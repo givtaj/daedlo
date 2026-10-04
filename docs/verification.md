@@ -44,6 +44,14 @@ also match the earlier browser-tested local candidate. The dirty and clean
 source receipts remain distinct. The follow-up commit recording this result
 changes documentation only; the linked CI result belongs to `3d02983`.
 
+The documentation commit also passed [run 37211683760](https://github.com/givtaj/browser-driver/actions/runs/37211683760).
+Those runs reported deprecated Node 20 runtimes inside the three GitHub actions.
+The workflow pins were subsequently advanced to official checkout `v7.0.1`,
+setup-node `v7.0.0` and upload-artifact `v7.0.1` commits, whose `action.yml` files
+declare Node 24. This affects the CI helpers; the product test matrix remains
+Node 22/24. Per-commit results are available in the
+[CI run history](https://github.com/givtaj/browser-driver/actions/workflows/ci.yml).
+
 Meaningful failing regressions preceded the release implementations and review
 fixes. Local red logs are retained under `artifacts/release/`,
 `artifacts/release-preparation/`, `artifacts/release-readiness/`, and
