@@ -1,0 +1,1477 @@
+{
+  "schemaVersion": 1,
+  "title": "Roots: the work that shaped the driver",
+  "description": "Curated, source-backed receipts from the real Roots QA history. Each run keeps its application/controller provenance, assertions, failed attempts and limits. This is an archive, not a fresh test of current Roots or proof that the standalone candidate has inherited every feature.",
+  "repository": "https://github.com/givtaj/roots",
+  "canonicalReportPath": "docs/verification/auth-release-2026-09-26/REPORT.md",
+  "capturedAt": "2026-09-27T17:17:11.760625+00:00",
+  "currentSource": {
+    "commit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
+    "observedAt": "2026-09-27T17:15:28.091604+00:00",
+    "status": "UNCOMMITTED_CONSOLIDATION_COMPLETE_LOCALLY",
+    "note": "Roots consolidation into tools/browser-driver completed locally on an uncommitted candidate based on dd9cee67. Final evidence and current manifest/binary hashes were independently read and checked for this archive. No current remote CI or publication is claimed.",
+    "chat": {
+      "title": "Drive Roots QA browser after update",
+      "url": "codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b"
+    }
+  },
+  "policy": {
+    "scenarioSelection": "Curated assertions; aggregate historical coverage is in each run.coverage and must not be counted twice.",
+    "statusMeaning": {
+      "PASS": "Recorded checks passed for that captured source.",
+      "FINDINGS": "The run found historical UX concerns; see per-scenario evidence.",
+      "BASELINE_PASS": "Recorded pre-change checks passed; later changes remain outside this receipt.",
+      "HISTORICAL_FINDING": "An observed concern on the stated historical source, not a current failure claim.",
+      "IN_PROGRESS": "A later gate is unclosed; a passing baseline does not establish final completion."
+    },
+    "privacy": "Only reviewed synthetic-fixture screenshots are copied. Raw logs, accounts, credentials, cookies, traces and session files are not copied. Source logs/JSON are referenced by path and SHA-256 only.",
+    "hashScope": "SHA-256 binds the original artifact bytes read at curation time. Changed originals may no longer match; hashes do not anonymize data."
+  },
+  "runs": [
+    {
+      "id": "initial-ux",
+      "kind": "roots-original",
+      "title": "The first UX drive: four concrete findings",
+      "date": "2026-09-26T13:11:26.095Z",
+      "status": "FINDINGS",
+      "testLevel": "Real Chromium + Roots HTTP API + isolated PostgreSQL; desktop and resized mobile viewport",
+      "summary": "Fifteen Home, Profile, sign-in and mobile destinations were checked. Four observed UX concerns exposed draft, save-message, focus and view-continuity gaps. The initial Refresh failure was a driver locator mistake and the corrected request check passed.",
+      "source": {
+        "commit": "8deffdd4a721143275a930abaa151db27f975517",
+        "evidencePath": "QA/evidence/ux-2026-09-26",
+        "canonicalReportPath": "docs/verification/auth-release-2026-09-26/REPORT.md",
+        "artifacts": [
+          {
+            "path": "QA/evidence/ux-2026-09-26/results.json",
+            "sha256": "377f963f781bd3b9d510188a4f5e230cf0ca8d1c4270f4dfc01a55c58eeffe43",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/ux-2026-09-26/refresh-corrected.json",
+            "sha256": "bd5ed395995e5222f30f30a3541a1a0d1dd4e4b17e434eadda06f72a0732f1e7",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/ux-2026-09-26/provenance.json",
+            "sha256": "395c295ff1768ff81c15dc6abaa2d1b9d3307686157aa51530248e946743de49",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/ux-2026-09-26/keyboard-focus.json",
+            "sha256": "1af37063c0f142d5939f6636bc2e6f1eb5de9704538c7e7664a1d8517ef50b66",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/ux-review-2026-09-26.md",
+            "sha256": "7bf0769b7cf6da6bcd26047379b90e06176d4550aee57d0776666b8e2656d5fd",
+            "kind": "md",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/ux-2026-09-26/draft-loss-demo.json",
+            "sha256": "8edc5c1cc1bf092859dfd193034a5a2f79705d7473e4892bd63cb62c4c2af876",
+            "kind": "json",
+            "copied": false
+          }
+        ],
+        "provenanceNote": "Application commit and API binary are recorded in provenance.json. No application fixes were made during this review; these findings are historical, not a diagnosis of the current checkout."
+      },
+      "coverage": {
+        "destinationsChecked": 15,
+        "historicalFindings": 4,
+        "scope": "Home/Profile/auth/mobile; Journal was added later"
+      },
+      "scenarios": [
+        {
+          "id": "refresh-corrected",
+          "name": "Refresh uses the actual accessible button name",
+          "status": "PASS",
+          "assertion": "The corrected Refresh connections action received real greeting and health HTTP 200 responses and restored two Connected indicators.",
+          "evidence": [
+            "QA/evidence/ux-2026-09-26/results.json",
+            "QA/evidence/ux-2026-09-26/refresh-corrected.json"
+          ],
+          "failure": "Initial driver attempted the exact accessible name Refresh and timed out; retained as FAIL.",
+          "correction": "Use the observed accessible name Refresh connections. The corrected run passed; this was not an application defect."
+        },
+        {
+          "id": "UX-01",
+          "name": "Unsaved Profile draft was lost on navigation",
+          "status": "HISTORICAL_FINDING",
+          "assertion": "A new display name was replaced by the saved value after Home \u2192 Profile, with no discard warning and no Save action.",
+          "evidence": [
+            "QA/evidence/ux-2026-09-26/results.json",
+            "QA/evidence/ux-2026-09-26/draft-loss-demo.json",
+            "QA/ux-review-2026-09-26.md"
+          ]
+        },
+        {
+          "id": "UX-02",
+          "name": "Old save success remained beside an unsaved edit",
+          "status": "HISTORICAL_FINDING",
+          "assertion": "Profile saved remained visible after changing the input again; the real API still returned the previous saved name.",
+          "evidence": [
+            "QA/evidence/ux-2026-09-26/results.json",
+            "QA/ux-review-2026-09-26.md"
+          ]
+        },
+        {
+          "id": "UX-03",
+          "name": "Save moved keyboard focus to BODY",
+          "status": "HISTORICAL_FINDING",
+          "assertion": "Pressing Enter on Save profile persisted the name but moved focus to BODY. Keyboard navigation still worked; this was not a keyboard trap.",
+          "evidence": [
+            "QA/evidence/ux-2026-09-26/keyboard-focus.json",
+            "QA/ux-review-2026-09-26.md"
+          ]
+        },
+        {
+          "id": "UX-04",
+          "name": "Reload preserved data but lost the selected view",
+          "status": "HISTORICAL_FINDING",
+          "assertion": "Reloading Profile opened Home; reopening Profile showed the saved name.",
+          "evidence": [
+            "QA/evidence/ux-2026-09-26/results.json",
+            "QA/ux-review-2026-09-26.md"
+          ]
+        },
+        {
+          "id": "profile-validation",
+          "name": "Validation rejected invalid names without a write",
+          "status": "PASS",
+          "assertion": "Empty and 101-character names produced inline feedback, retained input and caused zero writes; correction cleared validation and enabled saving.",
+          "evidence": [
+            "QA/evidence/ux-2026-09-26/results.json"
+          ]
+        },
+        {
+          "id": "mobile-layout",
+          "name": "Three narrow layouts and sign-in keyboard order",
+          "status": "PASS",
+          "assertion": "Home, Signin and Profile fit 390 \u00d7 844 without horizontal overflow; Tab traversed Email \u2192 Password \u2192 Sign in.",
+          "evidence": [
+            "QA/evidence/ux-2026-09-26/results.json"
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "images/initial-profile-stale-success.png",
+          "caption": "Historical finding UX-02: unsaved text beside the previous Profile saved confirmation.",
+          "sourcePath": "QA/evidence/ux-2026-09-26/observation-stale-save-success.png",
+          "sha256": "cd1d6a0de738ab80a91b2ca659ef70ffb449b1405862072cd08db2b069ace445"
+        }
+      ],
+      "limitations": [
+        "These four findings apply to application 8deffdd, not necessarily to current Roots.",
+        "Mobile coverage used one resized Chromium viewport; no physical device, touch keyboard, full accessibility or cross-browser audit.",
+        "The original provenance lifecycle fields are historical. The canonical report is the source for later cleanup and fixes."
+      ]
+    },
+    {
+      "id": "journal-flows",
+      "kind": "roots-original",
+      "title": "Journal flows learned from real failure and recovery",
+      "date": "2026-09-26T15:46:44.417Z",
+      "status": "PASS",
+      "testLevel": "real Chromium + real API + isolated PostgreSQL; explicit route faults",
+      "summary": "Eleven saved browser checks established the Journal behavior, including the ten flows later exposed as driver recipes. Failed sends, successful writes with lost replies, draft retention and keyboard focus were checked against the real API and isolated database.",
+      "source": {
+        "commit": "f198c9aa4fdcb7707c4ef98b65b56dfc4ae90c0c",
+        "evidencePath": "QA/evidence/journal-driver-2026-09-26",
+        "canonicalReportPath": "docs/verification/auth-release-2026-09-26/REPORT.md",
+        "artifacts": [
+          {
+            "path": "QA/evidence/journal-driver-2026-09-26/results.json",
+            "sha256": "7d49b54e70bf2eeac02a6ac77258573560ac9a39f4a887074737065ad52838a0",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/journal-driver-2026-09-26/source.json",
+            "sha256": "2db87ee00b5b7b1b1fe3bbefd1534f06e6881199730c40d568938de3905e9f7c",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/driver-commands.md",
+            "sha256": "f95c3348dc60216466e3bbff1313536aa39d9a9e4ee56d6acb1f60858cc0b647",
+            "kind": "md",
+            "copied": false
+          }
+        ],
+        "provenanceNote": "Original learned-flow browser run. Its eleven checks include calendar count recovery; the later live driver exposes ten recipes, not eleven."
+      },
+      "coverage": {
+        "browserChecks": 11,
+        "learnedRecipesLater": 10
+      },
+      "scenarios": [
+        {
+          "id": "shared-selected",
+          "name": "Shared selection across customers",
+          "status": "PASS",
+          "assertion": "The same shared strain ID and name were visible in two synthetic customer contexts.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "more-choices",
+          "name": "Load a second page without losing the draft",
+          "status": "PASS",
+          "assertion": "Options increased from 31 to 61; a later-page choice was usable and existing draft fields were retained.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "unspecified-strain",
+          "name": "Save with optional fields omitted",
+          "status": "PASS",
+          "assertion": "Exact date and null strain/rating persisted after a real API restart, reload and reopening Journal.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "draft-retained",
+          "name": "Keep the Journal draft across navigation",
+          "status": "PASS",
+          "assertion": "Date, notes, rating and explicitly saved private strain selection survived Home \u2192 Profile \u2192 Journal.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "cancelled",
+          "name": "Cancel the experience, retain an explicitly saved strain",
+          "status": "PASS",
+          "assertion": "Experience IDs/count were unchanged; the next notes/rating fields were blank; the already saved private strain remained.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "keyboard-saved",
+          "name": "Save from the keyboard on mobile",
+          "status": "PASS",
+          "assertion": "Notes \u2192 Overall rating \u2192 Save experience then Enter created one record; focus returned to Log experience, the next draft was blank and the old notice cleared.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "failed-save-retry",
+          "name": "Retry a request that never reached the server",
+          "status": "PASS",
+          "assertion": "The POST was aborted before the server; all fields remained, no write occurred, and explicit retry created one record.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "lost-response-retry",
+          "name": "Recover when the successful response is lost",
+          "status": "PASS",
+          "assertion": "The real upstream POST returned 201 but its reply was lost; all fields remained and there was exactly one record both before and after retry.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "history-load-retry",
+          "name": "Recover the history list without a false empty state",
+          "status": "PASS",
+          "assertion": "A failed GET never claimed empty history; retry restored four entries while retaining all draft fields.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "strain-load-retry",
+          "name": "Recover strain options without losing input",
+          "status": "PASS",
+          "assertion": "A failed strain GET retained the draft; retry restored 31 options and usable selection.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        },
+        {
+          "id": "calendar-count-retry",
+          "name": "Calendar failure means unavailable, not zero",
+          "status": "PASS",
+          "assertion": "Failed count reads showed unavailable instead of false zero; retry restored numeric counts.",
+          "evidence": [
+            "QA/evidence/journal-driver-2026-09-26/results.json",
+            "QA/driver-commands.md"
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "images/journal-lost-response-retained.png",
+          "caption": "Real POST succeeded but its reply was lost: the retryable form retained the synthetic draft. Record-count evidence, not the screenshot alone, establishes one write.",
+          "sourcePath": "QA/evidence/journal-driver-2026-09-26/screenshots/lost-response-retained.png",
+          "sha256": "2078b5777f61dbf1fb2f89fe0cba6a97686454751389c24e0c1f963b4941515b"
+        }
+      ],
+      "limitations": [
+        "Exactly-once claims refer to the recorded unchanged operation and synthetic fixture, not arbitrary repeated notes or all possible failures.",
+        "Shared selection across two accounts is narrower than full privacy coverage.",
+        "Screenshots show visible UI; persistence and no-write assertions come from the linked HTTP/database checks."
+      ]
+    },
+    {
+      "id": "live-controls",
+      "kind": "roots-original",
+      "title": "From missing controls to guarded live execution",
+      "date": "2026-09-27T10:48:30.851855+00:00",
+      "status": "PASS",
+      "testLevel": "Real viewer + Chromium + Roots API + disposable PostgreSQL; Rust contracts and source checks supplement browser acceptance",
+      "summary": "Six genuine missing-control assertions failed before implementation. The final controller passed ten scenario groups and all ten Journal recipes, including stale-action rejection, visible motion, safe stopping, reconnect and truthful save accounting.",
+      "source": {
+        "commit": "99c751aceb75c7e07d7cc3f376feae11cd7dc20d",
+        "evidencePath": "QA/evidence/live-controls-2026-09-27",
+        "canonicalReportPath": "docs/verification/auth-release-2026-09-26/REPORT.md",
+        "artifacts": [
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/red/browser-results.json",
+            "sha256": "55090105e59d81919a511d64d354b98a9aec85b406efe077b9f491f9db4cd23e",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/final-verification.json",
+            "sha256": "3ec0b6ca434029c963f48af2255b73d50c5ef5b46a9629779a2ccfb82d364f47",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/final-flows/controller-source.json",
+            "sha256": "b151150f19bec387f8a750be199dbcbc89497b9747d39615b8f0b9171e18d79a",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/final-safety/controller-source.json",
+            "sha256": "b1ee39f8f940a28804cf43bfe6b04555477c16f761eb296e498825eaaf35ba26",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/final-flows/results.json",
+            "sha256": "c0a2218adcd1bbbc459134b62b5462d1dbb9cb9f3084e2526d67613377126ce2",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/final-flows/recipe-results.json",
+            "sha256": "4452edb75200eb0bceb1783b1d98e9ac39b07083fd6c3b667bd4c32b10f31349",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/final-safety/results.json",
+            "sha256": "528426ec9d3d8922668697197a9e6c6fd6f32776025aa950369291cf8319fa3b",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/final-safety/motion.json",
+            "sha256": "2d72481c026f5fe79e81d4faaef2e42e06f667c4ed65b7577b97564ac78bd946",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/source-check-final.log",
+            "sha256": "f189fcb72040cef31e7e2330e13ad35d240fac9a8cddde8f807bb7c044bdc3b4",
+            "kind": "log",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-controls-2026-09-27/README.md",
+            "sha256": "8705528c79e187f1a0356b62a6c17098d7bf5848c2af6f33170e18daf55dff18",
+            "kind": "md",
+            "copied": false
+          }
+        ],
+        "controllerCommit": "b0370eb7104c2cd5a3d65d97ec6b91256f9038ad",
+        "controllerEvidencePath": "QA/evidence/live-controls-2026-09-27/final-flows/controller-source.json",
+        "provenanceNote": "Application was frozen at 99c751. The controller was separately developed and hashed; the canonical report later associates that QA implementation with b0370eb. Do not label the browser application as b0370eb."
+      },
+      "coverage": {
+        "scenarioGroups": 10,
+        "recipes": 10,
+        "rustTests": 274,
+        "rustQaContracts": 13,
+        "frontendTests": 68
+      },
+      "history": [
+        {
+          "status": "FAIL",
+          "stage": "genuine pre-implementation browser baseline",
+          "detail": "Six missing-control assertions failed after reaching the real application/viewer. Existing video and draft preservation already passed.",
+          "evidence": "QA/evidence/live-controls-2026-09-27/red/browser-results.json"
+        },
+        {
+          "status": "PASS",
+          "stage": "final combined verification",
+          "detail": "Ten scenario groups and ten recipe assertions passed across two scoped runs with matching controller and binary hashes.",
+          "evidence": "QA/evidence/live-controls-2026-09-27/final-verification.json"
+        }
+      ],
+      "scenarios": [
+        {
+          "id": "rust-guards-and-stale-commands",
+          "name": "Rust guards and stale commands",
+          "status": "PASS",
+          "assertion": "Sign-out and rejected/successful sign-in worked; commands chosen from stale navigation were rejected and Profile draft protection held.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-flows/results.json",
+            "QA/evidence/live-controls-2026-09-27/final-flows/recipe-results.json"
+          ]
+        },
+        {
+          "id": "ten-learned-journal-flows",
+          "name": "Run all ten learned Journal recipes",
+          "status": "PASS",
+          "assertion": "All ten recipes completed their distinct browser/API assertions, including API-restart persistence, cancellation, draft retention and explicit retries.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-flows/results.json",
+            "QA/evidence/live-controls-2026-09-27/final-flows/recipe-results.json"
+          ]
+        },
+        {
+          "id": "observe-preserves-draft",
+          "name": "Observe the existing page",
+          "status": "PASS",
+          "assertion": "Attaching a viewer retained the current session and mounted draft while showing actual live frames and canonical state.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        },
+        {
+          "id": "visible-motion-and-speed",
+          "name": "Watch pointer, input and scrolling",
+          "status": "PASS",
+          "assertion": "The paired operation measured Slow 9731 ms and Fast 5084 ms with 98 pointer moves, 17 input events and 48 scroll events.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        },
+        {
+          "id": "single-run-pause-resume-stop",
+          "name": "One run with safe pause, resume and stop",
+          "status": "PASS",
+          "assertion": "Two viewers could not overlap runs; pause, resume and stop retained the browser page and draft at safe action boundaries.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        },
+        {
+          "id": "explicit-failure-and-exactly-once-retry",
+          "name": "Recover explicitly after failure",
+          "status": "PASS",
+          "assertion": "Failed sends and lost successful replies retained operation identity; explicit retry yielded one intended record; failed reads recovered without draft loss.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        },
+        {
+          "id": "reconnect-without-replay",
+          "name": "Reconnect the monitor without running actions",
+          "status": "PASS",
+          "assertion": "Viewer reload and offline/reconnect retained state and speed without replay; commands while disconnected were rejected.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        },
+        {
+          "id": "stale-during-motion-and-session-switch",
+          "name": "Reject changes that happen during movement",
+          "status": "PASS",
+          "assertion": "Edits and account changes occurring after selection but before action invalidated the earlier command.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        },
+        {
+          "id": "paused-recipe-rejects-external-draft-edit",
+          "name": "Reject external edits made while paused",
+          "status": "PASS",
+          "assertion": "An external draft edit during a pause invalidated the recipe continuation instead of overwriting that edit.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        },
+        {
+          "id": "stop-during-save-and-reload-running-error",
+          "name": "Report a completed save even after Stop",
+          "status": "PASS",
+          "assertion": "Stopping during held Journal, Profile or Strain saves still reported writes that completed; uncertain Journal outcomes remained explicit and reload did not replay the run.",
+          "evidence": [
+            "QA/evidence/live-controls-2026-09-27/final-safety/results.json"
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "images/live-controls-stopped-draft.png",
+          "caption": "Original Roots viewer stopped at a safe boundary with the Journal draft still mounted and valid Rust commands visible.",
+          "sourcePath": "QA/evidence/live-controls-2026-09-27/final-safety/single-run-pause-resume-stop.png",
+          "sha256": "f0f6071a069ad25c01ce9115e0f6e10c357b9cf25c57bf8cc530fa179c8e1600"
+        }
+      ],
+      "limitations": [
+        "The six-case red baseline predates later acceptance extensions; not every final group has a separate chronological red run.",
+        "Supplemental save-accounting and late-callback sensitivity runs deliberately recreated earlier defects; they are not additional chronological red-before-code cycles.",
+        "Database release contracts and publication were NOT RUN by this QA-only completion. Source checks, browser behavior and remote CI are separate gates."
+      ]
+    },
+    {
+      "id": "timing-regression",
+      "kind": "roots-original",
+      "title": "Timed regression, with its source-drift caveat intact",
+      "date": "2026-09-27T16:21:11.209821+00:00",
+      "status": "PASS",
+      "testLevel": "Real headless Chromium + application/API + disposable PostgreSQL; performance.now wall-clock intervals",
+      "summary": "The d4008e3 application fixture passed ten browser groups and ten recipes. The suite took 150978.5 ms (160858.4 ms including fixture lifecycle). Concurrent Cargo work replaced the shared QA executable, so these timings are an observed regression run, not a single-binary benchmark.",
+      "source": {
+        "commit": "d4008e39aeaa137bb54ff48ca2d11748083a971a",
+        "evidencePath": "QA/evidence/live-regression-timing-2026-09-27",
+        "canonicalReportPath": "docs/verification/auth-release-2026-09-26/REPORT.md",
+        "artifacts": [
+          {
+            "path": "QA/evidence/live-regression-timing-2026-09-27/results.json",
+            "sha256": "baa22bbea915fb1adb6c559f9609e396acb1821508c4049204dd0fb7d050576e",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-regression-timing-2026-09-27/recipe-results.json",
+            "sha256": "95afc8e562afd587ee2200984553fee390cef9c3a49b28944afc6678703b07cb",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-regression-timing-2026-09-27/verification.json",
+            "sha256": "dd7bde00610257d69f4e5c41508ac514a986ac0ed23e7b3fa568a260a1f94caa",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-regression-timing-2026-09-27/timings.json",
+            "sha256": "568e0a1bfca333f995c306294747fe16f15a9e1e50b792730ac72ad441182c7a",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-regression-timing-2026-09-27/recipe-timings.json",
+            "sha256": "8ca4097294ccc1bda3c68bfe485381824274b9f1701bccb3fe31bd7e2cec34b0",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-regression-timing-2026-09-27/motion.json",
+            "sha256": "c2afa178d642e9523c8f17567b1c40caf75601e3841ae65e3c02dd24c2b73e9a",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/live-regression-timing-2026-09-27/binary-parity.json",
+            "sha256": "16585d12c4ea4b094bb4be7cdf12ce203a00c73f18484ada96b5df0a64c489cf",
+            "kind": "json",
+            "copied": false
+          }
+        ],
+        "controllerEvidencePath": "QA/evidence/live-regression-timing-2026-09-27/binary-parity.json",
+        "provenanceNote": "Observed regression run, not a single-binary benchmark: concurrent cargo replaced the shared QA executable; separate Strains development is excluded. See binary-parity.json. Application fixture was frozen at d4008e3."
+      },
+      "coverage": {
+        "scenarioGroups": 10,
+        "recipes": 10,
+        "suiteMs": 150978.5,
+        "totalWithFixtureMs": 160858.4,
+        "recipeCommandSumMs": 37668.9
+      },
+      "scenarios": [
+        {
+          "id": "ten-browser-groups",
+          "name": "All ten browser groups passed",
+          "status": "PASS",
+          "assertion": "The final regression result records ten passing groups, including stale edits/session switches, pause/stop, reconnect and save accounting.",
+          "evidence": [
+            "QA/evidence/live-regression-timing-2026-09-27/results.json",
+            "QA/evidence/live-regression-timing-2026-09-27/verification.json"
+          ]
+        },
+        {
+          "id": "ten-recipe-assertions",
+          "name": "All ten recipe outcomes were checked",
+          "status": "PASS",
+          "assertion": "Every recorded recipe returned ok with its specific assertion set; lost-response retry checked save_lost_response and save_retry_deduplicated.",
+          "evidence": [
+            "QA/evidence/live-regression-timing-2026-09-27/recipe-results.json"
+          ]
+        },
+        {
+          "id": "timed-motion",
+          "name": "Paired visible motion was measured",
+          "status": "PASS",
+          "assertion": "The paired operation recorded Slow 5864 ms and Fast 748 ms, with 98 pointer moves, 17 input events and 25 scroll events.",
+          "evidence": [
+            "QA/evidence/live-regression-timing-2026-09-27/motion.json"
+          ]
+        },
+        {
+          "id": "source-check",
+          "name": "Required source checks completed",
+          "status": "PASS",
+          "assertion": "The source-only check passed 286 Rust executions, 68 frontend tests and 9 Node tests. Its ignored DB contracts are not browser acceptance.",
+          "evidence": [
+            "QA/evidence/live-regression-timing-2026-09-27/verification.json"
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "images/timing-visible-motion.png",
+          "caption": "Actual timed-run viewer during the Fast operation; this screenshot is visual evidence, not an additional timing measurement.",
+          "sourcePath": "QA/evidence/live-regression-timing-2026-09-27/visible-motion-and-speed.png",
+          "sha256": "111621362903d9d4df74ba5d31cd155e3fb83cd5df4b98afbf2a286c8d2233fd"
+        }
+      ],
+      "limitations": [
+        "Concurrent Cargo replaced target/debug/roots-qa-driver during the run and changed a contract-test file. This is not a fixed-source, single-binary performance benchmark.",
+        "Recipe command intervals overlap the suite interval; do not add them to suiteMs.",
+        "Separate Strains development was outside this d4008e3 application fixture.",
+        "Historical source/CI statements in verification.json were not refreshed by creating this archive."
+      ]
+    },
+    {
+      "id": "strains",
+      "kind": "roots-original",
+      "title": "Strains: committed feature, real recovery and isolation checks",
+      "date": "2026-09-27T16:35:35.770924+00:00",
+      "status": "PASS",
+      "testLevel": "real Chromium + application HTTP API + disposable PostgreSQL; Rust QA driver decisions and observed enum states",
+      "summary": "Final candidate acceptance passed all eleven product scenarios, separately observed all eighteen Rust state leaves, and recorded zero uncaught browser errors. Earlier mobile-focus and cursor-readiness failures were retained and repaired before this final result.",
+      "source": {
+        "commit": "9c9e938210c5c6c5bdcba40b61f97fed3d64afb1",
+        "evidencePath": "QA/evidence/strains-2026-09-27/green-final-2",
+        "canonicalReportPath": "docs/verification/auth-release-2026-09-26/REPORT.md",
+        "artifacts": [
+          {
+            "path": "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "sha256": "8dc4244b841bb4bb3dbeda77751408fcc0fd4eee91695a8cf0e0c3d6a2a15963",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/green-final-2/verification.json",
+            "sha256": "9836a200488cafce233763017d1b452e3d2a2bdc645a3ccb68e972211b53e772",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/green-final-2/source.json",
+            "sha256": "8c3f19f7c681f02fa0d268dbf1245f57395af39b62ccd59c4b1b16b005a050f6",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/green-final-2/suite-source.json",
+            "sha256": "915d581d2c337403bd2dd22193408f24adbb221bfb9c7dbf030f7a337cd5af28",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/green-final-2/binary-equivalence.json",
+            "sha256": "5efa590d7514d8f1ca9a733001b59ec2ff7de317197611eaab4e704b72f006d4",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/green-final-2/commands.json",
+            "sha256": "bfae694ce0fb5d2918fbb6818630cff930800bcfbe094ef9d284f08b8f72336a",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/red-browser-authorized/results.json",
+            "sha256": "43c3f32f14bed2d2869cf258f1068952a6d2032fdeef507f5065cb1657957e57",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/strains-acceptance.md",
+            "sha256": "be57e67ea561803f3bcc9df838740c30b9b6f575de5fb425c6ac48454c168f38",
+            "kind": "md",
+            "copied": false
+          }
+        ],
+        "capturedBaseCommit": "d4008e39aeaa137bb54ff48ca2d11748083a971a",
+        "controllerEvidencePath": "QA/evidence/strains-2026-09-27/green-final-2/suite-source.json",
+        "provenanceNote": "Final acceptance froze an uncommitted candidate based on d4008e3, bound by 105 matching source files and copied binary hashes. The canonical report later records its implementation commit 9c9e938. Commit alone is not the original run identity."
+      },
+      "coverage": {
+        "productScenarios": 11,
+        "observedStateLeaves": 18,
+        "stateLeavesTotal": 18,
+        "uncaughtBrowserErrors": 0,
+        "sourceFilesCompared": 105
+      },
+      "history": [
+        {
+          "status": "FAIL",
+          "stage": "authorized pre-implementation browser run",
+          "detail": "The signed-in real browser failed the missing Strains navigation assertion; the other ten scenarios were NOT RUN. The earlier Docker setup failure was not product red.",
+          "evidence": "QA/evidence/strains-2026-09-27/red-browser-authorized/results.json"
+        },
+        {
+          "status": "FAIL",
+          "stage": "candidate 3",
+          "detail": "Actual mobile focus defect; fixed and exercised by the final mobile scenario.",
+          "evidence": "docs/verification/auth-release-2026-09-26/REPORT.md#strains-catalogue--september-27-2026"
+        },
+        {
+          "status": "FAIL",
+          "stage": "candidate 4",
+          "detail": "Scenarios passed but the uncaught-error gate failed: cursor initialized before the document root after reload. A failing regression preceded the readiness repair.",
+          "evidence": "docs/verification/auth-release-2026-09-26/REPORT.md#strains-catalogue--september-27-2026"
+        },
+        {
+          "status": "PASS",
+          "stage": "green-final-2",
+          "detail": "11/11 product scenarios, 18/18 observed leaves, 0 uncaught errors, matching source/binaries and owned fixture cleanup.",
+          "evidence": "QA/evidence/strains-2026-09-27/green-final-2/verification.json"
+        }
+      ],
+      "scenarios": [
+        {
+          "id": "navigation-loading-empty",
+          "name": "Navigate, wait, and distinguish true empty results",
+          "status": "PASS",
+          "assertion": "Held real requests exposed Loading; a successful empty catalogue exposed Empty; Add strain was disabled during pending load or recovery.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "whole-catalogue-search-pagination-races",
+          "name": "Search the whole catalogue and page safely",
+          "status": "PASS",
+          "assertion": "Literal case-insensitive search covered accessible names, pages had no missing/duplicate IDs, and stale search responses could not replace a newer query.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "private-add-visible-persisted-journal-preserved",
+          "name": "Add a private name and preserve the Journal draft",
+          "status": "PASS",
+          "assertion": "The new row was visible even outside the old search, survived reload, was absent for another customer and left existing Journal fields unchanged.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "validation-correction-cancel",
+          "name": "Validate, correct, and cancel without writing",
+          "status": "PASS",
+          "assertion": "Empty, overlong and invalid-character names reached exact validation leaves; correction returned to Draft; rejected/cancelled forms created no row.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "shared-private-duplicate-reveal",
+          "name": "Reveal an existing duplicate by identity",
+          "status": "PASS",
+          "assertion": "Shared and own-private duplicates created no new row; Show existing exposed the original ID beyond the current page or query.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "initial-and-search-load-recovery",
+          "name": "Recover catalogue and search failures",
+          "status": "PASS",
+          "assertion": "Failed reads retained useful context and did not claim Empty or NoMatches; retry restored the intended query.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "more-page-recovery",
+          "name": "Retry only the failed next page",
+          "status": "PASS",
+          "assertion": "The old rows, query and cursor survived a pagination failure; retry continued without gaps or duplicates.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "failed-save-and-lost-response-exactly-once",
+          "name": "Distinguish no-write failure from a lost success reply",
+          "status": "PASS",
+          "assertion": "The suite separated failed-before-server and lost successful response outcomes; retained name and operation identity allowed unchanged retry with exactly one intended row.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "private-isolation-session-switch-late-responses",
+          "name": "Account changes invalidate private UI and late replies",
+          "status": "PASS",
+          "assertion": "Private names remained isolated; observed account changes cleared private rows/drafts; late read/save callbacks could not restore the old account data or success.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "signedout-admin-expiry",
+          "name": "Apply signed-out, admin and expiry boundaries",
+          "status": "PASS",
+          "assertion": "Signed-out access reached Signin, admins reached Forbidden, and expiry cleared private state and rejected the attempted write.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        },
+        {
+          "id": "mobile-keyboard",
+          "name": "Complete keyboard save and cancel on a narrow screen",
+          "status": "PASS",
+          "assertion": "At 390 \u00d7 844, search/add/save/cancel retained useful focus with no horizontal overflow; saved rows and cancelled writes were verified through HTTP.",
+          "evidence": [
+            "QA/evidence/strains-2026-09-27/green-final-2/results.json",
+            "QA/strains-acceptance.md"
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "images/strains-lost-response.png",
+          "caption": "The Strains form retained the synthetic name after a lost successful response; API assertions separately proved retry deduplication.",
+          "sourcePath": "QA/evidence/strains-2026-09-27/green-final-2/screenshots/failed-save-and-lost-response-exactly-once-029.png",
+          "sha256": "9b1d787e7d022ae259efed4db4d33055487b5536dea10394093eb06ddd8fa78b"
+        },
+        {
+          "path": "images/strains-mobile-saved.png",
+          "caption": "Final mobile acceptance: saved synthetic strain row, success confirmation and useful Add strain keyboard focus.",
+          "sourcePath": "QA/evidence/strains-2026-09-27/green-final-2/screenshots/mobile-keyboard-043.png",
+          "sha256": "2dcefcd64e2c3c6e9b2c97ada426fdc373e0b7a891d3936902d4184190ab8e3d"
+        }
+      ],
+      "limitations": [
+        "An observed Rust label is not a passed product scenario; 18 leaf observations and 11 scenario outcomes are distinct evidence.",
+        "This is the captured candidate later committed as 9c9e938, not verification of subsequent uncommitted consolidation work.",
+        "Resized Chromium is not a physical phone.",
+        "Remote CI was NOT RUN by this browser suite and remained PENDING in the publication record; no current CI or release claim is made here.",
+        "The broader testkit aggregate initially failed an existing startup-timeout assertion; unchanged diagnostic reruns passed. That original failure is retained in the canonical report."
+      ]
+    },
+    {
+      "id": "consolidation-baseline",
+      "kind": "roots-original",
+      "title": "Roots consolidation: baseline preserved, final checks passed",
+      "date": "2026-09-27T17:13:38.339878+00:00",
+      "status": "PASS",
+      "testLevel": "Real Chromium + Roots API + disposable PostgreSQL; source/binary stability checks",
+      "summary": "Moving the existing Roots QA engine/runtime into tools/browser-driver preserved all ten live-control groups, ten Journal recipes and eleven Strains scenarios with eighteen separately observed leaves. Final source audits, four fixture binaries, required source checks, Docker packaging and owned cleanup passed. The consolidation remains local and uncommitted.",
+      "source": {
+        "commit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
+        "evidencePath": "QA/evidence/driver-consolidation-2026-09-27",
+        "canonicalReportPath": "docs/verification/auth-release-2026-09-26/REPORT.md",
+        "artifacts": [
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/baseline/strains-browser-execution.json",
+            "sha256": "7b21132c6a8664a43306583eee6c63403e3037490b3ee335da4f54b90c575c32",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/baseline/results.json",
+            "sha256": "eebde3284215f023800c3de62e8a93ba5fab55bab18171bf1b2dd7f9c88a52f0",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/baseline/recipe-results.json",
+            "sha256": "ea3405eef188302fd5a4e41aeb72858b278e04b593f49910c218d6f61fc6f883",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/baseline/run-timings.json",
+            "sha256": "15f584b32dec27601c15de8b354ac3e1326b4a6dc025e3c256fb2d5fd478cf98",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/baseline/controller-source.json",
+            "sha256": "dc31ae40298e86614f92261e655fe9d945f6f2e851c3d21573bc1e6b51fe6f32",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/fixture-setup-attempt-1.log",
+            "sha256": "6c7536fb4ba46cb48d51c4cb98c3cdee600fad2d5129f4632d396e3a47e2c8c8",
+            "kind": "log",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/verification.json",
+            "sha256": "c2c51e9a84edabbbc1f2e32d7da4e0198fd1c7871e5e0355df2c358a21fc0992",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/results.json",
+            "sha256": "dd578400338043494c11fa856faae1400faffe89b6326d68788e819917d8aea3",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/recipe-results.json",
+            "sha256": "49b81fd62b09fbfeaa2967b38b11e683f5b98daec3d67ffd22b3ffec24de68bf",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/strains-browser-execution.json",
+            "sha256": "1813825f69b7e95e322242e74493ae323c27ef587b8e25cf44355f7467ac4372",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/source-inventory.json",
+            "sha256": "5e9e4b97e6b68935587097d7000526428607a83fc314310960a08a740860df27",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/controller-source.json",
+            "sha256": "a76337be8649b32b6b65e30d43252f494e88b39dbf22a34ab4de50722c6600a4",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/packaging-source.json",
+            "sha256": "436b840c019319d974060614d4c463f9eb7b0b2e68f335b912afedb1230bcd37",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/source-check.log",
+            "sha256": "b2de45fb080bf12d53ffb4d980b5cb9eceabc1b4a0c59c001b888fa0da847624",
+            "kind": "log",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/api-image-build.log",
+            "sha256": "d3e8f3136fdd4d121cc7dce10a0ac197111f5a6636e6b3f1f60d5f8904d20e30",
+            "kind": "log",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/api-image-id.txt",
+            "sha256": "96f93cde573bc85b3fa0319781a86c418327281829154a2194e56b3a47b263ce",
+            "kind": "txt",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/run-timings.json",
+            "sha256": "3c17a8c3940e8929cc7a5bfbdff0a275f8006fc69b2f0da844ded146db526388",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/final/cleanup.json",
+            "sha256": "e6c400354964e9b6ff9ea1e3c135554bb62d9c7e3ab82bd51c8da6ae1715e1b1",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/driver-consolidation-2026-09-27/temporary-source-cleanup.json",
+            "sha256": "02e17c71195f7e9608b535f4211f3865d60d1606017b767435651582a541cf87",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/consolidation-final-20260927/results.json",
+            "sha256": "e85b237c5cb282656bb2414ee6e7e61fcc811269a25d51623af019ff2f219961",
+            "kind": "json",
+            "copied": false
+          },
+          {
+            "path": "QA/evidence/strains-2026-09-27/consolidation-final-20260927/source.json",
+            "sha256": "7c96558b37ea0d9399d59a95ff5f4a131528cdff56147265928dc8d97c9ceebb",
+            "kind": "json",
+            "copied": false
+          }
+        ],
+        "controllerEvidencePath": "QA/evidence/driver-consolidation-2026-09-27/final/controller-source.json",
+        "provenanceNote": "Application fixture remained frozen at dd9cee67. The relocated controller/runtime and Docker packaging were uncommitted candidates, bound by final source manifests and four stable fixture binary hashes. The final successful run followed the preserved setup refusal; no source guard or assertions were weakened.",
+        "chat": {
+          "title": "Drive Roots QA browser after update",
+          "url": "codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b"
+        },
+        "baseCommit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
+        "sourceState": "Uncommitted consolidation; application behavior unchanged",
+        "independentlyAuditedAt": "2026-09-27T17:15:28.091604+00:00",
+        "auditSummary": {
+          "sourceManifests": 4,
+          "sourceEntriesChecked": 250,
+          "sourceMismatches": 0,
+          "fixtureBinariesChecked": 4,
+          "binaryMismatches": 0
+        }
+      },
+      "coverage": {
+        "finalLiveControlGroups": 10,
+        "finalJournalRecipes": 10,
+        "finalStrainsScenarios": 11,
+        "finalStrainsObservedLeaves": 18,
+        "finalStrainsUncaughtBrowserErrors": 0,
+        "rustExecutions": 290,
+        "frontendTests": 74,
+        "nodeTests": 13,
+        "dockerPackaging": "PASS"
+      },
+      "scenarios": [
+        {
+          "id": "strains-baseline",
+          "name": "Strains behavior before the move",
+          "status": "PASS",
+          "assertion": "The baseline recorded 11 PASS, 0 FAIL, 0 NOT RUN and 18 observed leaves; before/after application source and binaries matched and owned resources were cleaned.",
+          "evidence": [
+            "QA/evidence/driver-consolidation-2026-09-27/baseline/strains-browser-execution.json"
+          ]
+        },
+        {
+          "id": "driver-baseline",
+          "name": "Live controls and recipes before the move",
+          "status": "PASS",
+          "assertion": "All ten live-control groups and all ten recipe result objects passed. Total fixture-inclusive wall time was 164462.3 ms.",
+          "evidence": [
+            "QA/evidence/driver-consolidation-2026-09-27/baseline/results.json",
+            "QA/evidence/driver-consolidation-2026-09-27/baseline/recipe-results.json",
+            "QA/evidence/driver-consolidation-2026-09-27/baseline/run-timings.json"
+          ]
+        },
+        {
+          "id": "final-consolidation-closure",
+          "name": "Final consolidated package browser closure",
+          "status": "PASS",
+          "assertion": "Final live results record ten passing groups and ten ok recipe results; final Strains records eleven passing scenarios, eighteen observed leaves and zero uncaught errors. Owned fixture cleanup completed.",
+          "evidence": [
+            "QA/evidence/driver-consolidation-2026-09-27/final/results.json",
+            "QA/evidence/driver-consolidation-2026-09-27/final/recipe-results.json",
+            "QA/evidence/driver-consolidation-2026-09-27/final/strains-browser-execution.json",
+            "QA/evidence/driver-consolidation-2026-09-27/final/cleanup.json",
+            "QA/evidence/driver-consolidation-2026-09-27/verification.json"
+          ]
+        },
+        {
+          "id": "final-source-and-packaging",
+          "name": "Source checks and relocated Docker packaging",
+          "status": "PASS",
+          "assertion": "The required check passed 290 Rust executions, 74 frontend tests and 13 Node tests; the API Docker image built with the relocated workspace manifest. Final source manifests and all four fixture binaries matched their captured hashes.",
+          "evidence": [
+            "QA/evidence/driver-consolidation-2026-09-27/final/source-check.log",
+            "QA/evidence/driver-consolidation-2026-09-27/api-image-build.log",
+            "QA/evidence/driver-consolidation-2026-09-27/verification.json"
+          ]
+        },
+        {
+          "id": "consolidation-publication",
+          "name": "Consolidation commit, push and remote CI",
+          "status": "NOT RUN",
+          "assertion": "This relocation is complete locally but remains uncommitted. Commit, push and remote CI were not run for this source.",
+          "evidence": [
+            "QA/evidence/driver-consolidation-2026-09-27/verification.json",
+            "docs/verification/auth-release-2026-09-26/REPORT.md"
+          ]
+        }
+      ],
+      "images": [],
+      "limitations": [
+        "This was a behavior-preserving relocation of the Roots-owned tool, not extraction into the independent product. Passing pre-move coverage is kept separate from the passing final run.",
+        "No statistical performance claim: before/after timings are single shared-host runs with deliberate pacing and recovery waits; nested recipe times must not be added to suite time.",
+        "The complete backend database-contract suite was NOT RUN for this relocation; the real browser suites used isolated PostgreSQL.",
+        "Consolidation is local and uncommitted; no commit, push or remote CI was run. Source chat and the canonical report own later status; this archive does not automatically synchronize.",
+        "The preserved first final attempt failed in fixture setup before browser assertions; the corrected successful-run duration does not include that failed attempt."
+      ],
+      "history": [
+        {
+          "status": "PASS",
+          "stage": "pre-move baseline",
+          "detail": "11 Strains scenarios/18 leaves plus 10 live-control groups/10 Journal recipes passed before the behavior-preserving move.",
+          "evidence": "QA/evidence/driver-consolidation-2026-09-27/baseline/strains-browser-execution.json"
+        },
+        {
+          "status": "SETUP_FAILURE",
+          "stage": "first final fixture launch",
+          "detail": "The fixture guard rejected an application source difference before any product assertion. The source chat attributes this to a temporary untracked dependency symlink and records replacing it with a real directory before rerunning. This is a setup correction, not product red/green evidence.",
+          "evidence": "QA/evidence/driver-consolidation-2026-09-27/final/fixture-setup-attempt-1.log"
+        },
+        {
+          "status": "PASS",
+          "stage": "final combined verification",
+          "detail": "The final relocated entry point passed 10 live groups/10 recipes and 11 Strains scenarios/18 leaves. Four source manifests and four binaries were stable; source checks, Docker packaging and owned cleanup completed.",
+          "evidence": "QA/evidence/driver-consolidation-2026-09-27/verification.json"
+        }
+      ],
+      "timings": {
+        "unit": "ms",
+        "before": {
+          "liveSuite": 153294.4,
+          "liveWithFixture": 164462.3,
+          "strainsProcess": 88948.062
+        },
+        "after": {
+          "liveSuite": 151244.2,
+          "liveWithFixture": 159871.6,
+          "strainsProcess": 89838.675
+        },
+        "note": "Single observed shared-host runs. Intentional pacing and recovery waits are included; recipe durations are nested inside suite durations and must not be added. Strains includes its harness. Final live timing describes the successful run; initial fixture refusal is separately preserved. Not a statistical benchmark."
+      }
+    },
+    {
+      "id": "standalone-roots-candidate",
+      "kind": "standalone-candidate",
+      "title": "The standalone candidate consuming real Roots",
+      "date": "2026-09-27",
+      "status": "PASS",
+      "testLevel": "real Chromium, Roots API and isolated PostgreSQL using the packed external runtime and public Rust ApplicationModel contract",
+      "summary": "The first extracted candidate drove real Roots through nine browser/API/database scenario groups. It also exposed and repaired a customer-model mismatch when correcting an invalid Profile field. Coverage is intentionally narrower than the original Roots driver: fifteen commands and one recipe.",
+      "coverage": {
+        "browserScenarioGroups": 9,
+        "customerContractChecks": 8,
+        "commands": 15,
+        "recipes": 1
+      },
+      "source": {
+        "commit": "d4008e39aeaa137bb54ff48ca2d11748083a971a",
+        "repository": "browser-driver",
+        "evidencePath": "artifacts/roots",
+        "runtimeArtifactSha256": "b04f7e98188e0c110de7f4d17959a21800bae2f1123188e61775585adefb32c1",
+        "engineSha256": "be6d68f7479b2009ae741cea52dac3ce9a3b5aa701888fd5b1e04d8c7fbea8c9",
+        "artifacts": [
+          {
+            "repository": "browser-driver",
+            "path": "artifacts/roots/browser-results.json",
+            "kind": "json",
+            "sha256": "7b16ab93e5cbf48686face3727e30ffc415e7003f2779608d7364617487c1da9",
+            "copied": false
+          },
+          {
+            "repository": "browser-driver",
+            "path": "artifacts/roots/package.json",
+            "kind": "json",
+            "sha256": "3e73d149459543045e0c6c7d555698a682cba319619cb8e440c5dec623c46a8e",
+            "copied": false
+          },
+          {
+            "repository": "browser-driver",
+            "path": "artifacts/roots/engine-package.json",
+            "kind": "json",
+            "sha256": "3767e46783d53c037d13e38a3e20ef0fcb907cb42b859a0bdf8a837353f7d4da",
+            "copied": false
+          },
+          {
+            "repository": "browser-driver",
+            "path": "integrations/roots/RESULTS.md",
+            "kind": "md",
+            "sha256": "3fa7b0b4e2d307d482b2615ac6883e9cffe9a832a57d4c6a560db0d03c42dccd",
+            "copied": false
+          },
+          {
+            "repository": "browser-driver",
+            "path": "integrations/roots/feedback.md",
+            "kind": "md",
+            "sha256": "fea69ee25149f6107f1e9d1d90e752cd65b8770448ecb89821988f78f9562533",
+            "copied": false
+          },
+          {
+            "repository": "browser-driver",
+            "path": "artifacts/candidates/rc3/runtime-equivalence.json",
+            "kind": "json",
+            "sha256": "d845d51eaa4684d5cd54001a66609f346f05523267570026a1730fe0b74875a3",
+            "copied": false
+          }
+        ],
+        "provenanceNote": "The browser-tested artifact is rc2 @browser-driver/runtime 0.1.0. Final rc3 changes one declaration only; executable files match rc2, but a fresh rc3 Roots run was not performed."
+      },
+      "scenarios": [
+        {
+          "id": "candidate-1",
+          "name": "Pinned external consumer signs in and verifies Profile API save",
+          "status": "PASS",
+          "assertion": "Pinned external consumer signs in and verifies Profile API save. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-2",
+          "name": "Profile validation remains a validation outcome with no persistence",
+          "status": "PASS",
+          "assertion": "Profile validation remains a validation outcome with no persistence. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-3",
+          "name": "Canonical customer recipe opens Journal; attachment preserves session and draft",
+          "status": "PASS",
+          "assertion": "Canonical customer recipe opens Journal; attachment preserves session and draft. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-4",
+          "name": "Human draft edit rejects stale save before request and preserves input",
+          "status": "PASS",
+          "assertion": "Human draft edit rejects stale save before request and preserves input. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-5",
+          "name": "Pause freezes a real guarded field action; resume and stop remain cooperative",
+          "status": "PASS",
+          "assertion": "Pause freezes a real guarded field action; resume and stop remain cooperative. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-6",
+          "name": "Failed Journal save and lost-success response retain recoverable outcomes; retry persists once",
+          "status": "PASS",
+          "assertion": "Failed Journal save and lost-success response retain recoverable outcomes; retry persists once. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-7",
+          "name": "Stop during an upstream-completed save reports saved after its response arrives",
+          "status": "PASS",
+          "assertion": "Stop during an upstream-completed save reports saved after its response arrives. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-8",
+          "name": "Live generic viewer shows Roots hierarchy, dynamic parameters and reconnects without replay",
+          "status": "PASS",
+          "assertion": "Live generic viewer shows Roots hierarchy, dynamic parameters and reconnects without replay. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        },
+        {
+          "id": "candidate-9",
+          "name": "Account/session change rejects stale command without writing or clearing draft",
+          "status": "PASS",
+          "assertion": "Account/session change rejects stale command without writing or clearing draft. See the original acceptance script and customer results for exact assertions.",
+          "evidence": [
+            "artifacts/roots/browser-results.json",
+            "integrations/roots/acceptance.mjs"
+          ]
+        }
+      ],
+      "history": [
+        {
+          "status": "FAIL",
+          "stage": "customer feedback",
+          "detail": "Correcting an invalid Profile name back to its saved value retained the old Saved notice and the legacy model rejected the edit. A real browser attempt and focused regression exposed it.",
+          "evidence": "integrations/roots/feedback.md"
+        },
+        {
+          "status": "PASS",
+          "stage": "customer bridge correction",
+          "detail": "The customer bridge uses exact field-match evidence for this correction; the original browser scenario passed. No live Roots source or shared policy was weakened.",
+          "evidence": "integrations/roots/RESULTS.md"
+        }
+      ],
+      "images": [
+        {
+          "path": "images/standalone-roots-candidate.png",
+          "caption": "The standalone generic viewer controlling actual Roots in the isolated candidate acceptance run. This saved screenshot is not the current original-driver session.",
+          "sourcePath": "artifacts/roots/roots-viewer.png",
+          "sourceRepository": "browser-driver",
+          "sha256": "45304c3ff5bbce616c343e4f7c998a6e13a155b8d078b52d69d3728290dcfa5c"
+        }
+      ],
+      "limitations": [
+        "Fifteen migrated commands and one recipe; not all ten original recipes, inline strain commands, restart flows or later Strains work.",
+        "Everyday Roots entrypoints and dependencies were not migrated.",
+        "Browser results bind rc2; rc3 was declaration-checked and runtime-compared, not rerun through Roots.",
+        "Acceptance-owned resources were cleaned; the current retained live example is a different original-driver session."
+      ]
+    },
+    {
+      "id": "manual-walkthrough",
+      "kind": "roots-original",
+      "title": "Fresh walkthrough: draft, lost reply, and Strains search",
+      "date": "2026-09-27T17:15:24.219951+00:00",
+      "status": "PASS",
+      "testLevel": "manual monitor interaction through CUA; existing Roots recipes with their own real-browser/API assertions; isolated synthetic PostgreSQL fixture",
+      "summary": "Opened and operated the actual Roots monitor: signed in, retained a Journal draft across navigation, recovered a lost save response, and searched Strains. This is a fresh scoped walkthrough of committed Roots, separate from historical acceptance and the extracted candidate.",
+      "coverage": {
+        "focusedChecks": 3,
+        "existingRecipesExecuted": 2,
+        "manualCatalogueSearch": 1
+      },
+      "source": {
+        "commit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
+        "driverCommit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
+        "repository": "browser-driver",
+        "evidencePath": "examples/roots/archive/receipts",
+        "artifacts": [
+          {
+            "repository": "browser-driver",
+            "path": "examples/roots/archive/receipts/draft-retained.json",
+            "sha256": "fbf87ac79fd47cc40a079b705f0ea1337f431775d5cf96ec65eb9afea49d0ad7",
+            "kind": "json",
+            "copied": true
+          },
+          {
+            "repository": "browser-driver",
+            "path": "examples/roots/archive/receipts/lost-response-retry.json",
+            "sha256": "3c6d10ec0925108f4b160abb01482cd3060f0bcc1d040b4163e16362160421e2",
+            "kind": "json",
+            "copied": true
+          },
+          {
+            "repository": "browser-driver",
+            "path": "examples/roots/archive/receipts/manual-walkthrough-source.json",
+            "sha256": "ca31367c8a8d164516b6ff7c8e44bc6feba5d437bcd16e5722ffc82c1019f825",
+            "kind": "json",
+            "copied": true
+          },
+          {
+            "repository": "browser-driver",
+            "path": "examples/roots/archive/receipts/strains-search.json",
+            "sha256": "f4c61e1946a045312a42ae3cf914efc35d30873ad58e2be9c4c2e07de77dd5b6",
+            "kind": "json",
+            "copied": true
+          }
+        ],
+        "provenanceNote": "Original committed Roots runtime and application were rebuilt in an isolated snapshot; four binaries were frozen before launch. New screenshots come from the exact controlled browser\u2019s MJPEG frames. Source thread consolidation is separately archived; this run does not claim to execute its uncommitted moved paths."
+      },
+      "scenarios": [
+        {
+          "id": "manual-draft-retained",
+          "name": "Keep the Journal draft while navigating",
+          "status": "PASS",
+          "assertion": "Activated the existing learned flow in the real monitor. It completed 11/11 steps and draft_retained. The observed state remained Journal Experience Draft. Only the private strain had been saved; the experience was still unsaved.",
+          "evidence": [
+            "examples/roots/archive/receipts/draft-retained.json"
+          ]
+        },
+        {
+          "id": "manual-lost-response",
+          "name": "Retry after losing a successful save response",
+          "status": "PASS",
+          "assertion": "After explicitly cancelling this walkthrough\u2019s synthetic draft, activated the existing lost-response recipe. It completed 10/10 steps, save_lost_response and save_retry_deduplicated, then showed Journal Experience Saved. The assertions are the original driver\u2019s real API checks.",
+          "evidence": [
+            "examples/roots/archive/receipts/lost-response-retry.json"
+          ]
+        },
+        {
+          "id": "manual-strains-search",
+          "name": "Search the actual Strains catalogue",
+          "status": "PASS",
+          "assertion": "Opened Strains through its offered command, entered White in the monitor input and ran Search strains. Observed Browsing Ready and six visible matching rows: White Truffle, White Tahoe Cookies, White Runtz, White Fire OG, White 99 and The White. Manual UI observation, not an independent completeness proof.",
+          "evidence": [
+            "examples/roots/archive/receipts/strains-search.json"
+          ]
+        }
+      ],
+      "images": [
+        {
+          "path": "images/walkthrough-lost-response-retry.jpg",
+          "caption": "Fresh walkthrough: the original Roots driver completed its lost-response retry recipe, including save_lost_response and save_retry_deduplicated assertions.",
+          "sourcePath": "artifacts/roots-experience/walkthrough/lost-response-retry.jpg",
+          "sourceRepository": "browser-driver",
+          "sha256": "5341aa5730baf2a2f0d365065f7640b222d7ddfaf53ad58f2b2cae13dbd5ba94"
+        },
+        {
+          "path": "images/walkthrough-strains-search.jpg",
+          "caption": "Fresh walkthrough: searching the actual Roots catalogue for White returned six visible matching rows. This manual observation does not replace the full catalogue acceptance suite.",
+          "sourcePath": "artifacts/roots-experience/walkthrough/strains-search.jpg",
+          "sourceRepository": "browser-driver",
+          "sha256": "bce016a0ef2b8abac0142beb270d9e2aa7ba55d7e32fd05e5337b1720a5527f3"
+        }
+      ],
+      "history": [
+        {
+          "status": "FAIL",
+          "stage": "fixture startup attempt",
+          "detail": "One PostgreSQL startup attempt exited 1 before any browser assertions and cleaned up. A diagnostic retry started a healthy fixture. Original cleanup removed the failing container before detailed logs could be recovered; no root cause is claimed.",
+          "evidence": "artifacts/roots-experience/ready-verification.json"
+        },
+        {
+          "status": "CORRECTED",
+          "stage": "monitor automation targeting",
+          "detail": "Initial pointer activations returned Home rather than the intended Profile control. Role-based keyboard activation reached Signin and was used for subsequent monitor commands. A short automation wait expired before the draft recipe completed; the actual 11/11 result and receipt were inspected afterward. These are automation observations, not asserted Roots application defects.",
+          "evidence": "examples/roots/archive/receipts/draft-retained.json"
+        }
+      ],
+      "limitations": [
+        "Three focused checks, not a rerun of all accepted Roots scenarios or all eighteen Strains leaves.",
+        "The original monitor\u2019s Saved successfully wording after draft retention refers to a saved private strain; it must not imply the unsaved Journal experience persisted.",
+        "Recipe success records its own assertions; the walkthrough did not independently rerun every underlying API/database assertion.",
+        "One current committed snapshot with synthetic accounts and new browser; no personal account, normal Roots database or existing draft was used.",
+        "Live processes are retained for the user; archived images and receipts remain historical snapshots after capture."
+      ]
+    }
+  ],
+  "sourceChat": {
+    "title": "Drive Roots QA browser after update",
+    "url": "codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b"
+  },
+  "updatedAt": "2026-09-27T17:15:28.091604+00:00"
+}

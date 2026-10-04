@@ -1,0 +1,27 @@
+{
+  "name": "@browser-driver/runtime",
+  "version": "0.1.0",
+  "description": "Visible browser control with a typed Rust application model",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    }
+  },
+  "bin": {
+    "browser-driver": "./src/cli.mjs"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "playwright": "1.62.1"
+  }
+}

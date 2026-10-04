@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Notebook · driver example</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f4f5f0;
+        color: #203529;
+        font:
+          16px system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 680px;
+        margin: 58px auto;
+        padding: 0 30px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #68746d;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+      }
+      h1 {
+        font-size: 44px;
+        letter-spacing: -2px;
+        margin: 34px 0 8px;
+      }
+      p {
+        color: #758076;
+      }
+      .card {
+        background: white;
+        padding: 28px;
+        margin-top: 28px;
+        border: 1px solid #dce3d8;
+        border-radius: 16px;
+        box-shadow: 0 8px 35px #193a2010;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin: 0 0 9px;
+      }
+      textarea {
+        width: 100%;
+        resize: vertical;
+        min-height: 145px;
+        border: 1px solid #d9dfd7;
+        border-radius: 9px;
+        padding: 14px;
+        font: 16px/1.6 system-ui;
+        color: #253a2c;
+        background: #fcfdfa;
+        outline-color: #487452;
+      }
+      .row {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        margin: 24px 0;
+      }
+      .row > div {
+        flex: 1;
+      }
+      select,
+      input[type="number"] {
+        width: 100%;
+        background: #f7f9f4;
+        border: 1px solid #d9dfd7;
+        border-radius: 7px;
+        padding: 9px;
+        color: inherit;
+      }
+      input[type="checkbox"] {
+        accent-color: #427049;
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 25px;
+      }
+      button {
+        font: inherit;
+        border: 1px solid #d8dfd3;
+        border-radius: 8px;
+        padding: 10px 16px;
+        background: white;
+        color: #335739;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #315e40;
+        color: white;
+        border-color: #315e40;
+      }
+      button:disabled {
+        opacity: 0.5;
+      }
+      #status {
+        min-height: 25px;
+        font-size: 14px;
+        margin-bottom: 0;
+      }
+      .account {
+        font-size: 12px;
+      }
+      .pill {
+        padding: 5px 9px;
+        background: #e2ebdd;
+        border-radius: 6px;
+      }
+      .foot {
+        font-size: 12px;
+        margin-top: 25px;
+        line-height: 1.8;
+      }
+    </style>
+  </head>
+  <body data-phase="ready" data-session="alpha" data-operation="">
+    <main>
+      <div class="top">
+        <span>Example application</span><span class="pill">Local fixture</span>
+      </div>
+      <h1>A small notebook.</h1>
+      <p>A real form, a real save, an observable outcome.</p>
+      <div class="card">
+        <div class="top">
+          <span>New note</span
+          ><button class="account" id="switch">Switch account</button>
+        </div>
+        <p class="account">Account: <strong id="account">alpha</strong></p>
+        <label for="note">Note</label
+        ><textarea id="note" placeholder="Something worth keeping…"></textarea>
+        <div class="row">
+          <div>
+            <label for="category">Category</label
+            ><select id="category">
+              <option value="plain">Personal</option>
+              <option value="work">Work</option>
+            </select>
+          </div>
+          <div>
+            <label for="priority">Priority</label
+            ><input id="priority" type="number" min="1" max="3" value="1" />
+          </div>
+          <div>
+            <label><input id="urgent" type="checkbox" /> Urgent</label>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="save" class="primary">Save note</button
+          ><button id="cancel">Clear draft</button>
+        </div>
+        <p id="status" role="status">Ready for a note.</p>
+      </div>
+      <p class="foot">
+        This disposable example demonstrates customer-defined states and
+        commands.<br />Notes live only for the lifetime of this example server.
+      </p>
+    </main>
+    <script>
+      const $ = (id) => document.getElementById(id),
+        body = document.body;
+      function state(phase, message) {
+        body.dataset.phase = phase;
+        $("status").textContent = message;
+        $("save").disabled = phase === "saving";
+      }
+      function changed() {
+        body.dataset.operation = "";
+        state("draft", "Unsaved changes.");
+      }
+      for (const id of ["note", "category", "priority", "urgent"])
+        $(id).addEventListener("input", changed);
+      $("cancel").onclick = () => {
+        $("note").value = "";
+        body.dataset.operation = "";
+        state("ready", "Draft cleared.");
+      };
+      $("switch").onclick = async () => {
+        const r = await fetch("/api/session", { method: "POST" });
+        const v = await r.json();
+        body.dataset.session = v.session;
+        $("account").textContent = v.session;
+        $("note").value = "";
+        body.dataset.operation = "";
+        state("ready", "Account changed.");
+      };
+      $("save").onclick = async () => {
+        if (!$("note").value.trim()) {
+          state("validation", "Please write a note.");
+          return;
+        }
+        body.dataset.operation ||= crypto.randomUUID();
+        state("saving", "Saving note…");
+        try {
+          const r = await fetch("/api/notes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              text: $("note").value,
+              urgent: $("urgent").checked,
+              category: $("category").value,
+              priority: Number($("priority").value),
+              operationId: body.dataset.operation,
+            }),
+          });
+          if (!r.ok) throw Error("save");
+          await r.json();
+          state("saved", "Your note is saved.");
+        } catch {
+          state(
+            "recovery",
+            "The result is uncertain. Your draft is retained; retry safely.",
+          );
+        }
+      };
+      fetch("/api/session")
+        .then((r) => r.json())
+        .then((v) => {
+          body.dataset.session = v.session;
+          $("account").textContent = v.session;
+        });
+    </script>
+  </body>
+</html>

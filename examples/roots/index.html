@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roots · Browser Driver</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.mjs"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Browser Driver home"
+        ><span class="brand-mark">↗</span
+        ><span>Browser Driver<small>LOCAL WORKSPACE</small></span></a
+      >
+      <div class="workspace-label">CUSTOMER WORKSPACE</div>
+      <div class="workspace-name">
+        <span class="roots-icon">r.</span>
+        <div>Roots<small>From real product work</small></div>
+      </div>
+      <nav aria-label="Workspace sections">
+        <a href="#live" class="nav-link"><span>◉</span> Current session</a
+        ><a href="#archive" class="nav-link selected"
+          ><span>▤</span> Work archive</a
+        >
+      </nav>
+      <div class="sidebar-note">
+        <span class="eyebrow">FIRST CUSTOMER</span>
+        <p>Build the driver.<br />Keep Roots moving.</p>
+        <small
+          >Live sessions and recorded evidence stay clearly separate.</small
+        >
+      </div>
+      <footer>
+        Local evidence workspace<span>No automatic replay or sync.</span>
+      </footer>
+    </aside>
+    <main>
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">BROWSER DRIVER / ROOTS</p>
+          <h1>Roots, in action.</h1>
+          <p class="intro">
+            Continue the live session. Inspect the work that brought us here.
+          </p>
+        </div>
+        <span class="local-badge"><i></i> Local workspace</span>
+      </header>
+      <section id="live" class="live-card" aria-labelledby="live-heading">
+        <div class="live-copy">
+          <div class="live-eyebrow">
+            <span class="live-indicator"></span> CURRENT SESSION
+            <span id="live-state" class="live-state">Checking…</span>
+          </div>
+          <h2 id="live-heading">Explore the real Roots flow.</h2>
+          <p id="live-description">
+            Checking the registered Roots browser session.
+          </p>
+          <div class="live-actions">
+            <a
+              id="open-live"
+              class="primary-button"
+              target="_blank"
+              rel="noopener noreferrer"
+              hidden
+              >Open live Roots <span>↗</span></a
+            ><button
+              id="live-offline"
+              class="primary-button offline"
+              type="button"
+              disabled
+            >
+              Live session unavailable</button
+            ><span class="source-label">Roots original driver</span>
+          </div>
+        </div>
+        <div class="live-observation">
+          <span class="eyebrow">OBSERVED NOW</span>
+          <p id="live-detail">Waiting for status</p>
+          <dl>
+            <div>
+              <dt>Application source</dt>
+              <dd id="live-commit">—</dd>
+            </div>
+            <div>
+              <dt>Browser frames</dt>
+              <dd id="live-frame-count">—</dd>
+            </div>
+          </dl>
+        </div>
+        <details class="live-provenance">
+          <summary>Live session source</summary>
+          <p id="live-source">
+            Read-only status check; commands run only in the live Roots viewer.
+          </p>
+        </details>
+      </section>
+      <details class="scope-note">
+        <summary>
+          <span class="scope-dot"></span
+          ><span
+            >Roots keeps its original driver while the standalone candidate
+            develops.</span
+          ><span class="expand">+</span>
+        </summary>
+        <div>
+          <p>
+            The live session uses the original Roots QA driver. The extracted
+            standalone candidate was tested against <code>d4008e3</code> with 15
+            commands and one recipe. Roots’ everyday entry point has not
+            migrated.
+          </p>
+          <p>
+            Latest observed Roots source:
+            <code id="current-source">Loading…</code>.
+            <span id="current-source-note"></span>
+          </p>
+        </div>
+      </details>
+      <section id="archive" aria-labelledby="archive-heading">
+        <div class="archive-heading">
+          <div>
+            <span class="eyebrow">THE WORK, RECORDED</span>
+            <h2 id="archive-heading">QA work archive</h2>
+          </div>
+          <span class="archive-label">HISTORICAL EVIDENCE</span>
+        </div>
+        <p id="archive-description" class="archive-description">
+          Loading the recorded Roots work. Screenshots in this archive are
+          historical, not a live browser.
+        </p>
+        <div id="archive-error" class="error" role="status" hidden></div>
+        <div
+          class="totals"
+          aria-label="Counts of currently filtered archive rows"
+        >
+          <div><strong id="run-count">—</strong><span>Recorded runs</span></div>
+          <div>
+            <strong id="check-count">—</strong><span>Scenario rows</span>
+          </div>
+          <div><strong id="pass-count">—</strong><span>Passing rows</span></div>
+          <div>
+            <strong id="finding-count">—</strong
+            ><span>Findings / failures</span>
+          </div>
+          <div><strong id="not-run-count">—</strong><span>Not run</span></div>
+        </div>
+        <p class="count-note">
+          Counts reflect listed evidence rows, including repeated checks across
+          runs; they are not unique feature coverage.
+        </p>
+        <div class="filters">
+          <div class="search-control">
+            <label class="sr-only" for="search">Search recorded work</label
+            ><span aria-hidden="true">⌕</span
+            ><input
+              id="search"
+              type="search"
+              placeholder="Find a flow, check, or result…"
+            />
+          </div>
+          <label class="sr-only" for="source-filter">Driver source</label
+          ><select id="source-filter">
+            <option value="all">All driver sources</option>
+            <option value="roots-original">Roots original driver</option>
+            <option value="standalone-candidate">
+              Standalone candidate
+            </option></select
+          ><label class="sr-only" for="status-filter"
+            >Recorded check result</label
+          ><select id="status-filter">
+            <option value="all">All results</option>
+            <option value="PASS">Pass</option>
+            <option value="HISTORICAL_FINDING">Historical findings</option>
+            <option value="FAIL">Fail</option>
+            <option value="NOT RUN">Not run</option>
+          </select>
+        </div>
+        <div class="archive-body">
+          <div class="run-column">
+            <p id="filtered-count" class="filtered-count">Loading archive</p>
+            <div id="runs" class="runs" aria-label="Archived runs"></div>
+          </div>
+          <article
+            id="run-detail"
+            class="run-detail"
+            aria-label="Selected historical run"
+          >
+            <div class="detail-empty">Loading recorded evidence…</div>
+          </article>
+        </div>
+      </section>
+      <footer class="page-footer">
+        <span
+          >Source of truth remains the original Roots verification record.</span
+        >
+        <details>
+          <summary>Canonical report</summary>
+          <code id="canonical-report"></code>
+        </details>
+      </footer>
+    </main>
+    <dialog id="gallery" aria-labelledby="gallery-caption">
+      <div class="gallery-toolbar">
+        <span>HISTORICAL SCREENSHOT · NOT LIVE</span
+        ><button id="close-gallery" type="button" aria-label="Close screenshot">
+          Close ×
+        </button>
+      </div>
+      <img id="gallery-image" alt="" />
+      <h2 id="gallery-caption"></h2>
+      <p id="gallery-source"></p>
+    </dialog>
+  </body>
+</html>

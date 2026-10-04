@@ -1,0 +1,24 @@
+{
+  "observedAt": "2026-09-27T17:13:11.517219+00:00",
+  "command": "draft-retained",
+  "state": "Root::Journal(Journal::Experience(Editing::Draft))",
+  "session": "customer",
+  "execution": "idle",
+  "progress": {
+    "step": 11,
+    "total": 11,
+    "lastAction": "assert",
+    "outcome": "reached"
+  },
+  "result": {
+    "ok": true,
+    "runId": "4334de39-5595-446b-8755-ae7132c68e7a",
+    "saveOutcome": "saved",
+    "recipe": "draft-retained",
+    "target": "Root::Journal(Journal::Composition(Composition::DraftRetained))",
+    "assertions": [
+      "draft_retained"
+    ],
+    "saveCompleted": true
+  }
+}

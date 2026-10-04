@@ -1,0 +1,29 @@
+{
+  "name": "browser-driver-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/runtime"
+  ],
+  "scripts": {
+    "test": "node --test packages/runtime/tests/*.test.mjs",
+    "test:rust": "cargo test --workspace --locked",
+    "test:e2e": "node tests/acceptance.mjs",
+    "demo": "node examples/roots/serve.mjs",
+    "check": "node scripts/check.mjs && npm run types && npm run format:check",
+    "types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target esnext --types node packages/runtime/src/index.d.ts",
+    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook tests/acceptance.mjs scripts/check.mjs package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests",
+    "demo:notebook": "node packages/runtime/src/cli.mjs --project examples/notebook/project.mjs",
+    "roots:prepare": "node examples/roots/prepare-live.mjs",
+    "roots:live": "node examples/roots/launch-live.mjs",
+    "test:roots-example": "node --test examples/roots/tests/*.test.mjs",
+    "roots:feature:prepare": "node integrations/roots/prepare-feature.mjs",
+    "roots:feature:stage": "node integrations/roots/stage-feature.mjs",
+    "test:roots-feature": "node integrations/roots/feature-acceptance.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.4",
+    "prettier": "3.6.2",
+    "typescript": "6.0.3"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-09-27T17:14:05.625148+00:00",
+  "command": "lost-response-retry",
+  "state": "Root::Journal(Journal::Experience(Editing::Saved))",
+  "session": "customer",
+  "execution": "idle",
+  "progress": {
+    "step": 10,
+    "total": 10,
+    "lastAction": "assert",
+    "outcome": "reached"
+  },
+  "result": {
+    "ok": true,
+    "runId": "f2f80004-4924-4841-9937-747af97cf406",
+    "saveOutcome": "saved",
+    "recipe": "lost-response-retry",
+    "target": "Root::Journal(Journal::Retry(Retry::LostResponse))",
+    "assertions": [
+      "save_lost_response",
+      "save_retry_deduplicated"
+    ],
+    "saveCompleted": true
+  }
+}

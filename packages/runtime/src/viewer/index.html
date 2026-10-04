@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Browser Driver · Live session</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/monitor.mjs"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Browser Driver home"
+        ><span class="brand-mark" aria-hidden="true">↗</span
+        ><span>Browser Driver<small>LOCAL WORKSPACE</small></span></a
+      >
+      <div class="model-header">
+        <span class="eyebrow">APPLICATION MODEL</span>
+        <h1 id="model-name">Connecting…</h1>
+        <div id="model-version" class="muted"></div>
+      </div>
+      <section aria-labelledby="tree-heading">
+        <h2 id="tree-heading">State map</h2>
+        <ul id="state-tree" class="state-tree"></ul>
+      </section>
+      <section aria-labelledby="facts-heading">
+        <h2 id="facts-heading">Observed facts</h2>
+        <dl id="display-facts" class="facts">
+          <dt>Waiting for observation</dt>
+        </dl>
+      </section>
+      <details class="identity">
+        <summary>Build &amp; session identity</summary>
+        <dl id="identity-values" class="facts"></dl>
+      </details>
+      <footer class="sidebar-footer">
+        <span class="tiny-dot"></span>Local session
+        <span class="footer-note">Your browser. Your model.</span>
+      </footer>
+    </aside>
+    <main>
+      <header class="workspace-header">
+        <div>
+          <div class="eyebrow">CONTROL ROOM</div>
+          <h2>
+            Live session <span id="connection" class="pill">Connecting</span>
+          </h2>
+        </div>
+        <div class="header-meta">
+          <span class="live-dot" id="live-dot"></span
+          ><span id="frame-status">Waiting for browser</span>
+        </div>
+      </header>
+      <div id="connection-error" class="notice" role="status" hidden></div>
+      <div class="workspace-grid">
+        <section class="browser-panel" aria-label="Live controlled browser">
+          <div class="browser-chrome">
+            <span class="window-dots" aria-hidden="true"
+              ><i></i><i></i><i></i
+            ></span>
+            <div class="browser-address">
+              <span aria-hidden="true">▣</span><span>Controlled browser</span>
+            </div>
+            <span class="mirror-tag">LIVE MIRROR</span>
+          </div>
+          <div class="browser-screen">
+            <img
+              id="browser-image"
+              src="/stream"
+              alt="Live mirror of the controlled browser; use the command panel to interact"
+            />
+            <div id="stream-error" class="stream-error" hidden>
+              Browser image unavailable<span
+                >Check the connection status before running a command.</span
+              >
+            </div>
+          </div>
+          <div class="browser-footer">
+            <span
+              ><span class="status-dot" aria-hidden="true"></span
+              ><span id="state-label">Observing application</span></span
+            ><span id="frame-count">0 frames</span>
+          </div>
+        </section>
+        <aside class="action-panel" aria-label="Commands and recipes">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">NEXT ACTION</span>
+              <h2>Commands</h2>
+            </div>
+            <span id="command-count" class="count">0</span>
+          </div>
+          <p class="panel-description">
+            Actions available in the observed state.
+          </p>
+          <div id="commands" class="command-list"></div>
+          <div class="recipes-heading">
+            <h2>Recipes</h2>
+            <span class="subtle">Authored paths</span>
+          </div>
+          <div id="recipes" class="recipe-list"></div>
+        </aside>
+        <section class="execution-panel" aria-labelledby="execution-heading">
+          <div class="execution-top">
+            <div>
+              <span class="eyebrow">EXECUTION</span>
+              <h2 id="execution-heading">
+                <span id="execution-state">Idle</span
+                ><span id="run-id" class="subtle"></span>
+              </h2>
+            </div>
+            <div class="controls">
+              <label class="speed-label" for="speed">Speed</label
+              ><select id="speed" aria-label="Execution speed">
+                <option value="slow">Slow</option>
+                <option value="normal" selected>Normal</option>
+                <option value="fast">Fast</option></select
+              ><button id="pause" class="secondary" type="button">Pause</button
+              ><button id="resume" class="secondary" type="button" hidden>
+                Resume</button
+              ><button id="stop" class="stop" type="button">Stop</button>
+            </div>
+          </div>
+          <div class="progress-track"><div id="progress-bar"></div></div>
+          <p id="progress-label" class="subtle">Ready for a command</p>
+          <div id="last-result" class="last-result" aria-live="polite">
+            <div class="result-icon" aria-hidden="true">↗</div>
+            <div>
+              <span class="eyebrow">APPLICATION OUTCOME</span>
+              <p id="outcome-label">No action has run yet</p>
+              <p id="effect-label" class="subtle">
+                Results appear after the application is observed.
+              </p>
+              <ul id="effect-operations" class="effect-operations" hidden></ul>
+            </div>
+            <span id="outcome-kind" class="pill" hidden></span>
+          </div>
+          <p
+            id="action-message"
+            class="action-message"
+            role="status"
+            hidden
+          ></p>
+        </section>
+      </div>
+      <footer class="workspace-footer">
+        <span>Observe → authorize → act → verify</span
+        ><span>Pause and stop take effect at action boundaries.</span>
+      </footer>
+    </main>
+  </body>
+</html>

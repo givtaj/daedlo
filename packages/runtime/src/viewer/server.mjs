@@ -1,0 +1,317 @@
+import http from "node:http";
+import { readFile } from "node:fs/promises";
+
+const MAX_BODY_BYTES = 16 * 1024;
+const BOUNDARY = "browser-driver-frame";
+const CSP =
+  "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'none'";
+const isObject = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+const validId = (value) =>
+  typeof value === "string" && value.length > 0 && value.length <= 256;
+
+/** Mirror one existing controlled page. Closing the viewer never closes its session or browser. */
+export async function createViewer({ page, context, session, port = 0 }) {
+  if (!page || !context || !session)
+    throw new TypeError("A page, context and driver session are required");
+  if (!Number.isInteger(port) || port < 0 || port > 65535)
+    throw new TypeError("Invalid viewer port");
+  const assets = new Map(
+    await Promise.all(
+      [
+        ["/", "index.html", "text/html; charset=utf-8"],
+        ["/monitor.mjs", "monitor.mjs", "text/javascript; charset=utf-8"],
+        ["/styles.css", "styles.css", "text/css; charset=utf-8"],
+      ].map(async ([path, file, type]) => [
+        path,
+        { type, body: await readFile(new URL(file, import.meta.url)) },
+      ]),
+    ),
+  );
+  const clients = new Set();
+  let cdp,
+    server,
+    frame,
+    heartbeat,
+    url,
+    disconnected = false,
+    closed = false;
+  let frames = 0,
+    updatedAt = null,
+    captureCleanup,
+    closing;
+
+  const json = (res, code, data) => {
+    if (res.destroyed || res.writableEnded) return;
+    res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(data));
+  };
+  const sendFrame = (res) => {
+    if (
+      !frame ||
+      res.destroyed ||
+      res.writableEnded ||
+      res.writableLength > 1024 * 1024
+    )
+      return;
+    res.write(
+      Buffer.concat([
+        Buffer.from(
+          `--${BOUNDARY}\r\nContent-Type: image/jpeg\r\nContent-Length: ${frame.length}\r\n\r\n`,
+        ),
+        frame,
+        Buffer.from("\r\n"),
+      ]),
+    );
+  };
+  const receive = (event) => {
+    if (closed || disconnected) return;
+    frame = Buffer.from(event.data, "base64");
+    frames++;
+    updatedAt = new Date().toISOString();
+    for (const res of clients) sendFrame(res);
+    cdp
+      .send("Page.screencastFrameAck", { sessionId: event.sessionId })
+      .catch(disconnect);
+  };
+  function cleanupCapture() {
+    if (captureCleanup) return captureCleanup;
+    captureCleanup = (async () => {
+      clearInterval(heartbeat);
+      page.off("close", disconnect);
+      cdp?.off("Disconnected", disconnect);
+      cdp?.off("Page.screencastFrame", receive);
+      for (const res of clients) res.end();
+      clients.clear();
+      if (cdp) {
+        // Disconnect may already have closed the target. HTTP teardown must still finish.
+        await cdp.send("Page.stopScreencast").catch(() => {});
+        await cdp.detach().catch(() => {});
+      }
+    })();
+    return captureCleanup;
+  }
+  function disconnect() {
+    disconnected = true;
+    void cleanupCapture();
+  }
+  async function close() {
+    if (closing) return closing;
+    closed = true;
+    closing = (async () => {
+      await cleanupCapture();
+      if (server?.listening)
+        await new Promise((resolve) => {
+          server.close(resolve);
+          server.closeAllConnections();
+        });
+    })();
+    return closing;
+  }
+  async function status() {
+    let driver;
+    try {
+      driver = await session.snapshot();
+    } catch {
+      driver = {
+        connected: false,
+        commands: [],
+        recipes: [],
+        error: "Driver observation unavailable",
+      };
+    }
+    return {
+      connected:
+        !closed &&
+        !disconnected &&
+        !page.isClosed() &&
+        driver.connected !== false,
+      frames,
+      updatedAt,
+      viewers: clients.size,
+      driver,
+    };
+  }
+  async function readBody(req, res) {
+    if (Number(req.headers["content-length"]) > MAX_BODY_BYTES) {
+      json(res, 413, { ok: false, error: "Request exceeds 16 KiB" });
+      req.resume();
+      return;
+    }
+    let size = 0;
+    const chunks = [];
+    for await (const chunk of req) {
+      size += chunk.length;
+      if (size > MAX_BODY_BYTES) {
+        json(res, 413, { ok: false, error: "Request exceeds 16 KiB" });
+        return;
+      }
+      chunks.push(chunk);
+    }
+    try {
+      const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      if (!isObject(body)) throw Error("Object required");
+      return body;
+    } catch {
+      json(res, 400, { ok: false, error: "A valid JSON object is required" });
+    }
+  }
+  try {
+    cdp = await context.newCDPSession(page);
+    page.on("close", disconnect);
+    cdp.on("Disconnected", disconnect);
+    cdp.on("Page.screencastFrame", receive);
+    frame = await page.screenshot({ type: "jpeg", quality: 75, timeout: 5000 });
+    updatedAt = new Date().toISOString();
+    await cdp.send("Page.enable");
+    await cdp.send("Page.startScreencast", {
+      format: "jpeg",
+      quality: 75,
+      maxWidth: 1920,
+      maxHeight: 1440,
+      everyNthFrame: 1,
+    });
+    if (disconnected)
+      throw Error("The browser disconnected while starting the viewer");
+    server = http.createServer(async (req, res) => {
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("X-Content-Type-Options", "nosniff");
+      res.setHeader("Content-Security-Policy", CSP);
+      res.setHeader("Referrer-Policy", "no-referrer");
+      const actualPort = server.address()?.port;
+      const host = req.headers.host;
+      if (
+        host !== `127.0.0.1:${actualPort}` &&
+        host !== `localhost:${actualPort}`
+      ) {
+        json(res, 403, {
+          ok: false,
+          error: "This viewer requires its loopback host and port",
+        });
+        return;
+      }
+      try {
+        const path = new URL(req.url, url).pathname;
+        if (req.method === "GET" && assets.has(path)) {
+          const asset = assets.get(path);
+          res.writeHead(200, { "Content-Type": asset.type });
+          res.end(asset.body);
+        } else if (req.method === "GET" && path === "/status") {
+          json(res, 200, await status());
+        } else if (req.method === "GET" && path === "/stream") {
+          if (disconnected || closed)
+            return json(res, 409, { ok: false, error: "Browser disconnected" });
+          res.writeHead(200, {
+            "Content-Type": `multipart/x-mixed-replace; boundary=${BOUNDARY}`,
+            Connection: "keep-alive",
+          });
+          res.flushHeaders();
+          clients.add(res);
+          sendFrame(res);
+          res.on("close", () => clients.delete(res));
+        } else if (
+          req.method === "POST" &&
+          ["/command", "/control"].includes(path)
+        ) {
+          if (
+            (req.headers.origin && req.headers.origin !== `http://${host}`) ||
+            req.headers["sec-fetch-site"] === "cross-site"
+          ) {
+            return json(res, 403, {
+              ok: false,
+              error: "Same-origin requests are required",
+            });
+          }
+          if (
+            !/^application\/json(?:\s*;|$)/i.test(
+              req.headers["content-type"] || "",
+            )
+          ) {
+            return json(res, 415, {
+              ok: false,
+              error: "application/json is required",
+            });
+          }
+          const body = await readBody(req, res);
+          if (!body) return;
+          if (disconnected || closed || page.isClosed())
+            return json(res, 409, { ok: false, error: "Browser disconnected" });
+          if (path === "/command") {
+            if (
+              !validId(body.id) ||
+              !validId(body.revision) ||
+              (body.params !== undefined && !isObject(body.params)) ||
+              (body.recipe !== undefined && typeof body.recipe !== "boolean") ||
+              Object.keys(body).some(
+                (key) => !["id", "revision", "params", "recipe"].includes(key),
+              )
+            ) {
+              return json(res, 400, {
+                ok: false,
+                error:
+                  "Supply a command ID, observed revision, and optional parameter object or recipe flag",
+              });
+            }
+            const result = await session.command(body);
+            const rejected =
+              result.execution === "rejected" ||
+              (!result.execution && result.ok === false);
+            json(res, rejected ? 409 : 200, result);
+          } else {
+            if (
+              Object.keys(body).some(
+                (key) => !["action", "value"].includes(key),
+              )
+            )
+              return json(res, 400, {
+                ok: false,
+                error: "Unknown control field",
+              });
+            if (
+              body.action === "speed" &&
+              ["slow", "normal", "fast"].includes(body.value)
+            )
+              await session.setSpeed(body.value);
+            else if (
+              ["pause", "resume", "stop"].includes(body.action) &&
+              body.value === undefined
+            )
+              await session[body.action]();
+            else
+              return json(res, 400, {
+                ok: false,
+                error: "Unknown control or speed",
+              });
+            json(res, 200, { ok: true, ...(await status()) });
+          }
+        } else json(res, 404, { ok: false, error: "Unknown endpoint" });
+      } catch {
+        if (!res.headersSent)
+          json(res, 503, {
+            ok: false,
+            error:
+              "Driver unavailable; refresh its observed state before trying again",
+          });
+        else res.end();
+      }
+    });
+    server.requestTimeout = 5000;
+    server.headersTimeout = 5000;
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(port, "127.0.0.1", () => {
+        server.off("error", reject);
+        resolve();
+      });
+    });
+    url = `http://127.0.0.1:${server.address().port}`;
+    heartbeat = setInterval(() => {
+      for (const res of clients) sendFrame(res);
+    }, 1000);
+    heartbeat.unref();
+    return { url, close };
+  } catch (error) {
+    await close();
+    throw error;
+  }
+}

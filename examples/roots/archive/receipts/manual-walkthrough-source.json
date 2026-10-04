@@ -1,0 +1,24 @@
+{
+  "applicationCommit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
+  "driverSourceCommit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
+  "archiveSha256": "abdd7a937bca8046df5e076e8c6ef4fd484ca500563193a8fe949f6dff4438c8",
+  "dependencyLocks": [
+    {
+      "path": "apps/web/package-lock.json",
+      "sha256": "ca3d78bc8ec0aecdeae3cbaabe7d220d97cd2df00ebe75786fed957cf6bc214d"
+    },
+    {
+      "path": "tools/live-qa/package-lock.json",
+      "sha256": "eb5d33ba14c8ed497e62e6271ad47d463c216d343bf7f916cefdce1bd75972d9"
+    }
+  ],
+  "builtAt": "2026-09-27T17:08:06.391Z",
+  "binaries": {
+    "roots-cli": "76653903103f90d967d492681c2777cff684a599eb82f21344223f5aad196616",
+    "roots-api": "4dd4320b84b5670ec53e9817e9ecca357cbed0cc83e278982473a1aa4c9abd65",
+    "db": "499b3bc3718d28cc151b12e02c5ebed5a1a97a45666ab9da0c0668974a8b41e4",
+    "roots-qa-driver": "5e944706b1cd74a3c9ef90e867c29e624badab68895e3db69a6dc45aa2fe1bf0"
+  },
+  "frozenAt": "2026-09-27T17:09:07.167Z",
+  "runtimeSource": "original Roots tools/live-qa at the captured committed revision; separate from uncommitted consolidation and standalone runtime"
+}

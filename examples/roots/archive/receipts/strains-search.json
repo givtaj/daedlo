@@ -1,0 +1,31 @@
+{
+  "observedAt": "2026-09-27T17:15:24.219951+00:00",
+  "command": "strains_search",
+  "input": "White",
+  "state": "Root::Strains(Strains::Browsing(StrainBrowse::Ready))",
+  "session": "customer",
+  "execution": "idle",
+  "progress": {
+    "step": 1,
+    "total": 1,
+    "lastAction": "strains_search",
+    "outcome": "reached"
+  },
+  "result": {
+    "ok": true,
+    "runId": "30a7743a-c911-48d8-b8da-6b7c99c3f20f",
+    "saveOutcome": "not_attempted",
+    "command": "strains_search",
+    "outcome": "reached",
+    "saveCompleted": false
+  },
+  "visuallyObservedRows": [
+    "White Truffle",
+    "White Tahoe Cookies",
+    "White Runtz",
+    "White Fire OG",
+    "White 99",
+    "The White"
+  ],
+  "testLevel": "manual browser interaction and visible result; no independent catalogue completeness assertion"
+}
