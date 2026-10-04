@@ -16,7 +16,8 @@ The [release guide](releases.md) documents the commands and later adoption gates
 | Independent browser acceptance from source | PASS — 8 Chromium groups | `source-browser.log`; owned headless Chromium/server; monitor screenshot inspected |
 | Installed-package browser acceptance | PASS — 8 Chromium groups | `package-browser02/results.json`; ordinary public import, exact 17 runtime files, separate consumer engine compiled against the extracted crate, bundle reverified after run, cleanup PASS; monitor screenshot inspected |
 | Real version/update/rollback walkthrough | PASS | `cli-walkthrough.json`; clean temporary source commits produced rc.1/rc.2 bundles, nine pins advanced, A-to-B update, tamper rejection without switching, recovery from damaged B to intact A, invalid rollback refused |
-| CI workflow | IMPLEMENTED — remote result pending first push | Ubuntu Node 22/24 matrix, source and installed consumer gates, only distributable bundle upload; no publication step |
+| Remote CI | PASS — Ubuntu Node 22 and 24 | [Run 37211458634](https://github.com/givtaj/browser-driver/actions/runs/37211458634), source commit `3d029839f3f28c5ea6ae3a6231ddcec60bc21ed4`; both jobs passed source checks, 59 release regressions, eight source and eight installed browser groups, then uploaded only bundles |
+| Clean local and downloaded CI bundles | PASS — identical package bytes and manifests | `clean-package-equivalence.json`, `ci-bundle-verification.json`; both CI matrix bundles match the clean local build and browser-tested package bytes |
 | Registry publication, Windows validation and everyday Roots migration | NOT PERFORMED | Explicit later lifecycle/coverage work |
 
 All evidence paths in this section are relative to
@@ -35,8 +36,13 @@ Shared crate SHA-256:
 `b70a342e81c0d2cb36689fc6d35112eeb2e39ada17599a4d24f4ad04dcde257f`.
 The clean temporary walkthrough's rc.1 archives match these exact package bytes;
 its source/manifest receipt differs because it names the temporary commit.
-Later harness/documentation changes do not change either archive. CI will build
-and test its own clean source receipt rather than relabel this dirty candidate.
+Later harness/documentation changes do not change either archive. The clean local
+build and both CI bundles for `3d02983` have manifest SHA-256
+`ddae8798e96e467663367b377bf18edaf9cfb33f94783aff151d2f3dd07b500f`.
+All four files are identical between those clean builds; both package archives
+also match the earlier browser-tested local candidate. The dirty and clean
+source receipts remain distinct. The follow-up commit recording this result
+changes documentation only; the linked CI result belongs to `3d02983`.
 
 Meaningful failing regressions preceded the release implementations and review
 fixes. Local red logs are retained under `artifacts/release/`,
