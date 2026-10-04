@@ -23,7 +23,8 @@ let result;
 try {
   const launch = await ready;
   const status = await (await fetch(new URL('/status', launch.viewerUrl))).json();
-  assert.equal(status.driver.identity.runtime, '@browser-driver/runtime@0.1.0');
+  const candidate = JSON.parse(fs.readFileSync(join(output, 'package.json')));
+  assert.equal(status.driver.identity.runtime, `@browser-driver/runtime@${candidate.version}`);
   assert.equal(status.driver.identity.candidate.sha256, JSON.parse(fs.readFileSync(join(output, 'package.json'))).sha256);
   assert.equal(status.driver.state.id, 'home.connectivity');
   assert.equal(status.driver.descriptor.id, 'roots');

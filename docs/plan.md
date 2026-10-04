@@ -145,3 +145,18 @@ driver and prove the selected consumer against immutable candidate packages.
 Everyday Roots dependency promotion, all-recipe migration and registry publication
 remain outside this change. Actual outcomes and identities belong in
 [verification](verification.md).
+
+## Release preparation — 2026-10-04
+
+Goal: prepare repeatable driver updates while Roots keeps its accepted tooling.
+
+- [x] Version the runtime, shared crate and isolated-consumer pins together.
+- [x] Build source-identified immutable bundles with checked sizes and checksums.
+- [x] Verify an installed package pair through the independent browser suite.
+- [x] Add CI gates for source, contracts, packaging and installed browser acceptance.
+- [x] Exercise explicit trusted update, corruption rejection and rollback.
+- [x] Record measured results and document the release/install walkthrough.
+
+Registry publication and everyday Roots migration remain separate actions. The
+release store selects archives for an opt-in consumer; it never changes Roots'
+normal dependencies, launchers, services or data.

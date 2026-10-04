@@ -1,5 +1,61 @@
 # Verification record
 
+## Release preparation tooling — 2026-10-04
+
+The runtime and shared crate are now versioned `0.1.1-rc.1`. The release CLI
+prepares versions, builds and verifies bundles, and selects an exact bundle in a
+dedicated store with rollback. This work does not install a driver into Roots.
+The [release guide](releases.md) documents the commands and later adoption gates.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Release contracts and CLI | PASS — 59 tests | `artifacts/release-readiness/release-suite-final.log`; version alignment, real packaging, manifest integrity, compatibility, store history/recovery, archive safety and installed-file proof |
+| Runtime, shared Rust, archive and customer contracts | PASS — 42 Node, 18 Rust, 5 archive and 51 customer Node tests | `runtime.log`, `rust-tests.log`, `workbench.log`, `customer-contracts.log` under `artifacts/release-readiness`; customer contracts are not a new Roots browser run |
+| Source, types, formatting and Rust lint/build | PASS | `source-check-final.log`, `rust-clippy.log`, `rust-build.log`; locked/offline Rust checks |
+| Actual repository bundle reproducibility | PASS | Two independent builds produced identical bytes for all four bundle files; `reproducibility.json`, `build01.json`, `build02.json` |
+| Independent browser acceptance from source | PASS — 8 Chromium groups | `source-browser.log`; owned headless Chromium/server; monitor screenshot inspected |
+| Installed-package browser acceptance | PASS — 8 Chromium groups | `package-browser02/results.json`; ordinary public import, exact 17 runtime files, separate consumer engine compiled against the extracted crate, bundle reverified after run, cleanup PASS; monitor screenshot inspected |
+| Real version/update/rollback walkthrough | PASS | `cli-walkthrough.json`; clean temporary source commits produced rc.1/rc.2 bundles, nine pins advanced, A-to-B update, tamper rejection without switching, recovery from damaged B to intact A, invalid rollback refused |
+| CI workflow | IMPLEMENTED — remote result pending first push | Ubuntu Node 22/24 matrix, source and installed consumer gates, only distributable bundle upload; no publication step |
+| Registry publication, Windows validation and everyday Roots migration | NOT PERFORMED | Explicit later lifecycle/coverage work |
+
+All evidence paths in this section are relative to
+`artifacts/release-readiness/` unless otherwise stated. Local execution used
+macOS arm64, Node 22.20.0 and Rust 1.96.0. The walkthrough clone intentionally
+excluded ignored Roots model snapshots, so its two customer Cargo metadata checks
+were not run; their changed framework pins/lock entries were checked as source
+only. The root workspace metadata and both real package builds passed.
+
+The browser-tested candidate01 is a dirty local preparation receipt based on
+`5bb9684c28f16e1d89abb8207b120ae195407f38`, not a published release. Its manifest
+SHA-256 is `cf6342c720e529b54caa89e3ce40d173a25f0b1396b8dde773bd8a65d2a3c6f9`.
+Runtime archive SHA-256:
+`8aef43ec1e37547acb3f76292c8171fad107a3bee189bcf4b37b06ff2eb2820a`.
+Shared crate SHA-256:
+`b70a342e81c0d2cb36689fc6d35112eeb2e39ada17599a4d24f4ad04dcde257f`.
+The clean temporary walkthrough's rc.1 archives match these exact package bytes;
+its source/manifest receipt differs because it names the temporary commit.
+Later harness/documentation changes do not change either archive. CI will build
+and test its own clean source receipt rather than relabel this dirty candidate.
+
+Meaningful failing regressions preceded the release implementations and review
+fixes. Local red logs are retained under `artifacts/release/`,
+`artifacts/release-preparation/`, `artifacts/release-readiness/`, and
+`/tmp/browser-driver-release-store-*-red.log`. They include strict manifest types,
+path traversal, recovery after corruption, retained recovery diagnostics, archive
+links, compatibility-before-output and temporary-directory canonicalization.
+
+The first installed run, `package-browser01`, verified the runtime file bytes but
+failed before engine compilation/browser scenarios because macOS resolved `/var`
+to `/private/var`. Its failure and successful cleanup remain recorded. The harness
+now canonicalizes its owned temporary directory; the exact containment assertion
+is preserved and the fresh `package-browser02` passed all eight groups.
+
+No live Roots source, normal dependency pin, launcher, service, browser session
+or data was changed during release preparation. Docker was neither restarted nor
+used. These independent package checks do not replace the still-required full
+Roots promotion suite or active-normal-stack preservation check.
+
 ## Requested Roots Journal edit port — 2026-10-04
 
 The [review and lessons](roots-edit-review-2026-10-04.md) distinguish the original

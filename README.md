@@ -11,7 +11,7 @@ shows a sourced archive of that work and connects to the real Roots driver.
 
 ![Control and image-stream architecture](docs/assets/architecture.png)
 
-**Status:** working local v0.1 candidate. The Rust engine, Node runtime, generic
+**Status:** working `0.1.1-rc.1` candidate with release preparation tooling. The Rust engine, Node runtime, generic
 viewer and independent example are implemented. An isolated Roots consumer passed
 real browser/API/PostgreSQL acceptance; its everyday driver has not been migrated.
 Exact candidate identities and limits are in [verification](docs/verification.md).
@@ -65,6 +65,8 @@ additionally requires Node 24+, Docker and a pinned Roots source checkout.
   current checklist.
 - [Development and Roots integration](docs/development-workflow.md): parallel
   development, ownership, candidate promotion/rollback and requested upstream ports.
+- [Release preparation](docs/releases.md): versioned bundles, installed-package CI,
+  trusted verification and explicit store update/rollback without changing Roots.
 - [Protocol and public API contract](docs/contracts.md): implemented v0.1
   interfaces; still pre-release, with the tested consumers recorded below.
 - [Acceptance scenarios](docs/acceptance.md): the behavior the executable tests

@@ -52,7 +52,7 @@ try {
   };
   await scenario('Pinned external consumer signs in and verifies Profile API save', async () => {
     const s = await observe(); assert.equal(s.state.id, 'home.connectivity');
-    assert.equal(s.identity.runtime, '@browser-driver/runtime@0.1.0');
+    assert.equal(s.identity.runtime, `@browser-driver/runtime@${packageIdentity.version}`);
     assert.equal(s.descriptor.id, 'roots');
     assert.deepEqual(s.descriptor.commands.map(c => c.id).sort(), Object.keys(adapter.handlers).sort());
     await command('profile'); await command('signin');

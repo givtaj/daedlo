@@ -7,6 +7,11 @@ accepted, that is its existing embedded implementation. Browser-driver develops 
 this repository and produces immutable candidate packages and Rust source/build
 identities. Normal Roots work does not depend on a changing checkout here.
 
+The [release tools](releases.md) produce versioned bundles and select verified
+artifacts in a dedicated store. Store selection does not update a customer's
+dependencies or entrypoints. CI exercises an independent installed consumer;
+customer adoption still requires the isolated acceptance and promotion gates below.
+
 A candidate consumer uses an explicit override in an isolated Roots snapshot. It
 has separate dependency installation, Cargo target output, browser context/profile,
 ports, processes, disposable data and evidence directory. Never overwrite normal

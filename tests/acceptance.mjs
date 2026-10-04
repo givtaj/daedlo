@@ -3,18 +3,22 @@ import fs from "node:fs/promises";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
-import {
-  createDriverSession,
-  createViewer,
-  createResourceScope,
-} from "../packages/runtime/src/index.mjs";
+const { createDriverSession, createViewer, createResourceScope } = await import(
+  process.env.BROWSER_DRIVER_ACCEPTANCE_RUNTIME ??
+    "../packages/runtime/src/index.mjs"
+);
 import { createNotebookServer } from "../examples/notebook/server.mjs";
 import { createNotebookAdapter } from "../examples/notebook/adapter.mjs";
-const out = resolve("artifacts/notebook");
+const out = resolve(
+  process.env.BROWSER_DRIVER_ACCEPTANCE_OUTPUT ?? "artifacts/notebook",
+);
 await fs.mkdir(out, { recursive: true });
 const scope = createResourceScope(),
   results = [];
-const enginePath = resolve("target/debug/notebook-engine");
+const enginePath = resolve(
+  process.env.BROWSER_DRIVER_ACCEPTANCE_ENGINE ??
+    "target/debug/notebook-engine",
+);
 const identity = {
   app: "notebook-fixture/1",
   engineSha256: createHash("sha256")

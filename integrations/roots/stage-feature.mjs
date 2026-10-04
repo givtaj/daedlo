@@ -7,6 +7,7 @@ const [runtimeArg, crateArg, snapshotArg, targetArg] = process.argv.slice(2);
 if (!targetArg) throw Error('Usage: node stage-feature.mjs RUNTIME_TGZ ENGINE_CRATE SNAPSHOT FRESH_TARGET');
 const runtime = resolve(runtimeArg), crate = resolve(crateArg), snapshot = resolve(snapshotArg), target = resolve(targetArg);
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const frameworkVersion = JSON.parse(fs.readFileSync(join(root, 'packages/runtime/package.json'))).version;
 if (fs.existsSync(target)) throw Error('Staged candidate already exists; use a fresh target');
 fs.mkdirSync(target, { recursive: true });
 const hash = path => createHash('sha256').update(fs.readFileSync(path)).digest('hex');
@@ -16,7 +17,7 @@ for (const path of files) fs.copyFileSync(join(root, 'integrations/roots', path)
 fs.mkdirSync(join(target, 'crate'));
 execFileSync('tar', ['-xf', crate, '-C', join(target, 'crate')]);
 const manifest = fs.readFileSync(join(root, 'integrations/roots/edit/engine/Cargo.toml'), 'utf8')
-  .replace('../../../../crates/browser-driver-engine', join(target, 'crate/browser-driver-engine-0.1.0'))
+  .replace('../../../../crates/browser-driver-engine', join(target, `crate/browser-driver-engine-${frameworkVersion}`))
   .replace('../../../../artifacts/roots-edit-20261004/capture/snapshot/tools/browser-driver/engine', join(snapshot, 'tools/browser-driver/engine'));
 fs.writeFileSync(join(target, 'edit/engine/Cargo.toml'), manifest);
 fs.copyFileSync(join(root, 'integrations/roots/edit/engine/Cargo.lock'), join(target, 'edit/engine/Cargo.lock'));
