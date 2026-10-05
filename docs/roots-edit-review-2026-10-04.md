@@ -1,6 +1,6 @@
 # Roots Journal edit review and selected port — 2026-10-04
 
-Source: [the requested Roots work chat](codex://threads/01a106ab-a9d8-7110-b6f9-9d3a452a5913).
+Source: the captured Roots edit application/controller receipts described below.
 This record describes the browser-driver changes requested after reviewing that
 work. It is not a new Roots application release or a migration of its everyday
 driver.

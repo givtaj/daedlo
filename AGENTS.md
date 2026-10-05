@@ -5,6 +5,11 @@ Keep product status in docs/verification.md accurate; update it from actual test
 not intentions. This repository is being built from an approved Roots-derived
 design. Existing user agreement covers the documented acceptance scenarios.
 
+For customer onboarding or authoring feature flows, read
+`skills/browser-driver/SKILL.md` and `docs/agent-onboarding.md`. Reuse accepted
+models and recorded product decisions; the agent performs the integration work.
+The instructions are distributed from this repository for Codex and Claude Code.
+
 - Preserve the user's live Roots checkout and unrelated dirty work. Read a pinned
   commit for source comparisons. Never install candidates into Roots' normal
   dependencies, overwrite its binaries, or stop its services as a side effect of

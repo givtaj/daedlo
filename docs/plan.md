@@ -107,8 +107,8 @@ for the new product. See [verification](verification.md) for actual progress.
 
 ## Follow-up: use the actual Roots experience
 
-The user requested real Roots usage and logs as the example/archive, and supplied
-the [latest Roots development chat](codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b).
+The user requested real Roots usage and logs as the example/archive. The captured
+source identities and evidence are recorded in the [Roots archive](../examples/roots/archive/README.md).
 
 - [x] Read current Roots model, commands, canonical report, failure logs and source chat.
 - [x] Build the committed Strains-era Roots application and original driver in an
@@ -123,7 +123,8 @@ the [latest Roots development chat](codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5
 
 This follow-up changes examples and records. The live reference uses the original
 Roots driver; the narrower extracted adapter is not silently relabeled as fully
-migrated. The active viewer and fixture remain available for user exploration.
+migrated. The viewer and fixture were retained at that checkpoint; this historical
+record does not assert that either remains running.
 
 ## Requested Journal edit review and port — 2026-10-04
 
@@ -160,3 +161,40 @@ Goal: prepare repeatable driver updates while Roots keeps its accepted tooling.
 Registry publication and everyday Roots migration remain separate actions. The
 release store selects archives for an opt-in consumer; it never changes Roots'
 normal dependencies, launchers, services or data.
+
+## Agent-led onboarding — 2026-10-05
+
+Goal: let an agent install and integrate the existing Rust/Node driver, then help
+product, development and QA contributors author one agreed feature's enum,
+transition diagram, flows and evidence. Keep the application in its current
+language and retain existing customer tooling.
+
+- [x] Review the original Roots UX-tree request and later feature-wave workflow.
+- [x] Add a portable skill, installation/model references and a flow-spec template.
+- [x] Document Codex and Claude Code project installation using the same folder.
+- [x] Check actual manifests/toolchains and distinguish core from Docker fixtures.
+- [x] Validate the skill, local links and complete-folder copying for both hosts.
+- [x] Review a realistic onboarding request independently; correct cache and
+      browser/application ownership guidance.
+- [ ] Perform complete onboarding of a second real customer application.
+- [ ] Verify skill discovery and end-to-end installation in both agent hosts.
+
+This milestone adds agent instructions, not a new runtime backend, generic model
+format, container image or registry release. See [agent onboarding](agent-onboarding.md)
+and [verification](verification.md) for the implemented path and actual checks.
+
+## First GitHub developer preview — 2026-10-05
+
+Release target: `v0.1.1-rc.2`, using the repository's existing visibility. Ship the
+exact runtime/crate bundle plus a separate complete agent-skill archive and final
+verification receipt. The existing CI matrix and checks remain unchanged.
+
+Release checks: scoped local regressions, clean committed-source packaging,
+installed-package browser acceptance, existing CI on that commit, skill content
+verification, then explicit tag/release publication and downloaded-asset checks.
+The [release page](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.2)
+and its `VERIFICATION.md` asset own the final publication receipt; the source tree
+is frozen before those identities can be generated.
+
+Registry publishing, repository visibility changes, new framework onboarding,
+Windows validation and everyday Roots adoption remain outside this preview.

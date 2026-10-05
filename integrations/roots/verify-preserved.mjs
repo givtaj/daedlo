@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
-const source = resolve(process.env.ROOTS_SOURCE || '/Users/aidin/code/canvas/roots');
+import { fileURLToPath } from 'node:url';
+const source = resolve(process.env.ROOTS_SOURCE || fileURLToPath(new URL('../../../roots', import.meta.url)));
 const output = resolve(process.env.ROOTS_CONSUMER_ARTIFACTS || 'artifacts/roots');
 const before = JSON.parse(fs.readFileSync(join(output, 'live-before.json')));
 const changed = Object.entries(before.trackedHashes).filter(([path, hash]) =>

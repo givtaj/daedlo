@@ -4,9 +4,11 @@ import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { resolve, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const source = resolve(
-  process.env.ROOTS_SOURCE ?? "/Users/aidin/code/canvas/roots",
+  process.env.ROOTS_SOURCE ??
+    fileURLToPath(new URL("../../../roots", import.meta.url)),
 );
 const output = resolve(
   process.env.ROOTS_EXPERIENCE_ARTIFACTS ?? "artifacts/roots-experience",

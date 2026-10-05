@@ -44,18 +44,16 @@ accounts, and starts signed out on Home. The viewer URL is printed and recorded
 for the workbench. Sign in using the viewer's offered command to use the fixture
 account through the actual UI.
 
-The current uncommitted Roots folder consolidation is not copied into the
-committed example. Its original checkout, dirty work, dependency files and normal
-services remain untouched. This is a new browser session, not recovery of a
-previous browser's cookies or draft.
+At the 2026-09-27 capture, the Roots folder consolidation was an uncommitted
+candidate and was not copied into this committed example. Preparation preserves
+the original checkout, dirty work, dependency files and normal services. Launching
+creates a new browser session; it does not recover a previous browser's cookies or draft.
 
-Latest development context is the user-linked chat
-[Drive Roots QA browser after update](codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b).
-That locally verified work moved the engine/runtime into `tools/browser-driver/` while
-keeping the Roots model, acceptance and evidence in `QA/`. The workbench records
-the reviewed evidence checkpoint, not an automatic claim that a running chat's
-later work has completed. Recheck that chat and the canonical report on the next
-requested upstream review.
+The archived 2026-09-27 consolidation receipt records locally verified work that
+moved the engine/runtime into `tools/browser-driver/` while keeping the Roots
+model, acceptance and evidence in `QA/`. It describes that captured checkpoint,
+not later development. Read the canonical report and inspect an explicit source
+revision on the next requested upstream review.
 
 Useful overrides:
 

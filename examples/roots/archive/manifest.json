@@ -9,11 +9,7 @@
     "commit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
     "observedAt": "2026-09-27T17:15:28.091604+00:00",
     "status": "UNCOMMITTED_CONSOLIDATION_COMPLETE_LOCALLY",
-    "note": "Roots consolidation into tools/browser-driver completed locally on an uncommitted candidate based on dd9cee67. Final evidence and current manifest/binary hashes were independently read and checked for this archive. No current remote CI or publication is claimed.",
-    "chat": {
-      "title": "Drive Roots QA browser after update",
-      "url": "codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b"
-    }
+    "note": "At the 2026-09-27 capture, Roots consolidation into tools/browser-driver had completed locally on an uncommitted candidate based on dd9cee67. Final evidence and manifest/binary hashes were independently read and checked for this archive. Remote CI and publication were not claimed at that checkpoint."
   },
   "policy": {
     "scenarioSelection": "Curated assertions; aggregate historical coverage is in each run.coverage and must not be counted twice.",
@@ -1038,10 +1034,6 @@
         ],
         "controllerEvidencePath": "QA/evidence/driver-consolidation-2026-09-27/final/controller-source.json",
         "provenanceNote": "Application fixture remained frozen at dd9cee67. The relocated controller/runtime and Docker packaging were uncommitted candidates, bound by final source manifests and four stable fixture binary hashes. The final successful run followed the preserved setup refusal; no source guard or assertions were weakened.",
-        "chat": {
-          "title": "Drive Roots QA browser after update",
-          "url": "codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b"
-        },
         "baseCommit": "dd9cee67e3886333a7fe8eb7f8545d428167fb07",
         "sourceState": "Uncommitted consolidation; application behavior unchanged",
         "independentlyAuditedAt": "2026-09-27T17:15:28.091604+00:00",
@@ -1465,13 +1457,9 @@
         "The original monitor\u2019s Saved successfully wording after draft retention refers to a saved private strain; it must not imply the unsaved Journal experience persisted.",
         "Recipe success records its own assertions; the walkthrough did not independently rerun every underlying API/database assertion.",
         "One current committed snapshot with synthetic accounts and new browser; no personal account, normal Roots database or existing draft was used.",
-        "Live processes are retained for the user; archived images and receipts remain historical snapshots after capture."
+        "Live processes were retained at the 2026-09-27 capture; their current availability is not established by this archive. Images and receipts remain historical snapshots."
       ]
     }
   ],
-  "sourceChat": {
-    "title": "Drive Roots QA browser after update",
-    "url": "codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b"
-  },
   "updatedAt": "2026-09-27T17:15:28.091604+00:00"
 }

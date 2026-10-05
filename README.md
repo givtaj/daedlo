@@ -1,9 +1,19 @@
 # browser-driver
 
-A visible browser driver with a Rust application-state engine. People and agents
-observe an application, choose a valid semantic command, watch it execute, and
-inspect evidence of the outcome. Authored commands and recipes run without an AI
-agent once the application integration is configured.
+An agent-installed QA workflow with a Rust application-state engine, a
+Node/Playwright runtime and a local live viewer. An agent helps a team turn one
+agreed feature into a state model, guarded browser flows and inspectable evidence.
+People and agents can then choose a valid command, watch it execute and verify the
+outcome. Authored commands and recipes run without an AI agent or model API key.
+
+**Start with an agent:** follow the [release installation guide](docs/releases.md)
+for the exact `0.1.1-rc.2` assets and selected source checkout, then use the
+[Codex and Claude Code guide](docs/agent-onboarding.md) and portable
+[browser-driver skill](skills/browser-driver/SKILL.md). The skill helps product,
+development and QA contributors agree a feature's Rust enum and diagram, connect
+its flows and verify the evidence. The application keeps its own language and
+architecture; its integration still needs a customer-authored Rust model and
+JavaScript adapter.
 
 **The primary example is actual Roots work:** Journal draft retention, save and
 retry behavior, session protection, and the Strains catalogue. The local workbench
@@ -11,11 +21,17 @@ shows a sourced archive of that work and connects to the real Roots driver.
 
 ![Control and image-stream architecture](docs/assets/architecture.png)
 
-**Status:** working `0.1.1-rc.1` candidate with release preparation tooling. The
-Rust engine, Node runtime, generic viewer and independent example are implemented.
-An isolated Roots consumer passed
-real browser/API/PostgreSQL acceptance; its everyday driver has not been migrated.
-Exact candidate identities and limits are in [verification](docs/verification.md).
+**Status:** `0.1.1-rc.2` developer preview; final release checks and publication are
+tracked in the [release notes](docs/release-notes/0.1.1-rc.2.md). The Rust engine,
+Node runtime, generic viewer and independent example are implemented. Earlier
+isolated Roots candidates passed real browser/API/PostgreSQL acceptance; Roots'
+everyday embedded driver remains unchanged. Exact tested identities and limits
+are in [verification](docs/verification.md).
+
+This preview requires application-specific integration. Windows, complete
+onboarding of an unfamiliar application, and full Claude Code skill discovery and
+onboarding have not been verified. The viewer runs locally. Distribution uses
+GitHub assets and tagged source; no npm or crates.io publication is included.
 
 ## Open the Roots workbench
 
@@ -58,6 +74,8 @@ additionally requires Node 24+, Docker and a pinned Roots source checkout.
 
 ## Project documents
 
+- [Agent onboarding](docs/agent-onboarding.md): portable instructions, current
+  dependencies and a shared story-to-state-to-evidence workflow.
 - [Product and architecture](docs/architecture.md): what the product does, the two
   streams, Rust/Node responsibilities and extension interfaces.
 - [Actual Roots experience](examples/roots/README.md): live operation, the evidence
@@ -66,8 +84,9 @@ additionally requires Node 24+, Docker and a pinned Roots source checkout.
   current checklist.
 - [Development and Roots integration](docs/development-workflow.md): parallel
   development, ownership, candidate promotion/rollback and requested upstream ports.
-- [Release preparation](docs/releases.md): versioned bundles, installed-package CI,
-  trusted verification and explicit store update/rollback without changing Roots.
+- [Release installation and preparation](docs/releases.md): exact GitHub assets,
+  the agent skill, installed-package CI, trusted verification and explicit store
+  update/rollback without changing Roots.
 - [Protocol and public API contract](docs/contracts.md): implemented v0.1
   interfaces; still pre-release, with the tested consumers recorded below.
 - [Acceptance scenarios](docs/acceptance.md): the behavior the executable tests
@@ -82,5 +101,5 @@ guards, expected outcomes, selectors and fixture setup. The core owns execution
 coordination, freshness checks, protocol validation, browser viewing and resource
 ownership. See the architecture document for the trust boundary and limitations.
 
-Implementation and local verification are authorized. Registry publication,
-deployment and promotion into everyday Roots usage are separate lifecycle steps.
+Registry publication, deployment and promotion into everyday Roots usage remain
+separate lifecycle steps.

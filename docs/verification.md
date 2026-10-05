@@ -1,5 +1,63 @@
 # Verification record
 
+## Developer preview source checks — 2026-10-05
+
+Release version `0.1.1-rc.2` includes the agent onboarding instructions, updated
+release documentation and portable Roots helper source defaults. Shared runtime
+and Rust engine implementation are unchanged; package versions and the isolated
+consumer pins advance together. Private chat references were removed from the
+distributed archive without changing scenario text or evidence identities.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Shared runtime | PASS — 42 Node tests | `checks/node-runtime-permitted.log` |
+| Release contracts | PASS — 59 tests | `checks/node-release.log` |
+| Archive and helper source selection | PASS — 11 tests | `checks/node-roots-archive-final.log`; includes six subprocess checks for sibling defaults and explicit overrides, with Git intercepted before customer access/build |
+| Rust contracts | PASS — 18 tests | `checks/rust-tests.log`; locked/offline |
+| Syntax, declarations, formatting, Rust lint/build | PASS | `checks/node-check-final.log`, `rust-fmt.log`, `rust-clippy.log`, `rust-build.log` |
+| Agent skill | PASS — structure and portable-copy checks | Instruction checks are recorded in the section below; final distributable content is checked separately in the release receipt |
+| CI configuration | UNCHANGED | Existing Ubuntu Node 22/24 jobs; no new workflows, matrix entries, dependencies or publication jobs |
+
+Paths in this section are under `artifacts/first-preview-20261005/`; Rust logs are
+under its `checks/` directory. Three genuine source-path assertions failed before
+the helper fix while all three explicit overrides passed (`source-location-red.log`).
+All six passed after the fix (`source-location-green.log`). The test fixture uses
+physical temporary paths to account for macOS path aliases without weakening the
+source-selection assertion. Initial runtime/archive server checks were blocked by
+sandbox loopback permissions; their logs remain beside the permitted passing runs.
+
+Clean-source bundle identities, exact installed-package browser checks, final
+remote CI and downloadable-asset verification are generated after this source
+commit. The [release receipt](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.2)
+and its `VERIFICATION.md` asset record those results against the final tag.
+These source checks do not assert new Roots browser acceptance or customer
+promotion. No normal Roots dependencies, services or data were changed.
+
+## Agent onboarding instructions — 2026-10-05
+
+Added a portable `skills/browser-driver/` instruction folder, a flow-spec template,
+Codex/Claude Code installation guidance and a repository Claude entry point. The
+runtime, crate, lockfiles, protocol and release artifacts were not changed. The
+[onboarding guide](agent-onboarding.md) keeps native Rust models and Node adapters;
+Docker remains a customer-fixture dependency rather than a core requirement.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Skill structure | PASS | Skill-creator validation of required frontmatter, naming and unfinished scaffold checks |
+| Portable folder and documented installation | PASS | `artifacts/agent-onboarding-20261005/validation-02.json`; five files including MIT license copied byte-for-byte into temporary `.agents/skills` and `.claude/skills` layouts; local references resolve inside each copy and an existing destination is refused |
+| Dependency inventory | CHECKED — source and local metadata | Runtime Node >=22, Playwright 1.62.1; Rust MSRV 1.96 with repository toolchain 1.96.0; no npm minimum declared; core has no model-provider SDK or Docker requirement |
+| Independent instruction evaluation | REVIEWED — dry run only | A separate agent applied the skill to an agreed PHP catalogue-search scenario with missing repository/URL inputs; it preserved prior agreement, distinguished browser ownership and avoided invented APIs. Review found inaccurate Chromium cache wording, which was corrected; no customer onboarding occurred |
+| Repository source, types and configured formatting | PASS | `npm run check`; existing JavaScript syntax, public declarations and configured formatting checks; this is not browser acceptance |
+| Markdown links, license and diff | PASS | Local links checked; copied skill license matches repository MIT license; `git diff --check` |
+| Host discovery, real Codex/Claude onboarding and new customer acceptance | NOT RUN | Folder layout checks and an instruction dry run do not prove host discovery or a successful application integration |
+
+Read-only local inventory used macOS arm64, Node 22.20.0, npm 10.9.3 and
+Rust/Cargo 1.96.0. Matching Playwright Chromium was present; no browser was launched.
+Roots fixtures document Node 24+ and disposable PostgreSQL through Docker; this
+instruction work did not run them or check Docker daemon/database readiness.
+No global skills, customer dependencies, Roots files or services were changed.
+Private chat history used to recover the workflow is not distributed in the skill.
+
 ## Release preparation tooling — 2026-10-04
 
 The runtime and shared crate are now versioned `0.1.1-rc.1`. The release CLI
@@ -156,8 +214,8 @@ survived a candidate failure. No normal Roots source or dependency pin changed.
 
 ## Actual Roots example and archive — 2026-09-27
 
-The user requested examples grounded in real Roots work and linked
-[Drive Roots QA browser after update](codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b).
+The user requested examples grounded in real Roots work. The
+[archive](../examples/roots/archive/README.md) records the captured source evidence.
 `npm run demo` now opens the Roots workbench. The notebook is available only as
 the independent `demo:notebook` conformance fixture.
 
@@ -196,9 +254,10 @@ draft. The archive retains this concrete ambiguity to guide future outcome label
 
 The current Roots folder reorganization was observed read-only and left with its
 own chat. This work made no live Roots source, dependency or normal-data changes.
-The original driver, disposable fixture and workbench are intentionally retained
-for interactive use; the old notebook demo was stopped after confirming it was idle
-with no draft. Stop the Roots launcher to clean its owned fixture when finished.
+The original driver, disposable fixture and workbench were retained at that
+checkpoint for interactive use; the old notebook demo was stopped after confirming
+it was idle with no draft. This historical record does not assert those services
+remain running. Closing a retained Roots launcher cleans only its owned fixture.
 
 ## Local v0.1 candidate — 2026-09-27
 

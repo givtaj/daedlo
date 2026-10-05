@@ -21,10 +21,10 @@ raw logs, credentials, account files, cookies, private records or traces are cop
 | Strains, September 27               | Hashed candidate based on `d4008e3`, later committed `9c9e938`                | Eleven product scenarios passed, eighteen Rust leaves were separately observed, zero uncaught errors; earlier focus and cursor-readiness failures are retained.                                                                                 |
 | Consolidation, September 27         | Application `dd9cee67`; relocated controller/runtime uncommitted              | Passing baseline and final 10 live groups/10 recipes plus 11 Strains scenarios/18 leaves; stable source/four binaries, 290 Rust/74 frontend/13 Node checks, Docker and owned cleanup. Initial setup failure retained; no commit/push/remote CI. |
 
-The source chat is [Drive Roots QA browser after update](codex://threads/01a0e3a2-2b67-7700-a4f0-5bd5a30b891b).
 The [canonical Roots report](../../../../roots/docs/verification/auth-release-2026-09-26/REPORT.md)
-owns current verification and release status. The consolidation receipt now records completed local verification with its
-uncommitted source and publication limits. Its before/after durations are single
+owns verification and release status for that project. The 2026-09-27
+consolidation receipt records completed local verification with its source then
+uncommitted and its publication limits at capture. Its before/after durations are single
 observed shared-host runs, not statistical performance benchmarks. This is a dated
 archive; it does not monitor or automatically synchronize either source. The first Profile
 findings are historical observations, not assertions that current Roots still
@@ -72,15 +72,16 @@ current-source status. Hashing does not anonymize source material. Screenshots
 alone demonstrate visible UI; the linked API/database assertions establish
 persistence, record identity, no-write and retry behavior.
 
-## Fresh manual walkthrough
+## Manual walkthrough — 2026-09-27
 
 The `manual-walkthrough` receipt records three focused checks on committed Roots
 `dd9cee67`: the original draft-retention recipe (11/11 steps), lost-response retry
 recipe (10/10 steps), and a visible Strains search for `White`. It is a scoped
 manual drive, not another full regression run. Its four [sanitized receipts](receipts/)
 include frozen source/binary identity and the exact original-driver assertion names.
-The two new screenshots are current frames captured from that same controlled
-browser, then archived unchanged. The fixture remains available for the user.
+The two screenshots were captured from that controlled browser on 2026-09-27
+and archived unchanged. The fixture was retained at that checkpoint; this archive
+does not establish whether that session or its services are still available.
 
 After draft retention, the monitor said Saved successfully while the experience
 remained a draft: the private strain was the saved object. This concrete wording
