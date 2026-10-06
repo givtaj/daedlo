@@ -1,13 +1,13 @@
 # Install, verify and prepare a driver release
 
-## Selected preview: 0.1.1-rc.4
+## Selected preview: 0.1.1-rc.5
 
 This release adds [portable tools](update-client.md) and fixes CLI shutdown report
 ordering and retry of failed owned-resource cleanup. The
-[release page](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.4)
+[release page](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.5)
 and its `VERIFICATION.md` asset record publication, the final source commit,
 CI run and the exact artifact hashes. This source document alone does not assert
-that publication has completed. Local rc.3 candidates are superseded; their bytes
+that publication has completed. Local rc.3 and rc.4 candidates are superseded; their bytes
 are not republished under a reused version.
 
 The repository remains private. The installing person or agent needs GitHub read
@@ -26,8 +26,8 @@ receipt first; a complete source checkout is unnecessary:
 ```sh
 mkdir browser-driver-download
 cd browser-driver-download
-gh release download v0.1.1-rc.4 --repo givtaj/browser-driver --dir tools-assets \
-  --pattern browser-driver-tools-0.1.1-rc.4.tgz \
+gh release download v0.1.1-rc.5 --repo givtaj/browser-driver --dir tools-assets \
+  --pattern browser-driver-tools-0.1.1-rc.5.tgz \
   --pattern TOOLS_SHA256SUMS --pattern TOOLS_VERIFICATION.json --pattern VERIFICATION.md
 ```
 
@@ -39,9 +39,9 @@ Install the verified archive into an owned tools directory:
 ```sh
 mkdir tools
 cd tools
-npm install --offline --ignore-scripts --no-audit --no-fund ../tools-assets/browser-driver-tools-0.1.1-rc.4.tgz
+npm install --offline --ignore-scripts --no-audit --no-fund ../tools-assets/browser-driver-tools-0.1.1-rc.5.tgz
 node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs --help
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs download --repo givtaj/browser-driver --version 0.1.1-rc.4 --out /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
+node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs download --repo givtaj/browser-driver --version 0.1.1-rc.5 --out /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
 node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs verify --bundle /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
 ```
 
@@ -241,7 +241,7 @@ npm run release -- version --next NEXT_VERSION
 ```
 
 Replace `NEXT_VERSION` with a strictly newer semantic version; do not rerun the
-version command for the current `0.1.1-rc.4`. Version reuse, build-metadata aliases,
+version command for the current `0.1.1-rc.5`. Version reuse, build-metadata aliases,
 misaligned existing pins and symlinks are refused. The command does not install
 dependencies, run hooks, commit, tag or publish. Review and commit the source before
 making a distributable bundle. Once shared, never assign different bytes to that
@@ -361,7 +361,7 @@ suite against the exact bundle and adapter, prove candidate failure leaves an
 actively running normal Roots stack usable, and review launcher/pin changes with
 rollback. The release commands do not perform that migration or database changes.
 See [the integration workflow](development-workflow.md) and
-[actual verification](https://github.com/givtaj/browser-driver/blob/v0.1.1-rc.4/docs/verification.md) for current coverage and remaining limits.
+[actual verification](https://github.com/givtaj/browser-driver/blob/v0.1.1-rc.5/docs/verification.md) for current coverage and remaining limits.
 
 ## Developer-preview limits
 

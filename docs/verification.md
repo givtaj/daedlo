@@ -1,8 +1,37 @@
 # Verification record
 
+## Corrected portable rc.5 source checks — 2026-10-06
+
+The rc.4 source commit and its existing Node 22/24 CI passed, but an additional
+real CLI browser check found a release blocker: Playwright's default SIGINT
+handler terminated the process with exit 130 before `endRun` and report export.
+That candidate was not published. Its clean packages remain identified as rc.4;
+the correction advances to `0.1.1-rc.5` rather than reusing those bytes' identity.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Actual pre-fix CLI | FAIL — preserved | rc.4 `cli-signal-red/results.json`; real save persisted, then signal caused exit 130 and no final report |
+| Signal ownership regressions | RED then PASS | Two competing Playwright-handler checks fail before explicitly disabling its SIGINT/SIGTERM handling |
+| Shared runtime | PASS — 55 Node tests | `runtime-tests.log`; 13 CLI lifecycle regressions included |
+| Release contracts and source checks | PASS — 82 plus check | `release-tests.log`, `check.log`; no CI changes |
+| Corrected CLI in real Chromium | PASS — 2 scenarios | `cli-browser-source/results.json`; stopped active save waits for gated finalization, and fail-once adapter cleanup survives for a second signal |
+| Persistence and cleanup | PASS within both corrected CLI cases | Exactly one API-confirmed row/write, one handler and one `endRun`; normal exit 0 and owned fixture/browser/viewer cleanup recorded |
+
+Corrected evidence is under ignored `artifacts/release-rc5-20261006/`; rc.4
+failure evidence remains under the corresponding rc.4 directory. The first extra
+browser attempt had an incorrect harness initial-state expectation (Draft instead
+of Ready); it was corrected against the actual model before reproducing the
+signal failure. That setup failure is not claimed as a product regression.
+
+The source CLI checks used the previously built notebook model; exact rc.5
+runtime/crate installation and browser checks are a separate post-commit gate.
+The [rc.5 release receipt](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.5)
+records final clean identities, package checks and publication. The earlier
+source/package checks below retain their original version and scope.
+
 ## Portable rc.4 source release checks — 2026-10-06
 
-The selected clean-release target is `0.1.1-rc.4`. It supersedes the local rc.3
+The earlier clean-release target was `0.1.1-rc.4`; it was not published. It supersedes the local rc.3
 candidates without reusing their artifact identities. User scope is a private
 release that an agent can download and mount in a separate customer QA directory;
 no actual WBF application onboarding or portal implementation is included.

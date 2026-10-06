@@ -242,3 +242,9 @@ then build both packages from that identity, verify installed bytes and the actu
 CLI in Chromium, run the unchanged CI and publish the verified assets. The final
 release receipt records those post-commit identities and outcomes. Do not reuse
 the earlier local rc.3 identity, alter real customer pins or add billing/portal work.
+
+Post-build verification withheld rc.4: Playwright's automatic signal handler
+exited before CLI finalization. The corrected target is `v0.1.1-rc.5`, with CLI
+signal ownership, two additional regressions and two passing real-browser CLI
+checks. Re-run the existing CI and exact final-package gates on its clean commit;
+keep the previous candidate and failure receipts intact.

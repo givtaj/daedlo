@@ -7,7 +7,7 @@ People and agents can then choose a valid command, watch it execute and verify t
 outcome. Authored commands and recipes run without an AI agent or model API key.
 
 **Start with an agent:** follow the [release installation guide](docs/releases.md)
-to download and mount the exact `0.1.1-rc.4` assets without a source checkout, then use the
+to download and mount the exact `0.1.1-rc.5` assets without a source checkout, then use the
 [Codex and Claude Code guide](docs/agent-onboarding.md) and portable
 [browser-driver skill](skills/browser-driver/SKILL.md). The skill helps product,
 development and QA contributors agree a feature's Rust enum and diagram, connect
@@ -26,8 +26,8 @@ shows a sourced archive of that work and connects to the real Roots driver.
 
 ![Control and image-stream architecture](docs/assets/architecture.png)
 
-**Status:** `0.1.1-rc.4` developer preview; final release checks and publication are
-tracked in the [release notes](docs/release-notes/0.1.1-rc.4.md). The Rust engine,
+**Status:** `0.1.1-rc.5` developer preview; final release checks and publication are
+tracked in the [release notes](docs/release-notes/0.1.1-rc.5.md). The Rust engine,
 Node runtime, generic viewer and independent example are implemented. Earlier
 isolated Roots candidates passed real browser/API/PostgreSQL acceptance; Roots'
 everyday embedded driver remains unchanged. Exact tested identities and limits

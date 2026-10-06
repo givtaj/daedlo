@@ -93,8 +93,8 @@ function harness(overrides = {}) {
       await overrides.writeReport?.();
     },
     {
-      launch: async () => {
-        await overrides.launchBrowser?.();
+      launch: async (options) => {
+        await overrides.launchBrowser?.(options, { process, browser });
         return browser;
       },
     },
@@ -546,5 +546,55 @@ for (const failure of ["missing engine", "descriptor mismatch"])
     assert.equal(h.calls.browser, 1);
     assert.equal(h.calls.attached, 0);
     assert.equal(h.process.exitCode, 1);
+    assert.equal(h.intervals.size, 0);
+  });
+
+for (const signal of ["SIGINT", "SIGTERM"])
+  test(`CLI retains ${signal} ownership while finalization is pending`, async (t) => {
+    const entered = deferred(),
+      release = deferred();
+    let browserClosedByLibrarySignal = false;
+    const h = harness({
+      launchBrowser: (options, { process, browser }) => {
+        // Playwright defaults these options to true and installs competing
+        // handlers that close its browser immediately. SIGINT also exits the
+        // host process after browser closure; model the premature browser close
+        // here without terminating the test runner.
+        if (options[`handle${signal}`] !== false)
+          process.on(signal, () => {
+            browserClosedByLibrarySignal = true;
+            void browser.close();
+          });
+      },
+      closeSession: async () => {
+        entered.resolve();
+        await release.promise;
+      },
+    });
+    t.after(async () => {
+      release.resolve();
+      await h.dispose();
+    });
+    await h.ready.promise;
+    await tick();
+    h.process.emit(signal);
+    await entered.promise;
+    assert.equal(
+      browserClosedByLibrarySignal,
+      false,
+      "Playwright must not bypass CLI finalization on its documented shutdown signals",
+    );
+    assert.equal(
+      h.calls.browser,
+      0,
+      "Browser must stay available until session finalization settles",
+    );
+    assert.equal(h.calls.reports.length, 0);
+    release.resolve();
+    await bounded(h.run);
+    assert.equal(h.calls.browser, 1);
+    assert.equal(h.calls.session, 1);
+    assert.equal(h.calls.reports.length, 1);
+    assert.equal(h.calls.attached, 0);
     assert.equal(h.intervals.size, 0);
   });

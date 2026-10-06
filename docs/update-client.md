@@ -6,7 +6,7 @@ store. It does not install a customer runtime, compile a customer model, replace
 application dependencies, or restart services. The customer integration keeps its
 accepted package pins and launcher until its own replacement checks pass.
 
-Developer preview `0.1.1-rc.4` distributes the tools archive as a separate GitHub
+Developer preview `0.1.1-rc.5` distributes the tools archive as a separate GitHub
 release asset. The selected release page and its `VERIFICATION.md` receipt confirm
 publication and exact bytes. Published v0.1.1-rc.2 does not include these tools,
 and the package is not published to npm. A full Browser Driver source checkout is not

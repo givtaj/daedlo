@@ -79,7 +79,14 @@ async function main() {
       typeof project.createAdapter !== "function"
     )
       throw Error("Project has an incomplete integration contract.");
-    const browser = await chromium.launch({ headless: !opt.headed });
+    const browser = await chromium.launch({
+      headless: !opt.headed,
+      // The CLI settles runs and preserves retryable cleanup before closing the
+      // browser. Playwright's defaults would close it independently (and exit
+      // the host process on SIGINT), bypassing that lifecycle.
+      handleSIGINT: false,
+      handleSIGTERM: false,
+    });
     resources.own(browser, {
       label: "controlled browser",
       close: (b) => b.close(),
