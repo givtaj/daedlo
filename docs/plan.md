@@ -176,7 +176,8 @@ language and retain existing customer tooling.
 - [x] Validate the skill, local links and complete-folder copying for both hosts.
 - [x] Review a realistic onboarding request independently; correct cache and
       browser/application ownership guidance.
-- [ ] Perform complete onboarding of a second real customer application.
+- [x] Onboard one existing flow in a second real application: isolated SeeRuntime,
+      exact rc.2 and rc.3 package pairs, the same Rust model/adapter and visible viewers.
 - [ ] Verify skill discovery and end-to-end installation in both agent hosts.
 
 This milestone adds agent instructions, not a new runtime backend, generic model
@@ -198,3 +199,46 @@ is frozen before those identities can be generated.
 
 Registry publishing, repository visibility changes, new framework onboarding,
 Windows validation and everyday Roots adoption remain outside this preview.
+
+## First paid pilot — 2026-10-05
+
+Commercial decision: one plan at **USD 20 per seat per month**, with WorkOS and
+Google sign-in for individuals and businesses. A prospective five-seat team would
+pay **USD 100 per month**; this is not yet contracted revenue.
+
+The [subscription plan](subscription-plan.md) records the separate later portal
+phase: Cloudflare hosting, WorkOS/Google login and Stripe payments. On 2026-10-06
+the owner deferred this phase to focus on the local release, safe updates and a
+SeeRuntime customer trial. The incomplete companion prototype is preserved in
+ignored artifacts and removed from active workspace dependencies.
+
+## Safe customer updates and SeeRuntime trial — 2026-10-06
+
+Goal: publish immutable versioned packages frequently while each application keeps
+its accepted package/model/adapter combination until a candidate passes its checks.
+
+- [x] Document the separate portal phase and preserve its prototype outside release paths.
+- [x] Add explicit release discovery and verified downloads without modifying customers.
+- [x] Package portable customer update tools and show the before/after installation layout.
+- [x] Verify candidate rejection, archive-store pin preservation and rollback.
+- [x] Install the exact package in an isolated pinned SeeRuntime copy and verify one
+      existing application flow through its customer Rust model and public adapter.
+- [x] Record real browser results, visible viewer inspection, source preservation and
+      owned resources. Keep the existing CI workflow unchanged.
+
+An available update is not an approved update. No background sync, automatic
+dependency rewrite, application migration or production deployment is included.
+
+## Portable release hardening — 2026-10-06
+
+Target: `v0.1.1-rc.4`, a clean immutable private preview that can be downloaded and
+mounted in a customer's separate QA integration without a driver source checkout.
+The owner clarified that preparing this installation path is the scope; onboarding
+an actual WBF application is deferred until its team chooses that integration.
+
+Source work covers shutdown finalization, retryable owned cleanup, complete
+portable instructions and regression checks. Freeze and commit the reviewed tree,
+then build both packages from that identity, verify installed bytes and the actual
+CLI in Chromium, run the unchanged CI and publish the verified assets. The final
+release receipt records those post-commit identities and outcomes. Do not reuse
+the earlier local rc.3 identity, alter real customer pins or add billing/portal work.

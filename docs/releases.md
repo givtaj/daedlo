@@ -1,9 +1,136 @@
 # Install, verify and prepare a driver release
 
-The current candidate is `0.1.1-rc.2`, a developer preview of the agent-installed
+## Selected preview: 0.1.1-rc.4
+
+This release adds [portable tools](update-client.md) and fixes CLI shutdown report
+ordering and retry of failed owned-resource cleanup. The
+[release page](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.4)
+and its `VERIFICATION.md` asset record publication, the final source commit,
+CI run and the exact artifact hashes. This source document alone does not assert
+that publication has completed. Local rc.3 candidates are superseded; their bytes
+are not republished under a reused version.
+
+The repository remains private. The installing person or agent needs GitHub read
+access to `givtaj/browser-driver` and an authenticated `gh` CLI. Granting that
+access is a repository-owner action; possession of these commands does not grant
+access. No token belongs in the customer repository, package, report or launcher.
+An authorized maintainer can instead deliver the exact release assets and trusted
+receipt through an approved private channel. No public registry, login portal or
+subscription service is required for this installation.
+
+### Download
+
+Use a new directory outside the application. Download the portable tools and
+receipt first; a complete source checkout is unnecessary:
+
+```sh
+mkdir browser-driver-download
+cd browser-driver-download
+gh release download v0.1.1-rc.4 --repo givtaj/browser-driver --dir tools-assets \
+  --pattern browser-driver-tools-0.1.1-rc.4.tgz \
+  --pattern TOOLS_SHA256SUMS --pattern TOOLS_VERIFICATION.json --pattern VERIFICATION.md
+```
+
+Before executing anything from the archive, compare its SHA-256 with the tools
+archive digest in the trusted release receipt. `TOOLS_SHA256SUMS` is also an
+integrity inventory; it is not independent proof of who supplied the bytes.
+Install the verified archive into an owned tools directory:
+
+```sh
+mkdir tools
+cd tools
+npm install --offline --ignore-scripts --no-audit --no-fund ../tools-assets/browser-driver-tools-0.1.1-rc.4.tgz
+node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs --help
+node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs download --repo givtaj/browser-driver --version 0.1.1-rc.4 --out /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
+node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs verify --bundle /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
+```
+
+The agent resolves the absolute output path and replaces `TRUSTED_MANIFEST_DIGEST`
+with the manifest digest from the trusted release receipt. The tools package has
+no npm dependencies or install scripts. Node 22+ is required; runtime verification
+also checks Rust 1.96.0+. Install the runtime's pinned Playwright Chromium before
+launch. Docker is only needed when the application's chosen fixture requires it.
+
+### Mount in a codebase
+
+Here, mounting means adding a separate QA integration beside an application's
+existing code. It does not mean changing the application's language or adding the
+driver to its production dependencies. An example layout is:
+
+```text
+customer-app/                           before: existing app and its lockfiles
+customer-app/                           after: same app, plus scoped integration
+└── qa/browser-driver/
+    ├── package.json, package-lock.json  private ESM package; exact runtime archive
+    ├── node_modules/                   ignored local runtime and Playwright
+    ├── vendor/                         matching verified engine crate
+    ├── engine/                         customer Rust model and Cargo.lock
+    ├── adapter.mjs, project.mjs         customer observations and guarded actions
+    ├── flows/                          agreed stories and acceptance checks
+    └── target/, reports/               ignored build output and private evidence
+```
+
+The folder name is a convention, not a required product path. Keep verified
+archives in a durable location referenced by the integration lockfile. Copy the
+complete bundled `skills/browser-driver` folder to an unused project skill path
+for Codex (`.agents/skills/browser-driver`) or Claude Code
+(`.claude/skills/browser-driver`), preserving any existing customization. The
+portable package includes the contracts, onboarding guide and skill; an additional
+standalone skill archive is available for hosts that need only the instructions.
+
+Give the agent this request, with actual paths:
+
+> Read the installed browser-driver skill and packaged contracts. Mount this exact
+> verified release in a separate QA integration in this codebase. Preserve the
+> existing app and lockfiles. Reuse accepted states and flows; agree the first
+> missing flow before authoring its Rust model and guarded adapter. Launch the
+> local viewer, verify that flow and a relevant failure path, and record the exact
+> package pins, evidence and cleanup ownership.
+
+The skill's [installation reference](../skills/browser-driver/references/onboarding.md)
+provides the exact npm/Cargo integration and public project-module contract. Once
+the agent has supplied the app-specific model, adapter and project module, launch
+from the customer integration with:
+
+```sh
+./node_modules/.bin/browser-driver --project ./project.mjs --report ./reports/session.json
+```
+
+Create the ignored reports directory first. The default is a new owned headless
+Chromium with a visible local viewer; add `--headed` for a native browser window.
+No application commands or sign-in execute automatically at startup. Ctrl+C waits
+for the active run and its cleanup before exporting the final report. If owned
+cleanup fails, the process retains the handles and accepts another Ctrl+C or
+SIGTERM to retry cleanup; it does not replay application actions.
+
+Downloading and installing packages does not discover an application's business
+states or prove its flows. Rust, Go, PHP, JS/TS and other web applications can keep
+their own implementation language; the QA model is a separate Rust binary and the
+adapter uses the browser and approved application interfaces. A particular
+framework is supported only to the extent its actual integration has been tested.
+
+### Updates without replacing the working integration
+
+Daily development does not require daily customer migration. Give each shipped
+change a new immutable version, run the existing checks and exact-package browser
+acceptance, then publish the selected bytes and trusted receipt. An agent can run
+`check --repo givtaj/browser-driver --current ACCEPTED_VERSION --channel preview`
+with the portable CLI. It then explicitly downloads a chosen version into fresh
+output. The application keeps its accepted runtime, crate, model, adapter, locks
+and launcher while that candidate is tested separately.
+
+Protocol/toolchain checks are necessary but cannot guarantee customer behavior.
+Promote the whole tested combination and retain the prior combination for rollback;
+archive-store rollback alone does not change an app. The stable channel may have
+no release. Failed/incomplete discovery is not evidence that an installation is
+current. No background updater or additional CI job is installed.
+
+## Earlier rc.2 installation using a source checkout
+
+The earlier preview is `0.1.1-rc.2`, a developer preview of the agent-installed
 Rust/Node QA workflow. An agent installs the tools and helps the team author a
 customer model, adapter and verified flow. This is not a zero-configuration app
-crawler. The [release notes](release-notes/0.1.1-rc.2.md) describe its scope; the
+crawler. The [release notes](https://github.com/givtaj/browser-driver/blob/v0.1.1-rc.2/docs/release-notes/0.1.1-rc.2.md) describe its scope; the
 GitHub release page and attached `VERIFICATION.md` hold the final publication,
 CI and artifact receipt. Downloads require access to the repository, whose
 visibility is unchanged by a release.
@@ -14,7 +141,7 @@ application. Roots continues using its existing embedded driver; adopting this
 package is a separate integration change. No npm or crates.io publication is
 included in this release.
 
-## Install the selected preview with an agent
+### Earlier checkout-based installation
 
 Use Node 22+, Rust/Cargo 1.96.0+ and the selected runtime's matching Playwright
 Chromium. The repository pins Rust 1.96.0 and the runtime pins Playwright 1.62.1.
@@ -114,7 +241,7 @@ npm run release -- version --next NEXT_VERSION
 ```
 
 Replace `NEXT_VERSION` with a strictly newer semantic version; do not rerun the
-version command for the current `0.1.1-rc.2`. Version reuse, build-metadata aliases,
+version command for the current `0.1.1-rc.4`. Version reuse, build-metadata aliases,
 misaligned existing pins and symlinks are refused. The command does not install
 dependencies, run hooks, commit, tag or publish. Review and commit the source before
 making a distributable bundle. Once shared, never assign different bytes to that
@@ -131,8 +258,8 @@ process is killed; the next invocation refuses inconsistent pins.
 npm ci
 cargo build --workspace --locked
 mkdir -p artifacts/releases
-npm run release -- build --out artifacts/releases/rc2
-npm run release -- verify --bundle artifacts/releases/rc2
+npm run release -- build --out artifacts/releases/selected
+npm run release -- verify --bundle artifacts/releases/selected
 ```
 
 The output directory must be fresh and its parent must exist. In-repository output
@@ -181,7 +308,7 @@ digest printed by `build` as `DIGEST` below:
 
 ```bash
 npx playwright install chromium
-npm run test:release:e2e -- artifacts/releases/rc2 artifacts/package-check DIGEST
+npm run test:release:e2e -- artifacts/releases/selected artifacts/package-check DIGEST
 ```
 
 The evidence directory must be fresh. The harness owns and cleans its temporary
@@ -234,7 +361,7 @@ suite against the exact bundle and adapter, prove candidate failure leaves an
 actively running normal Roots stack usable, and review launcher/pin changes with
 rollback. The release commands do not perform that migration or database changes.
 See [the integration workflow](development-workflow.md) and
-[actual verification](verification.md) for current coverage and remaining limits.
+[actual verification](https://github.com/givtaj/browser-driver/blob/v0.1.1-rc.4/docs/verification.md) for current coverage and remaining limits.
 
 ## Developer-preview limits
 

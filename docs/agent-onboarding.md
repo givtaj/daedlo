@@ -15,11 +15,11 @@ every framework. No WASM conversion or application rewrite is required.
 ## Give an agent the onboarding job
 
 The portable [browser-driver skill](../skills/browser-driver/SKILL.md) contains the
-workflow and its supporting references. Start with a reviewed browser-driver source
-checkout at an explicit revision. Until the skill is installed, ask the agent to
-read that file directly. For example:
+workflow and its supporting references. Start with the verified portable tools
+package or a reviewed browser-driver source checkout at an explicit revision.
+Until the skill is installed, ask the agent to read that file directly. For example:
 
-> Read `skills/browser-driver/SKILL.md` in the browser-driver checkout. Onboard this
+> Read `skills/browser-driver/SKILL.md` in the chosen browser-driver tools package or checkout. Onboard this
 > web app using the existing Rust engine and Node runtime. Inspect our current
 > setup, then help us agree the nested Rust enum, transition diagram and acceptance
 > for one useful flow. Reuse any agreement already recorded. Install the exact
@@ -45,7 +45,8 @@ inspect existing instructions first and preserve them.
 | Claude Code | `.claude/skills/browser-driver/` | `/browser-driver` |
 
 From the customer repository root, the agent can copy the reviewed folder into a
-fresh destination. Set `driver_source` to the actual checkout and choose one host's
+fresh destination. Set `driver_source` to the installed tools package root (the
+directory containing its `SOURCE.json`) or reviewed checkout, and choose one host's
 `skill_parent`; these are placeholders, not an unattended installer:
 
 ```sh
@@ -108,7 +109,7 @@ setup blocker, not permission to restart services used by other projects.
 ## Install the runtime and create the customer integration
 
 The agent follows the skill's [installation reference](../skills/browser-driver/references/onboarding.md)
-and the selected checkout's [release guide](releases.md). The current supported
+and the selected tools package or checkout's [release guide](releases.md). The current supported
 distribution path is an explicit candidate bundle or reviewed source checkout.
 Registry publication is not established by these instructions: do not assume that
 `npm install @browser-driver/runtime` or `cargo add browser-driver-engine` selects
@@ -160,4 +161,8 @@ session ownership. Persist sanitized evidence deliberately: the runtime's latest
 The Roots experience is the source of this workflow; its normal embedded driver
 remains unchanged. This instruction layer does not establish new customer browser
 coverage, Claude Code end-to-end onboarding, a container image, or a public release.
-See [verification](verification.md) for checks actually performed.
+The selected source checkout's `docs/verification.md` records checks actually
+performed; it is not included in portable tools. For published artifact provenance,
+read the selected GitHub release's `VERIFICATION.md` asset. Access to a private
+release requires repository access. Neither record substitutes for running the
+customer's own acceptance against its chosen package pair.

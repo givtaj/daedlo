@@ -22,11 +22,15 @@ When defining or changing behavior, also read [model and flows](references/model
 Adapt the [flow specification template](assets/flow-spec.md) to existing customer
 records instead of creating a competing source of truth.
 
-Locate the chosen browser-driver source checkout from the user's context or the
-existing receipt. Read its `README.md`, `docs/contracts.md`, `docs/agent-onboarding.md`,
-`docs/releases.md` and `docs/verification.md` from that root. Selected-release
-package READMEs, public types and Rust trait govern APIs. Never resolve repository
-docs relative to this installed skill or assume a remembered release is current.
+Locate the chosen release-tools installation or reviewed source checkout from the
+user's context or receipt. Read `README.md`, `docs/contracts.md`,
+`docs/agent-onboarding.md` and `docs/releases.md` from that package or checkout root.
+The portable tools include these references and this complete skill; they do not
+require a source checkout. `docs/verification.md` and repository examples are
+optional upstream evidence, absent from the portable tools. Selected-release
+runtime README, public types and Rust trait govern APIs. Record both tools and
+runtime versions; never infer the package root from a copied skill's location or
+assume a remembered release is current.
 
 ## Collaborate, then execute
 

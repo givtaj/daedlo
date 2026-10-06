@@ -50,8 +50,19 @@ async function main() {
   let session,
     stopping = false,
     shutdownPromise,
+    sessionClosePromise,
+    sessionClosed = false,
+    shutdownComplete = false,
+    retryKeepalive,
     finish;
   const lifetime = new Promise((r) => (finish = r));
+  const closeSession = () => {
+    if (sessionClosed) return Promise.resolve();
+    return (sessionClosePromise ??= (async () => {
+      await session.close();
+      sessionClosed = true;
+    })());
+  };
   const checkStop = () => {
     if (stopping) throw Error("Startup interrupted.");
   };
@@ -75,22 +86,35 @@ async function main() {
     });
     checkStop();
     const context = await browser.newContext({
-        viewport: { width: 1100, height: 780 },
-      }),
-      page = await context.newPage();
+      viewport: { width: 1100, height: 780 },
+    });
+    checkStop();
+    const page = await context.newPage();
+    checkStop();
     await page.goto(project.url);
     checkStop();
     const adapter = await project.createAdapter({ page, context });
-    session = await createDriverSession({
-      page,
-      context,
-      enginePath: project.enginePath,
-      adapter,
-      identity: project.identity,
-    });
+    try {
+      checkStop();
+      session = await createDriverSession({
+        page,
+        context,
+        enginePath: project.enginePath,
+        adapter,
+        identity: project.identity,
+      });
+    } catch (error) {
+      // Until a session exists, the launcher still owns adapter cleanup.
+      if (typeof adapter?.close === "function")
+        resources.own(adapter, {
+          label: "startup adapter",
+          close: (a) => a.close(),
+        });
+      throw error;
+    }
     resources.own(session, {
       label: "driver session",
-      close: (s) => s.close(),
+      close: closeSession,
     });
     checkStop();
     const viewer = await createViewer({
@@ -107,39 +131,72 @@ async function main() {
     );
     return viewer;
   })();
-  const shutdown = () =>
-    (shutdownPromise ??= (async () => {
+  const shutdown = () => {
+    if (shutdownComplete) return Promise.resolve();
+    return (shutdownPromise ??= (async () => {
       stopping = true;
       session?.stop();
+      if (session) void closeSession().catch(() => {});
       await startup.catch(() => {});
+      // Seal new commands and await the active run, including endRun. Share the
+      // promise with the resource scope so failures are retried only on the next
+      // shutdown attempt, never twice during this attempt.
+      if (session) await closeSession().catch(() => {});
+      let cleanupError;
+      try {
+        await resources.close();
+      } catch (error) {
+        cleanupError = error;
+      }
       try {
         if (opt.report && session)
           await writeFile(
             opt.report,
-            JSON.stringify(session.report(), null, 2) + "\n",
+            JSON.stringify(
+              { ...session.report(), resources: resources.snapshot() },
+              null,
+              2,
+            ) + "\n",
           );
-      } finally {
-        try {
-          await resources.close();
-        } finally {
-          finish();
-        }
+      } catch (error) {
+        console.error(error.message);
+        process.exitCode = 1;
       }
-    })());
+      if (cleanupError) {
+        sessionClosePromise = undefined;
+        // Signal listeners do not keep Node alive once its other handles close.
+        retryKeepalive ??= setInterval(() => {}, 1000);
+        console.error(
+          `${cleanupError.message} Send Ctrl+C or SIGTERM to retry.`,
+        );
+        return;
+      }
+      shutdownComplete = true;
+      clearInterval(retryKeepalive);
+      finish();
+    })().finally(() => {
+      shutdownPromise = undefined;
+    }));
+  };
   const signal = () => {
     shutdown().catch((error) => {
       console.error(error.message);
       process.exitCode = 1;
     });
   };
-  process.once("SIGINT", signal);
-  process.once("SIGTERM", signal);
+  process.on("SIGINT", signal);
+  process.on("SIGTERM", signal);
   try {
-    await startup;
+    try {
+      await startup;
+    } catch (error) {
+      if (!stopping) {
+        console.error(error.message);
+        process.exitCode = 1;
+      }
+      await shutdown();
+    }
     await lifetime;
-  } catch (error) {
-    await shutdown();
-    throw error;
   } finally {
     process.off("SIGINT", signal);
     process.off("SIGTERM", signal);

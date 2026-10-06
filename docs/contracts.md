@@ -4,11 +4,11 @@ The user approved implementation of the proposed local driver and isolated Roots
 
 ## Ownership
 
-- One Node package: `@browser-driver/runtime`, developer preview `0.1.1-rc.2`, Node >=22, ESM.
-- One Rust library: `browser-driver-engine`, developer preview `0.1.1-rc.2`; compiled customer engine binaries implement `ApplicationModel`.
+- One Node package: `@browser-driver/runtime`, candidate `0.1.1-rc.4`, Node >=22, ESM. Published rc.2 remains available; the candidate retains protocol 1.
+- One Rust library: `browser-driver-engine`, candidate `0.1.1-rc.4`; compiled customer engine binaries implement `ApplicationModel`.
 - Runtime owns one execution, revisions, interruption, transport and the viewer. Customer owns facts, nested state enums, commands, guards, outcome interpretation, browser handlers and fixture semantics.
 - App integrations are trusted code. Guarded action helpers are the supported effect path, not an isolation boundary against malicious adapters.
-- The first Roots consumer remains tied to commit `d4008e39aeaa137bb54ff48ca2d11748083a971a`. The explicitly requested Journal edit port may stage a reviewed working-tree feature overlay on pinned base `96275b53145e00e282d7c6a6f80faf3a5ad6df10` through [prepare-feature](../integrations/roots/prepare-feature.mjs). Only selected source files whose bytes match the supplied review receipts are copied into the isolated snapshot. Record its source digest and distinguish this overlay from committed Roots source; unrelated dirty files remain untouched. Later ports still require a requested review of explicit source identities. No automatic sync or services.
+- The first Roots consumer remains tied to commit `d4008e39aeaa137bb54ff48ca2d11748083a971a`. The explicitly requested Journal edit port may stage a reviewed working-tree feature overlay on pinned base `96275b53145e00e282d7c6a6f80faf3a5ad6df10` through the source checkout's `integrations/roots/prepare-feature.mjs` (not included in portable tools). Only selected source files whose bytes match the supplied review receipts are copied into the isolated snapshot. Record its source digest and distinguish this overlay from committed Roots source; unrelated dirty files remain untouched. Later ports still require a requested review of explicit source identities. No automatic sync or services.
 
 ## JSON Lines protocol 1
 
@@ -24,7 +24,7 @@ Observation envelope: `{connected:boolean,session:string,facts:object}`. Missing
 
 Descriptor: `{id,version,label,states:[{id,label,parent:null|string,support:"supported"|"planned"}],commands:[{id,label,params:{field:Parameter},changesSession?:boolean}],recipes:[{id,label,steps:[{command,params}]}]}`. IDs are explicit stable wire names, never Rust Debug output. Parameter: `{type:"text"|"number"|"boolean"|"select",label,required?:boolean,default?:value,options?:[{value,label}],minimum?:number,maximum?:number,maxLength?:number}`. All undeclared parameters rejected. Observe state is `{id}` referencing a supported descriptor leaf; `commands`/`recipes` contain `{id,enabled,reason?}`; display is `[{label,value}]` with safe public values only.
 
-The public `ApplicationModel` trait exposes associated `Facts`, `State`, `Command` and `Outcome` types. Models implement descriptor, state derivation/ID, typed command decoding, authorization, verification and outcome reporting. Optional display, command-availability and recipe-authorization hooks support the catalog. See `crates/browser-driver-engine` and `examples/notebook-engine` for the implemented API. Verification receives bounded before/after observations and read-only evidence. A declared state tree is descriptive metadata, not a promise of reachability.
+The public `ApplicationModel` trait exposes associated `Facts`, `State`, `Command` and `Outcome` types. Models implement descriptor, state derivation/ID, typed command decoding, authorization, verification and outcome reporting. Optional display, command-availability and recipe-authorization hooks support the catalog. The selected engine crate's `src/lib.rs` defines the implemented API. A source checkout additionally includes `examples/notebook-engine`; that example is not required or included in portable tools. Verification receives bounded before/after observations and read-only evidence. A declared state tree is descriptive metadata, not a promise of reachability.
 
 ## Public Node API
 

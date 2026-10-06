@@ -36,7 +36,7 @@ function inside(root, path) {
   );
 }
 
-async function sourceSnapshot(repoRoot) {
+export async function sourceSnapshot(repoRoot) {
   const commit = (await git(repoRoot, ["rev-parse", "HEAD"])).trim();
   const dirty =
     (
@@ -118,7 +118,7 @@ function parentPaths(path) {
   return parents;
 }
 
-function releaseVersion(files) {
+export function releaseVersion(files) {
   const content = (path) => {
     const file = files.find((entry) => entry.path === path);
     if (!file) throw new Error(`Required release source is missing: ${path}.`);

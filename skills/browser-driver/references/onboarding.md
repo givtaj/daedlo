@@ -52,16 +52,17 @@ assume `@browser-driver/runtime` or the crate has been published to a registry.
 A bundle contains the runtime `.tgz`, engine library `.crate`, `manifest.json`
 and `SHA256SUMS`; it does not contain a prebuilt customer engine or the release CLI.
 
-With the selected source checkout located, inspect its release instructions and
-run its actual verifier with the bundle path and independently trusted manifest
-digest, for example from that checkout:
+From the selected tools installation, run its verifier with the bundle path and
+independently trusted manifest digest:
 
 ```sh
-node scripts/release/cli.mjs verify --bundle /absolute/bundle --sha256 TRUSTED_DIGEST
+node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs verify --bundle /absolute/bundle --sha256 TRUSTED_DIGEST
 ```
 
 The digest must come from the selected trusted release/CI receipt or the user's
 explicitly trusted local build, not merely the untrusted bundle's own checksums.
+For an older release without portable tools, the reviewed source checkout's
+`node scripts/release/cli.mjs verify` offers the same verification arguments.
 If building from source is the chosen path, use that checkout's documented build
 procedure and preserve its source identity. Do not mark a dirty local experiment
 as a published release.
@@ -78,9 +79,11 @@ node "$driver_integration/node_modules/playwright/cli.js" install chromium
 Verify the installed package version and public import resolve inside that
 integration. Preserve the artifact path and generated lockfile for later `npm ci`.
 For other package managers, use their equivalent exact-artifact installation.
-Use the selected checkout's `tests/release-acceptance.mjs` as the existing example
-of validating archive paths/link entries and extracting verified crate bytes into
-owned output. Keep extracted crates under a stable integration vendor location;
+Before extracting the verified crate into fresh owned output, inspect its entries:
+require regular files/directories under the expected `browser-driver-engine-VERSION/`
+root and reject absolute paths, traversal, symbolic links and hard links. An
+optional source checkout contains a worked example in `tests/release-acceptance.mjs`;
+it is not a portable-tools prerequisite. Keep extracted crates under a stable integration vendor location;
 do not overwrite an existing accepted copy. The customer Cargo dependency is:
 
 ```toml

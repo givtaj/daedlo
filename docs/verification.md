@@ -1,5 +1,144 @@
 # Verification record
 
+## Portable rc.4 source release checks — 2026-10-06
+
+The selected clean-release target is `0.1.1-rc.4`. It supersedes the local rc.3
+candidates without reusing their artifact identities. User scope is a private
+release that an agent can download and mount in a separate customer QA directory;
+no actual WBF application onboarding or portal implementation is included.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| CLI lifecycle regressions | PASS — 11 | Genuine stale-report and missing-retry-handler failures precede fixes; additional failures cover cleanup status, interrupted startup and failed session construction |
+| Shared runtime | PASS — 53 Node tests | `runtime-tests-final.log`; includes actual CLI control flow with injected module boundaries, real sessions and resource scopes |
+| Release contracts | PASS — 82 | `release-tests-final.log`; remote discovery/download, store/version identity and 19-file portable installation checks |
+| Portable documentation links | PASS — 8 tools checks | Missing packaged local references first failed; final archive links resolve without a source checkout |
+| Rust contracts | PASS — 18 | `rust-tests.log`; locked/offline shared crate and independent fixture contracts |
+| Source browser conformance | PASS — 8 Chromium groups | `source-browser.log`; real isolated notebook browser/API fixture, public viewer, stale/uncertain effects and recovery |
+| Roots archive helpers | PASS — 11 | `archive-tests.log`; no live Roots fixture, service or data mutation |
+| Source/types/format and Rust lint/build | PASS | `check-final.log`, `rust-fmt.log`, `rust-clippy.log`, `rust-build.log` |
+| CI configuration | UNCHANGED | Existing Ubuntu Node 22/24 matrix and existing test globs cover these regressions |
+
+Evidence is under ignored `artifacts/release-rc4-20261006/`; the initial packaged
+link failure is in `artifacts/release-readiness-20261006/portable-links-red.log`.
+CLI reports are captured after active execution, `endRun` and owned cleanup;
+failed cleanup remains retryable by a later signal without replaying effects.
+A session initialization failure also retains the adapter's cleanup responsibility.
+Attached resources remain outside owned cleanup. Tests using injected boundaries
+are not mislabeled as browser acceptance.
+
+The final clean source identity, exact installed-runtime CLI browser checks,
+portable installation outside the workspace, final remote CI and published-asset
+verification are recorded after source freeze in the
+[release receipt](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.4).
+This source record does not assert those later outcomes, WBF readiness for a
+specific flow, or promotion of any everyday customer dependency. Existing rc.2
+and rc.3 customer evidence below remains tied to its original bytes.
+
+## SeeRuntime isolated update comparison — 2026-10-06
+
+The second application trial uses committed SeeRuntime source
+`068d573051f7e43213ba547f842624f6551706f6` in an isolated archive. Its JavaScript
+application was not rewritten: a customer-owned Rust playback model and guarded
+Node adapter exercise the existing Node.js I/O lesson. The [integration guide](../integrations/seeruntime/README.md)
+records the enum, recipe, setup, coverage and evidence boundaries.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Customer Rust model | PASS — 6 per package pair | Genuine 3-assertion model red, then green against the exact rc.2 and rc.3 crates; missing/inconsistent observations deny effects |
+| Customer archive preparation | PASS — 3 checks | `prepare-tests.log`; unsafe archive entries refused; listing and extraction consume the same verified bytes |
+| Released rc.2 browser flow | PASS — 9 checks | `rc2-final/results.json`; six commands, full recipe, unavailable pause rejection, final successful reset |
+| Local rc.3 browser flow | PASS — same 9 checks | `rc3-final/results.json`; identical customer model/adapter, separately installed runtime/crate and build output |
+| Accepted version after candidate | PASS | `accepted-after-candidate.json`; the full rc.2 recipe still completes successfully via its public viewer after rc.3 acceptance |
+| Customer pins and engine preservation | PASS | Both consumers' Node/Cargo manifests and locks, Rust model sources and engine binaries match the recorded pre-run hashes |
+| Application source provenance | PASS — 35 served files | `source-identity.json`; exact archive hash and served tree identity; independent comparison with pinned Git blobs; runner verifies before/after |
+| Real checkout preservation | PASS — 142 recorded files | `preservation-comparison.json`; HEAD, Git status and recorded file identities unchanged; all 42 existing dirty entries preserved |
+| Visible viewer | INSPECTED — both versions | `rc2-final/viewer.png`, `rc3-final/viewer.png`; controlled headless Chromium with visible MJPEG stream, Ready state and final Success |
+| Ownership | RETAINED deliberately | Two owned static servers, Chromium sessions and viewers; current PIDs/URLs and scoped cleanup instructions in private handoff; prior trial owner exited |
+
+Evidence paths are under ignored `artifacts/seeruntime-trial-20261006/`. The exact
+rc.3 pair is the candidate recorded below. Model source SHA-256 in both consumers
+is `dccdbfd29468944eadb1efde7ebd487482830449f938cbcc7b6ee43b478a0529`.
+No live SeeRuntime or Roots dependencies, services or data were installation
+targets. The checkout inventory excludes ignored files, running services and
+external data; it does not prove their contents or state. External font requests
+were blocked in the trial's owned browser context. No Docker fixture was needed.
+
+This verifies one existing lesson flow, not all SeeRuntime models or branches.
+Playback completion/replay, account, sharing/clipboard, persistence, production
+deployment, Windows and Claude Code host discovery are not covered. Earlier
+successful runs remain separate from the final receipts; setup permission waits
+are not browser failures. CI configuration and the published rc.2 assets remain
+unchanged.
+
+## Portable updates — local rc.3 candidate, 2026-10-06
+
+The published rc.2 release remains unchanged. This work produces a local
+`0.1.1-rc.3` runtime/crate candidate and a separate portable tools archive. Both
+receipts explicitly disclose dirty source; they are not a clean final release or
+remote CI/publication claim. The tools documentation was finalized after the
+runtime snapshot, so their recorded source-tree identities differ.
+
+| Check | Result | Evidence and scope |
+| --- | --- | --- |
+| Release regressions | PASS — 82 | `release-tests.log`; 7 CLI, 14 remote, 8 portable-tools plus existing packaging/store/version checks |
+| Portable documentation inventory repair | PASS — 8 tools checks | `tools-doc-path-red.log` then `tools-doc-path-green.log`; missing packaged update guide first failed the inventory assertion |
+| Runtime and Rust regressions | PASS — 42 Node / 18 Rust | `runtime-tests.log`, `rust-tests.log`; loopback permission failure resolved through normal escalation |
+| Syntax/types/format | PASS | `check.log`; no CI configuration changes |
+| Exact runtime/crate installation | PASS — 8 real Chromium groups | `package-acceptance-allowed/results.json`; all 17 installed runtime files verified; owned temporary consumer/browser/server cleanup passed |
+| Exact tools installation | PASS — 19 files | `build-tools-rc3-complete.json`; actual offline installation adds one dependency-free package; all installed bytes compared with archive |
+| Real GitHub discovery/download | PASS — installed client | `installed-live-check.json`, `installed-live-download.json`; rc.1 detects published rc.2; exact rc.2 download matches its trusted manifest digest; discovery does not claim compatibility |
+| Current release check | PASS | `live-check-rc2.json`; rc.2 reports current on the explicit preview channel |
+| Opt-in update and rollback | PASS — 5 steps | `store-walkthrough.json`; select rc.2, reject dirty candidate without opt-in, reject corrupted archive, explicitly select intact rc.3, rollback to rc.2; both refusals preserve store state byte-for-byte |
+| Portal | DEFERRED | Prototype preserved in ignored artifacts, removed from active workspace dependencies; Cloudflare/WorkOS/Google/Stripe phase documented only |
+
+Evidence paths above are under ignored `artifacts/release-update-20261006/`.
+The explicit candidate runtime/engine manifest SHA-256 is
+`9fff3c15e3eda90fdd1e6342ef5f7cc1f5f90a273df593619770c5490a2e5799`;
+the complete tools archive SHA-256 is
+`ef3fa5edc584225bcc7a7b0d65acd432576b74a46be086794dec2fb81b018068`.
+The actual before/after layout is retained in `PACKAGE-WALKTHROUGH.md` beside
+those receipts; the reusable instructions are in [portable tools](update-client.md).
+
+The download/store commands never edit application pins or launchers. Store
+rollback selects archives only. Customer compatibility still requires testing the
+exact model/adapter/package combination; version or protocol checks alone cannot
+guarantee it. No background update task was installed. Windows and both agent
+hosts' automatic skill discovery remain unverified. This work did not access or
+change the live Roots project or its retained fixtures.
+
+## Current Roots clone onboarding and comparison — 2026-10-05
+
+The published `v0.1.1-rc.2` runtime/crate were verified against the supplied trusted
+digests and installed into a separate self-contained Roots clone pinned to
+`fc099641691000e3c37cba8c690c532764981e3a`. Shared release bytes and current Roots
+product code were unchanged. Two clone-local customer bridges reuse current Rust
+plans and facts; they cover six of the original driver's 18 canonical recipes.
+The [full comparison report](reviews/2026-10-05-current-roots-onboarding.md) contains
+the command/recipe matrix, package identities, onboarding repairs, viewer findings
+and reproduction/cleanup instructions.
+
+| Check | Result | Fresh evidence and scope |
+| --- | --- | --- |
+| Released runtime integrity | PASS | Trusted manifest/skill verification; all 17 installed runtime files match archive bytes |
+| Current creation/draft/retry bridge | PASS — 4 browser/API/PostgreSQL groups | `basic-run02/results.json`; invalid/valid sign-in, exact draft retention, retained-draft save, same-operation lost-response retry |
+| Current Journal edit bridge | PASS — 6 browser/API/PostgreSQL groups | `released-edit-run02/results.json`; valid auth, direct draft retention, four current edit recipes including retry and owned API restart |
+| Original current driver | 19 PASS, 1 FAIL | `legacy/results.json`; all 18 recipes plus Strains smoke pass; second sign-in had a transient destination-verification failure despite a signed-in UI |
+| Equivalent supplemental re-sign-in | PASS — both drivers | `resignin-comparison.json`; later Journal/signout/Profile/signin/Journal sequence passed; initial legacy failure retained, cause unresolved |
+| Customer integration contracts | PASS | Basic 11 Node + 2 Rust; edit 13 Node + 5 Rust; genuine model/catalog/display regressions precede repairs |
+| Original driver contracts | PASS | 35 Node + 42 Rust; clone-only default binary path setup required |
+| Live viewer experience | INSPECTED in visible Codex tabs | Original, new basic and new edit viewers; owned headless Chromium streams, not native headed windows |
+| Original checkout preservation | PASS — scoped inventory | Same HEAD/status and 3,274 recorded file identities; zero changed paths |
+| New-driver deletion / standalone Strains | UNSUPPORTED by these bridges | Original deletion recipes and Strains smoke pass; not new-driver acceptance |
+| Full feature suites / unfamiliar-app onboarding / Claude discovery | NOT RUN | Selected recipes do not establish full feature or host coverage |
+
+Evidence is under ignored `artifacts/current-roots-onboarding-20261005/`. Docker
+was initially stopped and was started by the user. Sandbox/toolchain/launcher
+setup failures remain separately recorded. Three isolated demos are retained with
+current owned handles and guarded cleanup commands; the first edit fixture cleaned
+successfully. No original Roots dependency, binary, service, session, database or
+record was changed. CI and publication were untouched.
+
 ## Developer preview source checks — 2026-10-05
 
 Release version `0.1.1-rc.2` includes the agent onboarding instructions, updated

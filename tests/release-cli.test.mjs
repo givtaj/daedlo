@@ -35,6 +35,8 @@ test("help describes preparation and does not offer automatic customer modificat
   assert.match(result.stdout, /build/);
   assert.match(result.stdout, /rollback/);
   assert.match(result.stdout, /customer|Roots/);
+  assert.match(result.stdout, /check --repo/);
+  assert.match(result.stdout, /download --repo/);
 });
 test("preserves explicit path traversal for store validation instead of normalizing it away", async (t) => {
   const parent = await fs.realpath(
@@ -59,7 +61,9 @@ test("reports retained recovery handles when an operation fails to clean up", ()
     import fs from 'node:fs/promises';
     fs.lstat = async () => { throw Object.assign(new Error('Incomplete cleanup'), {
       rollbackFailed: [{file: 'Cargo.toml', backup: '/private/tmp/owned-version-backup'}],
-      cleanupFailed: ['/private/tmp/owned-version-staged']
+      cleanupFailed: ['/private/tmp/owned-version-staged'],
+      retainedPaths: ['/private/tmp/owned-download-stage'],
+      retainedOwnedDirectories: ['/private/tmp/owned-tools-stage']
     }); };
     process.argv = [process.execPath, ${JSON.stringify(cli)}, 'status', '--store', '/private/tmp/owned-fixture'];
     await import(${JSON.stringify(pathToFileURL(cli).href)});
@@ -72,4 +76,24 @@ test("reports retained recovery handles when an operation fails to clean up", ()
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /owned-version-backup/);
   assert.match(result.stderr, /owned-version-staged/);
+  assert.match(result.stderr, /owned-download-stage/);
+  assert.match(result.stderr, /owned-tools-stage/);
+});
+
+test("download requires a trusted digest before any network or destination operation", async (t) => {
+  const parent = await fs.mkdtemp(join(tmpdir(), "driver-download-cli-"));
+  t.after(() => fs.rm(parent, { recursive: true, force: true }));
+  const out = join(parent, "candidate");
+  const result = invoke([
+    "download",
+    "--repo",
+    "example/driver",
+    "--version",
+    "1.0.0",
+    "--out",
+    out,
+  ]);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Missing --sha256/);
+  await assert.rejects(fs.stat(out), { code: "ENOENT" });
 });

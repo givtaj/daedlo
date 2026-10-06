@@ -7,7 +7,7 @@ People and agents can then choose a valid command, watch it execute and verify t
 outcome. Authored commands and recipes run without an AI agent or model API key.
 
 **Start with an agent:** follow the [release installation guide](docs/releases.md)
-for the exact `0.1.1-rc.2` assets and selected source checkout, then use the
+to download and mount the exact `0.1.1-rc.4` assets without a source checkout, then use the
 [Codex and Claude Code guide](docs/agent-onboarding.md) and portable
 [browser-driver skill](skills/browser-driver/SKILL.md). The skill helps product,
 development and QA contributors agree a feature's Rust enum and diagram, connect
@@ -15,21 +15,31 @@ its flows and verify the evidence. The application keeps its own language and
 architecture; its integration still needs a customer-authored Rust model and
 JavaScript adapter.
 
+The selected preview adds [portable update tools](docs/update-client.md): check
+for newer releases, download verified archives, then test them alongside the
+accepted integration. The published rc.2 assets remain unchanged. The separate
+[Cloudflare/WorkOS/Stripe portal](docs/subscription-plan.md) is a later phase.
+
 **The primary example is actual Roots work:** Journal draft retention, save and
 retry behavior, session protection, and the Strains catalogue. The local workbench
 shows a sourced archive of that work and connects to the real Roots driver.
 
 ![Control and image-stream architecture](docs/assets/architecture.png)
 
-**Status:** `0.1.1-rc.2` developer preview; final release checks and publication are
-tracked in the [release notes](docs/release-notes/0.1.1-rc.2.md). The Rust engine,
+**Status:** `0.1.1-rc.4` developer preview; final release checks and publication are
+tracked in the [release notes](docs/release-notes/0.1.1-rc.4.md). The Rust engine,
 Node runtime, generic viewer and independent example are implemented. Earlier
 isolated Roots candidates passed real browser/API/PostgreSQL acceptance; Roots'
 everyday embedded driver remains unchanged. Exact tested identities and limits
 are in [verification](docs/verification.md).
 
+A second [SeeRuntime integration](integrations/seeruntime/README.md) now verifies
+one existing playback flow with both published rc.2 and the local rc.3 candidate.
+The accepted rc.2 installation still works after the candidate test. This is an
+isolated source snapshot, with no changes to the real application checkout.
+
 This preview requires application-specific integration. Windows, complete
-onboarding of an unfamiliar application, and full Claude Code skill discovery and
+onboarding across unfamiliar frameworks, and full Claude Code skill discovery and
 onboarding have not been verified. The viewer runs locally. Distribution uses
 GitHub assets and tagged source; no npm or crates.io publication is included.
 
