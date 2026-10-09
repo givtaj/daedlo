@@ -5,6 +5,7 @@ import { validateDescriptor, validateParams } from "./catalog.mjs";
 import { DriverError, reject } from "./errors.mjs";
 import { executableHash, runtimeIdentity } from "./identity.mjs";
 import { publicEffectReport } from "./effects.mjs";
+import { validatePresentations } from "./presentation.mjs";
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const speeds = {
@@ -28,6 +29,7 @@ export async function createDriverSession({
   adapter,
   identity = {},
   resources,
+  presentations = [],
 }) {
   if (!page || !adapter || typeof adapter.observe !== "function")
     reject(
@@ -39,7 +41,7 @@ export async function createDriverSession({
     engineSha256: executableHash(enginePath),
   };
   const engine = createEngineClient(enginePath);
-  let descriptor;
+  let descriptor, presentationCatalog;
   const checked = (r) => {
     if (!r.ok)
       reject(
@@ -53,6 +55,7 @@ export async function createDriverSession({
       checked(await engine.request({ op: "hello" })).descriptor,
       adapter,
     );
+    presentationCatalog = validatePresentations(presentations, descriptor);
   } catch (error) {
     await engine.close();
     throw error;
@@ -68,11 +71,15 @@ export async function createDriverSession({
     runId = null,
     lastResult = null,
     active = null,
-    closePromise;
+    closePromise,
+    presentation = null,
+    advanceRequested = false,
+    holdTick = null;
   const completedCleanup = new Set();
   let progress = { step: 0, total: 0, lastAction: null },
     lastState = null;
   const waiters = new Set(),
+    holdInterrupts = new Set(),
     events = [],
     completedRuns = new Map();
   const emit = (type, detail = {}) => {
@@ -88,6 +95,7 @@ export async function createDriverSession({
   const wake = () => {
     for (const resolve of waiters) resolve();
     waiters.clear();
+    for (const interrupt of holdInterrupts) interrupt();
   };
   async function raw() {
     if (closed || page.isClosed?.() || !engine.connected())
@@ -111,9 +119,11 @@ export async function createDriverSession({
         "invalid_observation",
         "Adapter returned an invalid observation envelope.",
       );
+    if (!observation.connected)
+      reject("disconnected", "Application observation is disconnected.");
     return structuredClone(observation);
   }
-  async function inspect(observation) {
+  async function inspect(observation, publish = true) {
     const r = checked(await engine.request({ op: "observe", observation }));
     if (
       !descriptor.states.some(
@@ -125,7 +135,7 @@ export async function createDriverSession({
     for (const choice of r.commands ?? [])
       if (!commands.has(choice.id))
         reject("invalid_catalog", "Engine advertised an unknown command.");
-    lastState = {
+    const state = {
       connected: observation.connected,
       state: r.state,
       revision: r.fingerprint,
@@ -133,6 +143,7 @@ export async function createDriverSession({
       recipes: r.recipes ?? [],
       display: r.display ?? [],
     };
+    if (publish) lastState = state;
     return { observation, response: r };
   }
   async function read() {
@@ -146,6 +157,19 @@ export async function createDriverSession({
     speed,
     runId,
     progress: { ...progress },
+    presentations: presentationCatalog.map((p) => {
+      const choice = (
+        p.recipe ? lastState?.recipes : lastState?.commands
+      )?.find((c) => c.id === (p.recipe ?? p.command));
+      return {
+        id: p.id,
+        title: p.title,
+        explanation: p.explanation,
+        enabled: Boolean(choice?.enabled),
+        ...(choice?.reason ? { reason: choice.reason } : {}),
+      };
+    }),
+    presentation: structuredClone(presentation),
     lastResult: structuredClone(lastResult),
     identity: {
       ...identity,
@@ -162,6 +186,13 @@ export async function createDriverSession({
       return {
         ...base(),
         connected: false,
+        presentations: presentationCatalog.map((p) => ({
+          id: p.id,
+          title: p.title,
+          explanation: p.explanation,
+          enabled: false,
+          reason: publicError(error).error,
+        })),
         state: null,
         revision: null,
         commands: [],
@@ -306,6 +337,141 @@ export async function createDriverSession({
       session: after.session,
     };
   }
+  function stageStarted(profile, index) {
+    if (!profile) return;
+    holdTick = null;
+    const stage = profile.stages[index];
+    advanceRequested = false;
+    presentation = {
+      id: profile.id,
+      title: profile.title,
+      status: "running",
+      phase: "executing",
+      stage: index + 1,
+      total: profile.stages.length,
+      stageId: `${runId}:${index + 1}`,
+      stageTitle: stage.title,
+      explanation: stage.explanation,
+      holdMs: stage.holdMs,
+      remainingMs: stage.holdMs,
+      manual: stage.manual,
+    };
+    emit("presentation_stage", {
+      presentationId: profile.id,
+      stage: index + 1,
+    });
+  }
+  async function checkHeldState(expected, session) {
+    if (stopping || closed)
+      reject("stopped", "Presentation stopped during a hold.");
+    // Observation has no effect. Let Stop interrupt a stalled adapter read,
+    // discard late results, and never publish them into a subsequent run.
+    const current = await new Promise((resolve, fail) => {
+      let settled = false;
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        holdInterrupts.delete(interrupt);
+        fn(value);
+      };
+      const interrupt = () => {
+        if (stopping || closed)
+          finish(
+            fail,
+            new DriverError("stopped", "Presentation stopped during a hold."),
+          );
+      };
+      const timer = setTimeout(
+        () =>
+          finish(
+            fail,
+            new DriverError(
+              "observation_failed",
+              "Presentation observation did not finish within 5 seconds.",
+            ),
+          ),
+        5000,
+      );
+      holdInterrupts.add(interrupt);
+      void (async () => {
+        const observation = await raw();
+        if (settled) return;
+        const current = await inspect(observation, false);
+        finish(resolve, current);
+      })().catch((error) => finish(fail, error));
+    });
+    if (stopping || closed)
+      reject("stopped", "Presentation stopped during a hold.");
+    if (current.observation.session !== session)
+      reject(
+        "session_changed",
+        "Application session changed during the presentation hold.",
+      );
+    if (current.response.fingerprint !== expected)
+      reject(
+        "stale_observation",
+        "Application changed during the presentation hold. Inspect the current state before choosing another command.",
+      );
+  }
+  async function holdStage(result) {
+    presentation.phase = "holding";
+    emit("presentation_hold", {
+      presentationId: presentation.id,
+      stage: presentation.stage,
+    });
+    holdTick = performance.now();
+    // Observe throughout a hold, even when presenter-paused. Never adopt a new
+    // revision merely because the viewer or an external actor changed the app.
+    while (true) {
+      await checkHeldState(result.revision, result.session);
+      execution = paused ? "paused" : "running";
+      tickHold();
+      if (
+        !paused &&
+        (advanceRequested ||
+          (!presentation.manual && presentation.remainingMs <= 0))
+      ) {
+        await checkHeldState(result.revision, result.session);
+        // Pause can arrive while this last observation is pending.
+        if (!paused) break;
+      }
+      await new Promise((resolve) => {
+        const done = () => {
+          clearTimeout(timer);
+          waiters.delete(done);
+          resolve();
+        };
+        const timer = setTimeout(done, 100);
+        waiters.add(done);
+      });
+    }
+    presentation.remainingMs = 0;
+    holdTick = null;
+    emit("presentation_advanced", {
+      presentationId: presentation.id,
+      stage: presentation.stage,
+    });
+  }
+  function tickHold() {
+    if (holdTick === null) return;
+    const now = performance.now();
+    if (!paused)
+      presentation.remainingMs = Math.max(
+        0,
+        presentation.remainingMs - (now - holdTick),
+      );
+    holdTick = now;
+  }
+  function finishPresentation(status, reason) {
+    if (!presentation) return;
+    tickHold();
+    holdTick = null;
+    presentation.status = status;
+    presentation.phase = "finished";
+    if (reason) presentation.reason = reason;
+    emit("presentation_finished", { presentationId: presentation.id, status });
+  }
   async function effectReport(attempted) {
     if (!attempted) return { status: "not_attempted" };
     if (adapter.effectStatus) {
@@ -315,7 +481,7 @@ export async function createDriverSession({
     }
     return { status: attempted ? "uncertain" : "not_attempted" };
   }
-  function start(id, params, revision, recipe) {
+  function start(id, params, revision, recipe, profile) {
     // Unknown user input is not public command metadata.
     const command = (
       recipe ? descriptor.recipes.some((r) => r.id === id) : commands.has(id)
@@ -346,6 +512,7 @@ export async function createDriverSession({
       return Promise.resolve(
         refused("revision_required", "An observed revision is required."),
       );
+    presentation = null;
     busy = true;
     stopping = false;
     execution = "running";
@@ -353,6 +520,7 @@ export async function createDriverSession({
     progress = { step: 0, total: 1, lastAction: null };
     emit("run_started", { command, recipe });
     const firstEvent = events.at(-1).sequence;
+    stageStarted(profile, 0);
     const runIdentity = structuredClone(base().identity);
     active = (async () => {
       let attempted = false;
@@ -390,6 +558,7 @@ export async function createDriverSession({
             const values = validateParams(command, step.params);
             progress.step = index;
             progress.lastAction = step.command;
+            if (index > 0) stageStarted(profile, index);
             const result = await perform(
               step.command,
               values,
@@ -398,9 +567,13 @@ export async function createDriverSession({
               () => (attempted = true),
             );
             outcome = result.outcome;
-            if (outcome.kind !== "success") break;
+            if (outcome.kind !== "success") {
+              finishPresentation("halted", outcome.label);
+              break;
+            }
             progress.step = index + 1;
             expected = result.revision;
+            if (profile) await holdStage(result);
             if (result.session !== session)
               reject(
                 "session_changed",
@@ -412,17 +585,20 @@ export async function createDriverSession({
           if (!command) reject("unknown_command", "Unknown command.");
           const values = validateParams(command, params);
           progress.lastAction = id;
-          outcome = (
-            await perform(
-              id,
-              values,
-              revision,
-              undefined,
-              () => (attempted = true),
-            )
-          ).outcome;
+          const result = await perform(
+            id,
+            values,
+            revision,
+            undefined,
+            () => (attempted = true),
+          );
+          outcome = result.outcome;
           progress.step = 1;
+          if (profile && outcome.kind === "success") await holdStage(result);
+          else if (profile) finishPresentation("halted", outcome.label);
         }
+        if (profile && presentation.status === "running")
+          finishPresentation("completed");
         execution = "completed";
         lastResult = {
           ok: true,
@@ -446,6 +622,11 @@ export async function createDriverSession({
           ...publicError(error),
           effect: await effectReport(attempted),
         };
+        if (profile)
+          finishPresentation(
+            execution === "stopped" ? "stopped" : "halted",
+            lastResult.error,
+          );
         emit("run_finished", { execution, error_code: lastResult.error_code });
       } finally {
         try {
@@ -460,6 +641,12 @@ export async function createDriverSession({
             error: "Owned transient cleanup is incomplete.",
           };
           emit("cleanup_failed", { error_code: "cleanup_incomplete" });
+        }
+        if (profile) {
+          if (lastResult.cleanupFailed)
+            finishPresentation("halted", lastResult.cleanupError.error);
+          lastResult.presentation = structuredClone(presentation);
+          paused = false;
         }
         lastResult.command = command;
         lastResult.recipe = recipe;
@@ -495,6 +682,48 @@ export async function createDriverSession({
     return active;
   }
   const api = {
+    startPresentation(id, revision) {
+      const profile = presentationCatalog.find((p) => p.id === id);
+      if (!profile)
+        return Promise.resolve({
+          ok: false,
+          execution: "rejected",
+          error_code: "unknown_presentation",
+          error: "Unknown presentation.",
+          command: null,
+          recipe: false,
+          effect: { status: "not_attempted" },
+          startedAt: new Date().toISOString(),
+          finishedAt: new Date().toISOString(),
+        });
+      return start(
+        profile.recipe ?? profile.command,
+        profile.params ?? {},
+        revision,
+        Boolean(profile.recipe),
+        profile,
+      );
+    },
+    advancePresentation(stageId) {
+      if (
+        !busy ||
+        paused ||
+        stopping ||
+        presentation?.status !== "running" ||
+        presentation.phase !== "holding" ||
+        presentation.stageId !== stageId ||
+        advanceRequested
+      )
+        return {
+          ok: false,
+          error_code: "presentation_not_holding",
+          error:
+            "Advance requires the current unpaused presentation hold. Refresh its stage before advancing.",
+        };
+      advanceRequested = true;
+      wake();
+      return { ok: true };
+    },
     observe: snapshot,
     snapshot,
     execute: (id, params = {}, revision) => start(id, params, revision, false),
@@ -505,18 +734,22 @@ export async function createDriverSession({
         : start(request?.id, request?.params ?? {}, request?.revision, false),
     pause() {
       if (closed) return { ok: false };
+      tickHold();
       paused = true;
+      wake();
       if (busy) execution = "paused";
       emit("paused");
       return { ok: true, paused };
     },
     resume() {
+      tickHold();
       paused = false;
       wake();
       emit("resumed");
       return { ok: true, paused };
     },
     stop() {
+      tickHold();
       stopping = true;
       paused = false;
       wake();

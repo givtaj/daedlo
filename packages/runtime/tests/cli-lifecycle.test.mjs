@@ -129,6 +129,7 @@ function harness(overrides = {}) {
       createProject: async () => ({
         url: "about:blank",
         enginePath: overrides.enginePath ?? enginePath,
+        presentations: overrides.presentations,
         createAdapter:
           overrides.createAdapter ??
           (async () =>
@@ -598,3 +599,28 @@ for (const signal of ["SIGINT", "SIGTERM"])
     assert.equal(h.calls.attached, 0);
     assert.equal(h.intervals.size, 0);
   });
+
+test("CLI passes customer presentation metadata into its session without auto-start", async (t) => {
+  const presentations = [
+    {
+      id: "show",
+      title: "Show",
+      command: "save",
+      stages: [{ title: "Saved", holdMs: 15000 }],
+    },
+  ];
+  let received;
+  const h = harness({
+    presentations,
+    createSession: async (options) => {
+      received = options.presentations;
+      return { stop() {}, close: async () => {}, report: () => ({}) };
+    },
+  });
+  t.after(() => h.dispose());
+  await h.ready.promise;
+  await tick();
+  h.process.emit("SIGTERM");
+  await bounded(h.run);
+  assert.deepEqual(received, presentations);
+});

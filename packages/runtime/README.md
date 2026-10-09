@@ -18,6 +18,19 @@ await viewer.close();
 await session.close(); // Preserves the supplied browser/page.
 ```
 
+Optional `presentations` config adds narrated, paced playback of an existing
+command or canonical recipe. Supply `{id,title,recipe,stages}` with one
+`{title,explanation?,holdMs?,manual?}` stage per recipe step; a single command uses
+`command` and optional `params` instead of `recipe`. Holds follow successful model
+verification, default to 10 seconds, and do not depend on execution speed.
+`startPresentation(id, revision)` uses the same guarded session; `pause`, `resume`
+and `stop` remain available. `advancePresentation(snapshot.presentation.stageId)`
+advances only the current unpaused hold. Fresh state/session checks continue during
+holds, including while paused; unexpected changes halt without replay. Snapshot
+and result presentation status/captions are separate from outcome/effect evidence.
+Configuration is validated at attachment; no presentation starts automatically.
+The complete public shapes and bounds are in `src/index.d.ts`.
+
 The adapter supplies `{model:{id,version}, observe, handlers}` with optional
 `beginRun`, `endRun`, `settle`, `evidence`, `effectStatus` and `close` hooks. `beginRun` resets
 per-run request tracking only; it must not change the application. `effectStatus`
@@ -55,7 +68,7 @@ runtime preserves execution/outcome/effect evidence, sets `ok:false` and
 
 `browser-driver --project ./project.mjs` launches a new owned browser. The trusted
 project module exports `createProject({resources})`, returning
-`{url,enginePath,createAdapter({page,context}),identity?}`. Register owned fixture
+`{url,enginePath,createAdapter({page,context}),identity?,presentations?}`. Register owned fixture
 resources with `resources.own(handle,{label,close})`; use `attach` for existing
 resources that must survive. Ctrl+C closes owned resources. No sign-in or authored
 command runs automatically.

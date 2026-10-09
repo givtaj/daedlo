@@ -13,7 +13,7 @@ const usage = `browser-driver --project PATH [--port NUMBER] [--headed] [--repor
 
 Start a trusted project's local browser-driver integration.
 The project module exports createProject({resources}) and returns:
-  {url, enginePath, createAdapter({page,context}), identity?}
+  {url, enginePath, createAdapter({page,context}), identity?, presentations?}
 The CLI owns its new browser and registered fixture resources. Ctrl+C cleans them.
 Existing attached resources are preserved. No commands execute on startup.
 `;
@@ -109,6 +109,7 @@ async function main() {
         enginePath: project.enginePath,
         adapter,
         identity: project.identity,
+        presentations: project.presentations,
       });
     } catch (error) {
       // Until a session exists, the launcher still owns adapter cleanup.

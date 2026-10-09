@@ -82,6 +82,22 @@
           </div>
         </section>
         <aside class="action-panel" aria-label="Commands and recipes">
+          <section
+            id="presentation-catalog"
+            aria-labelledby="presentations-heading"
+            hidden
+          >
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">PRESENT</span>
+                <h2 id="presentations-heading">Presentations</h2>
+              </div>
+            </div>
+            <p class="panel-description">
+              Authored stages with time to explain the real application.
+            </p>
+            <div id="presentations" class="recipe-list"></div>
+          </section>
           <div class="panel-heading">
             <div>
               <span class="eyebrow">NEXT ACTION</span>
@@ -100,6 +116,45 @@
           <div id="recipes" class="recipe-list"></div>
         </aside>
         <section class="execution-panel" aria-labelledby="execution-heading">
+          <section
+            id="presentation-panel"
+            class="presentation-panel"
+            aria-labelledby="presentation-title"
+            hidden
+          >
+            <div class="presentation-top">
+              <div>
+                <span class="eyebrow">PRESENTATION</span>
+                <h2 id="presentation-title"></h2>
+              </div>
+              <span id="presentation-phase" class="pill" role="status"></span>
+            </div>
+            <p id="presentation-progress" class="subtle"></p>
+            <progress
+              id="presentation-meter"
+              aria-label="Presentation stages"
+              max="1"
+              value="0"
+            ></progress>
+            <h3 id="presentation-stage"></h3>
+            <p id="presentation-explanation"></p>
+            <div class="presentation-pacing">
+              <p id="presentation-hold"></p>
+              <button id="advance" class="secondary" type="button">
+                Advance
+              </button>
+            </div>
+            <p id="presentation-reason" class="notice" role="status" hidden></p>
+            <p class="subtle">
+              Stage captions describe the plan; application success requires an
+              observed outcome.
+            </p>
+            <p class="subtle">
+              Stage holds use their authored duration. Execution speed affects
+              browser actions. Driver pause holds this run, independently of the
+              application's state.
+            </p>
+          </section>
           <div class="execution-top">
             <div>
               <span class="eyebrow">EXECUTION</span>
@@ -109,7 +164,7 @@
               </h2>
             </div>
             <div class="controls">
-              <label class="speed-label" for="speed">Speed</label
+              <label class="speed-label" for="speed">Action speed</label
               ><select id="speed" aria-label="Execution speed">
                 <option value="slow">Slow</option>
                 <option value="normal" selected>Normal</option>
@@ -144,7 +199,10 @@
       </div>
       <footer class="workspace-footer">
         <span>Observe → authorize → act → verify</span
-        ><span>Pause and stop take effect at action boundaries.</span>
+        ><span
+          >Pause and stop interrupt stage holds and take effect at action
+          boundaries.</span
+        >
       </footer>
     </main>
   </body>

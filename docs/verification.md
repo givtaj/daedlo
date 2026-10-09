@@ -1,5 +1,78 @@
 # Verification record
 
+## Shared presentation mode — 2026-10-09
+
+Implemented [presentation mode](presentation.md) for an existing command or
+canonical Rust recipe, with customer-owned captions, configurable timed/manual
+holds, viewer controls and progress. Presentation and ordinary execution share the
+same guards, adapter and resource lifecycle. Runtime speed, presenter pause and
+application pause remain distinct. No shared Rust/model/protocol change was needed.
+
+| Check | Result | Evidence / limit |
+| --- | --- | --- |
+| Regression-first workflow | RED then PASS | `artifacts/presentation-20261009/`: ignored config and invalid plans, missing viewer endpoint/UI, final-read pause/stop races, stalled observations and pause-duration accounting reproduced before fixes |
+| Full runtime suite | PASS — 73 Node tests | Includes 15 presentation checks plus CLI passthrough and viewer HTTP boundaries; `node-green-final.txt` |
+| Source quality | PASS | Syntax, public TypeScript declarations and repository formatting; `check-final.txt` |
+| Shared Rust checks | PASS — 18 tests | `cargo test --workspace --locked --offline`; Rust implementation unchanged by presentation work |
+| Generic viewer Chromium checks | PASS — 1 browser group plus 8 HTTP groups | Start, captions, manual/timed holds, pause/resume, advance token, stop, stale reason, disconnected state, reload without replay, initial viewport controls, outcome-pending copy and prior-result preservation |
+| Ordinary notebook Chromium acceptance | PASS — 8 groups | Existing attachment, stale/account, validation/persistence, lost-response retry, interruption, viewer, incompatibility and canonical recipe checks |
+| Final isolated Stoplight candidate | PASS — 5 scenarios / 15 groups | `artifacts/stoplight-presentation-accept-20261009-final/results.json`: actual viewer start/pause/resume, hold freeze/advance, exact edited receipt, draft protection, stop, automatic disconnect halt and ordinary recipe compatibility |
+| Candidate identity and cleanup | PASS | Final `source-verification.json` matches current runtime source and demo inputs; sealed prior trial unchanged. `external-cleanup.json`: all five profiles removed, all ten fixture/viewer ports refused connections; supplied pages survived session/viewer close |
+| Visible slow demonstration | PASS / INSPECTED | Fresh `artifacts/stoplight-presentation-demo-20261009-final-02/`: started in the visible Codex viewer, all five stages completed, one edited receipt, final outcome success with effect uncertain; owned viewer retained |
+
+The Stoplight candidate uses an immutable copy of the new **local runtime source**
+with the unchanged customer executable built against published rc.5, protocol 1,
+and pinned Stoplight `78ff7d465fa01f06eeff2d813d74049fe8852296`. This is not a
+new release or new acceptance claim for the published rc.5 runtime. Candidate input
+inventories and reports identify the exact bytes. The earlier intermediate
+candidate under `artifacts/stoplight-presentation-accept-20261009-01/` also passed;
+only the final candidate contains the reviewed timing and viewer-copy corrections.
+
+Source tests initially hit the sandbox's loopback `EPERM`; those are setup failures.
+Permitted loopback/browser runs passed. No blind retries, weakened assertions,
+application resets or recovery effects were added. Hold observations are bounded
+and interruptible; ordinary adapter effects/settle/cleanup remain cooperative.
+
+The customer example streams an extension page with a separate owned target. Native
+Chrome sidebar behavior and durable business persistence remain unverified. One
+in-memory HTTP receipt is evidence of synthetic forwarding only. New presentations
+are configured when attaching the session; holds occur after whole commands.
+
+The first visible slow demo, retained under
+`artifacts/stoplight-presentation-demo-20261009-final/`, halted correctly about
+7.1 seconds into its first 15-second hold when the app changed from Armed to an
+original paused request. Its report records only the Arm effect, no Send effect
+or stage advance, and zero receiver receipts. The source of that state change is
+unrecorded. The run was not resumed, reset or treated as successful; its pending
+request and evidence were preserved. The separate fresh `final-02` fixture added
+passive local input/request metadata, with no runtime, adapter, engine or
+application changes. Its input inventory matches the final acceptance candidate.
+
+The second slow demo completed with measured holds of 15,028 / 18,089 / 18,077 /
+12,059 / 3,097 ms and per-stage receiver counts 0 / 0 / 0 / 1 / 1. The final
+application state was Detached with an empty queue and one edited HTTP receipt.
+Execution completed and the model outcome was success; the effect remains
+uncertain because no durable business persistence is claimed. Passive diagnostics
+recorded one synthetic click and one POST/fetch aligned with the guarded Send
+stage; they do not identify an actor. `demo-summary.json`, stage captures and the
+completed report preserve the evidence. Both the successful viewer and the earlier
+halted fixture were retained with explicit owners in ignored
+`artifacts/presentation-20261009/presentation-HANDOFF.md`; prior parent demo
+resources remain untouched.
+
+Existing evaluation/licensing drafts, older integration evidence, live Roots and
+Stoplight checkouts, dependency pins and retained parent demo resources were left
+outside the implementation change. No commit, push, publication or deployment
+occurred during the implementation checkpoint described above.
+
+The subsequent requested commit isolates the shared presentation runtime, viewer,
+tests and documentation. Pre-existing licensing/version drafts and the uncommitted
+Stoplight integration, including its dependent presentation launcher, stay local.
+The exact selected commit source passed 73 Node tests, syntax/types/format checks
+and the independent Chromium viewer test. Earlier Stoplight browser results refer
+to the recorded local candidate and its specific input identity above, not a new
+test of the selected commit or a released package.
+
 ## Corrected portable rc.5 source checks — 2026-10-06
 
 The rc.4 source commit and its existing Node 22/24 CI passed, but an additional

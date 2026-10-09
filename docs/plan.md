@@ -248,3 +248,20 @@ exited before CLI finalization. The corrected target is `v0.1.1-rc.5`, with CLI
 signal ownership, two additional regressions and two passing real-browser CLI
 checks. Re-run the existing CI and exact final-package gates on its clean commit;
 keep the previous candidate and failure receipts intact.
+
+## Requested shared presentation mode — 2026-10-09
+
+- [x] Decorate existing Rust commands/recipes with customer-authored stage metadata.
+- [x] Add configurable holds and explicit start/pause/resume/advance/stop controls.
+- [x] Recheck fresh observations through holds; halt on stale state, disconnection,
+      application non-success or cleanup failure without recovery effects.
+- [x] Reproduce and fix final-hold interruption and paused-clock races.
+- [x] Preserve attached resources and ordinary command/recipe behavior.
+- [x] Verify source tests, generic Chromium UI, ordinary browser acceptance and a
+      fresh isolated Stoplight runtime candidate.
+- [x] Document public configuration, ownership and limits in
+      [presentation mode](presentation.md); record actual results in
+      [verification](verification.md).
+
+This feature is local source work; publication and customer dependency promotion
+are separate actions. The Stoplight captions and fixture remain customer-owned.

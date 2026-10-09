@@ -211,7 +211,7 @@ export async function createViewer({ page, context, session, port = 0 }) {
           res.on("close", () => clients.delete(res));
         } else if (
           req.method === "POST" &&
-          ["/command", "/control"].includes(path)
+          ["/command", "/presentation", "/control"].includes(path)
         ) {
           if (
             (req.headers.origin && req.headers.origin !== `http://${host}`) ||
@@ -257,6 +257,24 @@ export async function createViewer({ page, context, session, port = 0 }) {
               result.execution === "rejected" ||
               (!result.execution && result.ok === false);
             json(res, rejected ? 409 : 200, result);
+          } else if (path === "/presentation") {
+            if (
+              !validId(body.id) ||
+              !validId(body.revision) ||
+              Object.keys(body).some((key) => !["id", "revision"].includes(key))
+            )
+              return json(res, 400, {
+                ok: false,
+                error: "Supply a presentation ID and observed revision",
+              });
+            const result = await session.startPresentation(
+              body.id,
+              body.revision,
+            );
+            const rejected =
+              result.execution === "rejected" ||
+              (!result.execution && result.ok === false);
+            json(res, rejected ? 409 : 200, result);
           } else {
             if (
               Object.keys(body).some(
@@ -272,7 +290,10 @@ export async function createViewer({ page, context, session, port = 0 }) {
               ["slow", "normal", "fast"].includes(body.value)
             )
               await session.setSpeed(body.value);
-            else if (
+            else if (body.action === "advance" && validId(body.value)) {
+              const result = await session.advancePresentation(body.value);
+              if (!result.ok) return json(res, 409, result);
+            } else if (
               ["pause", "resume", "stop"].includes(body.action) &&
               body.value === undefined
             )

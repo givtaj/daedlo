@@ -48,6 +48,20 @@ Resource registry tracks explicit owned/attached handles; cleanup reverses acqui
 
 `session.report()` returns a detached current session view with `format:"browser-driver-report/1"`, `identity`, `runId`, `lastResult`, the latest 200 session `events`, `resources`, and `completedRunIds`. During an active run, `lastResult` remains the prior result until the new result is available. The session view changes as work proceeds; it is not a frozen record of one run.
 
+Optional session `presentations` decorates an existing command or canonical recipe
+with one public caption/hold per step; it cannot add a second application plan.
+`startPresentation(id,revision)` shares the execution facade and run lifecycle.
+`advancePresentation(stageId)` consumes only the current unpaused hold; existing
+pause/resume/stop controls remain available. Holds default to 10 seconds, are
+independent of execution speed, and compare the verified revision/session
+throughout the hold and at exit. A stale observation, disconnection or non-success
+outcome halts presentation without recovery effects. Snapshots add `presentations`
+and `presentation`; presentation results retain that progress in the completed
+report. Captions do not establish success or persistence. POST `/presentation`
+accepts `{id,revision}`; `/control` also accepts `{action:"advance",value:stageId}`.
+See [presentation configuration and ownership](presentation.md) and public types
+for bounds, phases, cooperative interruption and resource preservation.
+
 `session.report({runId})` returns a detached completed report for one of the latest 16 finished active runs, or `null` if that run is absent, still active or evicted. Finished includes completed, rejected, failed and stopped executions. Its captured identity, result, resource snapshot and run-only events remain unchanged by later commands, later cleanup or mutations to returned objects. Reports live in memory and are not a durable archive. They use the same format marker and omit `completedRunIds`; their `eventRange:{first,last,retainedFirst,truncated}` identifies the run's original first/last event sequences and the oldest retained event. At most 200 events are retained per report, with truncation disclosed instead of implying complete history.
 
 Reports omit raw observations, command parameters and private operation evidence. Caller-supplied identities, model outcome labels and adapter metadata must themselves be safe public values. Snapshot/report identities include the measured runtime package source digest and engine executable SHA256, alongside caller-supplied application metadata. These identify bytes, not proof that a binary was compiled from a claimed application commit. The consumer acceptance record supplies build/source provenance and actual browser verification separately; the report schema does not establish either.

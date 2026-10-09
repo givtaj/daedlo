@@ -139,6 +139,13 @@ accept an existing controlled page/context; simply opening the same URL does not
 attach to a user's authenticated session. Explain headed versus streamed-headless
 mode and show the viewer that belongs to the controlled browser.
 
+For a requested demonstration of an accepted flow, use the shared
+[presentation mode](presentation.md): customer-owned titles/explanations and holds
+decorate the existing command or Rust recipe. Configure it on that session or in
+the CLI project module. Choose human-readable holds separately from execution
+speed; do not reconstruct the transition graph or silently reset an application
+to make a presentation continue.
+
 ## Complete the first onboarding
 
 Product contributors review the outcome, language and useful branches. Developers

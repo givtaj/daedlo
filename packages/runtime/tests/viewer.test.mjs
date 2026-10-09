@@ -71,6 +71,31 @@ function fixture({ failScreenshot = false, failStart = false } = {}) {
         outcome: { kind: "recoverable_error", label: "Save can be retried" },
       };
     },
+    startPresentation: async (id, revision) => {
+      calls.push(["presentation", id, revision]);
+      return revision === "r1"
+        ? {
+            ok: true,
+            execution: "completed",
+            outcome: { kind: "success", label: "Observed result" },
+          }
+        : {
+            ok: false,
+            execution: "rejected",
+            error_code: "stale_revision",
+            error: "Observe the current state before presenting.",
+          };
+    },
+    advancePresentation: async (stageId) => {
+      calls.push(["advance", stageId]);
+      return stageId === "stage-1"
+        ? { ok: true }
+        : {
+            ok: false,
+            error_code: "stale_stage",
+            error: "This stage has already advanced.",
+          };
+    },
     setSpeed: async (value) => {
       calls.push(["speed", value]);
     },
@@ -187,6 +212,99 @@ test("dispatches exact command, recipe and controls, preserving outcome separate
     ["stop"],
     ["speed", "fast"],
   ]);
+});
+
+test("dispatches presentations and tokenized advance while preserving actionable refusals", async (t) => {
+  const { viewer, calls } = await start(t);
+  const result = await post(`${viewer.url}/presentation`, {
+    id: "tour",
+    revision: "r1",
+  });
+  assert.equal(result.status, 200);
+  assert.equal(JSON.parse(result.body).outcome.label, "Observed result");
+  assert.deepEqual(calls[0], ["presentation", "tour", "r1"]);
+  const stale = await post(`${viewer.url}/presentation`, {
+    id: "tour",
+    revision: "old",
+  });
+  assert.equal(stale.status, 409);
+  assert.equal(JSON.parse(stale.body).error_code, "stale_revision");
+  const advanced = await post(`${viewer.url}/control`, {
+    action: "advance",
+    value: "stage-1",
+  });
+  assert.equal(advanced.status, 200);
+  assert.deepEqual(calls[2], ["advance", "stage-1"]);
+  const duplicate = await post(`${viewer.url}/control`, {
+    action: "advance",
+    value: "stage-0",
+  });
+  assert.equal(duplicate.status, 409);
+  assert.equal(
+    JSON.parse(duplicate.body).error,
+    "This stage has already advanced.",
+  );
+});
+
+test("presentation endpoints enforce the command request and connection boundaries", async (t) => {
+  const { viewer, calls, page } = await start(t);
+  const url = `${viewer.url}/presentation`;
+  const body = { id: "tour", revision: "r1" };
+  for (const invalid of [
+    null,
+    [],
+    {},
+    { ...body, revision: "" },
+    { ...body, id: "" },
+    { ...body, params: {} },
+    { ...body, recipe: true },
+  ])
+    assert.equal((await post(url, invalid)).status, 400);
+  assert.equal(
+    (await post(url, body, { origin: "https://attacker.example" })).status,
+    403,
+  );
+  assert.equal(
+    (await post(url, body, { "sec-fetch-site": "cross-site" })).status,
+    403,
+  );
+  assert.equal(
+    (await post(url, body, { host: "attacker.example" })).status,
+    403,
+  );
+  assert.equal(
+    (
+      await request(url, {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: "{}",
+      })
+    ).status,
+    415,
+  );
+  assert.equal(
+    (await post(url, { ...body, id: "x".repeat(17000) })).status,
+    413,
+  );
+  for (const value of [undefined, "", [], 1])
+    assert.equal(
+      (await post(`${viewer.url}/control`, { action: "advance", value }))
+        .status,
+      400,
+    );
+  assert.equal(calls.length, 0);
+  page.emit("close");
+  assert.equal((await post(url, body)).status, 409);
+  assert.equal(
+    (
+      await post(`${viewer.url}/control`, {
+        action: "advance",
+        value: "stage-1",
+      })
+    ).status,
+    409,
+  );
+  assert.equal(calls.length, 0);
 });
 
 test("refuses hostile Host, cross-origin mutation, non-JSON, oversized and malformed requests before dispatch", async (t) => {

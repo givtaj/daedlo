@@ -89,6 +89,41 @@ export interface BrowserAdapter<F = Record<string, unknown>> {
   effectStatus?(): EffectReport | Promise<EffectReport>;
   close?(): void | Promise<void>;
 }
+export interface PresentationStage {
+  /** Customer-authored public metadata; captions do not establish success. */
+  title: string;
+  explanation?: string;
+  /** Hold after a verified successful step, 0..3,600,000 ms; default 10,000. Independent of execution speed. */
+  holdMs?: number;
+  /** Wait for Advance even when the countdown ends. Default false. */
+  manual?: boolean;
+}
+export type Presentation = {
+  id: string;
+  title: string;
+  explanation?: string;
+  /** Exactly one stage per canonical command/recipe step. */
+  stages: PresentationStage[];
+} & (
+  | { recipe: string; command?: never; params?: never }
+  | { command: string; params?: Record<string, unknown>; recipe?: never }
+);
+export interface PresentationProgress {
+  id: string;
+  title: string;
+  status: "running" | "completed" | "halted" | "stopped";
+  phase: "executing" | "holding" | "finished";
+  stage: number;
+  total: number;
+  /** Pass this token to advancePresentation; valid only for the current hold. */
+  stageId: string;
+  stageTitle: string;
+  explanation: string;
+  holdMs: number;
+  remainingMs: number;
+  manual: boolean;
+  reason?: string;
+}
 export interface Result {
   ok: boolean;
   execution: "completed" | "rejected" | "failed" | "stopped";
@@ -108,6 +143,7 @@ export interface Result {
     label: string;
   };
   effect: EffectReport;
+  presentation?: PresentationProgress;
   error_code?: string;
   error?: string;
 }
@@ -121,6 +157,9 @@ export interface DriverEvent {
   outcome?: string;
   execution?: string;
   error_code?: string;
+  presentationId?: string;
+  stage?: number;
+  status?: string;
 }
 export interface ReportResource {
   label: string;
@@ -163,8 +202,22 @@ export interface Snapshot {
   progress: { step: number; total: number; lastAction: string | null };
   lastResult: Result | null;
   identity: Record<string, unknown>;
+  presentations: Array<{
+    id: string;
+    title: string;
+    explanation: string;
+    enabled: boolean;
+    reason?: string;
+  }>;
+  presentation: PresentationProgress | null;
 }
 export interface DriverSession {
+  startPresentation(id: string, revision: string): Promise<Result>;
+  advancePresentation(stageId: string): {
+    ok: boolean;
+    error_code?: string;
+    error?: string;
+  };
   observe(): Promise<Snapshot>;
   snapshot(): Promise<Snapshot>;
   execute(
@@ -208,6 +261,7 @@ export function createDriverSession<F>(options: {
   adapter: BrowserAdapter<F>;
   identity?: Record<string, unknown>;
   resources?: ResourceScope;
+  presentations?: Presentation[];
 }): Promise<DriverSession>;
 export function createViewer(options: {
   page: Page;

@@ -621,6 +621,90 @@ main {
   color: #9aa891;
   line-height: 1.6;
 }
+#presentation-catalog {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+.presentation-description {
+  font-size: 10px;
+  line-height: 1.55;
+  color: #647565;
+  margin: 8px 4px;
+}
+.presentation-button {
+  background: #eaf5ed;
+  border-color: #bcd8c4;
+  color: #295c3e;
+}
+.presentation-panel {
+  background: #f4f9f4;
+  border: 1px solid #d5e6d6;
+  border-radius: 9px;
+  padding: 16px;
+  margin-bottom: 22px;
+}
+.presentation-top,
+.presentation-pacing {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.presentation-top h2 {
+  margin-top: 5px;
+  font-size: 17px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+#presentation-progress {
+  margin-top: 12px;
+}
+#presentation-meter {
+  display: block;
+  width: 100%;
+  height: 5px;
+  margin: 7px 0 16px;
+  accent-color: #43835c;
+}
+#presentation-stage {
+  font-size: 15px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+#presentation-explanation {
+  margin-top: 7px;
+  color: #526955;
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.presentation-pacing {
+  margin: 13px 0;
+  font-size: 11px;
+  color: #365f40;
+}
+#advance {
+  padding: 8px 15px;
+  border: 1px solid #a5c6ac;
+  border-radius: 5px;
+  background: white;
+  color: #285d38;
+}
+#advance:disabled {
+  opacity: 0.45;
+}
+.presentation-panel .subtle {
+  color: #6e7f6d;
+}
+.presentation-panel .subtle + .subtle {
+  margin-top: 5px;
+}
+.presentation-panel[data-status="halted"] {
+  background: #fff7ef;
+  border-color: #e2c8a8;
+}
 .execution-panel {
   background: #fff;
   border: 1px solid var(--line);
@@ -820,6 +904,37 @@ main {
   }
   .browser-screen {
     min-height: 480px;
+  }
+}
+@media (min-width: 921px) {
+  .presenting .workspace-grid {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+  .presenting .browser-panel {
+    grid-row: 1 / span 2;
+  }
+  .presenting .execution-panel {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 16px;
+  }
+  .presenting .execution-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .presenting .controls {
+    flex-wrap: wrap;
+  }
+  .presenting .presentation-panel {
+    padding: 13px;
+  }
+  .presenting .action-panel {
+    grid-row: 2;
+    min-height: 0;
+    max-height: none;
+  }
+  .presenting .last-result {
+    flex-wrap: wrap;
   }
 }
 @media (max-width: 1180px) {

@@ -17,11 +17,15 @@ const node = (tag, className, content) => {
 };
 let latest,
   descriptorKey,
+  presentationKey,
   pending = false,
+  startingPresentation = false,
+  advancePending = false,
   streamFailed = false,
   lastStreamRetry = 0;
 const commandViews = new Map(),
   recipeViews = new Map(),
+  presentationViews = new Map(),
   stateViews = new Map();
 
 function message(value, failed = false) {
@@ -113,6 +117,113 @@ async function run(id, params, recipe = false) {
     pending = false;
     await refresh();
   }
+}
+
+async function present(id) {
+  if (
+    !latest?.driver?.revision ||
+    pending ||
+    latest.driver.busy ||
+    latest.driver.paused ||
+    !latest.connected
+  )
+    return;
+  const revision = latest.driver.revision;
+  pending = true;
+  startingPresentation = true;
+  message("Starting the presentation…");
+  updateAvailability();
+  try {
+    const result = await mutate("/presentation", { id, revision });
+    displayResult(result);
+    message(
+      result.execution === "failed"
+        ? result.error ||
+            result.reason ||
+            "Presentation halted; inspect the observed outcome."
+        : "",
+      result.execution === "failed",
+    );
+  } catch (error) {
+    message(error.message, true);
+  } finally {
+    pending = false;
+    startingPresentation = false;
+    await refresh();
+  }
+}
+
+function buildPresentations(presentations) {
+  presentationViews.clear();
+  $("presentations").replaceChildren();
+  $("presentation-catalog").hidden = !presentations.length;
+  for (const presentation of presentations) {
+    const card = node("div", "recipe-card");
+    const button = node("button", "recipe-button presentation-button");
+    button.type = "button";
+    button.dataset.presentation = presentation.id;
+    button.append(
+      node("span", "recipe-icon", "▷"),
+      node("strong", "", `Start ${presentation.title}`),
+    );
+    const explanation = node(
+      "p",
+      "presentation-description",
+      presentation.explanation,
+    );
+    const reason = node("p", "command-reason");
+    reason.id = `presentation-reason-${presentation.id}`;
+    button.setAttribute("aria-describedby", reason.id);
+    button.addEventListener("click", () => void present(presentation.id));
+    card.append(button, explanation, reason);
+    $("presentations").append(card);
+    presentationViews.set(presentation.id, { button, reason });
+  }
+}
+
+function renderPresentation(driver, connected) {
+  const presentation = driver.presentation;
+  document.body.classList.toggle("presenting", Boolean(presentation));
+  $("presentation-panel").hidden = !presentation;
+  if (!presentation) return;
+  const running = presentation.status === "running";
+  const holding = running && presentation.phase === "holding";
+  $("presentation-panel").dataset.status = presentation.status;
+  $("presentation-title").textContent = presentation.title;
+  $("presentation-phase").textContent =
+    running && !connected
+      ? "Connection unavailable"
+      : running && driver.paused
+        ? "Paused by presenter"
+        : running
+          ? holding
+            ? "Holding for explanation"
+            : "Executing stage"
+          : title(presentation.status);
+  $("presentation-progress").textContent =
+    `Stage ${presentation.stage} of ${presentation.total}`;
+  $("presentation-meter").max = presentation.total || 1;
+  $("presentation-meter").value =
+    presentation.status === "completed"
+      ? presentation.total
+      : Math.max(
+          0,
+          presentation.stage - (presentation.phase === "executing" ? 1 : 0),
+        );
+  $("presentation-stage").textContent = presentation.stageTitle;
+  $("presentation-explanation").textContent = presentation.explanation;
+  $("presentation-hold").textContent =
+    running && !connected
+      ? "Observation unavailable; inspect the connection."
+      : holding
+        ? presentation.manual
+          ? "Waiting for Advance"
+          : `${Math.ceil(Math.max(0, presentation.remainingMs) / 1000)}s remaining${driver.paused ? " · countdown paused" : " · or Advance when ready"}`
+        : running
+          ? "Observing and executing guarded application actions…"
+          : "Presentation finished. Inspect the application outcome below.";
+  $("presentation-reason").textContent = presentation.reason || "";
+  $("presentation-reason").hidden = !presentation.reason;
 }
 
 function buildParameter(id, name, parameter) {
@@ -292,7 +403,8 @@ function buildDescriptor(descriptor) {
 
 function updateAvailability() {
   const driver = latest?.driver;
-  const blocked = pending || driver?.busy || !latest?.connected;
+  const blocked =
+    pending || driver?.busy || driver?.paused || !latest?.connected;
   let available = 0;
   for (const [id, view] of commandViews) {
     const state = driver?.commands?.find((command) => command.id === id);
@@ -315,6 +427,24 @@ function updateAvailability() {
       (!state?.enabled ? "Unavailable in the observed state" : "");
     view.reason.hidden = !view.reason.textContent;
   }
+  for (const [id, view] of presentationViews) {
+    const state = driver?.presentations?.find(
+      (presentation) => presentation.id === id,
+    );
+    view.button.disabled = Boolean(blocked || !state?.enabled);
+    view.reason.textContent =
+      state?.reason ||
+      (!state?.enabled ? "Unavailable in the observed state" : "");
+    view.reason.hidden = !view.reason.textContent;
+  }
+  const presentation = driver?.presentation;
+  $("advance").disabled = Boolean(
+    advancePending ||
+      !latest?.connected ||
+      driver?.paused ||
+      presentation?.status !== "running" ||
+      presentation?.phase !== "holding",
+  );
   $("pause").disabled = !latest?.connected || !driver?.busy;
   $("pause").hidden = Boolean(driver?.paused);
   $("resume").hidden = !driver?.paused;
@@ -339,6 +469,27 @@ function render(snapshot) {
       buildDescriptor(driver.descriptor);
       descriptorKey = key;
     }
+  }
+  const presentations = driver.presentations || [];
+  const catalogKey = JSON.stringify(
+    presentations.map(({ id, title, explanation }) => ({
+      id,
+      title,
+      explanation,
+    })),
+  );
+  if (catalogKey !== presentationKey) {
+    buildPresentations(presentations);
+    presentationKey = catalogKey;
+  }
+  renderPresentation(driver, snapshot.connected);
+  if (
+    startingPresentation &&
+    driver.busy &&
+    driver.presentation?.status === "running"
+  ) {
+    startingPresentation = false;
+    message("Presentation running…");
   }
   $("connection").textContent = snapshot.connected
     ? "Connected"
@@ -377,7 +528,7 @@ function render(snapshot) {
     })),
   );
   $("execution-state").textContent = driver.paused
-    ? "Paused"
+    ? "Driver paused"
     : title(
         typeof driver.execution === "object"
           ? driver.execution.status
@@ -398,6 +549,13 @@ function render(snapshot) {
         ? "Executing and observing the application…"
         : "Ready for a command");
   if (driver.lastResult) displayResult(driver.lastResult);
+  else if (driver.busy) {
+    $("outcome-label").textContent =
+      "Run in progress; final application outcome pending";
+    $("effect-label").textContent =
+      "Execution is active. The finished run's observed outcome will appear here.";
+    $("outcome-kind").hidden = true;
+  }
   updateAvailability();
   if (
     streamFailed &&
@@ -422,6 +580,7 @@ async function refresh() {
       "The local viewer is unavailable. Existing commands are never replayed when it reconnects.";
     $("connection-error").hidden = false;
     $("live-dot").classList.add("offline");
+    renderPresentation(latest?.driver || {}, false);
     updateAvailability();
   }
 }
@@ -435,6 +594,30 @@ for (const action of ["pause", "resume", "stop"])
       message(error.message, true);
     }
   });
+$("advance").addEventListener("click", async () => {
+  const presentation = latest?.driver?.presentation;
+  if (
+    advancePending ||
+    !latest?.connected ||
+    latest.driver.paused ||
+    presentation?.status !== "running" ||
+    presentation?.phase !== "holding"
+  )
+    return;
+  const stageId = presentation.stageId;
+  advancePending = true;
+  updateAvailability();
+  try {
+    await mutate("/control", { action: "advance", value: stageId });
+    message("");
+  } catch (error) {
+    message(error.message, true);
+  } finally {
+    await refresh();
+    advancePending = false;
+    updateAvailability();
+  }
+});
 $("speed").addEventListener("change", async () => {
   try {
     await mutate("/control", { action: "speed", value: $("speed").value });

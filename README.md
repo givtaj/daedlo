@@ -99,6 +99,8 @@ additionally requires Node 24+, Docker and a pinned Roots source checkout.
   update/rollback without changing Roots.
 - [Protocol and public API contract](docs/contracts.md): implemented v0.1
   interfaces; still pre-release, with the tested consumers recorded below.
+- [Presentation mode](docs/presentation.md): paced playback of existing commands
+  and recipes, presenter controls, fresh-state guards and ownership.
 - [Acceptance scenarios](docs/acceptance.md): the behavior the executable tests
   must prove.
 - [Verification record](docs/verification.md): actual pass/fail/not-run evidence.
