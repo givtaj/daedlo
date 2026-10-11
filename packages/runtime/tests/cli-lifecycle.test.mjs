@@ -126,15 +126,18 @@ function harness(overrides = {}) {
       },
     },
     {
-      createProject: async () => ({
-        url: "about:blank",
-        enginePath: overrides.enginePath ?? enginePath,
-        presentations: overrides.presentations,
-        createAdapter:
-          overrides.createAdapter ??
-          (async () =>
-            overrides.adapter ?? { model: { id: "test", version: "1" } }),
-      }),
+      createProject: async ({ resources }) =>
+        overrides.project
+          ? overrides.project({ resources, page, browser })
+          : {
+              url: "about:blank",
+              enginePath: overrides.enginePath ?? enginePath,
+              presentations: overrides.presentations,
+              createAdapter:
+                overrides.createAdapter ??
+                (async () =>
+                  overrides.adapter ?? { model: { id: "test", version: "1" } }),
+            },
     },
     (callback, delay) => {
       const timer = setInterval(callback, delay);
@@ -623,4 +626,409 @@ test("CLI passes customer presentation metadata into its session without auto-st
   h.process.emit("SIGTERM");
   await bounded(h.run);
   assert.deepEqual(received, presentations);
+});
+
+function customSession(overrides = {}) {
+  const snapshot = async () => ({ descriptor: { id: "test", version: "1" } });
+  return {
+    snapshot,
+    observe: snapshot,
+    execute: async () => ({}),
+    runRecipe: async () => ({}),
+    command: async () => ({}),
+    startPresentation: async () => ({}),
+    advancePresentation: () => ({ ok: true }),
+    pause: () => ({ ok: true }),
+    resume: () => ({ ok: true }),
+    stop() {},
+    setSpeed: () => ({ ok: true }),
+    close: async () => {},
+    report: () => ({
+      identity: { model: { id: "custom", version: "1" } },
+      facade: true,
+    }),
+    ...overrides,
+  };
+}
+
+test("CLI custom factory supplies the exact facade to viewer, shutdown and final report", async (t) => {
+  let closes = 0,
+    stops = 0,
+    commands = 0,
+    defaults = 0,
+    supplied;
+  const facade = customSession({
+    close: async () => closes++,
+    stop: () => stops++,
+    command: async () => {
+      commands++;
+      return { ok: true };
+    },
+  });
+  const h = harness({
+    project: () => ({
+      url: "about:blank",
+      createSession: async (options) => {
+        supplied = options;
+        return facade;
+      },
+    }),
+    createSession: async () => {
+      defaults++;
+      throw Error("default path must not run");
+    },
+    createViewer: async ({ session }) => {
+      assert.equal(session, facade);
+      await session.command({ id: "fixture" });
+    },
+  });
+  t.after(() => h.dispose());
+  await bounded(h.ready.promise);
+  assert.ok(supplied.page && supplied.context && supplied.resources);
+  assert.equal(defaults, 0);
+  h.process.emit("SIGTERM");
+  await bounded(h.run);
+  assert.equal(closes, 1);
+  assert.ok(stops >= 1);
+  assert.equal(commands, 1);
+  assert.equal(h.calls.reports[0].facade, true);
+  assert.equal(h.calls.browser, 1);
+  assert.equal(h.calls.attached, 0);
+});
+
+test("CLI owns a custom session returned after startup interruption before validating or viewing it", async (t) => {
+  const entered = deferred(),
+    release = deferred();
+  let closes = 0;
+  const h = harness({
+    project: () => ({
+      url: "about:blank",
+      createSession: async () => {
+        entered.resolve();
+        await release.promise;
+        return customSession({ close: async () => closes++ });
+      },
+    }),
+  });
+  t.after(async () => {
+    release.resolve();
+    await h.dispose();
+  });
+  await bounded(entered.promise);
+  h.process.emit("SIGINT");
+  release.resolve();
+  await bounded(h.run);
+  assert.equal(closes, 1);
+  assert.equal(h.calls.viewer, 0);
+  assert.equal(h.calls.browser, 1);
+  assert.equal(h.calls.attached, 0);
+});
+
+test("CLI cleans resources registered by a failing custom factory", async (t) => {
+  let partial = 0;
+  const h = harness({
+    project: () => ({
+      url: "about:blank",
+      createSession: async ({ resources }) => {
+        resources.own(
+          {},
+          { label: "partially started custom fixture", close: () => partial++ },
+        );
+        throw Error("custom initialization failed");
+      },
+    }),
+  });
+  t.after(() => h.dispose());
+  await bounded(h.run);
+  assert.equal(h.process.exitCode, 1);
+  assert.equal(partial, 1);
+  assert.equal(h.calls.browser, 1);
+  assert.equal(h.calls.viewer, 0);
+  assert.equal(h.calls.attached, 0);
+  assert.ok(
+    h.diagnostics.some((s) => s.includes("custom initialization failed")),
+  );
+});
+
+for (const invalid of [
+  "missing command",
+  "missing stop",
+  "missing report",
+  "missing close",
+  "null",
+  "ambiguous",
+])
+  test(`CLI rejects invalid custom project/session: ${invalid}`, async (t) => {
+    let closes = 0,
+      factories = 0;
+    const h = harness({
+      project: () => ({
+        url: "about:blank",
+        ...(invalid === "ambiguous"
+          ? { enginePath, createAdapter: async () => ({}) }
+          : {}),
+        createSession: async () => {
+          factories++;
+          if (invalid === "null") return null;
+          const session = customSession({ close: async () => closes++ });
+          delete session[invalid.slice("missing ".length)];
+          return session;
+        },
+      }),
+    });
+    t.after(() => h.dispose());
+    await bounded(h.run);
+    assert.equal(h.process.exitCode, 1);
+    assert.equal(h.calls.viewer, 0);
+    assert.equal(h.calls.attached, 0);
+    assert.equal(factories, invalid === "ambiguous" ? 0 : 1);
+    assert.equal(
+      closes,
+      invalid.startsWith("missing ") && invalid !== "missing close" ? 1 : 0,
+      "A returned closable invalid session remains owned",
+    );
+  });
+
+test("CLI retries custom facade cleanup without repeating commands or closing attached resources", async (t) => {
+  let closes = 0,
+    commands = 0;
+  const facade = customSession({
+    close: async () => {
+      if (++closes === 1) throw Error("retry custom close");
+    },
+    command: async () => {
+      commands++;
+    },
+  });
+  const h = harness({
+    project: () => ({ url: "about:blank", createSession: async () => facade }),
+    createViewer: async ({ session }) => session.command({ id: "once" }),
+  });
+  t.after(() => h.dispose());
+  await bounded(h.ready.promise);
+  h.process.emit("SIGINT");
+  await bounded(h.diagnostic.promise);
+  await tick();
+  assert.equal(closes, 1);
+  assert.equal(commands, 1);
+  assert.equal(h.calls.reports[0].facade, true);
+  assert.ok(
+    h.calls.reports[0].resources.some(
+      (r) => r.label === "driver session" && r.status === "cleanup_failed",
+    ),
+  );
+  h.process.emit("SIGTERM");
+  await bounded(h.run);
+  assert.equal(closes, 2);
+  assert.equal(commands, 1);
+  assert.equal(h.calls.browser, 1);
+  assert.equal(h.calls.attached, 0);
+  assert.ok(
+    h.calls.reports[1].resources.some(
+      (r) => r.label === "driver session" && r.status === "closed",
+    ),
+  );
+});
+
+test("CLI custom facade settles an active write before final report and browser closure", async (t) => {
+  const entered = deferred(),
+    release = deferred();
+  let writes = 0,
+    endCalls = 0,
+    running;
+  const facts = { text: "retained", saved: false };
+  const h = harness({
+    project: () => ({
+      url: "about:blank",
+      createSession: async ({ page, context }) => {
+        const inner = await createDriverSession({
+          page,
+          context,
+          enginePath,
+          adapter: {
+            model: { id: "test", version: "1" },
+            observe: async () => ({ connected: true, session: "alpha", facts }),
+            effectStatus: () => ({
+              status: facts.saved ? "saved" : "not_attempted",
+            }),
+            handlers: {
+              edit: async () => {},
+              save: async (_, x) => {
+                await x.effect(() => {
+                  facts.saved = true;
+                  writes++;
+                });
+                entered.resolve();
+                await release.promise;
+              },
+            },
+            endRun: async () => {
+              endCalls++;
+            },
+          },
+        });
+        return {
+          ...inner,
+          report: () => ({ ...inner.report(), customFacade: true }),
+        };
+      },
+    }),
+    createViewer: async ({ session }) => {
+      running = session.execute(
+        "save",
+        {},
+        (await session.snapshot()).revision,
+      );
+    },
+  });
+  t.after(async () => {
+    release.resolve();
+    await h.dispose();
+  });
+  await bounded(entered.promise);
+  h.process.emit("SIGTERM");
+  await tick();
+  assert.equal(h.calls.browser, 0);
+  assert.equal(h.calls.reports.length, 0);
+  release.resolve();
+  await bounded(h.run);
+  await running;
+  assert.equal(writes, 1);
+  assert.equal(endCalls, 1);
+  assert.equal(h.calls.browser, 1);
+  assert.equal(h.calls.attached, 0);
+  assert.equal(h.calls.reports[0].customFacade, true);
+  assert.equal(h.calls.reports[0].lastResult.execution, "stopped");
+  assert.equal(h.calls.reports[0].lastResult.effect.status, "saved");
+});
+
+test("CLI immediately cancels paused factory startup before its next command and owns the partial facade once", async (t) => {
+  const entered = deferred(),
+    release = deferred();
+  const facts = { text: "retained", saved: false };
+  let facade,
+    factorySignal,
+    firstResult,
+    firstCommands = 0,
+    nextCommands = 0,
+    effects = 0,
+    closes = 0;
+  const h = harness({
+    project: () => ({
+      url: "about:blank",
+      createSession: async ({
+        page,
+        context,
+        signal,
+        ownSession,
+        resources,
+      }) => {
+        factorySignal = signal;
+        const inner = await createDriverSession({
+          page,
+          context,
+          enginePath,
+          adapter: {
+            model: { id: "test", version: "1" },
+            observe: async () => ({ connected: true, session: "alpha", facts }),
+            handlers: {
+              edit: async (_, x) => {
+                entered.resolve();
+                await release.promise;
+                await x.effect(() => effects++);
+              },
+              save: async () => nextCommands++,
+            },
+          },
+        });
+        facade = {
+          ...inner,
+          close: async () => {
+            closes++;
+            await inner.close();
+          },
+        };
+        // Keep the pre-feature run observable: only the new cancellation/ownership
+        // behavior is asserted, while fallback cleanup prevents a leaked engine.
+        if (ownSession) ownSession(facade);
+        else
+          resources.own(facade, {
+            label: "fallback partial",
+            close: (value) => value.close(),
+          });
+        const abort = () => facade.stop();
+        signal?.addEventListener("abort", abort, { once: true });
+        try {
+          signal?.throwIfAborted();
+          firstCommands++;
+          firstResult = await facade.execute(
+            "edit",
+            { text: "first" },
+            (await facade.snapshot()).revision,
+          );
+          signal?.throwIfAborted();
+          nextCommands++;
+          await facade.execute("save", {}, (await facade.snapshot()).revision);
+          return facade;
+        } finally {
+          signal?.removeEventListener("abort", abort);
+        }
+      },
+    }),
+  });
+  t.after(async () => {
+    facade?.stop();
+    release.resolve();
+    await h.dispose();
+  });
+  await bounded(entered.promise);
+  facade.pause();
+  release.resolve();
+  await tick();
+  h.process.emit("SIGINT");
+  assert.equal(
+    factorySignal?.aborted,
+    true,
+    "Shutdown must synchronously abort pending startup",
+  );
+  await bounded(h.run);
+  assert.equal(firstCommands, 1);
+  assert.equal(firstResult.error_code, "stopped");
+  assert.equal(nextCommands, 0);
+  assert.equal(effects, 0);
+  assert.equal(closes, 1);
+  assert.equal(h.calls.viewer, 0);
+  assert.equal(h.calls.browser, 1);
+  assert.equal(h.calls.attached, 0);
+});
+
+test("CLI transfers early custom session ownership without a second close", async (t) => {
+  let closes = 0;
+  const facade = customSession({ close: async () => closes++ });
+  const h = harness({
+    project: () => ({
+      url: "about:blank",
+      createSession: async ({ ownSession, resources }) => {
+        if (ownSession) ownSession(facade);
+        else
+          resources.own(facade, {
+            label: "fallback partial",
+            close: (value) => value.close(),
+          });
+        return facade;
+      },
+    }),
+  });
+  t.after(() => h.dispose());
+  await bounded(h.ready.promise);
+  h.process.emit("SIGTERM");
+  await bounded(h.run);
+  assert.equal(closes, 1, "An early owned and returned facade must close once");
+  assert.equal(
+    h
+      .scope()
+      .snapshot()
+      .filter((r) => r.label === "driver session").length,
+    1,
+  );
 });

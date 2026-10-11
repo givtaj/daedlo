@@ -7,6 +7,6 @@ license.workspace = true
 publish = false
 
 [dependencies]
-browser-driver-engine = { path = "../../crates/browser-driver-engine", version = "=0.1.3-roots.3" }
+browser-driver-engine = { path = "../../crates/browser-driver-engine", version = "=0.1.3-roots.4" }
 serde.workspace = true
 serde_json.workspace = true
