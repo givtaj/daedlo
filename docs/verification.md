@@ -713,3 +713,39 @@ groups, four motion groups, two viewer groups, syntax, types and format passed.
 Logs are retained in `artifacts/roots-migration-0.1.3-roots.3/`. Consumer Roots
 acceptance, its database, and publication are separate gates; this record does
 not claim them complete.
+
+### Local CLI browser overrides, 2026-10-11 — unpublished candidate
+
+The candidate CLI loads trusted `PLAYWRIGHT_MODULE` before project setup and
+passes `CHROMIUM` unchanged at browser launch. It has no module/executable fallback
+and retains its existing signal ownership. Thirteen actual CLI subprocess checks replace only the bare default
+Playwright import with a recording sentinel; no browser is launched by those tests.
+The pre-fix source had three passing default/help checks and ten actual assertion
+failures: explicit modules were ignored and executablePath was absent. Tightening
+help to require zero browser-module evaluations separately failed against the exact
+installed roots.4 CLI, then passed on the changed source. These are observed
+nonbrowser failures, not an OS executable-refusal or customer browser result.
+
+All thirteen strengthened environment checks pass. All 104 runtime checks pass,
+including paused factory cancellation and active saved-effect shutdown with selected
+executable options. Syntax, types and formatting pass. Private logs are retained
+in `artifacts/cli-environment-20261011/`.
+
+The exact installed roots.4 CLI also failed the real Chromium override assertion
+after successfully saving once and completing its owned cleanup: the selected
+module was never evaluated. The changed source passes ten real Chromium/HTTP CLI
+cases: the existing three, three override path forms, active saved-action SIGTERM,
+selected paused-startup cancellation, and missing/non-executable launch failures.
+Public response and final-report run IDs/effects match, with exactly one write for
+successful save scenarios and zero for interrupted startup. OS process path,
+realpath and SHA256 bind the selected actual browser; launch options stay unchanged.
+An earlier attempt retained five passes and five witness setup failures because
+Chromium rejected the optional command-line diagnostic. The corrected witness uses
+a browser-target process ID and an OS executable read, with no fallback or extra
+launch flag. All ten named fixture roots, fifteen child/browser PIDs and ten owned
+HTTP origins were absent in the independent cleanup audit.
+
+Unpublished local version `0.1.3-roots.5` will package these reviewed changes.
+Exact installed-candidate acceptance is recorded in its external LOCAL-CANDIDATE
+receipt after the clean build. Customer acceptance/pin selection, remote CI and
+publication remain separate; no existing Roots installation is changed here.

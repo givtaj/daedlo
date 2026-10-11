@@ -3,7 +3,6 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { writeFile } from "node:fs/promises";
-import { chromium } from "playwright";
 import {
   createDriverSession,
   createResourceScope,
@@ -19,6 +18,10 @@ or {url, createSession({page,context,resources,signal,ownSession})} returning a 
 The two creation routes are mutually exclusive. The CLI owns its new browser and registered fixture resources. Ctrl+C cleans them.
 Existing attached resources are preserved. The CLI does not automatically dispatch commands.
 Trusted project factories may perform explicitly configured startup actions.
+Optional environment:
+  PLAYWRIGHT_MODULE  Playwright module URL or path resolved from the working directory.
+  CHROMIUM           Browser executable path, passed unchanged to Playwright.
+Unset or empty values use Playwright defaults; selected module or launch failures do not fall back.
 `;
 function options(args) {
   const result = { port: 0, headed: false };
@@ -84,6 +87,16 @@ async function main() {
     if (stopping) throw Error("Startup interrupted.");
   };
   const startup = (async () => {
+    const moduleOverride = process.env.PLAYWRIGHT_MODULE;
+    const playwrightSpecifier = moduleOverride
+      ? /^(file:|[a-z]+:)/i.test(moduleOverride)
+        ? moduleOverride
+        : pathToFileURL(resolve(moduleOverride)).href
+      : "playwright";
+    const { chromium } = await import(playwrightSpecifier);
+    checkStop();
+    if (typeof chromium?.launch !== "function")
+      throw Error("Selected Playwright module must export chromium.launch.");
     const projectModule = await import(pathToFileURL(opt.project).href);
     checkStop();
     if (typeof projectModule.createProject !== "function")
@@ -104,6 +117,7 @@ async function main() {
       );
     const browser = await chromium.launch({
       headless: !opt.headed,
+      ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}),
       // The CLI settles runs and preserves retryable cleanup before closing the
       // browser. Playwright's defaults would close it independently (and exit
       // the host process on SIGINT), bypassing that lifecycle.

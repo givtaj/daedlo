@@ -126,3 +126,19 @@ for bounds, phases, cooperative interruption and resource preservation.
 Reports omit raw observations, command parameters and private operation evidence. Caller-supplied identities, model outcome labels and adapter metadata must themselves be safe public values. Snapshot/report identities include the measured runtime package source digest and engine executable SHA256, alongside caller-supplied application metadata. These identify bytes, not proof that a binary was compiled from a claimed application commit. The consumer acceptance record supplies build/source provenance and actual browser verification separately; the report schema does not establish either.
 
 A pause gates future effects and recipe steps, but an already dispatched direct action completes its read-only settling and model verification without requiring Resume. Its result may be `execution:"completed"` while the session remains paused. Stop also allows this verification to finish and takes terminal precedence; if completion fails, `interruptionError` retains the original sanitized failure and the independent `effect` report remains available. A stopped result with a verification failure does not gain a successful outcome. No interruption replays an effect.
+
+## CLI browser selection
+
+The CLI loads Playwright before importing the project or acquiring its fixture.
+Unset or empty `PLAYWRIGHT_MODULE` uses `import("playwright")`. A truthy value
+matching `/^(file:|[a-z]+:)/i` is imported as a URL; every other value is a path
+resolved against the process working directory, including bare names and paths
+with spaces. The selected module must export a callable `chromium.launch`.
+Import or validation failure stops startup without falling back to another module.
+`--help` does not load the selected browser module or project.
+
+A truthy `CHROMIUM` value is passed unchanged as `executablePath`; unset or empty
+omits that option. Launch failure does not retry with the default executable.
+The CLI retains `handleSIGINT:false` and `handleSIGTERM:false` so its existing
+shutdown settles active actions, reports results and cleans owned resources.
+These overrides select trusted local code/executables, not a sandbox.

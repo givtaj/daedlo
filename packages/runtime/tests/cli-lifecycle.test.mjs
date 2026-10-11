@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { createDriverSession, createResourceScope } from "../src/index.mjs";
 
@@ -15,12 +15,14 @@ const source = (
   .replace(/^#!.*\n/, "")
   .replace(/^import .*?;\n/gms, "")
   .replace(/main\(\)\.catch\([\s\S]*$/, "return main();")
-  .replace("await import(pathToFileURL(opt.project).href)", "injectedProject");
+  .replace("await import(pathToFileURL(opt.project).href)", "injectedProject")
+  .replace("await import(playwrightSpecifier)", "injectedPlaywright");
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const launch = new AsyncFunction(
   "resolve",
   "writeFile",
-  "chromium",
+  "injectedPlaywright",
+  "pathToFileURL",
   "createDriverSession",
   "createResourceScope",
   "createViewer",
@@ -56,6 +58,7 @@ async function bounded(promise) {
 }
 function harness(overrides = {}) {
   const process = new EventEmitter();
+  process.env = overrides.env ?? {};
   process.argv = [
     "node",
     "cli",
@@ -93,11 +96,14 @@ function harness(overrides = {}) {
       await overrides.writeReport?.();
     },
     {
-      launch: async (options) => {
-        await overrides.launchBrowser?.(options, { process, browser });
-        return browser;
+      chromium: {
+        launch: async (options) => {
+          await overrides.launchBrowser?.(options, { process, browser });
+          return browser;
+        },
       },
     },
+    pathToFileURL,
     overrides.createSession ?? (async () => session),
     () => {
       scope = createResourceScope();
@@ -177,6 +183,15 @@ test("CLI exports the stopped active run only after endRun, preserving saved eff
     endCalls = 0,
     endFinished = false;
   const h = harness({
+    env: {
+      PLAYWRIGHT_MODULE: "./selected module.mjs",
+      CHROMIUM: "/selected browser",
+    },
+    launchBrowser: (options) => {
+      assert.equal(options.executablePath, "/selected browser");
+      assert.equal(options.handleSIGINT, false);
+      assert.equal(options.handleSIGTERM, false);
+    },
     createSession: createDriverSession,
     adapter: {
       model: { id: "test", version: "1" },
@@ -914,6 +929,15 @@ test("CLI immediately cancels paused factory startup before its next command and
     effects = 0,
     closes = 0;
   const h = harness({
+    env: {
+      PLAYWRIGHT_MODULE: "./selected module.mjs",
+      CHROMIUM: "/selected browser",
+    },
+    launchBrowser: (options) => {
+      assert.equal(options.executablePath, "/selected browser");
+      assert.equal(options.handleSIGINT, false);
+      assert.equal(options.handleSIGTERM, false);
+    },
     project: () => ({
       url: "about:blank",
       createSession: async ({
