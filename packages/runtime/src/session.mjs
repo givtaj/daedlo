@@ -1,3 +1,4 @@
+// Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { createEngineClient } from "./engine-client.mjs";

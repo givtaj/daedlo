@@ -164,7 +164,8 @@ test("serves a generic descriptor-driven viewer and a fresh snapshot without inl
   const { viewer } = await start(t);
   const html = await request(viewer.url);
   assert.equal(html.status, 200);
-  assert.match(html.body, /Browser Driver/);
+  assert.match(html.body, /<title>Daedlo · Live session<\/title>/);
+  assert.match(html.body, /aria-label="Daedlo home"/);
   assert.doesNotMatch(html.headers["content-security-policy"], /unsafe-inline/);
   assert.match(
     html.headers["content-security-policy"],

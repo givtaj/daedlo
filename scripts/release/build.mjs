@@ -4,6 +4,7 @@ import os from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import { createManifest, sha256, verifyBundle } from "./manifest.mjs";
+import { releaseLicense } from "./licensing.mjs";
 
 const execute = promisify(execFile);
 
@@ -220,6 +221,7 @@ export async function buildBundle({ repoRoot, output, allowDirty = false }) {
       "Release requires a clean source tree; allowDirty is only for explicit candidates.",
     );
   const version = releaseVersion(before.files);
+  releaseLicense(before.files);
   await fs.mkdir(output); // Exclusive acquisition: EEXIST leaves all pre-existing bytes alone.
   let temporary;
   try {

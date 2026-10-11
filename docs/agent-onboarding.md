@@ -1,10 +1,13 @@
-# Agent-led application onboarding
+# Daedlo agent-led application onboarding
 
-An agent installs browser-driver and helps product, development and QA contributors
+An agent installs Daedlo and helps product, development and QA contributors
 turn a user story into a Rust state model, guarded browser flows and inspectable
 evidence. The agent reads the application and does the integration work; the team
 defines the intended behavior and what counts as success. Authored flows can then
 run without an AI agent or model API key.
+
+The product name is Daedlo; the existing browser-driver package names, commands
+and skill paths below remain the supported technical identifiers.
 
 Keep the current native Rust engine and Node/Playwright runtime. A customer's
 backend can use JavaScript/TypeScript, Go, Rust, PHP or another language: the
@@ -80,8 +83,8 @@ MCP server or registry installer. It is not included in the current runtime tarb
 ## Dependency preflight
 
 Read the selected candidate's manifests before installing. The following describes
-`0.1.1-rc.2`; later instructions must follow the selected version rather than
-silently upgrading a working consumer.
+public preview 0.1.2-rc.1. Follow its manifests rather than silently upgrading
+a working consumer. Start with the verified kit from https://daedlo.com/install.html.
 
 | Component | Current requirement | Purpose |
 | --- | --- | --- |
@@ -165,11 +168,7 @@ application/model/runtime identities, precise assertions and cleanup or retained
 session ownership. Persist sanitized evidence deliberately: the runtime's latest
 16 completed reports are in memory, not a durable team archive.
 
-The Roots experience is the source of this workflow; its normal embedded driver
-remains unchanged. This instruction layer does not establish new customer browser
-coverage, Claude Code end-to-end onboarding, a container image, or a public release.
-The selected source checkout's `docs/verification.md` records checks actually
-performed; it is not included in portable tools. For published artifact provenance,
-read the selected GitHub release's `VERIFICATION.md` asset. Access to a private
-release requires repository access. Neither record substitutes for running the
-customer's own acceptance against its chosen package pair.
+The Roots experience is the source of this workflow. Read the public kit manifest
+and tools receipt for artifact provenance. Repository examples and docs/verification.md
+are not included in portable tools. Customer acceptance still requires running
+the chosen package, model and adapter combination.

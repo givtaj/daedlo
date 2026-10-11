@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { writeFile } from "node:fs/promises";
@@ -11,7 +12,7 @@ import {
 
 const usage = `browser-driver --project PATH [--port NUMBER] [--headed] [--report PATH]
 
-Start a trusted project's local browser-driver integration.
+Start a trusted project's local Daedlo integration.
 The project module exports createProject({resources}) and returns:
   {url, enginePath, createAdapter({page,context}), identity?, presentations?}
 The CLI owns its new browser and registered fixture resources. Ctrl+C cleans them.
@@ -133,7 +134,7 @@ async function main() {
     });
     resources.own(viewer, { label: "live viewer", close: (v) => v.close() });
     checkStop();
-    console.log(`Browser-driver monitor: ${viewer.url}`);
+    console.log(`Daedlo monitor: ${viewer.url}`);
     console.log(
       `Model: ${adapter.model.id}@${adapter.model.version} · protocol 1 · Ctrl+C to close`,
     );

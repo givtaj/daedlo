@@ -1,6 +1,12 @@
-# browser-driver-engine
+# Daedlo engine — `browser-driver-engine`
 
-Native Rust decision engine for browser-driver. A customer implements
+**Daedlo 0.1.2-rc.1 public developer preview.**
+Read LICENSE and THIRD_PARTY_NOTICES.md: MIT for new additions, with retained
+Apache-2.0 obligations for Roots-derived portions.
+
+
+Native Rust decision engine for Daedlo. The crate name stays compatible with
+existing integrations. A customer implements
 `ApplicationModel` with typed facts, states, commands and outcomes, then calls
 `browser_driver_engine::serve(model)` in its executable. Node communicates with
 that executable through JSON Lines on stdin/stdout. This crate does not launch
@@ -29,5 +35,5 @@ a change detector, not an authorization token or anonymization mechanism. The
 Node runtime must also check model compatibility and handler coverage before
 actions, exclude concurrent runs and reobserve at action boundaries.
 
-See `examples/notebook-engine` in the repository for a complete model and its
-protocol and executable-process tests.
+Use AGENT_START.md in the surrounding Daedlo download kit for integration.
+The optional source repository's notebook fixture is not included in this crate.

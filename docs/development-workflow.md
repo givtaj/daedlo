@@ -1,3 +1,6 @@
+> Optional maintainer context: the Roots source and integration mentioned below
+> are not included in the public kit or required to onboard your application.
+
 # Parallel development and Roots feedback
 
 ## Stable usage and candidate development

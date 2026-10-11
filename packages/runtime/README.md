@@ -1,4 +1,12 @@
-# @browser-driver/runtime
+# Daedlo runtime — `@browser-driver/runtime`
+
+The public product name is Daedlo. The package import and `browser-driver` command
+remain unchanged for existing integrations.
+
+**Daedlo 0.1.2-rc.1 public developer preview.**
+Read LICENSE and THIRD_PARTY_NOTICES.md: MIT for new additions, with retained
+Apache-2.0 obligations for Roots-derived portions.
+
 
 Local visible browser control through a versioned native Rust application model.
 One ESM package includes the session runtime, generic viewer, resource scope and CLI.
