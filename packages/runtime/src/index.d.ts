@@ -19,6 +19,8 @@ export interface CommandDescriptor {
   label: string;
   params: Record<string, Parameter>;
   changesSession?: boolean;
+  /** Available only as a canonical recipe step, never as a direct command. */
+  recipeOnly?: boolean;
 }
 export interface Descriptor {
   id: string;
@@ -37,7 +39,14 @@ export interface Descriptor {
     steps: Array<{ command: string; params: Record<string, unknown> }>;
   }>;
 }
+export interface RecipeContext {
+  readonly recipe: string;
+  readonly step: number;
+  readonly session: string;
+}
 export interface ExecutionContext {
+  /** Runtime-created canonical scope for read-only model checks; absent for direct commands or legacy engines. */
+  readonly recipeContext?: RecipeContext;
   boundary(): Promise<void>;
   effect<T>(fn: () => T | Promise<T>): Promise<void>;
   click(locator: Locator): Promise<void>;

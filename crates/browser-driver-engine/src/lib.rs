@@ -81,6 +81,12 @@ pub struct CommandDescriptor {
         skip_serializing_if = "std::ops::Not::not"
     )]
     pub changes_session: bool,
+    #[serde(
+        default,
+        rename = "recipeOnly",
+        skip_serializing_if = "std::ops::Not::not"
+    )]
+    pub recipe_only: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -134,6 +140,16 @@ pub struct RecipeStep {
     pub params: Value,
 }
 
+/// Canonical execution context, separate from application observation identity.
+/// The stateless engine validates this context; the runtime owns the active run.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RecipeContext {
+    pub recipe: String,
+    pub step: usize,
+    pub session: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DisplayFact {
@@ -182,6 +198,25 @@ pub trait ApplicationModel {
         evidence: &Value,
     ) -> Result<Self::Outcome>;
     fn outcome_report(&self, outcome: &Self::Outcome) -> OutcomeReport;
+    /// Called only after the engine checks canonical step parameters and session.
+    fn authorize_scoped(
+        &self,
+        observation: &Observation<Self::Facts>,
+        command: &Self::Command,
+        _context: Option<&RecipeContext>,
+    ) -> Result<()> {
+        self.authorize(observation, command)
+    }
+    fn verify_scoped(
+        &self,
+        before: &Observation<Self::Facts>,
+        after: &Observation<Self::Facts>,
+        command: &Self::Command,
+        evidence: &Value,
+        _context: Option<&RecipeContext>,
+    ) -> Result<Self::Outcome> {
+        self.verify(before, after, command, evidence)
+    }
     fn display(&self, _observation: &Observation<Self::Facts>) -> Vec<DisplayFact> {
         vec![]
     }

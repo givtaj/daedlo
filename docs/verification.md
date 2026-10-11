@@ -1,5 +1,35 @@
 # Verification record
 
+## Canonical recipe context correction — 2026-10-11
+
+The exact public engine rejected a canonical `recipeContext` request as an
+unexpected field, and the runtime sent no context to recipe actions. A model with
+recipe-only application guards therefore could not retain those guards while
+running its declared recipes. This correction adds generic negotiated scope,
+internal-command metadata and defaulted Rust hooks; it contains no Roots rules.
+
+| Check | Actual result and scope |
+| --- | --- |
+| Rust regression first | RED: two compiled protocol tests returned `invalid_request` for canonical context and context mismatch requests. |
+| Runtime regression first | RED: a full recipe lacked context, direct internal execution reached protocol dispatch, and an unsupported engine accepted an internal-command descriptor. All three assertions failed before implementation. A follow-up read-only handler-scope test then failed because the context was absent before that API was added. |
+| Rust workspace | PASS: 23 tests, including scope/direct/mismatched recipe, step, parameters and session cases; default normalization, typed hooks, unchanged fingerprints and verification after a session transition. |
+| Runtime | PASS: 77 Node tests, including full recipe context at every guard/verification, direct-context injection refusal and immutable handler scope for app verification. Existing engines without the optional capability retain prior request shape. |
+| Source | PASS: syntax, public TypeScript and formatting; locked offline Rust build and Clippy with warnings denied. |
+| Real Chromium | PASS: eight notebook browser/API groups with the rebuilt engine, four motion groups, and one viewer group including internal-card omission. These are independent shared-runtime fixtures. |
+| Installed candidate / full Roots parity | NOT RUN here: parent integration owner must assign a new version, build exact artifacts, and verify the installed consumer. No public release or remote CI claim. |
+
+Receipts remain under `artifacts/motion-parity-20261011/recipe-*`, including
+unmodified red logs and final Rust, runtime, source and browser logs. The new wire
+fields are negotiated within protocol 1. The Rust descriptor's new public bool
+field requires updates for users constructing struct literals; serde consumers
+and default authorization/verification hooks preserve prior behavior. The shared
+engine validates canonical scope but remains stateless; the trusted runtime owns
+run sequencing. See [the exact contract and compatibility limits](contracts.md#canonical-recipe-context-extension).
+
+The earlier release-tooling failures remain open and unchanged; they were not
+rerun for this protocol change. Public rc.1 bytes are preserved, and no artifact
+has been versioned or published from these corrections.
+
 ## Roots visible-motion parity correction — 2026-10-11
 
 An isolated Roots migration consumer reproduced a failure in exact public Daedlo

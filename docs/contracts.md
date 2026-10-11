@@ -17,7 +17,7 @@ The user approved implementation of the proposed local driver and isolated Roots
 
 Requests: `{protocol:1,id,op,...}`. Every parsed response echoes `protocol:1,id,ok`. Errors include `{error_code,error}`. Stdout is protocol only. The transport must fail pending work on malformed/uncorrelated replies, exit or timeout, and never silently retry an effect.
 
-- `hello`: returns `descriptor`.
+- `hello`: returns `descriptor` and optional negotiated `capabilities`.
 - `observe`: accepts `observation`; returns `state`, `fingerprint`, `commands`, `recipes`, `display`.
 - `command`: accepts `observation`, `fingerprint`, `command` (string), `params` (object). Returns authorized `{action:{id,params}}` or rejection.
 - `recipe`: accepts `observation`, `fingerprint`, `recipe` (string). Returns `plan:[{command,params}]` or rejection.
@@ -25,9 +25,51 @@ Requests: `{protocol:1,id,op,...}`. Every parsed response echoes `protocol:1,id,
 
 Observation envelope: `{connected:boolean,session:string,facts:object}`. Missing required facts, unknown state, incompatible model and absent handlers cannot imply success. Fingerprint includes the full typed observation and session. Application state is derived from observations, never assigned because a click ran. Facts and action parameters must be decoded at the Rust boundary. Model versions identify exact schema contracts; the Node adapter declares `model:{id,version}` and must match the descriptor before effects.
 
-Descriptor: `{id,version,label,states:[{id,label,parent:null|string,support:"supported"|"planned"}],commands:[{id,label,params:{field:Parameter},changesSession?:boolean}],recipes:[{id,label,steps:[{command,params}]}]}`. IDs are explicit stable wire names, never Rust Debug output. Parameter: `{type:"text"|"number"|"boolean"|"select",label,required?:boolean,default?:value,options?:[{value,label}],minimum?:number,maximum?:number,maxLength?:number}`. All undeclared parameters rejected. Observe state is `{id}` referencing a supported descriptor leaf; `commands`/`recipes` contain `{id,enabled,reason?}`; display is `[{label,value}]` with safe public values only.
+Descriptor: `{id,version,label,states:[{id,label,parent:null|string,support:"supported"|"planned"}],commands:[{id,label,params:{field:Parameter},changesSession?:boolean,recipeOnly?:boolean}],recipes:[{id,label,steps:[{command,params}]}]}`. IDs are explicit stable wire names, never Rust Debug output. Parameter: `{type:"text"|"number"|"boolean"|"select",label,required?:boolean,default?:value,options?:[{value,label}],minimum?:number,maximum?:number,maxLength?:number}`. All undeclared parameters rejected. Observe state is `{id}` referencing a supported descriptor leaf; `commands`/`recipes` contain `{id,enabled,reason?}`; display is `[{label,value}]` with safe public values only.
 
 The public `ApplicationModel` trait exposes associated `Facts`, `State`, `Command` and `Outcome` types. Models implement descriptor, state derivation/ID, typed command decoding, authorization, verification and outcome reporting. Optional display, command-availability and recipe-authorization hooks support the catalog. The selected engine crate's `src/lib.rs` defines the implemented API. A source checkout additionally includes `examples/notebook-engine`; that example is not required or included in portable tools. Verification receives bounded before/after observations and read-only evidence. A declared state tree is descriptive metadata, not a promise of reachability.
+
+## Canonical recipe context extension
+
+The next candidate retains protocol 1 and advertises
+`hello.capabilities.recipeContext:1`. Its `command` and `verify` operations accept
+optional `recipeContext:{recipe:string,step:number,session:string}`; `step` is the
+zero-based canonical recipe index and `session` is the original run session. The
+engine strictly decodes the context and validates the recipe, index, command,
+normalized parameters and session before invoking model authorization. Verify also
+requires the after-observation to retain that recipe session, including for a
+command declaring `changesSession`. Context is separate from facts and never
+changes observation fingerprints.
+
+Descriptors may mark internal commands `recipeOnly:true` (default false). Such
+commands are omitted from the public availability catalog and viewer, and cannot
+be authorized or verified without canonical context. Other command guards still
+apply. The Rust trait adds `authorize_scoped(..., Option<&RecipeContext>)` and
+`verify_scoped(..., Option<&RecipeContext>)`, defaulting to the existing methods.
+Applications override them only for model-owned rules that depend on a canonical
+recipe step. Internal commands bypass public `command_available`; their scoped
+authorization must enforce application-state restrictions. Rust code constructing
+`CommandDescriptor` literals must supply the new `recipe_only` field; existing
+JSON descriptors default it to false.
+
+Only the runtime's recipe path creates context. Public `execute`, `command` and
+viewer command input cannot inject it; direct internal commands are rejected
+before a handler runs. Each guarded effect and final verification carry the same
+step context. Handlers can read the frozen `executionContext.recipeContext` to
+perform independent application verification while settling; the getter cannot be
+assigned and is undefined for direct commands or legacy engines. It is not added
+to observations or reports. Runtime session binding still prevents a later step or an in-flight
+action from continuing under another session. The stateless Rust engine validates
+a supplied context but does not independently establish run history or prove
+prior-step completion. As with browser handlers, the runtime and protocol caller
+are trusted integration code, not a security sandbox.
+
+The runtime sends this optional field only when the engine advertises capability
+version 1. Existing protocol-1 engines and models without internal commands keep
+their prior wire shape. A descriptor with `recipeOnly` requires the capability and
+fails initialization if it is missing. Old runtimes cannot execute new internal
+recipes, so consumers requiring this extension must pin a matched runtime and
+engine candidate. The immutable public rc.1 artifacts do not implement it.
 
 ## Public Node API
 

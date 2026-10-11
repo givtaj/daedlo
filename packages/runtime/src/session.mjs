@@ -43,7 +43,7 @@ export async function createDriverSession({
     engineSha256: executableHash(enginePath),
   };
   const engine = createEngineClient(enginePath);
-  let descriptor, presentationCatalog;
+  let descriptor, presentationCatalog, supportsRecipeContext;
   const checked = (r) => {
     if (!r.ok)
       reject(
@@ -53,10 +53,17 @@ export async function createDriverSession({
     return r;
   };
   try {
-    descriptor = validateDescriptor(
-      checked(await engine.request({ op: "hello" })).descriptor,
-      adapter,
-    );
+    const hello = checked(await engine.request({ op: "hello" }));
+    descriptor = validateDescriptor(hello.descriptor, adapter);
+    supportsRecipeContext = hello.capabilities?.recipeContext === 1;
+    if (
+      descriptor.commands.some((command) => command.recipeOnly) &&
+      !supportsRecipeContext
+    )
+      reject(
+        "contract_mismatch",
+        "Recipe-only commands require engine recipe-context support.",
+      );
     presentationCatalog = validatePresentations(presentations, descriptor);
   } catch (error) {
     await engine.close();
@@ -142,7 +149,9 @@ export async function createDriverSession({
       connected: observation.connected,
       state: r.state,
       revision: r.fingerprint,
-      commands: r.commands ?? [],
+      commands: (r.commands ?? []).filter(
+        (command) => !commands.get(command.id)?.recipeOnly,
+      ),
       recipes: r.recipes ?? [],
       display: r.display ?? [],
     };
@@ -215,7 +224,7 @@ export async function createDriverSession({
     }
     execution = "running";
   }
-  async function authorize(id, params, expected, boundSession) {
+  async function authorize(id, params, expected, boundSession, recipeContext) {
     await boundary();
     const observation = await raw();
     if (boundSession !== undefined && observation.session !== boundSession)
@@ -230,6 +239,7 @@ export async function createDriverSession({
         fingerprint: expected,
         command: id,
         params,
+        ...(recipeContext ? { recipeContext } : {}),
       }),
     );
     if (!isDeepStrictEqual(authorized.action, { id, params }))
@@ -239,14 +249,33 @@ export async function createDriverSession({
       );
     return observation;
   }
-  async function perform(id, params, revision, boundSession, onEffect) {
+  async function perform(
+    id,
+    params,
+    revision,
+    boundSession,
+    onEffect,
+    recipeContext,
+  ) {
     const c = commands.get(id);
-    let before = await authorize(id, params, revision, boundSession),
+    let before = await authorize(
+        id,
+        params,
+        revision,
+        boundSession,
+        recipeContext,
+      ),
       expected = revision;
     const originalSession = before.session;
     let actionSession = originalSession;
     const currentCheck = () =>
-      authorize(id, params, expected, boundSession ?? actionSession);
+      authorize(
+        id,
+        params,
+        expected,
+        boundSession ?? actionSession,
+        recipeContext,
+      );
     async function effect(fn) {
       await boundary();
       await currentCheck();
@@ -284,6 +313,9 @@ export async function createDriverSession({
       await currentCheck();
     }
     const x = {
+      get recipeContext() {
+        return recipeContext;
+      },
       boundary,
       effect,
       click: async (locator) => {
@@ -335,6 +367,7 @@ export async function createDriverSession({
         command: id,
         params,
         evidence: evidence ?? {},
+        ...(recipeContext ? { recipeContext } : {}),
       }),
     );
     if (
@@ -528,6 +561,13 @@ export async function createDriverSession({
       return Promise.resolve(
         refused("revision_required", "An observed revision is required."),
       );
+    if (!recipe && commands.get(id)?.recipeOnly)
+      return Promise.resolve(
+        refused(
+          "recipe_scope_required",
+          "This command requires a canonical recipe step.",
+        ),
+      );
     presentation = null;
     busy = true;
     stopping = false;
@@ -581,6 +621,9 @@ export async function createDriverSession({
               expected,
               session,
               () => (attempted = true),
+              supportsRecipeContext
+                ? Object.freeze({ recipe: id, step: index, session })
+                : undefined,
             );
             outcome = result.outcome;
             if (outcome.kind !== "success") {

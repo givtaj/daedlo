@@ -74,9 +74,22 @@ impl<M: ApplicationModel> Engine<M> {
         let allowed: &[&str] = match op {
             "hello" => &[],
             "observe" => &["observation"],
-            "command" => &["observation", "fingerprint", "command", "params"],
+            "command" => &[
+                "observation",
+                "fingerprint",
+                "command",
+                "params",
+                "recipeContext",
+            ],
             "recipe" => &["observation", "fingerprint", "recipe"],
-            "verify" => &["before", "observation", "command", "params", "evidence"],
+            "verify" => &[
+                "before",
+                "observation",
+                "command",
+                "params",
+                "evidence",
+                "recipeContext",
+            ],
             _ => return Err(err("unknown_operation", "Unknown protocol operation")),
         };
         if object.keys().any(|key| {
@@ -89,7 +102,9 @@ impl<M: ApplicationModel> Engine<M> {
             ));
         }
         match op {
-            "hello" => Ok(json!({"descriptor": self.descriptor})),
+            "hello" => {
+                Ok(json!({"descriptor": self.descriptor,"capabilities":{"recipeContext":1}}))
+            }
             "observe" => {
                 let observation = self.observation(request, "observation")?;
                 let state = self.state(&observation)?;
@@ -97,6 +112,7 @@ impl<M: ApplicationModel> Engine<M> {
                     .descriptor
                     .commands
                     .iter()
+                    .filter(|command| !command.recipe_only)
                     .map(|command| {
                         availability(
                             &command.id,
@@ -130,8 +146,12 @@ impl<M: ApplicationModel> Engine<M> {
                 self.check_fingerprint(request, &observation)?;
                 let id = required_str(request, "command")?;
                 let (command, params) = self.command(id, required(request, "params")?)?;
-                self.model.command_available(&observation, id)?;
-                self.model.authorize(&observation, &command)?;
+                let context = self.recipe_context(request, &observation, id, &params)?;
+                if !self.command_descriptor(id)?.recipe_only {
+                    self.model.command_available(&observation, id)?;
+                }
+                self.model
+                    .authorize_scoped(&observation, &command, context.as_ref())?;
                 Ok(json!({"action":{"id":id,"params":params}}))
             }
             "recipe" => {
@@ -169,13 +189,30 @@ impl<M: ApplicationModel> Engine<M> {
                         "Session changed while executing the command",
                     ));
                 }
-                let (command, _) = self.command(id, required(request, "params")?)?;
-                self.model.authorize(&before, &command)?;
+                let (command, params) = self.command(id, required(request, "params")?)?;
+                let context = self.recipe_context(request, &before, id, &params)?;
+                if context
+                    .as_ref()
+                    .is_some_and(|context| context.session != after.session)
+                {
+                    return Err(err(
+                        "recipe_session_changed",
+                        "Recipe cannot verify in another session",
+                    ));
+                }
+                self.model
+                    .authorize_scoped(&before, &command, context.as_ref())?;
                 let evidence = required(request, "evidence")?;
                 if !evidence.is_object() {
                     return Err(err("invalid_evidence", "Evidence must be an object"));
                 }
-                let outcome = self.model.verify(&before, &after, &command, evidence)?;
+                let outcome = self.model.verify_scoped(
+                    &before,
+                    &after,
+                    &command,
+                    evidence,
+                    context.as_ref(),
+                )?;
                 Ok(json!({"outcome":self.model.outcome_report(&outcome)}))
             }
             _ => unreachable!(),
@@ -256,6 +293,55 @@ impl<M: ApplicationModel> Engine<M> {
             .iter()
             .find(|command| command.id == id)
             .ok_or_else(|| err("unknown_command", "Command is not declared by this model"))
+    }
+
+    fn recipe_context(
+        &self,
+        request: &Value,
+        observation: &Observation<M::Facts>,
+        id: &str,
+        params: &Value,
+    ) -> Result<Option<RecipeContext>> {
+        let descriptor = self.command_descriptor(id)?;
+        let Some(value) = request.get("recipeContext") else {
+            return if descriptor.recipe_only {
+                Err(err(
+                    "recipe_scope_required",
+                    "This command requires a canonical recipe step",
+                ))
+            } else {
+                Ok(None)
+            };
+        };
+        let context: RecipeContext = serde_json::from_value(value.clone()).map_err(|_| {
+            err(
+                "invalid_recipe_context",
+                "Recipe context must identify a recipe, step and session",
+            )
+        })?;
+        if context.session != observation.session {
+            return Err(err(
+                "recipe_session_changed",
+                "Recipe cannot continue in another session",
+            ));
+        }
+        let mismatch = || {
+            err(
+                "recipe_step_mismatch",
+                "Command and parameters must match the canonical recipe step",
+            )
+        };
+        let step = self
+            .descriptor
+            .recipes
+            .iter()
+            .find(|recipe| recipe.id == context.recipe)
+            .and_then(|recipe| recipe.steps.get(context.step))
+            .ok_or_else(mismatch)?;
+        if step.command != id || parameters(descriptor, &step.params)? != *params {
+            return Err(mismatch());
+        }
+        Ok(Some(context))
     }
 
     fn command(&self, id: &str, input: &Value) -> Result<(M::Command, Value)> {

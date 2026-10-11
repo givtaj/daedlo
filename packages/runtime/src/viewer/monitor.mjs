@@ -336,6 +336,7 @@ function buildDescriptor(descriptor) {
     if (!emitted.has(state.id)) appendState(state, $("state-tree"));
   $("commands").replaceChildren();
   for (const command of descriptor.commands || []) {
+    if (command.recipeOnly) continue;
     const form = node("form", "command-card");
     form.dataset.commandId = command.id;
     const header = node("div", "command-heading");

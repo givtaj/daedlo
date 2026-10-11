@@ -25,7 +25,15 @@ test("presentation viewer renders human pacing and operates controls without rep
           support: "supported",
         },
       ],
-      commands: [{ id: "inspect", label: "Inspect", params: {} }],
+      commands: [
+        { id: "inspect", label: "Inspect", params: {} },
+        {
+          id: "recipe_evidence",
+          label: "Internal evidence",
+          params: {},
+          recipeOnly: true,
+        },
+      ],
       recipes: [],
     },
     revision: "observed-r1",
@@ -121,6 +129,11 @@ test("presentation viewer renders human pacing and operates controls without rep
     await ui.goto(viewer.url);
     await ui.waitForFunction(
       () => document.querySelector("#connection").textContent === "Connected",
+    );
+    assert.equal(await ui.locator('[data-command-id="inspect"]').count(), 1);
+    assert.equal(
+      await ui.locator('[data-command-id="recipe_evidence"]').count(),
+      0,
     );
     assert.equal(
       await ui.locator("#presentation-panel").count(),
