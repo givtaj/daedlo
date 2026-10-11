@@ -1,5 +1,39 @@
 # Verification record
 
+## Roots visible-motion parity correction — 2026-10-11
+
+An isolated Roots migration consumer reproduced a failure in exact public Daedlo
+`0.1.2-rc.1` bytes: the accepted Slow QA / Fast QA typing check emitted four input
+events, below its minimum of fourteen. Both commands completed with the correct
+values, pointer movement and speed difference. The preserved Roots motion code
+emitted seventeen input events on the same independent form and showed its cursor.
+These are real Chromium primitive checks, not Roots application/API/database E2E.
+
+The correction was developed in an isolated checkout at `7e3e48d`, overlaid only
+with the public source receipt's 93 verified prepared files (local preservation
+commit `b8f7452`). The normal browser-driver workspace and Roots driver remain
+untouched. Shared text fill now types at the chosen pace, with guarded boundaries
+before each character. Native date/time fills retain browser form semantics. A
+session-owned pointer and click overlay survives reload and is removed on close.
+
+| Check | Actual result and scope |
+| --- | --- |
+| Regression first | RED: visible typing yielded 2 events on the upstream text-only fixture, cursor count was 0, and no first-character interruption point appeared. Native date/session checks already passed. |
+| Focused Chromium | PASS: four groups covering visible input/key events, speed, cursor reload/cleanup, preserved human input after pause, and native date/session behavior. Cursor screenshot inspected. |
+| Existing shared runtime | PASS: 73 Node tests. |
+| Source | PASS: JavaScript syntax, public TypeScript and format checks; locked offline Rust build. |
+| Existing browser checks | PASS: eight notebook browser/API groups and one presentation-viewer group. |
+| Release tooling | FAIL: 67/82 tests passed. Unchanged older release fixtures omit the license declarations required by the frozen public builder; a version test sees an old integration pin. These failures remain open and are not relabeled as a motion pass. |
+| New package / Roots migration / remote CI | NOT RUN: no new version, packaged candidate, full Roots parity or remote CI result is claimed. |
+
+Ignored upstream evidence is `artifacts/motion-parity-20261011/`, including the
+public source receipt, baseline identity, browser red/green logs, runtime/source
+checks, notebook and presentation logs, and the retained release failures. The
+consumer's package and preserved-reference receipts remain in its isolated
+`.migration/contract-probe/` directory. All probe browser/viewer resources closed.
+The public release bytes remain immutable; consuming the correction requires a
+separately versioned candidate and a new exact installed-package acceptance run.
+
 ## Shared presentation mode — 2026-10-09
 
 Implemented [presentation mode](presentation.md) for an existing command or

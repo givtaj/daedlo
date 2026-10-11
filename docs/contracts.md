@@ -43,6 +43,15 @@ There are at most 16 operations. IDs must be unique and match `[A-Za-z0-9][A-Za-
 
 Execution context supplies `boundary()`, `click(locator)`, `fill(locator,value)`, `select(locator,value)`, `press(locator,key)` and `effect(fn)`; the runtime rechecks the expected revision/session at each guarded action boundary immediately before effect. A handler may use multiple primitives; expected facts refresh only after its own completed primitive. Guard checks do not lock the external browser/server. Pause/stop are cooperative; dispatching a save is not undoable.
 
+Text `fill` uses visible key input at the selected speed, checking freshness and
+session before clearing the field and before each subsequent character. A paused
+or stopped fill leaves its current partial value; it never restarts typing.
+Date/time and other native controls retain Playwright's direct fill semantics.
+Pointer actions install an `aria-hidden` cursor decoration and click pulse on the
+controlled page. The decoration survives that page's reload
+while the session is open; close removes its own overlay and reload listener.
+These visuals do not authorize actions or establish application outcomes.
+
 Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runRecipe(id,revision)`; compatibility `command({id,params,revision,recipe})`; `pause()`, `resume()`, `stop()`, `setSpeed("slow"|"normal"|"fast")`, `report()`, `report({runId})`, `close()`. Snapshot includes `connected,descriptor,state,revision,commands,recipes,display,execution,busy,paused,speed,runId,progress,lastResult,identity`. Result separates `execution` (`completed|rejected|failed|stopped`) from `outcome` and `effect`. It also contains the descriptor command or recipe ID in `command`, a boolean `recipe`, and ISO `startedAt`/`finishedAt` timestamps. Unknown requested IDs are recorded as `command:null`; arbitrary identifiers, parameters and facts are not copied into these result fields. Only an active run receives a `runId`. `ok:true` or `execution:"completed"` alone does not establish a successful application outcome or persistence.
 
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.

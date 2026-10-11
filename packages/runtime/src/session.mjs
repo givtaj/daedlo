@@ -7,6 +7,7 @@ import { DriverError, reject } from "./errors.mjs";
 import { executableHash, runtimeIdentity } from "./identity.mjs";
 import { publicEffectReport } from "./effects.mjs";
 import { validatePresentations } from "./presentation.mjs";
+import { createVisibleCursor, supportsVisibleTyping } from "./motion.mjs";
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const speeds = {
@@ -62,6 +63,7 @@ export async function createDriverSession({
     throw error;
   }
   const commands = new Map(descriptor.commands.map((c) => [c.id, c]));
+  const cursor = createVisibleCursor(page);
   let busy = false,
     paused = false,
     stopping = false,
@@ -268,6 +270,7 @@ export async function createDriverSession({
     async function move(locator) {
       await boundary();
       await currentCheck();
+      await cursor.ensure();
       if (locator.scrollIntoViewIfNeeded)
         await locator.scrollIntoViewIfNeeded();
       const box = await locator.boundingBox?.();
@@ -289,7 +292,19 @@ export async function createDriverSession({
       },
       fill: async (locator, value) => {
         await move(locator);
-        await effect(() => locator.fill(String(value), { timeout: 12000 }));
+        if (await supportsVisibleTyping(locator)) {
+          await effect(() => locator.fill("", { timeout: 12000 }));
+          for (const character of String(value)) {
+            await delay(speeds[speed].key);
+            await effect(() =>
+              locator.pressSequentially(character, { timeout: 12000 }),
+            );
+          }
+        } else {
+          // Dates, times and other native controls require Playwright's fill
+          // semantics; typing into browser-specific segments changes their value.
+          await effect(() => locator.fill(String(value), { timeout: 12000 }));
+        }
       },
       select: async (locator, value) => {
         await move(locator);
@@ -784,6 +799,7 @@ export async function createDriverSession({
         closed = true;
         const errors = [];
         for (const [name, cleanup] of [
+          ["cursor", () => cursor.close()],
           ["adapter", () => adapter.close?.()],
           ["engine", () => engine.close()],
           ["resources", () => resources?.close()],
