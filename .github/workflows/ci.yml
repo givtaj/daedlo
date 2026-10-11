@@ -57,6 +57,7 @@ jobs:
         run: |
           npm run test:e2e
           npm run test:motion
+          npm run test:controls
       - name: Build an immutable candidate bundle from the clean checkout
         id: bundle
         run: |

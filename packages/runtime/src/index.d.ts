@@ -142,6 +142,8 @@ export interface Result {
   recipe: boolean;
   startedAt: string;
   finishedAt: string;
+  /** Original public failure when Stop takes terminal precedence; no successful outcome is inferred. */
+  interruptionError?: { error_code: string; error: string };
   cleanupFailed?: true;
   cleanupError?: {
     error_code: "cleanup_incomplete";

@@ -350,7 +350,8 @@ export async function createDriverSession({
     };
     await adapter.handlers[id](params, x);
     if (adapter.settle) await adapter.settle();
-    await boundary();
+    // An already dispatched effect must finish read-only verification even
+    // while paused or stopping. Boundaries still guard every future effect.
     const after = await raw();
     if (after.session !== originalSession && !c.changesSession)
       reject(
@@ -380,6 +381,8 @@ export async function createDriverSession({
     // Carry the exact verified observation into the next recipe step. Reading
     // the browser again here could silently adopt an intervening human edit.
     const verified = await inspect(after);
+    if (stopping || closed)
+      reject("stopped", "Stopped after the current action was verified.");
     return {
       outcome: verification.outcome,
       revision: verified.response.fingerprint,
@@ -658,27 +661,32 @@ export async function createDriverSession({
         }
         if (profile && presentation.status === "running")
           finishPresentation("completed");
-        execution = "completed";
+        execution = paused ? "paused" : "completed";
         lastResult = {
           ok: true,
-          execution,
+          execution: "completed",
           runId,
           outcome,
           effect: await effectReport(attempted),
         };
         emit("run_completed", { outcome: outcome.kind });
       } catch (error) {
-        execution =
-          error?.code === "stopped"
-            ? "stopped"
-            : attempted
-              ? "failed"
-              : "rejected";
+        const interrupted = stopping || closed || error?.code === "stopped";
+        const failure = publicError(error);
+        execution = interrupted ? "stopped" : attempted ? "failed" : "rejected";
         lastResult = {
           ok: false,
           execution,
           runId,
-          ...publicError(error),
+          ...(interrupted
+            ? {
+                error_code: "stopped",
+                error: "Stopped at an action boundary.",
+                ...(failure.error_code !== "stopped"
+                  ? { interruptionError: failure }
+                  : {}),
+              }
+            : failure),
           effect: await effectReport(attempted),
         };
         if (profile)
@@ -803,6 +811,8 @@ export async function createDriverSession({
     resume() {
       tickHold();
       paused = false;
+      if (!busy && execution === "paused")
+        execution = lastResult?.execution ?? "idle";
       wake();
       emit("resumed");
       return { ok: true, paused };

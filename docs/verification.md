@@ -696,3 +696,20 @@ services, dependencies, entrypoints or data. The owned fixture was removed.
 Later Roots changes are reviewed and selectively ported only when requested,
 following [the upstream-review workflow](development-workflow.md). There is no
 automatic synchronization or monitoring.
+
+### Local Roots migration interruption candidate, 2026-10-11
+
+Unpublished `0.1.3-roots.3` preserves read-only completion verification after a
+dispatched effect while Pause gates future effects. Stop retains a separate
+`interruptionError` if verification fails, alongside the independently reported
+effect status; no successful outcome is inferred from an unverified postcondition.
+
+The added independent Chromium/HTTP regression failed all three assertions before
+the fix (paused completion, stopped verification, stopped failed verification) and
+passed all three afterward. A recipe-step unit regression first observed zero
+verified steps while paused and now passes while still rejecting a human edit
+before the next effect. All 78 runtime tests, eight existing notebook browser
+groups, four motion groups, two viewer groups, syntax, types and format passed.
+Logs are retained in `artifacts/roots-migration-0.1.3-roots.3/`. Consumer Roots
+acceptance, its database, and publication are separate gates; this record does
+not claim them complete.

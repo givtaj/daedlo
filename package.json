@@ -10,6 +10,7 @@
     "test:rust": "cargo test --workspace --locked",
     "test:e2e": "node tests/acceptance.mjs",
     "test:motion": "node --test packages/runtime/tests/motion-browser.mjs",
+    "test:controls": "node --test packages/runtime/tests/control-boundary-browser.mjs",
     "release": "node scripts/release/cli.mjs",
     "test:release": "node --test tests/release-*.test.mjs",
     "test:release:e2e": "node tests/release-acceptance.mjs",
