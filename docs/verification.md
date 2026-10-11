@@ -1,5 +1,31 @@
 # Verification record
 
+## Paused recipe finalization correction — 2026-10-11
+
+A real Roots launcher run against installed unpublished `0.1.3-roots.5` failed
+its uncertain-recipe Resume case: verification returned `unknown` while paused,
+then the recipe published `completed` and ran cleanup before Resume could decide
+to stop it. The old result and exact package remain preserved; passing independent
+recipes do not clear that launcher failure.
+
+The generic regression dispatches one guarded effect, pauses, and observes real
+protocol verification before checking that the recipe remains busy with no new
+completed report or `endRun` call. It also covers Resume, Stop, close, final-step
+success and non-success, immutable previous reports, and unchanged direct-command
+completion while paused. The unchanged roots5 runtime produced **10 genuine
+recipe failures and 4 direct-command passes**. The minimal recipe-only boundary
+now waits after verification and before halting or publishing a final result.
+
+Source verification: **14/14 new lifecycle cases**, **55/55 focused lifecycle,
+report, cleanup and presentation cases**, **118/118 runtime tests**, and JavaScript
+syntax, public types and formatting **PASS**. Private receipts and unchanged red
+logs are under `artifacts/recipe-finalization-20261011/`. These are protocol and
+runtime tests, not browser acceptance. The corrected installed-package and real
+Roots launcher/browser reruns are **NOT RUN**. The reviewed source is prepared
+as unpublished local `0.1.3-roots.6`; its later immutable artifact receipt records
+packaging and installed checks separately. No publication or customer dependency
+promotion is claimed.
+
 ## Explicit empty viewer parameter correction — 2026-10-11
 
 The installed `0.1.3-roots.1` Roots control group reproduced a viewer failure:

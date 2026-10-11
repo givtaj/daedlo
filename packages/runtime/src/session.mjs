@@ -628,6 +628,9 @@ export async function createDriverSession({
                 ? Object.freeze({ recipe: id, step: index, session })
                 : undefined,
             );
+            // Verification may finish while paused, but a recipe must retain
+            // its active run until Resume or Stop decides whether it can finish.
+            await boundary();
             outcome = result.outcome;
             if (outcome.kind !== "success") {
               finishPresentation("halted", outcome.label);
