@@ -1,5 +1,24 @@
 # Verification record
 
+## Explicit empty viewer parameter correction — 2026-10-11
+
+The installed `0.1.3-roots.1` Roots control group reproduced a viewer failure:
+clearing the notes parameter submitted no notes, so the application inserted its
+default text instead of the required empty value. Candidate cleanup passed and a
+simultaneous preserved-original fixture retained its draft and usable navigation.
+That evidence is an explicit tmpfs-fixture comparison, not the normal-stack gate.
+
+An independent upstream Chromium regression failed at the same boundary: the
+viewer posted `{}` instead of `{notes:""}` after editing and clearing Notes. The
+minimal generic correction tracks input intent per field, preserving explicit
+empty text while leaving untouched optional fields and empty numeric fields
+omitted. Reload does not replay parameter intent. This source prepares a separate
+unpublished `0.1.3-roots.2`; the prior candidate remains immutable. New receipts
+are under `artifacts/roots-migration-0.1.3-roots.2/`. The focused viewer suite
+passes both browser groups, all 77 runtime tests and source checks pass, and all
+13 atomic-version/CLI checks pass. Exact installed-package proof is recorded with
+the candidate artifacts; full Roots controls remain a separate integration gate.
+
 ## Unpublished Roots migration candidate preparation — 2026-10-11
 
 The isolated source prepares `0.1.3-roots.1` for local acceptance only. This is not

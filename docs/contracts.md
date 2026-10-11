@@ -98,6 +98,11 @@ Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runReci
 
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
 
+The viewer omits untouched optional fields. An explicitly edited text field
+that is then cleared submits an empty string; clearing an optional numeric or
+selection field still omits it. Reloading the viewer discards parameter editing
+intent and never replays a command.
+
 Resource registry tracks explicit owned/attached handles; cleanup reverses acquisition, preserves attached resources, records failed cleanup and supports retry. Replacement processes must be registered before removing prior ownership records. No global process/container killing.
 
 `session.report()` returns a detached current session view with `format:"browser-driver-report/1"`, `identity`, `runId`, `lastResult`, the latest 200 session `events`, `resources`, and `completedRunIds`. During an active run, `lastResult` remains the prior result until the new result is available. The session view changes as work proceeds; it is not a frozen record of one run.

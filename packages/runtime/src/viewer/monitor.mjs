@@ -272,6 +272,10 @@ function buildParameter(id, name, parameter) {
   }
   input.id = inputId;
   input.name = name;
+  let touched = false;
+  input.addEventListener("input", () => {
+    touched = true;
+  });
   // Required boolean means the value must be supplied; false remains a valid value.
   if (parameter.type !== "boolean")
     input.required = Boolean(parameter.required);
@@ -284,7 +288,9 @@ function buildParameter(id, name, parameter) {
       parameter.type === "boolean"
         ? input.checked
         : input.value === ""
-          ? undefined
+          ? parameter.type === "text" && touched
+            ? ""
+            : undefined
           : parameter.type === "number"
             ? Number(input.value)
             : parameter.type === "select"
