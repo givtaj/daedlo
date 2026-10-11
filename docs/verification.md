@@ -1,5 +1,30 @@
 # Verification record
 
+## Unpublished Roots migration candidate preparation — 2026-10-11
+
+The isolated source prepares `0.1.3-roots.1` for local acceptance only. This is not
+a published release and has no asserted public download URL. It includes the
+visible-motion and canonical-recipe corrections below. The public rc.1 artifacts
+and the normal browser-driver checkout remain unchanged.
+
+The inherited release suite was repaired without changing production validation:
+MIT test fixtures now declare their license and the bundle fixture includes its
+notice; the portable-tools fixture includes the presentation document required by
+the frozen builder. The two old isolated integration dependency/lockfile pairs
+were first aligned to public rc.1, preserving their customer model pins, so the
+atomic version tool could prepare all nine version files coherently.
+
+The initial retained result was 67/82. Adding the license declarations exposed
+seven additional fixture failures for the missing presentation document; that
+intermediate result was 75/82. The corrected full release suite passes **82/82**.
+The version operation records previous `0.1.2-rc.1` and next `0.1.3-roots.1`.
+These results supersede the open release-tooling failures recorded below.
+
+All candidate preparation, package-build and installed-verification receipts are
+kept under ignored `artifacts/roots-migration-0.1.3-roots.1/`. Consult those receipts
+for the eventual exact source commit and artifact hashes. Packaging and source
+checks do not establish full Roots customer parity or publication.
+
 ## Canonical recipe context correction — 2026-10-11
 
 The exact public engine rejected a canonical `recipeContext` request as an

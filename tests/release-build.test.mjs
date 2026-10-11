@@ -19,14 +19,21 @@ async function fixture(t, releaseVersion = version) {
   await fs.mkdir(join(repoRoot, "crates/browser-driver-engine/src"), {
     recursive: true,
   });
+  const notice = await fs.readFile(
+    new URL("../licenses/MIT-legacy.txt", import.meta.url),
+  );
   const files = {
     ".gitignore": "artifacts/\nnode_modules/\ntarget/\n.env\n",
     "README.md": "Public release fixture.\n",
+    LICENSE: notice,
+    "packages/runtime/LICENSE": notice,
+    "crates/browser-driver-engine/LICENSE": notice,
     "packages/runtime/package.json": JSON.stringify({
       name: "@browser-driver/runtime",
       version: releaseVersion,
+      license: "MIT",
       type: "module",
-      files: ["src"],
+      files: ["src", "LICENSE"],
       scripts: { prepack: 'node -e "process.exit(72)"' },
     }),
     "packages/runtime/src/index.mjs": "export const fixture = true;\n",

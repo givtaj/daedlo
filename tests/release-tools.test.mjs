@@ -17,6 +17,7 @@ const documents = [
   "development-workflow",
   "releases",
   "update-client",
+  "presentation",
 ];
 const skillFiles = [
   "SKILL.md",
@@ -40,6 +41,7 @@ async function fixture(t) {
     "packages/runtime/package.json": JSON.stringify({
       name: "@browser-driver/runtime",
       version,
+      license: "MIT",
     }),
     "Cargo.toml": `[workspace.package]\nversion = "${version}"\n`,
     "crates/browser-driver-engine/Cargo.toml":
