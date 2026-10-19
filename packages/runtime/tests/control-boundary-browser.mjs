@@ -13,13 +13,16 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fixture(
   t,
-  { failVerification = false, deferEffectStatus = false } = {},
+  { failVerification = false, deferEffectStatus = false, terminalControl } = {},
 ) {
   let release,
     entered,
     releaseEffectStatus,
     enteredEffectStatus,
     returnedEffectStatus,
+    appliedControl,
+    reportAtControl,
+    reports = 0,
     writes = 0,
     ended = 0,
     driver,
@@ -38,6 +41,9 @@ async function fixture(
   });
   const effectReturned = new Promise((resolve) => {
     returnedEffectStatus = resolve;
+  });
+  const controlApplied = new Promise((resolve) => {
+    appliedControl = resolve;
   });
   const server = http.createServer(async (req, res) => {
     if (req.method === "POST" && req.url === "/save") {
@@ -102,10 +108,24 @@ async function fixture(
         );
     },
     effectStatus: async () => {
+      reports++;
       if (deferEffectStatus) {
         enteredEffectStatus();
         await effectGate;
         returnedEffectStatus();
+      }
+      if (terminalControl) {
+        // Deliver control during the final await continuation, after the real
+        // save and model verification but before the result can publish.
+        queueMicrotask(() =>
+          queueMicrotask(() =>
+            queueMicrotask(() => {
+              reportAtControl = driver.report();
+              driver[terminalControl]();
+              appliedControl();
+            }),
+          ),
+        );
       }
       return { status: writes === 1 ? "saved" : "not_attempted" };
     },
@@ -124,6 +144,9 @@ async function fixture(
     effectReady,
     effectReturned,
     releaseEffectStatus,
+    controlApplied,
+    reportAtControl: () => reportAtControl,
+    reports: () => reports,
     writes: () => writes,
     ended: () => ended,
     async start({ recipe = false } = {}) {
@@ -279,4 +302,80 @@ for (const mode of ["pause", "stop", "stop-unverified"]) {
     assert.equal(f.browser.isConnected(), true);
     assert.equal(await f.page.locator("#note").inputValue(), "Retain my note");
   });
+}
+
+for (const action of ["stop", "pause"]) {
+  test(
+    `recipe ${action} before publication preserves one verified browser write`,
+    { timeout: 10000 },
+    async (t) => {
+      const f = await fixture(t, {
+        deferEffectStatus: true,
+        terminalControl: action,
+      });
+      const { result } = await f.start({ recipe: true });
+      await f.ready;
+      f.release();
+      await f.effectReady;
+      assert.equal(f.writes(), 1);
+      assert.equal(await f.page.locator("#status").textContent(), "Saved");
+      f.releaseEffectStatus();
+      await f.controlApplied;
+      await new Promise((resolve) => setImmediate(resolve));
+      const before = f.reportAtControl(),
+        runId = before.runId;
+      assert.equal(
+        before.lastResult,
+        null,
+        "Control must precede terminal publication",
+      );
+      assert.deepEqual(before.completedRunIds, []);
+      assert.ok(
+        before.events.some(
+          (event) =>
+            event.runId === runId &&
+            event.type === "verified" &&
+            event.command === "save",
+        ),
+        "The browser write must be model-verified before the late control",
+      );
+      assert.equal(f.reports(), 1);
+      if (action === "pause") {
+        const held = await f.driver.snapshot();
+        assert.equal(held.paused, true);
+        assert.equal(
+          held.busy,
+          true,
+          "Late Pause must retain the active recipe",
+        );
+        assert.equal(held.execution, "paused");
+        assert.equal(f.ended(), 0, "Cleanup must await Resume or Stop");
+        assert.equal(f.driver.report({ runId }), null);
+        f.driver.resume();
+      }
+      const completed = await result;
+      assert.equal(
+        completed.execution,
+        action === "stop" ? "stopped" : "completed",
+        "Accepted Stop must prevent successful publication",
+      );
+      assert.equal(completed.ok, action !== "stop");
+      if (action === "stop") assert.equal(completed.outcome, undefined);
+      assert.equal(completed.effect.status, "saved");
+      assert.equal(f.reports(), 1, "Do not recollect evidence after a control");
+      assert.equal(f.ended(), 1);
+      assert.equal(
+        f.writes(),
+        1,
+        "Finalization must not replay the saved request",
+      );
+      assert.deepEqual(f.driver.report({ runId }).lastResult, completed);
+      await f.driver.close();
+      assert.equal(f.ended(), 1);
+      assert.equal(f.page.isClosed(), false);
+      assert.equal(f.browser.isConnected(), true);
+      assert.equal(await f.page.locator("#status").textContent(), "Saved");
+      assert.equal(f.writes(), 1);
+    },
+  );
 }

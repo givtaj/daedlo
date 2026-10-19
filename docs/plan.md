@@ -278,13 +278,17 @@ browser-driver and Roots checkouts retain their existing source and entrypoints.
       `codex/daedlo-roots-fixes` branch without changing the ordinary checkout.
 - [x] Reproduce the canonical-recipe and paused-finalization regressions on their
       pre-fix source identities.
-- [ ] Verify the corrected roots.7 source and exact installed packages, including
-      controls accepted during asynchronous final effect evidence.
-- [ ] Reconcile the reviewed current Roots feature snapshot and its model in an
+- [x] Verify the roots.7 source and exact installed packages, including controls
+      during asynchronous final effect evidence; retain its later review failure.
+- [x] Reproduce and fix the final boundary publication race in source tests.
+- [ ] Build and verify a new immutable roots.8 package and its isolated consumer.
+- [x] Reconcile the reviewed current Roots feature snapshot and its model in an
       isolated consumer; preserve the old inventory and original driver reference.
 - [ ] Close exact-identity, current-feature, normal-session and applicable CI gates
       before coordinated default promotion.
 
 Actual measured outcomes belong in [verification](verification.md). The Roots
 consumer continues to own its canonical checklist. Historical local passes do not
-clear pending VoiceOver, current-feature, publication or normal-session gates.
+clear pending publication, CI or normal-session gates. The user explicitly deferred
+VoiceOver spoken-output acceptance on October 19; it remains DEFERRED / NOT RUN
+and is not a current migration blocker.

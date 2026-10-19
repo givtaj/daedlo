@@ -664,10 +664,15 @@ export async function createDriverSession({
           else if (profile) finishPresentation("halted", outcome.label);
         }
         effect = await effectReport(attempted);
-        // Evidence hooks can be asynchronous. Honor controls accepted while
-        // reporting before publishing a result or starting per-run cleanup.
-        if (recipe) await boundary();
-        else if (stopping || closed)
+        // An awaited boundary can itself yield to Pause or Stop. Recheck each
+        // return before publishing; no asynchronous work may separate these
+        // final control checks from the result and per-run cleanup decision.
+        if (recipe) {
+          do {
+            await boundary();
+          } while (paused);
+        }
+        if (stopping || closed)
           reject("stopped", "Stopped after the current action was verified.");
         if (profile && presentation.status === "running")
           finishPresentation("completed");

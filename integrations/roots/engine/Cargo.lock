@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "browser-driver-engine"
-version = "0.1.3-roots.7"
+version = "0.1.3-roots.8"
 dependencies = [
  "serde",
  "serde_json",

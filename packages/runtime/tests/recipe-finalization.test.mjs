@@ -258,7 +258,10 @@ for (const kind of ["success", "validation", "recoverable_error", "unknown"]) {
 
 // Effect evidence is an asynchronous part of the active run. Controls accepted
 // while it is pending must still decide whether a terminal result can publish.
-async function reportingFixture(t, { recipe = true, outcome } = {}) {
+async function reportingFixture(
+  t,
+  { recipe = true, outcome, terminalControl } = {},
+) {
   const folder = await mkdtemp(join(tmpdir(), "driver-reporting-controls-"));
   const enginePath = join(folder, "engine.mjs");
   await writeFile(
@@ -272,7 +275,9 @@ async function reportingFixture(t, { recipe = true, outcome } = {}) {
       JSON.stringify({ verifyOutcomes: { edit: outcome, save: outcome } }),
     );
   const entered = deferred(),
-    release = deferred();
+    release = deferred(),
+    controlApplied = deferred();
+  let reportAtControl;
   const facts = { text: "original", saved: false };
   const effects = [];
   let ended = 0,
@@ -304,6 +309,19 @@ async function reportingFixture(t, { recipe = true, outcome } = {}) {
         reports++;
         entered.resolve();
         await release.promise;
+        if (terminalControl) {
+          // The last microtask runs after effectReport resolves and the async
+          // final boundary checks its initial state, before publication resumes.
+          queueMicrotask(() =>
+            queueMicrotask(() =>
+              queueMicrotask(() => {
+                reportAtControl = driver.report();
+                driver[terminalControl]();
+                controlApplied.resolve();
+              }),
+            ),
+          );
+        }
         return { status: facts.saved ? "saved" : "uncertain" };
       },
       endRun: () => {
@@ -330,6 +348,8 @@ async function reportingFixture(t, { recipe = true, outcome } = {}) {
     runId: driver.report().runId,
     release,
     effects,
+    controlApplied: controlApplied.promise,
+    reportAtControl: () => reportAtControl,
     ended: () => ended,
     reports: () => reports,
     settled: () => settled,
@@ -422,4 +442,45 @@ for (const outcome of [{}, { kind: "malformed", label: "Invalid" }]) {
       assert.deepEqual(f.effects, ["edit"]);
     });
   }
+}
+
+for (const action of ["stop", "pause"]) {
+  test(`${action} accepted before recipe publication retains terminal precedence`, async (t) => {
+    const f = await reportingFixture(t, { terminalControl: action });
+    f.release.resolve();
+    await f.controlApplied;
+    await new Promise((resolve) => setImmediate(resolve));
+    const before = f.reportAtControl();
+    assert.equal(
+      before.lastResult,
+      null,
+      "Control must precede result publication",
+    );
+    assert.deepEqual(before.completedRunIds, []);
+    assert.equal(f.reports(), 1);
+    assert.deepEqual(f.effects, ["edit", "save"]);
+    if (action === "pause") {
+      assert.equal(f.settled(), false, "Pause must keep the recipe pending");
+      assert.equal(f.driver.report({ runId: f.runId }), null);
+      assert.equal(f.ended(), 0, "Cleanup must wait for Resume or Stop");
+      f.driver.resume();
+    }
+    const result = await f.running;
+    assert.equal(
+      result.execution,
+      action === "stop" ? "stopped" : "completed",
+      "Accepted Stop must prevent successful terminal publication",
+    );
+    assert.equal(result.ok, action !== "stop");
+    if (action === "stop") assert.equal(result.outcome, undefined);
+    assert.equal(result.effect.status, "saved");
+    assert.equal(f.reports(), 1, "Finalization must retain collected evidence");
+    assert.deepEqual(
+      f.effects,
+      ["edit", "save"],
+      "Finalization must not replay effects",
+    );
+    assert.equal(f.ended(), 1);
+    assert.deepEqual(f.driver.report({ runId: f.runId }).lastResult, result);
+  });
 }

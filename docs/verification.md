@@ -4,7 +4,7 @@
 
 Recovered the preserved `c8135fe` source bundle after verifying its SHA-256 and
 kept the immutable roots.6 ZIP. This isolated branch integrates the public-preview
-ancestry and all six local migration corrections: visible guarded typing/cursor,
+ancestry and the preserved migration corrections: visible guarded typing/cursor,
 canonical recipe context, explicit empty viewer text, verification controls,
 owned project CLI sessions, explicit browser overrides and paused finalization.
 The ordinary browser-driver and Roots checkouts are not integration targets.
@@ -30,6 +30,65 @@ Resume. This prepares a separate **unpublished `0.1.3-roots.7`** candidate.
 Evidence is retained under ignored `artifacts/resume-20261019/`; browser screenshot
 suites use their documented artifact paths. The viewer suite now also runs in CI,
 but no remote CI result, publication or normal Roots promotion is claimed.
+
+## Exact roots.7 artifact and isolated Roots acceptance — 2026-10-19
+
+Built the unpublished `0.1.3-roots.7` distribution from clean source commit
+`c8b481a870a841257da88fa079708dcd5d5797a2`. The immutable ZIP SHA-256 is
+`6c91036e4d54b101f3bee510caccf9d429c0d628efe123cfd16c478be25f30e2`;
+its manifest SHA-256 is
+`73ff58def5e7fe0f37024941d0ce5ef3403ca8d7f0e369119102c280d1d1a67e`.
+Later documentation commits do not change this artifact's source identity.
+
+The exact installed archives passed eight independent Chromium/API groups and
+all ten generic CLI browser cases. Runtime and crate trees remained byte-identical;
+all recorded owned processes, origins and fixtures closed. The clean source bundle
+was restored independently, checked with `git fsck`, and matched the source commit.
+This is verified local preservation, not an off-host backup.
+
+The isolated Roots consumer reconciles the reviewed A05/A08 snapshot with model
+`d1a7400-df20261011-daedlo.4` (131 declared leaves, 74 public commands, 18 recipes).
+The original driver remains present. Fresh candidate results now include:
+
+- Full application acceptance: 189 actual cases (105 primary plus 84 companion),
+  represented by 110 primary/wrapper rows and the five companion receipts.
+- All 18 recipes; six direct groups, eleven supplemental groups, three remaining
+  direct groups, and all 74 successful public commands plus all 74 stale guards.
+- All ten viewer/control groups, three receipt groups and four completion groups.
+- Current draft/validation acceptance: 39 checks. Actual zoom is separate;
+  VoiceOver spoken-output acceptance is DEFERRED / NOT RUN by user decision.
+
+These results use an explicit isolated application snapshot and disposable data.
+A simultaneous original-driver reference preserved its draft and navigation;
+that preservation result does not stand in for baseline control parity. No normal
+Roots service or browser tab was found during inspection, so the existing normal
+session gate remains NOT RUN. Baseline, launcher, rollback, final source/database
+and strict promotion outcomes are recorded separately when complete. The old
+roots.6 strict refusals remain unchanged. No remote CI, publication, deployment,
+or everyday Roots dependency/default promotion is claimed.
+
+Private raw evidence remains in the isolated consumer's
+`.migration/resume-20261019/` and ignored native `QA/evidence/` directories. Shared
+runtime and exact package receipts remain in `artifacts/resume-20261019/`.
+
+## Final result publication race — 2026-10-19
+
+Independent review found a further race in the exact installed roots.7 runtime:
+Pause or Stop accepted after the final asynchronous boundary checked controls,
+but before result publication, was followed by a completed result and cleanup.
+Two installed-package unit assertions, two source assertions and two real Chromium
+assertions reproduced the defect; the seven existing browser cases still passed.
+The original red evidence and roots.7 artifact remain immutable. Its final strict
+receipt refuses promotion, including this independent-review failure.
+
+The final boundary now rechecks Pause after each asynchronous return and checks
+Stop synchronously immediately before publishing. It reuses the collected effect
+evidence and never replays the saved request. The focused source tests pass
+**25/25 lifecycle cases and 9/9 real Chromium cases**, including retained saved
+HTTP evidence and no cleanup before Resume. This prepares a separate unpublished
+**0.1.3-roots.8** candidate. Broader source and exact roots.8 package/customer
+acceptance are pending at this source checkpoint; roots.7 passes do not establish
+roots.8 acceptance. Normal Roots defaults remain unchanged.
 
 ## Paused recipe finalization correction — 2026-10-11
 
