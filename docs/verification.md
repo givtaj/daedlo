@@ -1,5 +1,36 @@
 # Verification record
 
+## Resumed shared fixes and final-evidence controls — 2026-10-19
+
+Recovered the preserved `c8135fe` source bundle after verifying its SHA-256 and
+kept the immutable roots.6 ZIP. This isolated branch integrates the public-preview
+ancestry and all six local migration corrections: visible guarded typing/cursor,
+canonical recipe context, explicit empty viewer text, verification controls,
+owned project CLI sessions, explicit browser overrides and paused finalization.
+The ordinary browser-driver and Roots checkouts are not integration targets.
+
+A new regression reproduced controls being ignored while an asynchronous
+`effectStatus` hook collected final evidence. Execution now remains active until
+that hook completes; recipe Pause holds publication, Stop/close wins, and the
+collected evidence is reused exactly once. Failure cleanup does not wait for
+Resume. This prepares a separate **unpublished `0.1.3-roots.7`** candidate.
+
+| Fresh check | Actual result |
+| --- | --- |
+| Preserved regression RED | Canonical context: 4 genuine failures on public-snapshot runtime; paused-finalization: 10 genuine failures on roots.5. |
+| New final-evidence RED | 7 lifecycle failures on roots.6; 4 real Chromium/HTTP failures after a verified saved request (3 existing cases passed). |
+| Runtime | Node 22 and 24: 127/127 each; focused finalization 23/23. |
+| Release tooling | Node 22 and 24: 82/82 each. |
+| Rust | Formatting, Clippy with warnings denied, locked build and 23 tests PASS. |
+| Source quality | JavaScript syntax, public types and formatting PASS. |
+| Source Chromium | Motion 4/4; controls 7/7; CLI 10/10; viewer 2/2; notebook browser/API 8/8. |
+| Visible presentation | Fresh cursor and viewer hold screenshots inspected; owned browser/server cleanup assertions passed. |
+| Exact roots.7 package / Roots application acceptance | NOT RUN at this source checkpoint; subsequent immutable artifact and integration receipts must establish these separately. |
+
+Evidence is retained under ignored `artifacts/resume-20261019/`; browser screenshot
+suites use their documented artifact paths. The viewer suite now also runs in CI,
+but no remote CI result, publication or normal Roots promotion is claimed.
+
 ## Paused recipe finalization correction — 2026-10-11
 
 A real Roots launcher run against installed unpublished `0.1.3-roots.5` failed

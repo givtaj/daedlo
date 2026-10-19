@@ -582,7 +582,8 @@ export async function createDriverSession({
     stageStarted(profile, 0);
     const runIdentity = structuredClone(base().identity);
     active = (async () => {
-      let attempted = false;
+      let attempted = false,
+        effect;
       try {
         if (adapter.beginRun)
           await adapter.beginRun({ runId, command: id, recipe });
@@ -662,6 +663,12 @@ export async function createDriverSession({
           if (profile && outcome.kind === "success") await holdStage(result);
           else if (profile) finishPresentation("halted", outcome.label);
         }
+        effect = await effectReport(attempted);
+        // Evidence hooks can be asynchronous. Honor controls accepted while
+        // reporting before publishing a result or starting per-run cleanup.
+        if (recipe) await boundary();
+        else if (stopping || closed)
+          reject("stopped", "Stopped after the current action was verified.");
         if (profile && presentation.status === "running")
           finishPresentation("completed");
         execution = paused ? "paused" : "completed";
@@ -670,10 +677,13 @@ export async function createDriverSession({
           execution: "completed",
           runId,
           outcome,
-          effect: await effectReport(attempted),
+          effect,
         };
         emit("run_completed", { outcome: outcome.kind });
       } catch (error) {
+        // Retain evidence already collected on the success path; never rerun
+        // the hook merely because Stop won the final publication decision.
+        effect ??= await effectReport(attempted);
         const interrupted = stopping || closed || error?.code === "stopped";
         const failure = publicError(error);
         execution = interrupted ? "stopped" : attempted ? "failed" : "rejected";
@@ -690,7 +700,7 @@ export async function createDriverSession({
                   : {}),
               }
             : failure),
-          effect: await effectReport(attempted),
+          effect,
         };
         if (profile)
           finishPresentation(

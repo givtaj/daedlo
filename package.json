@@ -25,7 +25,8 @@
     "test:roots-example": "node --test examples/roots/tests/*.test.mjs",
     "roots:feature:prepare": "node integrations/roots/prepare-feature.mjs",
     "roots:feature:stage": "node integrations/roots/stage-feature.mjs",
-    "test:roots-feature": "node integrations/roots/feature-acceptance.mjs"
+    "test:roots-feature": "node integrations/roots/feature-acceptance.mjs",
+    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "24.13.4",

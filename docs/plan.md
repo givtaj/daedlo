@@ -265,3 +265,26 @@ keep the previous candidate and failure receipts intact.
 
 This feature is local source work; publication and customer dependency promotion
 are separate actions. The Stoplight captions and fixture remain customer-owned.
+
+## Resume installed Roots migration — 2026-10-19
+
+The user requested resuming the migration and bringing the preserved shared fixes
+into browser-driver while keeping the current Roots driver operational until all
+acceptance checks pass. Work occurs in isolated checkouts; the ordinary dirty
+browser-driver and Roots checkouts retain their existing source and entrypoints.
+
+- [x] Verify and recover the preserved `c8135fe` source bundle and roots.6 archive.
+- [x] Integrate its public-preview ancestry and shared corrections on the local
+      `codex/daedlo-roots-fixes` branch without changing the ordinary checkout.
+- [x] Reproduce the canonical-recipe and paused-finalization regressions on their
+      pre-fix source identities.
+- [ ] Verify the corrected roots.7 source and exact installed packages, including
+      controls accepted during asynchronous final effect evidence.
+- [ ] Reconcile the reviewed current Roots feature snapshot and its model in an
+      isolated consumer; preserve the old inventory and original driver reference.
+- [ ] Close exact-identity, current-feature, normal-session and applicable CI gates
+      before coordinated default promotion.
+
+Actual measured outcomes belong in [verification](verification.md). The Roots
+consumer continues to own its canonical checklist. Historical local passes do not
+clear pending VoiceOver, current-feature, publication or normal-session gates.
