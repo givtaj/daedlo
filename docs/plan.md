@@ -281,11 +281,14 @@ browser-driver and Roots checkouts retain their existing source and entrypoints.
 - [x] Verify the roots.7 source and exact installed packages, including controls
       during asynchronous final effect evidence; retain its later review failure.
 - [x] Reproduce and fix the final boundary publication race in source tests.
-- [ ] Build and verify a new immutable roots.8 package and its isolated consumer.
+- [x] Build the immutable roots.8 package and verify its exact installed consumer,
+      paired 189-case application suites, 74 commands/guards and 18 recipes.
+- [ ] Finish the final local source/evidence preservation and strict decision.
+- [ ] Resolve ordinary launcher fixture ownership and finish L03–L08 on roots.8.
 - [x] Reconcile the reviewed current Roots feature snapshot and its model in an
       isolated consumer; preserve the old inventory and original driver reference.
-- [ ] Close exact-identity, current-feature, normal-session and applicable CI gates
-      before coordinated default promotion.
+- [ ] Close normal-session and applicable CI gates before coordinated default
+      promotion; keep the original driver as the ordinary entrypoint until then.
 
 Actual measured outcomes belong in [verification](verification.md). The Roots
 consumer continues to own its canonical checklist. Historical local passes do not

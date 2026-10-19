@@ -1,5 +1,54 @@
 # Verification record
 
+## Roots migration: exact roots.8 local acceptance — 2026-10-19
+
+The preserved fixes are integrated on `codex/daedlo-roots-fixes`. The current
+unpublished candidate is **0.1.3-roots.8**, built once from clean implementation
+commit `42ef2a380d20a4ea59a45f864467f60eade4da35`. Its immutable ZIP SHA-256 is
+`fe807d75ed2569e29228e7be8bbf5e576a0de2c97149f7589ce85c55ceff5d76`.
+Later documentation commits do not change the packaged source identity.
+The normal Roots driver remains the default. Migration promotion is incomplete.
+
+| Executed check | Actual result and scope |
+| --- | --- |
+| Shared source | Runtime 129/129 and release tooling 82/82 on both Node 22 and 24; Rust 23 tests, locked build, Clippy, formatting, JavaScript syntax and public types PASS. |
+| Exact installed roots.8 | Independent consumer: eight Chromium/API groups, ten CLI browser cases, 25 publication lifecycle cases and nine publication browser cases PASS. Runtime and crate files match the immutable archives before and after; recorded owned cleanup PASS. |
+| Paired Roots application | Both original and candidate PASS 189 actual cases: 105 primary plus 84 companion. The 110 main/wrapper rows include five wrappers, not five extra cases. Both full02 runs use frozen Roots `df301b1`, finish with exact source/binary provenance and zero drift. |
+| Commands, recipes and controls | Candidate 74 successful public commands, 74 stale guards, all 18 recipes, ten viewer/control groups, three receipt groups and four completion groups PASS. Direct commands exclude recipe internals. |
+| Additional application observations | Paired real-request Journal pending checks (three each) and Profile/sign-in residual checks (five each) PASS. Literal observed states and named temporal/business outcomes are recorded separately. |
+| Independence and recovery | Six direct browser groups PASS under explicit source-read denials. Missing observations and incompatible contracts fail closed. Four isolated update/rollback checks PASS, preserving session, draft, data and exact-one writes across the recorded attachments and restart. |
+| Roots source/database and packaging | Complete serial source/database checks PASS at recorded `612864a`: all six database modules and 148 frontend tests, build and lint. Source-input equivalence to final integration is recorded; later QA-only verifier/readiness changes have separate checks. The development web Docker build PASS; no production serving claim. |
+| Preservation and final strict decision | Final integration bundle/evidence restore and final strict receipt are pending at this documentation checkpoint. Earlier package/source restoration passed; it does not stand in for this final checkpoint. |
+
+The first roots.8 full candidate run remains **188 PASS / 1 FAIL**. Its creation
+case used direct DOM clicks without waiting for the disabled Save button to become
+ready. A real Roots regression held the readiness responses: the old native
+action produced no POST and failed the intended assertion; the corrected action
+waits for enabled state before the same rapid-click burst and produces exactly
+one POST and one row. Both complete full02 reruns pass the corrected case. This
+confirms a mechanism consistent with the original failure; the button state at
+that original instant was not captured. No application assertion was weakened.
+
+The ordinary launcher is still incomplete. With Node 24, L01 and L02 pass, but
+the separate ordinary bind-mounted PostgreSQL fixture fails its ownership check
+before L03–L08 can run. Exact owned diagnostics and cleanup are retained. The
+roots.7 launcher passes are historical and cannot pass roots.8. No open normal
+Roots session was found, so existing login/draft preservation remains NOT RUN.
+Applicable CI and coordinated default adoption also remain open. VoiceOver is
+**DEFERRED / NOT RUN** by the user's October 19 decision, not a current blocker.
+
+The accepted application is the frozen reviewed A05/A08 snapshot. Concurrent
+private-pilot authentication work in normal Roots is excluded. Read-only checks
+found the normal browser-driver checkout unchanged and the compared normal Roots
+dependency/entrypoint pins unchanged; other Roots source is changing in its owning
+chat. No whole-checkout unchanged claim is made for Roots.
+
+Private raw evidence remains in the isolated Roots consumer's ignored
+`.migration/resume-20261019/` and `QA/evidence/`, and this worktree's ignored
+`artifacts/resume-20261019/`. No publication, remote CI, deployment or everyday
+dependency/default promotion is claimed. The older sections below retain their
+dated scope, including superseded candidates and genuine failed receipts.
+
 ## Resumed shared fixes and final-evidence controls — 2026-10-19
 
 Recovered the preserved `c8135fe` source bundle after verifying its SHA-256 and
