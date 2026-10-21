@@ -22,6 +22,7 @@ Later website/evidence documentation commits do not change the packaged source.
 | Public contents | ZIP plus nested archives checked across 72 file boundaries: inventories/digests and canonical MIT/Apache notices PASS; no detected private paths, credentials or evaluation drafts. Only sanitized verification metadata is published. |
 | Website | 31 tests PASS; six-page/two-archive acceptance PASS. Desktop and 390px mobile review: no overflow or browser errors. Exact rendered installer matches the tested kit guide. |
 | Public delivery | Wrangler 4.147.0 dry-run and deployment PASS. Active version `8eebf633-35e6-498a-ae19-67f867c1b878` at 100%; all 21 served assets match frozen bytes on both apex and provider origins, seven private/missing paths return 404, CSP and nosniff present. Public installation page inspected. |
+| Downloaded installation | Fresh HTTPS ZIP, checksum and metadata exactly match the frozen release. The downloaded START_HERE block exits successfully with an initially empty npm cache; all 26 tools files and 13 extracted kit files match. Parent manifests unchanged; temporary workspace removed. |
 
 Scope: assisted macOS arm64 with Codex and existing toolchains/caches. Linux CI
 is technical coverage, not Linux customer onboarding. Windows, Claude Code,
