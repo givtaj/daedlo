@@ -1,6 +1,37 @@
 # Verification record
 
-## Roots migration: exact roots.8 local acceptance — 2026-10-19
+## Evidence availability check — 2026-10-21
+
+The shared driver implementation and immutable roots.8 package remain available.
+A read-only integrity review rechecked 22 recorded file hashes, including the
+installed-package receipts and logs, both ZIP copies, the preserved full-history
+source bundle, release metadata and runtime source. All match. The source bundle
+passes `git bundle verify`, the managed repository passes `git fsck`, and its
+implementation is unchanged from `42ef2a3`; the later `b74e830` checkpoint changes
+only documentation. The source and exact installed-package test evidence below
+remains inspectable; these tests were not rerun for this availability review.
+
+The temporary Roots consumer `/private/tmp/roots-daedlo-resume-20261019` is absent
+at this check. Its ignored Roots acceptance receipts and native evidence are not
+available at their recorded locations. The cause of the directory's disappearance
+has not been established. The final integration archive and strict closure were
+not completed, and no replacement is claimed. Recovery is in progress; recovered
+source must be verified, and unavailable acceptance evidence must be recovered or
+replaced by fresh isolated runs before it can support promotion.
+
+The October 19 Roots results below remain historical observations, including the
+passing paired runs and genuine earlier failures. Missing raw evidence does not
+turn those observed passes into failed tests, but prevents their current independent
+reinspection. The earlier driver source restoration is also historical: its
+receipt and valid bundle survive, while the named temporary restore directory is
+absent. That restoration never covered the final Roots integration. Migration
+promotion remains incomplete and the current Roots driver stays in place.
+
+The metadata-only integrity receipt is in ignored
+`artifacts/resume-20261021/driver-integrity-review.json`. Shared source/package
+receipts remain in this worktree's ignored `artifacts/resume-20261019/`.
+
+## Roots migration: historical roots.8 local acceptance — 2026-10-19
 
 The preserved fixes are integrated on `codex/daedlo-roots-fixes`. The current
 unpublished candidate is **0.1.3-roots.8**, built once from clean implementation
@@ -9,7 +40,7 @@ commit `42ef2a380d20a4ea59a45f864467f60eade4da35`. Its immutable ZIP SHA-256 is
 Later documentation commits do not change the packaged source identity.
 The normal Roots driver remains the default. Migration promotion is incomplete.
 
-| Executed check | Actual result and scope |
+| Executed October 19 check | Recorded result and scope; see October 21 availability above |
 | --- | --- |
 | Shared source | Runtime 129/129 and release tooling 82/82 on both Node 22 and 24; Rust 23 tests, locked build, Clippy, formatting, JavaScript syntax and public types PASS. |
 | Exact installed roots.8 | Independent consumer: eight Chromium/API groups, ten CLI browser cases, 25 publication lifecycle cases and nine publication browser cases PASS. Runtime and crate files match the immutable archives before and after; recorded owned cleanup PASS. |
@@ -31,7 +62,8 @@ that original instant was not captured. No application assertion was weakened.
 
 The ordinary launcher is still incomplete. With Node 24, L01 and L02 pass, but
 the separate ordinary bind-mounted PostgreSQL fixture fails its ownership check
-before L03–L08 can run. Exact owned diagnostics and cleanup are retained. The
+before L03–L08 could run. Exact owned diagnostics and cleanup were retained at
+that checkpoint; their recorded temporary location is now absent. The
 roots.7 launcher passes are historical and cannot pass roots.8. No open normal
 Roots session was found, so existing login/draft preservation remains NOT RUN.
 Applicable CI and coordinated default adoption also remain open. VoiceOver is
@@ -43,9 +75,10 @@ found the normal browser-driver checkout unchanged and the compared normal Roots
 dependency/entrypoint pins unchanged; other Roots source is changing in its owning
 chat. No whole-checkout unchanged claim is made for Roots.
 
-Private raw evidence remains in the isolated Roots consumer's ignored
-`.migration/resume-20261019/` and `QA/evidence/`, and this worktree's ignored
-`artifacts/resume-20261019/`. No publication, remote CI, deployment or everyday
+At this checkpoint, private raw evidence was stored in the isolated Roots
+consumer's ignored `.migration/resume-20261019/` and `QA/evidence/`, and this
+worktree's ignored `artifacts/resume-20261019/`. The October 21 check above records
+which evidence remains available. No publication, remote CI, deployment or everyday
 dependency/default promotion is claimed. The older sections below retain their
 dated scope, including superseded candidates and genuine failed receipts.
 
@@ -116,9 +149,10 @@ and strict promotion outcomes are recorded separately when complete. The old
 roots.6 strict refusals remain unchanged. No remote CI, publication, deployment,
 or everyday Roots dependency/default promotion is claimed.
 
-Private raw evidence remains in the isolated consumer's
-`.migration/resume-20261019/` and ignored native `QA/evidence/` directories. Shared
-runtime and exact package receipts remain in `artifacts/resume-20261019/`.
+Private Roots raw evidence was stored in the isolated consumer's
+`.migration/resume-20261019/` and ignored native `QA/evidence/` directories; those
+locations are unavailable at the October 21 check above. Shared runtime and exact
+package receipts remain in `artifacts/resume-20261019/`.
 
 ## Final result publication race — 2026-10-19
 

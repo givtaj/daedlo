@@ -281,17 +281,29 @@ browser-driver and Roots checkouts retain their existing source and entrypoints.
 - [x] Verify the roots.7 source and exact installed packages, including controls
       during asynchronous final effect evidence; retain its later review failure.
 - [x] Reproduce and fix the final boundary publication race in source tests.
-- [x] Build the immutable roots.8 package and verify its exact installed consumer,
-      paired 189-case application suites, 74 commands/guards and 18 recipes.
+- [x] Build the immutable roots.8 package and verify its exact installed consumer;
+      the surviving package and installed-check evidence match on October 21.
+- [x] Record the October 19 paired 189-case application suites, 74 commands/guards
+      and 18 recipes as historical observed passes.
+- [ ] Recover and verify the temporary Roots integration source and its missing
+      acceptance evidence, or produce fresh isolated acceptance for recovered source.
 - [ ] Finish the final local source/evidence preservation and strict decision.
 - [ ] Resolve ordinary launcher fixture ownership and finish L03–L08 on roots.8.
-- [x] Reconcile the reviewed current Roots feature snapshot and its model in an
-      isolated consumer; preserve the old inventory and original driver reference.
+- [x] Reconcile the reviewed Roots feature snapshot and its model in the October 19
+      isolated consumer, retaining its inventory and original driver reference then.
+      Their current recovery and verification remain pending above.
 - [ ] Close normal-session and applicable CI gates before coordinated default
       promotion; keep the original driver as the ordinary entrypoint until then.
 
-Actual measured outcomes belong in [verification](verification.md). The Roots
-consumer continues to own its canonical checklist. Historical local passes do not
-clear pending publication, CI or normal-session gates. The user explicitly deferred
+On October 21 the temporary Roots consumer and its private raw receipts are absent
+at their recorded locations; their disappearance has no established cause. Recovery
+is in progress. The shared driver source/package evidence remains intact, but no
+final integration archive, restored Roots snapshot or strict closure is claimed.
+Missing evidence does not relabel the historical passing tests as failures.
+
+Actual measured outcomes and current evidence availability belong in
+[verification](verification.md). Roots owns its canonical checklist. Historical
+local passes do not clear pending preservation, publication, CI or normal-session
+gates. The user explicitly deferred
 VoiceOver spoken-output acceptance on October 19; it remains DEFERRED / NOT RUN
 and is not a current migration blocker.
