@@ -19,7 +19,11 @@ A candidate consumer uses an explicit override in an isolated Roots snapshot. It
 has separate dependency installation, Cargo target output, browser context/profile,
 ports, processes, disposable data and evidence directory. Never overwrite normal
 Roots binaries or lockfiles to run a candidate. Record the precise application,
-adapter/model, runtime and engine combination used by the test.
+adapter/model, runtime and engine combination used by the test. Keep recovered
+source and acceptance receipts in a durable, isolated work directory. Temporary
+paths are for disposable fixtures. Preserve source checkpoints and completed
+receipts as they are produced, verify archive readback, and record any missing
+historical evidence explicitly; do not wait until final promotion to preserve it.
 
 Temporary local links can help a bounded experiment. Acceptance and everyday
 consumption use exact package artifacts and revisions. Node/Rust/model/protocol

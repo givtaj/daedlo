@@ -1,5 +1,29 @@
 # Verification record
 
+## Durable recovery checkpoint — 2026-10-21
+
+The isolated Roots recovery source is committed locally as `a52a5ee7ba1abfe91f73b71d6ba6fce62a79695e`
+in `/Users/aidin/code/roots-driver-preservation/2026-10-21-recovery/roots`.
+Independent review verified 49 reconstructed source files, 27 reviewed A05/A08
+inputs and 161 application files. Later authentication pilot changes are excluded.
+48 final source hashes match historical tool output; one provenance test has
+complete literal source-write lineage without a printed historical hash.
+This is a new source checkpoint, not restoration of the lost Git commit or receipts.
+
+Fresh tests pass: 53 focused Node, 75 original-model and 88 candidate-model Rust,
+55 promotion-contract/inventory checks and two installation corruption refusals.
+The exact installed roots.8 runtime (22 files) and crate (11 files) match the
+immutable package. Full source/database and browser acceptance are pending on
+this recovered source. Normal Roots defaults remain unchanged.
+
+Shared-driver source at documentation checkpoint `af83862` and 276 available
+private evidence files have a fresh bundle/archive restoration under the durable
+recovery directory. Independent verification confirms all 202 tracked source
+files and all evidence bytes, clean restored HEAD, bundle verification and Git
+integrity. This is local source/evidence preservation; it does not restore missing
+Roots receipts, dependencies, databases or an active normal session. New review
+receipts are retained separately for a later closure archive.
+
 ## Evidence availability check — 2026-10-21
 
 The shared driver implementation and immutable roots.8 package remain available.
