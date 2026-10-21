@@ -1,6 +1,6 @@
 # Daedlo engine — `browser-driver-engine`
 
-**Daedlo 0.1.4-alpha.1 candidate for assisted macOS arm64 onboarding.**
+**Daedlo 0.1.4-alpha.2 candidate for assisted macOS arm64 onboarding.**
 Read LICENSE and THIRD_PARTY_NOTICES.md: MIT for new additions, with retained
 Apache-2.0 obligations for Roots-derived portions.
 

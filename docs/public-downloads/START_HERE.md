@@ -67,14 +67,17 @@ console.log('Tools archive digest verified.');
 NODE
   mkdir "$driver_kit/installed-tools"
   cd "$driver_kit/installed-tools"
-  npm install --offline --ignore-scripts --no-audit --no-fund \
+  npm install --prefix "$driver_kit/installed-tools" --workspaces=false \
+    --offline --ignore-scripts --no-audit --no-fund \
     "$driver_kit/tools/browser-driver-tools-{{VERSION}}.tgz"
   node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs \
     verify --bundle "$driver_kit/bundle" --sha256 '{{MANIFEST_SHA256}}'
 )
 ```
 
-Stop if any step fails. `mkdir` deliberately refuses an existing tools directory;
+The explicit installation prefix keeps npm inside `installed-tools`, even when
+an ancestor directory is an npm workspace. Stop if any step fails. `mkdir`
+deliberately refuses an existing tools directory;
 inspect a prior installation or choose another fresh kit location before retrying.
 Do not bypass a digest or compatibility failure. A successful check establishes
 package integrity and measured toolchain compatibility, not your application's

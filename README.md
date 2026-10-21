@@ -8,7 +8,7 @@ Rust model and guarded Node/Playwright actions. Watch the controlled browser,
 choose valid commands, pause or stop execution, and inspect evidence of the
 application outcome. Authored flows run without an AI agent or model API key.
 
-**Preparing 0.1.4-alpha.1: assisted macOS arm64 onboarding with Codex.** This
+**Preparing 0.1.4-alpha.2: assisted macOS arm64 onboarding with Codex.** This
 candidate incorporates the shared fixes from `0.1.3-roots.8`. Its exact-package
 verification and customer first-flow acceptance are pending. It is not published
 or promoted into normal Roots. The existing public download is

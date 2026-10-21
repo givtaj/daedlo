@@ -1,6 +1,6 @@
 # Daedlo alpha delivery — 21 October 2026
 
-Release target: **0.1.4-alpha.1**. Status: **candidate in preparation; not published**.
+Release target: **0.1.4-alpha.2**. Status: **candidate in preparation; not published**.
 This is the current product/release decision record. Actual test outcomes belong
 in [verification](verification.md); historical records keep their original scope.
 
@@ -31,8 +31,11 @@ separate expansion work. Linux CI remains required technical verification.
 | Roots adoption | Independent migration/recovery work remains incomplete; some earlier raw application receipts are unavailable | No normal dependency switch or current Roots acceptance claim |
 | Remote CI at audit | Main `7e3e48d` failed on missing portable `presentation.md`; alpha base includes its packaging repair | Run CI against the selected alpha commit; historical green runs do not satisfy this gate |
 
-The dedicated branch is `codex/daedlo-alpha-release`. The version advances to
-0.1.4-alpha.1 because 0.1.3-alpha.1 would sort below the existing roots.8 candidate.
+The dedicated branch is `codex/daedlo-alpha-release`. Version 0.1.4 avoids sorting
+below the existing roots.8 candidate. Alpha.1 passed technical and real-application
+checks but was withheld after its installer modified an ancestor npm workspace.
+Alpha.2 uses an explicit install prefix and disables workspace targeting; a real
+nested-workspace regression must prove the ancestor manifests remain unchanged.
 The integration owner controls version fields, lockfiles, entrypoints and release
 assembly. Existing application pins and live services remain untouched.
 

@@ -1,4 +1,4 @@
-# Daedlo 0.1.4-alpha.1 portable release tools
+# Daedlo 0.1.4-alpha.2 portable release tools
 
 The `@browser-driver/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding

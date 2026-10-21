@@ -1,5 +1,42 @@
 # Verification record
 
+## Alpha installer isolation correction — 2026-10-21
+
+**0.1.4-alpha.1 was withheld, not published.** Its exact installed package passed
+eight browser/API groups, ten CLI cases, 25 finalization cases and nine browser
+control cases with cleanup PASS. Clean source `216d188` also passed the complete
+Node 22/24 Linux CI [run 39632283284](https://github.com/givtaj/browser-driver/actions/runs/39632283284).
+The separate pinned Architecture Studio fixture passed invalid-name zero-write,
+exact save/read-back/reload, final report export, owned shutdown, attached fixture
+preservation and CLI/browser relaunch with a repeat save. Its seven acceptance
+groups and post-run integrity seal passed; the live viewer was inspected.
+
+The shipped tools-install block failed when extracted beneath an npm workspace:
+npm added a tools dependency to the ancestor manifest/lock instead of the intended
+`installed-tools` directory, then the local verifier could not be found. The guide
+recommended outside-workspace extraction, but the command still needed to preserve
+the parent project in this common placement. Two setup receipts and the accidental
+diffs are preserved. Only those owned changes were removed, with byte equality to
+the committed manifests checked before restoration. No normal customer checkout
+or everyday Roots dependency was changed.
+
+A new regression executes the exact rendered shell block with real npm and an
+offline tools fixture. Before the fix, standalone installation passed and nested
+installation failed at the genuine parent-manifest preservation assertion.
+The corrected block supplies an explicit installation prefix and disables npm
+workspace targeting. Both cases now pass, including unchanged parent manifests,
+lockfile and sentinel, expected local package path, and execution of the local
+verifier against the expected bundle/digest. **105 release checks pass** after the
+fix. Runtime/model behavior is unchanged.
+
+The corrected target is **0.1.4-alpha.2**. Its clean build, exact-package acceptance,
+customer rerun, selected-commit CI and public delivery remain pending at this
+checkpoint. The alpha.1 ZIP and its passing/failed receipts remain separate.
+Private evidence: `artifacts/alpha-20261021/`, including
+`installer-regression-red.log`, `installer-regression-green.log`,
+`release-tests-alpha2.log`, `installed-acceptance/`, `remote-ci.json`, `customer/`
+and `site/installer-check.json`.
+
 ## Alpha source preparation — 2026-10-21
 
 Prepared isolated branch `codex/daedlo-alpha-release` from clean checkpoint

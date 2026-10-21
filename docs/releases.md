@@ -1,4 +1,4 @@
-# Install Daedlo 0.1.4-alpha.1
+# Install Daedlo 0.1.4-alpha.2
 
 This alpha candidate pairs the Daedlo runtime, Rust engine source,
 portable release tools and complete agent skill. Existing `browser-driver`
@@ -30,10 +30,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `browser-driver-runtime-0.1.4-alpha.1.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
-| `browser-driver-engine-0.1.4-alpha.1.crate` | Rust library source for the customer's application model                                                                |
+| `browser-driver-runtime-0.1.4-alpha.2.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
+| `browser-driver-engine-0.1.4-alpha.2.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `browser-driver-tools-0.1.4-alpha.1.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
+| `browser-driver-tools-0.1.4-alpha.2.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory

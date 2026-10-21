@@ -9,7 +9,7 @@ license: MIT AND Apache-2.0
 Daedlo is the product name; this skill keeps its existing `browser-driver` name,
 installation paths and commands so current integrations continue to work.
 
-This instruction copy accompanies the Daedlo 0.1.4-alpha.1 candidate.
+This instruction copy accompanies the Daedlo 0.1.4-alpha.2 candidate.
 Read its LICENSE and THIRD_PARTY_NOTICES.md for MIT and Apache-2.0 notices.
 
 

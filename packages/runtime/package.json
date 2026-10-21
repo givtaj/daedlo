@@ -1,6 +1,6 @@
 {
   "name": "@browser-driver/runtime",
-  "version": "0.1.4-alpha.1",
+  "version": "0.1.4-alpha.2",
   "description": "Visible browser control with a typed Rust application model",
   "license": "MIT AND Apache-2.0",
   "type": "module",
