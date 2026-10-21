@@ -1,4 +1,12 @@
-# @browser-driver/runtime
+# Daedlo runtime — `@browser-driver/runtime`
+
+The public product name is Daedlo. The package import and `browser-driver` command
+remain unchanged for existing integrations.
+
+**Daedlo 0.1.4-alpha.2 candidate for assisted macOS arm64 onboarding.**
+Read LICENSE and THIRD_PARTY_NOTICES.md: MIT for new additions, with retained
+Apache-2.0 obligations for Roots-derived portions.
+
 
 Local visible browser control through a versioned native Rust application model.
 One ESM package includes the session runtime, generic viewer, resource scope and CLI.
@@ -67,11 +75,50 @@ runtime preserves execution/outcome/effect evidence, sets `ok:false` and
 `cleanup_incomplete`. The adapter's raw error is never included in public reports.
 
 `browser-driver --project ./project.mjs` launches a new owned browser. The trusted
-project module exports `createProject({resources})`, returning
-`{url,enginePath,createAdapter({page,context}),identity?,presentations?}`. Register owned fixture
-resources with `resources.own(handle,{label,close})`; use `attach` for existing
-resources that must survive. Ctrl+C closes owned resources. No sign-in or authored
-command runs automatically.
+project module exports `createProject({resources})`, returning either
+`{url,enginePath,createAdapter({page,context}),identity?,presentations?}` or
+`{url,createSession({page,context,resources,signal,ownSession})}`. These routes are
+mutually exclusive. The default adapter route is unchanged. The custom route
+returns a complete `DriverSession` facade; its `report().identity.model` must
+identify the model. The viewer, shutdown and final `--report` all use that exact
+facade, preserving application control policy without copying launcher lifecycle.
+The CLI itself does not run sign-in or authored commands during startup.
+
+Register owned fixture resources with `resources.own(handle,{label,close})`; use
+`attach` for existing resources that must survive. A factory must register partial
+resources before awaiting further work. For a session created before optional
+application startup actions, call `ownSession(facade)` immediately: returning that
+same object does not register or close it twice. This helper acquires cleanup
+ownership only; it does not activate the session or expose it to the viewer.
+Closable invalid returns are also acquired before validation so they can be cleaned.
+A factory that throws before returning has no active session: its registered partial
+resources are cleaned, but `--report` is not written for that unreturned session.
+
+Ctrl+C immediately aborts the factory's `signal`, then waits for startup and active
+runs to settle before closing owned resources. A factory that performs startup
+actions must stop its facade on abort and check the signal before each next action:
+
+```js
+async function createSession({page, context, signal, ownSession}) {
+  const facade = ownSession(await createApplicationSession({page, context}));
+  const abort = () => facade.stop();
+  signal.addEventListener("abort", abort, {once: true});
+  try {
+    signal.throwIfAborted();
+    // Only if explicitly requested by the application launcher:
+    await requestedStartupAction(facade);
+    signal.throwIfAborted();
+    return facade;
+  } finally {
+    signal.removeEventListener("abort", abort);
+  }
+}
+```
+
+The trusted factory is responsible for honoring cancellation and for any resources
+it neither registers nor returns. Cleanup failures retain owned handles for the
+next signal to retry; cleanup never reruns startup or application commands. Existing
+attached services and independently owned sessions remain untouched.
 
 The initial supported contract is protocol 1 with exact adapter/model version
 matching. Viewer reconnect does not replay actions. Pause/stop is cooperative and

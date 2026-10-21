@@ -14,6 +14,7 @@ import {
 import { promisify } from "node:util";
 import { sourceSnapshot, releaseVersion } from "./build.mjs";
 import { sha256 } from "./manifest.mjs";
+import { releaseLicense } from "./licensing.mjs";
 
 const execute = promisify(execFile);
 const libraries = ["consumer-cli", "commands", "manifest", "store", "remote"];
@@ -23,6 +24,7 @@ const documents = [
   "development-workflow",
   "releases",
   "update-client",
+  "presentation",
 ];
 const skillPrefix = "skills/browser-driver/";
 const requiredSkill = [
@@ -147,6 +149,7 @@ export async function buildToolsArchive({
       "Tools release requires clean source; allowDirty is only for explicit candidates.",
     );
   const version = releaseVersion(before.files);
+  const licensing = releaseLicense(before.files);
   const sourceFiles = new Map(before.files.map((entry) => [entry.path, entry]));
   const entries = new Map();
   const copy = (source, destination = source) => {
@@ -161,7 +164,7 @@ export async function buildToolsArchive({
     copy(`scripts/release/${name}.mjs`, `lib/${name}.mjs`);
   for (const name of documents) copy(`docs/${name}.md`);
   copy("docs/update-client.md", "README.md");
-  copy("LICENSE");
+  for (const file of licensing.files) copy(file);
   for (const file of requiredSkill)
     if (!sourceFiles.has(skillPrefix + file))
       throw Error(`Required skill source is missing: ${file}.`);
@@ -171,13 +174,20 @@ export async function buildToolsArchive({
     name: "@browser-driver/release-tools",
     version,
     description:
-      "Verify and select Browser Driver release bundles in an isolated archive store",
+      "Verify and select Daedlo release bundles in an isolated archive store",
     private: true,
-    license: "MIT",
+    license: licensing.license,
     type: "module",
     engines: { node: ">=22" },
     bin: { "browser-driver-release": "lib/consumer-cli.mjs" },
-    files: ["lib", "docs", "skills", "README.md", "LICENSE", "SOURCE.json"],
+    files: [
+      "lib",
+      "docs",
+      "skills",
+      "README.md",
+      ...licensing.files,
+      "SOURCE.json",
+    ],
   };
   entries.set("package.json", {
     bytes: Buffer.from(JSON.stringify(pkg, null, 2) + "\n"),

@@ -1,5 +1,9 @@
 # Implementation plan
 
+Current release work: [Daedlo alpha delivery — 21 October 2026](alpha-release.md).
+That record owns the bounded alpha scope and gates. The milestones below retain
+their historical scope and do not by themselves establish a current release.
+
 ## Goal and approved constraints
 
 Build the dedicated browser-driver product described in this conversation, with
@@ -265,3 +269,45 @@ keep the previous candidate and failure receipts intact.
 
 This feature is local source work; publication and customer dependency promotion
 are separate actions. The Stoplight captions and fixture remain customer-owned.
+
+## Resume installed Roots migration — 2026-10-19
+
+The user requested resuming the migration and bringing the preserved shared fixes
+into browser-driver while keeping the current Roots driver operational until all
+acceptance checks pass. Work occurs in isolated checkouts; the ordinary dirty
+browser-driver and Roots checkouts retain their existing source and entrypoints.
+
+- [x] Verify and recover the preserved `c8135fe` source bundle and roots.6 archive.
+- [x] Integrate its public-preview ancestry and shared corrections on the local
+      `codex/daedlo-roots-fixes` branch without changing the ordinary checkout.
+- [x] Reproduce the canonical-recipe and paused-finalization regressions on their
+      pre-fix source identities.
+- [x] Verify the roots.7 source and exact installed packages, including controls
+      during asynchronous final effect evidence; retain its later review failure.
+- [x] Reproduce and fix the final boundary publication race in source tests.
+- [x] Build the immutable roots.8 package and verify its exact installed consumer;
+      the surviving package and installed-check evidence match on October 21.
+- [x] Record the October 19 paired 189-case application suites, 74 commands/guards
+      and 18 recipes as historical observed passes.
+- [ ] Recover and verify the temporary Roots integration source and its missing
+      acceptance evidence, or produce fresh isolated acceptance for recovered source.
+- [ ] Finish the final local source/evidence preservation and strict decision.
+- [ ] Resolve ordinary launcher fixture ownership and finish L03–L08 on roots.8.
+- [x] Reconcile the reviewed Roots feature snapshot and its model in the October 19
+      isolated consumer, retaining its inventory and original driver reference then.
+      Their current recovery and verification remain pending above.
+- [ ] Close normal-session and applicable CI gates before coordinated default
+      promotion; keep the original driver as the ordinary entrypoint until then.
+
+On October 21 the temporary Roots consumer and its private raw receipts are absent
+at their recorded locations; their disappearance has no established cause. Recovery
+is in progress. The shared driver source/package evidence remains intact, but no
+final integration archive, restored Roots snapshot or strict closure is claimed.
+Missing evidence does not relabel the historical passing tests as failures.
+
+Actual measured outcomes and current evidence availability belong in
+[verification](verification.md). Roots owns its canonical checklist. Historical
+local passes do not clear pending preservation, publication, CI or normal-session
+gates. The user explicitly deferred
+VoiceOver spoken-output acceptance on October 19; it remains DEFERRED / NOT RUN
+and is not a current migration blocker.

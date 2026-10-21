@@ -6,8 +6,9 @@ stage captions and deliberate holds after successful verification. It does not
 create a second application model, navigate on attachment, reset the application,
 or replay a failed action.
 
-This is a local source feature. Published rc.5 and frozen release packages do not
-contain it. See [verification](verification.md) for the candidate actually tested.
+Presentation mode is included in Daedlo 0.1.2-rc.1. Earlier rc.5 packages do not
+contain it. The website release record identifies the package checks performed;
+customer-specific acceptance remains separate.
 
 ## Configure the customer session
 
@@ -46,8 +47,7 @@ Each `holdMs` is an integer from 0 to 3,600,000; the default is 10,000 ms. A
 `manual: true` stage waits for Advance even after its countdown expires. The
 presenter can advance any current hold early. Execution speed controls pointer
 motion and ordinary action pacing; it does not scale or bypass stage holds. The
-Stoplight example uses Slow and holds of 15, 18, 18 and 12 seconds at its meaningful
-request stages. These are customer configuration, not shared runtime defaults.
+customer chooses meaningful holds for its own flow.
 
 IDs are unique, 1–64 ASCII letters/digits or `._:-`, beginning with a letter or
 digit. At most 32 presentations may be configured. Titles are nonempty and at
@@ -115,14 +115,3 @@ whole commands, and has no arbitrary mid-handler narration, automatic recovery,
 remote viewer authentication or durable report storage. Existing ordinary commands
 and recipes do not inherit presentation holds.
 
-The local Stoplight demonstration used a separately prepared integration and
-sealed application artifacts. Its configuration and ownership guide remains in
-the uncommitted `integrations/stoplight-driver-browser/presentation-README.md`;
-that integration is not required by the shared presentation runtime. The
-[verification record](verification.md) describes the actual local evidence.
-
-For source regression checks, run `npm test` and `npm run check`. The focused
-real Chromium viewer test is
-`node --test packages/runtime/tests/viewer-presentation-browser.mjs`; existing
-ordinary browser acceptance remains `npm run test:e2e`. The separate local
-Stoplight launcher requires its own integration and sealed trial inputs.

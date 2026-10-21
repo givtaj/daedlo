@@ -164,3 +164,68 @@ test("recipe runs canonical steps and observe/reconnect never replays", async ()
     await f.driver.close();
   }
 });
+
+test("pause verifies a dispatched recipe step and guards its next step before resume", async () => {
+  let f,
+    entered,
+    release,
+    effects = 0;
+  const ready = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  f = await fixture({
+    handlers: {
+      edit: async ({ text }, x) =>
+        x.effect(async () => {
+          effects++;
+          f.facts.text = text;
+          entered();
+          await gate;
+        }),
+      save: async (_, x) =>
+        x.effect(() => {
+          effects++;
+          f.facts.saved = true;
+        }),
+    },
+  });
+  let running;
+  try {
+    const before = await f.driver.snapshot();
+    running = f.driver.runRecipe("sample", before.revision);
+    await ready;
+    f.driver.pause();
+    release();
+    const end = Date.now() + 1000;
+    while (
+      !f.driver.report().events.some((e) => e.type === "verified") &&
+      Date.now() < end
+    )
+      await pause(10);
+    assert.equal(
+      f.driver.report().events.filter((e) => e.type === "verified").length,
+      1,
+      "Read-only verification must finish without Resume",
+    );
+    assert.equal(effects, 1);
+    assert.equal((await f.driver.snapshot()).paused, true);
+    f.facts.text = "Human edit while paused";
+    f.driver.resume();
+    const result = await running;
+    assert.equal(result.error_code, "stale_observation");
+    assert.equal(
+      effects,
+      1,
+      "The next recipe effect still requires the verified revision",
+    );
+    assert.equal(f.facts.text, "Human edit while paused");
+  } finally {
+    release();
+    f.driver.stop();
+    await running;
+    await f.driver.close();
+  }
+});

@@ -25,7 +25,15 @@ test("presentation viewer renders human pacing and operates controls without rep
           support: "supported",
         },
       ],
-      commands: [{ id: "inspect", label: "Inspect", params: {} }],
+      commands: [
+        { id: "inspect", label: "Inspect", params: {} },
+        {
+          id: "recipe_evidence",
+          label: "Internal evidence",
+          params: {},
+          recipeOnly: true,
+        },
+      ],
       recipes: [],
     },
     revision: "observed-r1",
@@ -121,6 +129,11 @@ test("presentation viewer renders human pacing and operates controls without rep
     await ui.goto(viewer.url);
     await ui.waitForFunction(
       () => document.querySelector("#connection").textContent === "Connected",
+    );
+    assert.equal(await ui.locator('[data-command-id="inspect"]').count(), 1);
+    assert.equal(
+      await ui.locator('[data-command-id="recipe_evidence"]').count(),
+      0,
     );
     assert.equal(
       await ui.locator("#presentation-panel").count(),
@@ -270,7 +283,10 @@ test("presentation viewer renders human pacing and operates controls without rep
       pauseBox.y + pauseBox.height <= 1000,
       "Presenter controls must remain visible beside the application at desktop viewport size",
     );
-    const out = resolve("artifacts/presentation-20261009");
+    const out = resolve(
+      process.env.VIEWER_EVIDENCE_DIR ||
+        `artifacts/viewer-browser-${Date.now()}-${process.pid}`,
+    );
     await mkdir(out, { recursive: true });
     await ui.screenshot({
       path: resolve(out, "viewer-contract-hold.png"),
@@ -319,6 +335,102 @@ test("presentation viewer renders human pacing and operates controls without rep
       false,
       "Closing the viewer preserves the attached controlled page",
     );
+  } finally {
+    await viewer?.close();
+    await browser.close();
+  }
+});
+
+test("viewer preserves intentional empty text while leaving untouched optional parameters omitted", async () => {
+  const browser = await chromium.launch({ headless: true });
+  let viewer;
+  const calls = [];
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.setContent("<h1>Independent parameter fixture</h1>");
+    const snapshot = {
+      connected: true,
+      descriptor: {
+        id: "parameter-fixture",
+        version: "1",
+        label: "Parameter fixture",
+        states: [
+          { id: "ready", label: "Ready", parent: null, support: "supported" },
+        ],
+        commands: [
+          {
+            id: "edit",
+            label: "Apply draft",
+            params: {
+              notes: { type: "text", label: "Notes" },
+              untouched: { type: "text", label: "Untouched" },
+              count: { type: "number", label: "Count" },
+            },
+          },
+        ],
+        recipes: [],
+      },
+      revision: "observed-r1",
+      state: { id: "ready" },
+      commands: [{ id: "edit", enabled: true }],
+      recipes: [],
+      display: [],
+      execution: "idle",
+      busy: false,
+      paused: false,
+      speed: "normal",
+    };
+    const session = {
+      snapshot: async () => structuredClone(snapshot),
+      command: async (command) => {
+        calls.push(structuredClone(command));
+        return {
+          ok: true,
+          execution: "completed",
+          outcome: { kind: "success", label: "Observed draft" },
+          effect: { status: "not_attempted" },
+        };
+      },
+    };
+    viewer = await createViewer({ page, context, session });
+    const ui = await browser.newPage();
+    await ui.goto(viewer.url);
+    const submit = async () => {
+      const [response] = await Promise.all([
+        ui.waitForResponse(
+          (response) =>
+            new URL(response.url()).pathname === "/command" &&
+            response.request().method() === "POST",
+        ),
+        ui.getByRole("button", { name: "Apply draft", exact: true }).click(),
+      ]);
+      assert.equal(response.status(), 200);
+      return calls.at(-1).params;
+    };
+    assert.deepEqual(
+      await submit(),
+      {},
+      "Untouched optional values must remain omitted",
+    );
+    await ui.getByLabel("Notes", { exact: true }).fill("Clear this draft");
+    await ui.getByLabel("Count", { exact: true }).fill("4");
+    assert.deepEqual(await submit(), { notes: "Clear this draft", count: 4 });
+    await ui.getByLabel("Notes", { exact: true }).fill("");
+    await ui.getByLabel("Count", { exact: true }).fill("");
+    assert.deepEqual(
+      await submit(),
+      { notes: "" },
+      "An explicitly cleared text value must reach the application as an empty string",
+    );
+    await ui.reload();
+    assert.deepEqual(
+      await submit(),
+      {},
+      "Reload does not replay earlier parameter intent",
+    );
+    await viewer.close();
+    assert.equal(page.isClosed(), false);
   } finally {
     await viewer?.close();
     await browser.close();

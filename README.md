@@ -1,117 +1,70 @@
-# browser-driver
+# Daedlo
 
-An agent-installed QA workflow with a Rust application-state engine, a
-Node/Playwright runtime and a local live viewer. An agent helps a team turn one
-agreed feature into a state model, guarded browser flows and inspectable evidence.
-People and agents can then choose a valid command, watch it execute and verify the
-outcome. Authored commands and recipes run without an AI agent or model API key.
+**Make “it works” something you can show.**
 
-**Start with an agent:** follow the [release installation guide](docs/releases.md)
-to download and mount the exact `0.1.1-rc.5` assets without a source checkout, then use the
-[Codex and Claude Code guide](docs/agent-onboarding.md) and portable
-[browser-driver skill](skills/browser-driver/SKILL.md). The skill helps product,
-development and QA contributors agree a feature's Rust enum and diagram, connect
-its flows and verify the evidence. The application keeps its own language and
-architecture; its integration still needs a customer-authored Rust model and
-JavaScript adapter.
+Daedlo is a local browser QA workbench for teams building with coding agents.
+Bring one existing application flow: your agent connects its behavior to a typed
+Rust model and guarded Node/Playwright actions. Watch the controlled browser,
+choose valid commands, pause or stop execution, and inspect evidence of the
+application outcome. Authored flows run without an AI agent or model API key.
 
-The selected preview adds [portable update tools](docs/update-client.md): check
-for newer releases, download verified archives, then test them alongside the
-accepted integration. The published rc.2 assets remain unchanged. The separate
-[Cloudflare/WorkOS/Stripe portal](docs/subscription-plan.md) is a later phase.
+**0.1.4-alpha.2 is released: assisted macOS arm64 onboarding with Codex.**
+[Download the verified kit](https://daedlo.com/install) or read the
+[versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
+The exact installed kit, real-application flow, source CI and public delivery
+passed their scoped checks on 21 October 2026. The [verification record](docs/verification.md)
+owns measured results and limits; [alpha delivery](docs/alpha-release.md) owns the
+product scope and next acceptance milestone. Everyday Roots dependencies remain
+unchanged.
 
-**The primary example is actual Roots work:** Journal draft retention, save and
-retry behavior, session protection, and the Strains catalogue. The local workbench
-shows a sourced archive of that work and connects to the real Roots driver.
+## The first alpha journey
 
-![Control and image-stream architecture](docs/assets/architecture.png)
+Start with one agreed, existing feature and a relevant negative case. An agent
+performs the integration work in a separate QA directory, preserving the
+application's dependencies, data and working tools. The application keeps its own
+language; its integration supplies a native Rust model, a JavaScript adapter,
+fixture instructions and assertions for the outcome that matters.
 
-**Status:** `0.1.1-rc.5` developer preview; final release checks and publication are
-tracked in the [release notes](docs/release-notes/0.1.1-rc.5.md). The Rust engine,
-Node runtime, generic viewer and independent example are implemented. Earlier
-isolated Roots candidates passed real browser/API/PostgreSQL acceptance; Roots'
-everyday embedded driver remains unchanged. Exact tested identities and limits
-are in [verification](docs/verification.md).
+1. Acquire the selected kit and verify its recorded archive and package digests.
+2. Open the application in Codex and explicitly read the kit's `AGENT_START.md`
+   and complete browser-driver skill. Automatic skill discovery is optional.
+3. Install the exact runtime and matching crate, build the customer engine, and
+   launch its project module with a fresh report path.
+4. Run the agreed flow and negative case in the visible viewer. For a save,
+   independently read back the intended data; a click alone is not proof.
+5. Preserve the assertions and report, shut down owned resources, then relaunch
+   and repeat the authored flow from its documented prerequisites.
 
-A second [SeeRuntime integration](integrations/seeruntime/README.md) now verifies
-one existing playback flow with both published rc.2 and the local rc.3 candidate.
-The accepted rc.2 installation still works after the candidate test. This is an
-isolated source snapshot, with no changes to the real application checkout.
+The [onboarding guide](docs/agent-onboarding.md) describes this handoff. The kit's
+`START_HERE.md` and `AGENT_START.md` contain version-specific installation steps.
+Use existing Node 22+, npm, Rust/Cargo 1.96.0 and the runtime's matching Playwright
+Chromium. Docker is needed only when the chosen application fixture requires it.
 
-This preview requires application-specific integration. Windows, complete
-onboarding across unfamiliar frameworks, and full Claude Code skill discovery and
-onboarding have not been verified. The viewer runs locally. Distribution uses
-GitHub assets and tagged source; no npm or crates.io publication is included.
+This alpha targets assisted use on macOS arm64 with Codex. Linux, Windows, Claude
+Code onboarding, fresh OS/toolchain installation and independent self-service
+onboarding remain outside its acceptance claim. Supporting another application's
+language is an integration boundary, not verified coverage of every framework.
+Billing, a hosted QA service and everyday Roots dependency promotion are separate
+work. Read the included `LICENSE` and `THIRD_PARTY_NOTICES.md` for component terms.
 
-## Open the Roots workbench
+## Product evidence and development
 
-With Node 22+:
+Roots supplied the real journeys that shaped Daedlo: draft retention, save/retry
+behavior and session protection. Its [work archive](examples/roots/README.md)
+distinguishes original-driver evidence from extracted candidate acceptance.
+Historical receipts retain their original application and package identities.
+The independent notebook is an engineering conformance fixture.
 
-```bash
-npm ci
-npm run demo
-```
+Read [contracts](docs/contracts.md),
+[development and promotion](docs/development-workflow.md), and the
+[implementation plan](docs/plan.md) before changing the shared product or an
+application integration. Applications own their states, semantic actions,
+fixtures and acceptance checks. The browser-driver package, CLI and skill names
+remain the technical identifiers.
 
-Open the printed URL to inspect real Roots results, screenshots, failures and
-corrections. Archive entries identify their original source and test level. They
-remain available when no live session is running; historical screenshots are never
-presented as a live browser.
-
-To open the current committed Roots application and its original full driver in
-an isolated fixture, follow [the Roots example guide](examples/roots/README.md).
-That live reference includes the workflows the dedicated product must support.
-The original extracted consumer covers 15 commands and one recipe on `d4008e3`.
-An additional [Journal edit consumer](integrations/roots/edit/README.md) ports four
-selected recipes from a separately captured, reviewed feature snapshot. The
-workbench archive remains historical; current candidate results are recorded in
-[verification](docs/verification.md).
-
-The independent notebook remains an engineering conformance fixture under
-`npm run demo:notebook`, after `cargo build --locked --workspace` and
-`npx playwright install chromium`. It is not the product's primary example.
-
-```bash
-npm run check
-npm test
-npm run test:rust
-npm run test:e2e
-npm run test:roots-example
-```
-
-Node checks include local loopback server tests. Browser acceptance launches an
-owned Chromium and example server. [Roots consumer acceptance](integrations/roots/README.md)
-additionally requires Node 24+, Docker and a pinned Roots source checkout.
-
-## Project documents
-
-- [Agent onboarding](docs/agent-onboarding.md): portable instructions, current
-  dependencies and a shared story-to-state-to-evidence workflow.
-- [Product and architecture](docs/architecture.md): what the product does, the two
-  streams, Rust/Node responsibilities and extension interfaces.
-- [Actual Roots experience](examples/roots/README.md): live operation, the evidence
-  archive and the distinction between Roots and the extracted candidate.
-- [Implementation plan](docs/plan.md): ordered milestones, completion gates and
-  current checklist.
-- [Development and Roots integration](docs/development-workflow.md): parallel
-  development, ownership, candidate promotion/rollback and requested upstream ports.
-- [Release installation and preparation](docs/releases.md): exact GitHub assets,
-  the agent skill, installed-package CI, trusted verification and explicit store
-  update/rollback without changing Roots.
-- [Protocol and public API contract](docs/contracts.md): implemented v0.1
-  interfaces; still pre-release, with the tested consumers recorded below.
-- [Presentation mode](docs/presentation.md): paced playback of existing commands
-  and recipes, presenter controls, fresh-state guards and ownership.
-- [Acceptance scenarios](docs/acceptance.md): the behavior the executable tests
-  must prove.
-- [Verification record](docs/verification.md): actual pass/fail/not-run evidence.
-- [Roots customer results](integrations/roots/RESULTS.md): package consumption,
-  real scenarios, cleanup and the first customer-driven model fix.
-
-The first delivery is a local CLI and browser monitor, one Node package and one
-shared Rust library. Each application owns its nested states, facts, commands,
-guards, expected outcomes, selectors and fixture setup. The core owns execution
-coordination, freshness checks, protocol validation, browser viewing and resource
-ownership. See the architecture document for the trust boundary and limitations.
-
-Registry publication, deployment and promotion into everyday Roots usage remain
-separate lifecycle steps.
+With the pinned Node/Rust toolchains and matching Playwright Chromium installed,
+run `npm ci`, `npm run check`, `npm test`, `npm run test:rust`,
+`npm run test:release`, `npm run test:e2e`, `npm run test:motion`,
+`npm run test:controls`, `npm run test:cli`, and `npm run test:viewer`.
+Installed-package acceptance is a separate release gate; source checks do not
+establish customer acceptance, complete Roots replacement or remote CI success.

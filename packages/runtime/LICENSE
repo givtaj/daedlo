@@ -1,3 +1,13 @@
+Daedlo public developer preview
+
+New Daedlo additions are provided under the MIT License below.
+Roots-derived portions retain Apache-2.0 and its applicable notice and patent
+terms. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt. The combined
+package declaration is MIT AND Apache-2.0; it is not a choice that removes
+obligations for either portion. Earlier MIT notices remain preserved in
+licenses/MIT-legacy.txt. Customer application code, models, adapters and data
+remain separate and are not relicensed by this package.
+
 MIT License
 
 Copyright (c) 2026 Aidin Givtaj

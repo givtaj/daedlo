@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "browser-driver-engine"
-version = "0.1.1-rc.5"
+version = "0.1.4-alpha.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -85,7 +85,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "notebook-engine"
-version = "0.1.1-rc.5"
+version = "0.1.4-alpha.2"
 dependencies = [
  "browser-driver-engine",
  "serde",

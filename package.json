@@ -9,6 +9,9 @@
     "test": "node --test packages/runtime/tests/*.test.mjs",
     "test:rust": "cargo test --workspace --locked",
     "test:e2e": "node tests/acceptance.mjs",
+    "test:motion": "node --test packages/runtime/tests/motion-browser.mjs",
+    "test:controls": "node --test packages/runtime/tests/control-boundary-browser.mjs",
+    "test:cli": "node --test packages/runtime/tests/cli-factory-browser.mjs",
     "release": "node scripts/release/cli.mjs",
     "test:release": "node --test tests/release-*.test.mjs",
     "test:release:e2e": "node tests/release-acceptance.mjs",
@@ -22,7 +25,8 @@
     "test:roots-example": "node --test examples/roots/tests/*.test.mjs",
     "roots:feature:prepare": "node integrations/roots/prepare-feature.mjs",
     "roots:feature:stage": "node integrations/roots/stage-feature.mjs",
-    "test:roots-feature": "node integrations/roots/feature-acceptance.mjs"
+    "test:roots-feature": "node integrations/roots/feature-acceptance.mjs",
+    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "24.13.4",

@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { runInstalledControls } from "./installed-controls-acceptance.mjs";
 
 function inventory(root) {
   const files = [];
@@ -380,6 +381,19 @@ export async function runReleaseAcceptance({
       status,
     }));
     result.runtimeBuild = browser.report.identity.runtimeBuild;
+    Object.assign(
+      result,
+      await runInstalledControls({
+        repoRoot,
+        work,
+        installed,
+        entry,
+        output,
+        run,
+        source: manifest.source,
+        version: pkg.version,
+      }),
+    );
     result.installedRuntime = verifyInstalledRuntime(
       packageExpected,
       installed,

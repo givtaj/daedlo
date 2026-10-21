@@ -1,3 +1,4 @@
+// Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 const statuses = new Set(["saved", "uncertain", "rejected", "not_attempted"]);
 const object = (value) =>
   value !== null && typeof value === "object" && !Array.isArray(value);

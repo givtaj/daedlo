@@ -57,7 +57,7 @@ for await (const line of createInterface({ input: process.stdin })) {
       display: [],
     });
   else if (q.op === "verify")
-    r.outcome = {
+    r.outcome = behavior.verifyOutcomes?.[q.command] ?? {
       kind:
         q.command !== "save" || q.observation.facts.saved
           ? "success"

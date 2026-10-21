@@ -1,8 +1,8 @@
 #!/usr/bin/env node
+// Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { writeFile } from "node:fs/promises";
-import { chromium } from "playwright";
 import {
   createDriverSession,
   createResourceScope,
@@ -11,11 +11,17 @@ import {
 
 const usage = `browser-driver --project PATH [--port NUMBER] [--headed] [--report PATH]
 
-Start a trusted project's local browser-driver integration.
+Start a trusted project's local Daedlo integration.
 The project module exports createProject({resources}) and returns:
   {url, enginePath, createAdapter({page,context}), identity?, presentations?}
-The CLI owns its new browser and registered fixture resources. Ctrl+C cleans them.
-Existing attached resources are preserved. No commands execute on startup.
+or {url, createSession({page,context,resources,signal,ownSession})} returning a complete session.
+The two creation routes are mutually exclusive. The CLI owns its new browser and registered fixture resources. Ctrl+C cleans them.
+Existing attached resources are preserved. The CLI does not automatically dispatch commands.
+Trusted project factories may perform explicitly configured startup actions.
+Optional environment:
+  PLAYWRIGHT_MODULE  Playwright module URL or path resolved from the working directory.
+  CHROMIUM           Browser executable path, passed unchanged to Playwright.
+Unset or empty values use Playwright defaults; selected module or launch failures do not fall back.
 `;
 function options(args) {
   const result = { port: 0, headed: false };
@@ -47,6 +53,8 @@ async function main() {
     return;
   }
   const resources = createResourceScope();
+  const startupController = new AbortController();
+  const ownedSessions = new WeakSet();
   let session,
     stopping = false,
     shutdownPromise,
@@ -63,24 +71,53 @@ async function main() {
       sessionClosed = true;
     })());
   };
+  const ownSession = (candidate) => {
+    if (typeof candidate?.close !== "function")
+      throw Error("Owned sessions require a close method.");
+    if (!ownedSessions.has(candidate)) {
+      resources.own(candidate, {
+        label: "driver session",
+        close: (value) => (value === session ? closeSession() : value.close()),
+      });
+      ownedSessions.add(candidate);
+    }
+    return candidate;
+  };
   const checkStop = () => {
     if (stopping) throw Error("Startup interrupted.");
   };
   const startup = (async () => {
+    const moduleOverride = process.env.PLAYWRIGHT_MODULE;
+    const playwrightSpecifier = moduleOverride
+      ? /^(file:|[a-z]+:)/i.test(moduleOverride)
+        ? moduleOverride
+        : pathToFileURL(resolve(moduleOverride)).href
+      : "playwright";
+    const { chromium } = await import(playwrightSpecifier);
+    checkStop();
+    if (typeof chromium?.launch !== "function")
+      throw Error("Selected Playwright module must export chromium.launch.");
     const projectModule = await import(pathToFileURL(opt.project).href);
     checkStop();
     if (typeof projectModule.createProject !== "function")
       throw Error("Project must export createProject.");
     const project = await projectModule.createProject({ resources });
     checkStop();
+    const customSession = typeof project?.createSession === "function";
     if (
-      !project.url ||
-      !project.enginePath ||
-      typeof project.createAdapter !== "function"
+      !project?.url ||
+      (customSession && project.createAdapter !== undefined) ||
+      (!customSession &&
+        (project.createSession !== undefined ||
+          !project.enginePath ||
+          typeof project.createAdapter !== "function"))
     )
-      throw Error("Project has an incomplete integration contract.");
+      throw Error(
+        "Project must provide exactly one complete adapter or session creation route.",
+      );
     const browser = await chromium.launch({
       headless: !opt.headed,
+      ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}),
       // The CLI settles runs and preserves retryable cleanup before closing the
       // browser. Playwright's defaults would close it independently (and exit
       // the host process on SIGINT), bypassing that lifecycle.
@@ -100,30 +137,72 @@ async function main() {
     checkStop();
     await page.goto(project.url);
     checkStop();
-    const adapter = await project.createAdapter({ page, context });
-    try {
-      checkStop();
-      session = await createDriverSession({
+    let model;
+    if (customSession) {
+      const candidate = await project.createSession({
         page,
         context,
-        enginePath: project.enginePath,
-        adapter,
-        identity: project.identity,
-        presentations: project.presentations,
+        resources,
+        signal: startupController.signal,
+        ownSession,
       });
-    } catch (error) {
-      // Until a session exists, the launcher still owns adapter cleanup.
-      if (typeof adapter?.close === "function")
-        resources.own(adapter, {
-          label: "startup adapter",
-          close: (a) => a.close(),
+      // Acquire a closable return before validation or an interruption check.
+      // Invalid candidates never become active sessions: shutdown must not call
+      // missing stop/report methods before their owned close can run.
+      if (typeof candidate?.close === "function") ownSession(candidate);
+      if (
+        !candidate ||
+        [
+          "startPresentation",
+          "advancePresentation",
+          "observe",
+          "snapshot",
+          "execute",
+          "runRecipe",
+          "command",
+          "pause",
+          "resume",
+          "stop",
+          "setSpeed",
+          "report",
+          "close",
+        ].some((method) => typeof candidate[method] !== "function")
+      )
+        throw Error(
+          "Project createSession must return a complete DriverSession.",
+        );
+      session = candidate;
+      checkStop();
+      model = session.report()?.identity?.model;
+      if (typeof model?.id !== "string" || typeof model?.version !== "string")
+        throw Error("Custom session report must identify its model.");
+    } else {
+      const adapter = await project.createAdapter({ page, context });
+      try {
+        checkStop();
+        session = await createDriverSession({
+          page,
+          context,
+          enginePath: project.enginePath,
+          adapter,
+          identity: project.identity,
+          presentations: project.presentations,
         });
-      throw error;
+      } catch (error) {
+        // Until a session exists, the launcher still owns adapter cleanup.
+        if (typeof adapter?.close === "function")
+          resources.own(adapter, {
+            label: "startup adapter",
+            close: (a) => a.close(),
+          });
+        throw error;
+      }
+      resources.own(session, {
+        label: "driver session",
+        close: closeSession,
+      });
+      model = adapter.model;
     }
-    resources.own(session, {
-      label: "driver session",
-      close: closeSession,
-    });
     checkStop();
     const viewer = await createViewer({
       page,
@@ -133,9 +212,9 @@ async function main() {
     });
     resources.own(viewer, { label: "live viewer", close: (v) => v.close() });
     checkStop();
-    console.log(`Browser-driver monitor: ${viewer.url}`);
+    console.log(`Daedlo monitor: ${viewer.url}`);
     console.log(
-      `Model: ${adapter.model.id}@${adapter.model.version} · protocol 1 · Ctrl+C to close`,
+      `Model: ${model.id}@${model.version} · protocol 1 · Ctrl+C to close`,
     );
     return viewer;
   })();
@@ -143,6 +222,7 @@ async function main() {
     if (shutdownComplete) return Promise.resolve();
     return (shutdownPromise ??= (async () => {
       stopping = true;
+      startupController.abort(Error("Startup interrupted."));
       session?.stop();
       if (session) void closeSession().catch(() => {});
       await startup.catch(() => {});

@@ -1,3 +1,4 @@
+// Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 import { reject } from "./errors.mjs";
 const object = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 export function validateParams(command, input = {}) {
@@ -83,6 +84,11 @@ export function validateDescriptor(d, adapter) {
     }
   }
   for (const c of d.commands) {
+    if (c.recipeOnly !== undefined && typeof c.recipeOnly !== "boolean")
+      reject(
+        "invalid_descriptor",
+        "Command recipe-only scope must be boolean.",
+      );
     if (!object(c.params) || typeof adapter.handlers?.[c.id] !== "function")
       reject(
         "missing_handler",

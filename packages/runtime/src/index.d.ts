@@ -19,6 +19,8 @@ export interface CommandDescriptor {
   label: string;
   params: Record<string, Parameter>;
   changesSession?: boolean;
+  /** Available only as a canonical recipe step, never as a direct command. */
+  recipeOnly?: boolean;
 }
 export interface Descriptor {
   id: string;
@@ -37,7 +39,14 @@ export interface Descriptor {
     steps: Array<{ command: string; params: Record<string, unknown> }>;
   }>;
 }
+export interface RecipeContext {
+  readonly recipe: string;
+  readonly step: number;
+  readonly session: string;
+}
 export interface ExecutionContext {
+  /** Runtime-created canonical scope for read-only model checks; absent for direct commands or legacy engines. */
+  readonly recipeContext?: RecipeContext;
   boundary(): Promise<void>;
   effect<T>(fn: () => T | Promise<T>): Promise<void>;
   click(locator: Locator): Promise<void>;
@@ -133,6 +142,8 @@ export interface Result {
   recipe: boolean;
   startedAt: string;
   finishedAt: string;
+  /** Original public failure when Stop takes terminal precedence; no successful outcome is inferred. */
+  interruptionError?: { error_code: string; error: string };
   cleanupFailed?: true;
   cleanupError?: {
     error_code: "cleanup_incomplete";
@@ -254,6 +265,36 @@ export interface ResourceScope {
   setup<T>(fn: (scope: ResourceScope) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 }
+/** Trusted CLI project. The CLI owns its browser, viewer, returned session and shutdown. */
+export type DriverProject = {
+  url: string;
+} & (
+  | {
+      enginePath: string;
+      createAdapter(options: {
+        page: Page;
+        context: BrowserContext;
+      }): BrowserAdapter | Promise<BrowserAdapter>;
+      createSession?: never;
+      identity?: Record<string, unknown>;
+      presentations?: Presentation[];
+    }
+  | {
+      /** Own the facade before startup commands; abort stops startup cooperatively. */
+      createSession(options: {
+        page: Page;
+        context: BrowserContext;
+        resources: ResourceScope;
+        signal: AbortSignal;
+        /** Acquire a partial facade once; returning the same object transfers no duplicate ownership. */
+        ownSession<T extends { close(): void | Promise<void> }>(session: T): T;
+      }): DriverSession | Promise<DriverSession>;
+      createAdapter?: never;
+    }
+);
+export type CreateProject = (options: {
+  resources: ResourceScope;
+}) => DriverProject | Promise<DriverProject>;
 export function createDriverSession<F>(options: {
   page: Page;
   context: BrowserContext;

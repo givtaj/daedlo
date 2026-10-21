@@ -1,144 +1,102 @@
-# Portable release tools
+# Daedlo 0.1.4-alpha.2 portable release tools
 
-The update client checks for Browser Driver releases, downloads an exact bundle,
-verifies its identity and compatibility, and selects archives in an isolated local
-store. It does not install a customer runtime, compile a customer model, replace
-application dependencies, or restart services. The customer integration keeps its
-accepted package pins and launcher until its own replacement checks pass.
+The `@browser-driver/release-tools` package verifies and selects exact driver
+archives in a separate local store. It also includes the contracts, onboarding
+guides and complete `browser-driver` agent skill. It does not install a customer
+runtime, compile an application model, change application dependencies or restart
+services.
 
-Developer preview `0.1.1-rc.5` distributes the tools archive as a separate GitHub
-release asset. The selected release page and its `VERIFICATION.md` receipt confirm
-publication and exact bytes. Published v0.1.1-rc.2 does not include these tools,
-and the package is not published to npm. A full Browser Driver source checkout is not
-required to run the packaged consumer commands. Maintainer `build` and `version`
-commands remain in the source repository and are unavailable in the portable client.
+Obtain the exact kit named by the selected release receipt. During preparation
+this alpha candidate is local; the [installation page](https://daedlo.com/install.html)
+may still serve the earlier preview.
+Follow the surrounding kit's `START_HERE.md` for the selected archive's trusted
+digests and exact installation commands, and `AGENT_START.md` for the first-flow
+handoff. Those files are kit-level guides, not files inside this installed tools
+package. The public website download path requires no driver source checkout or
+GitHub account.
 
-## Before and after installation
+## Install and inspect
 
-Obtain `browser-driver-tools-VERSION.tgz`, `TOOLS_SHA256SUMS`, and
-`TOOLS_VERIFICATION.json` from the selected trusted local candidate or, once
-published, release. Confirm the archive digest against its receipt before
-installing or executing it. A checksum downloaded from an untrusted source does
-not authenticate that source.
+Verify the tools archive against the trusted release receipt before installing or
+running it. Install it in a separate tools directory outside the application,
+using the kit's offline npm command. Node.js 22 or later and npm are prerequisites.
+The tools package contains no npm dependencies or installation scripts. Installation
+creates local npm metadata, a lockfile and the executable link in that directory.
 
-Use a separate, empty directory for the tools, outside the application:
+From that tools installation directory, inspect the actual CLI:
 
 ```sh
-mkdir driver-update-tools
-cd driver-update-tools
-npm install --offline --ignore-scripts --no-audit --no-fund /absolute/path/browser-driver-tools-VERSION.tgz
 node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs --help
 ```
 
-The package has no npm dependencies or installation scripts. This creates the
-local npm metadata, lockfile, executable link, and package files under that chosen
-directory. It does not modify the application's `package.json`, Cargo manifest,
-lockfiles, or installed driver. Node 22 or later and npm are prerequisites.
+The installed package root is `node_modules/@browser-driver/release-tools`. Its
+`SOURCE.json` records the source identity and shipped-file hashes. Read
+`docs/contracts.md`, `docs/agent-onboarding.md`, `docs/releases.md` and
+`skills/browser-driver/SKILL.md` there. A copied skill's location does not identify
+the tools package root. Runtime types and the Rust trait are in their separately
+installed packages.
 
-```text
-driver-update-tools/
-├── package.json
-├── package-lock.json
-└── node_modules/
-    ├── .bin/browser-driver-release
-    └── @browser-driver/release-tools/
-        ├── README.md, LICENSE, package.json, SOURCE.json
-        ├── lib/                 consumer CLI and release operations
-        ├── docs/                contracts and authoring references
-        └── skills/browser-driver/   complete agent skill
-```
+## Available operations
 
-`SOURCE.json` identifies the source commit, clean/candidate state, source-tree
-digest, and hashes of the shipped files. The external verification receipt also
-binds the completed archive's digest and size. An explicit dirty candidate is
-development evidence, not a clean release.
+The table lists flags, not commands with fabricated paths or verification digests.
+Use the paths and trusted digest supplied by the selected kit. Resolve output and
+store directories explicitly; use fresh owned output and preserve accepted files.
 
-## Check, verify, and select
+| Operation  | Required flags                             | Optional flags                            | Effect                                                                                     |
+| ---------- | ------------------------------------------ | ----------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `verify`   | `--bundle`                                 | `--sha256`                                | Checks a local four-file runtime/engine bundle and the Node/Rust/protocol environment      |
+| `update`   | `--store`, `--bundle`, `--sha256`          | `--allow-dirty`                           | Verifies and selects exact archives in an isolated store                                   |
+| `status`   | `--store`                                  | None                                      | Reads the store's current selection and integrity                                          |
+| `rollback` | `--store`                                  | `--allow-dirty`                           | Verifies and selects the store's previous bundle                                           |
+| `check`    | `--repo`, `--current`                      | `--channel stable` or `--channel preview` | Checks release metadata in an explicitly selected GitHub repository                        |
+| `download` | `--repo`, `--version`, `--out`, `--sha256` | None                                      | Downloads the selected GitHub runtime/engine bundle into fresh output without selecting it |
 
-The packaged CLI's `--help` lists its exact command flags. GitHub discovery and
-downloads use the installed `gh` CLI and its existing authentication. Private
-repositories require access; the client does not request wider repository
-permissions or copy credentials into the archive or store.
+Use `--sha256` for trusted verification: omitting it checks internal integrity but
+reports `trustedDigestProvided: false`. The expected manifest digest must come
+from the trusted receipt, not merely the downloaded bundle's own checksum file.
+`verify`, `update` and `rollback` require a compatible Rust compiler as well as
+Node. `status`, `check` and `download` do not measure Rust compatibility.
 
-A safe daily check is read-only: compare the accepted version against the chosen
-repository and explicit `stable` or `preview` channel. A newer tag is only a
-candidate. Discovery does not prove package compatibility or customer acceptance,
-and an unavailable or incomplete response is not evidence that the installation
-is current. Scheduling is separate; installing the tools creates no background
-job and enables no automatic application updates.
+The alpha release requires `source.dirty: false` and a recorded commit. Check the
+selected manifest rather than inferring provenance from a version name. An older
+preview such as `0.1.2-rc.1` records `source.dirty: true`; selecting or rolling back
+to that historic archive requires the explicit `--allow-dirty` flag. That flag
+preserves its source disclosure and does not establish customer acceptance.
+Maintainer `build`, `build-tools` and `version` commands are not available in this
+portable client.
 
-From the tools installation directory, substitute the actual accepted version:
+## Public website updates and optional GitHub operations
 
-```sh
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs check --repo givtaj/browser-driver --current ACCEPTED_VERSION --channel preview
-```
+To obtain another public version, return to the
+[installation page](https://daedlo.com/install.html), download its kit and follow
+its receipt before using local verification. The client currently has no website
+release discovery or website download operation.
 
-After choosing a release and recording its trusted manifest digest:
+`check` and `download` use the installed `gh` CLI and its existing authentication
+for the repository explicitly supplied through `--repo`. They support GitHub
+releases only. Access to the chosen repository must already exist; the tools do
+not grant access or copy credentials into packages or stores. These optional
+operations are not prerequisites for installing a public website kit. An
+unavailable repository or failed discovery is not evidence that a local version
+is current.
 
-```sh
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs download --repo givtaj/browser-driver --version SELECTED_VERSION --out /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs verify --bundle /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs update --store /absolute/path/chosen-store --bundle /absolute/path/new-bundle --sha256 TRUSTED_MANIFEST_DIGEST
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs status --store /absolute/path/chosen-store
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs rollback --store /absolute/path/chosen-store
-```
+## Preserve the working integration
 
-These are separate operations: run rollback only when returning to the previous
-archive selection is intended. `verify`, `update`, and `rollback` measure the
-available Rust compiler as well as the running Node version; discovery and
-download do not require a Rust compiler and do not claim toolchain compatibility.
+The canonical bundle consists of its runtime `.tgz`, engine `.crate`,
+`manifest.json` and `SHA256SUMS`. Keep those four files together. The tools archive,
+skill-only assets and surrounding kit guides are outside that bundle contract.
 
-For a selected candidate:
+`update` selects archives; it does not install them into the application. Test the
+candidate with the customer's exact Rust model, adapter, lockfiles and launcher
+before promoting that whole combination. `rollback` changes only the archive
+store's selection; it does not undo application writes, data migrations or an
+independently changed customer installation.
 
-1. Obtain the expected manifest SHA-256 from the trusted release receipt.
-2. Download into a new, explicitly chosen directory. The client verifies the exact
-   version, manifest digest, artifact sizes and hashes, and checksum inventory.
-3. Run compatibility verification with the Node and Rust environment intended for
-   the consumer. Missing prerequisites or incompatible versions must be resolved
-   before selecting the release.
-4. Update the isolated archive store. Its previous selection remains recorded for
-   rollback. Downloading alone never changes that selection.
-5. Test the customer's exact runtime/model/adapter combination in an isolated
-   integration before promoting application pins or a launcher.
+Do not overwrite an existing accepted version. Nonempty unowned stores, symlinks,
+changed bytes under an existing version and partial downloads are refused rather
+than silently adopted. Retain reported cleanup handles if cleanup is incomplete.
+No automatic updates, scheduled checks, application migrations or hosted service
+are installed.
 
-The canonical downloaded bundle remains exactly:
-
-```text
-bundle/
-├── browser-driver-runtime-VERSION.tgz
-├── browser-driver-engine-VERSION.crate
-├── manifest.json
-└── SHA256SUMS
-```
-
-Selecting it creates only the store's owned metadata and archive copy:
-
-```text
-chosen-store/
-├── .browser-driver-release-store.json
-├── current.json
-└── releases/VERSION/
-    └── the same four bundle files
-```
-
-`status` inspects the selection and archive integrity. `rollback` verifies and
-selects the previously recorded bundle; it does not reverse application writes,
-data migrations, or a separately promoted customer installation. Existing
-nonempty directories, symlinks, replaced version bytes, and partial downloads are
-not silently adopted. If cleanup is incomplete, retain the reported owned paths
-for inspection rather than deleting other directories.
-
-## Agent integration
-
-The bundled `skills/browser-driver/SKILL.md` explains the customer workflow.
-Read `docs/contracts.md` and `docs/agent-onboarding.md` from the installed package
-root alongside the selected runtime's
-public types and the engine crate's public Rust trait. These references do not
-include the complete repository examples or maintainer test harness.
-
-Customers still author the Rust state model, guarded Node adapter, fixtures and
-application assertions. The Rust crate is source, not a precompiled model.
-Playwright and its matching Chromium belong to the runtime installation, not this
-update client. A package conformance result does not establish customer feature
-coverage. The local viewer remains local; this workflow adds no hosted portal,
-identity provider, billing integration, or changes to an existing Roots driver.
+The supplied `LICENSE`, `THIRD_PARTY_NOTICES.md` and preserved license texts apply
+to the selected public package. It carries no time-limited evaluation agreement.

@@ -1,3 +1,4 @@
+// Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { createEngineClient } from "./engine-client.mjs";
@@ -6,6 +7,7 @@ import { DriverError, reject } from "./errors.mjs";
 import { executableHash, runtimeIdentity } from "./identity.mjs";
 import { publicEffectReport } from "./effects.mjs";
 import { validatePresentations } from "./presentation.mjs";
+import { createVisibleCursor, supportsVisibleTyping } from "./motion.mjs";
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const speeds = {
@@ -41,7 +43,7 @@ export async function createDriverSession({
     engineSha256: executableHash(enginePath),
   };
   const engine = createEngineClient(enginePath);
-  let descriptor, presentationCatalog;
+  let descriptor, presentationCatalog, supportsRecipeContext;
   const checked = (r) => {
     if (!r.ok)
       reject(
@@ -51,16 +53,24 @@ export async function createDriverSession({
     return r;
   };
   try {
-    descriptor = validateDescriptor(
-      checked(await engine.request({ op: "hello" })).descriptor,
-      adapter,
-    );
+    const hello = checked(await engine.request({ op: "hello" }));
+    descriptor = validateDescriptor(hello.descriptor, adapter);
+    supportsRecipeContext = hello.capabilities?.recipeContext === 1;
+    if (
+      descriptor.commands.some((command) => command.recipeOnly) &&
+      !supportsRecipeContext
+    )
+      reject(
+        "contract_mismatch",
+        "Recipe-only commands require engine recipe-context support.",
+      );
     presentationCatalog = validatePresentations(presentations, descriptor);
   } catch (error) {
     await engine.close();
     throw error;
   }
   const commands = new Map(descriptor.commands.map((c) => [c.id, c]));
+  const cursor = createVisibleCursor(page);
   let busy = false,
     paused = false,
     stopping = false,
@@ -139,7 +149,9 @@ export async function createDriverSession({
       connected: observation.connected,
       state: r.state,
       revision: r.fingerprint,
-      commands: r.commands ?? [],
+      commands: (r.commands ?? []).filter(
+        (command) => !commands.get(command.id)?.recipeOnly,
+      ),
       recipes: r.recipes ?? [],
       display: r.display ?? [],
     };
@@ -212,7 +224,7 @@ export async function createDriverSession({
     }
     execution = "running";
   }
-  async function authorize(id, params, expected, boundSession) {
+  async function authorize(id, params, expected, boundSession, recipeContext) {
     await boundary();
     const observation = await raw();
     if (boundSession !== undefined && observation.session !== boundSession)
@@ -227,6 +239,7 @@ export async function createDriverSession({
         fingerprint: expected,
         command: id,
         params,
+        ...(recipeContext ? { recipeContext } : {}),
       }),
     );
     if (!isDeepStrictEqual(authorized.action, { id, params }))
@@ -236,14 +249,33 @@ export async function createDriverSession({
       );
     return observation;
   }
-  async function perform(id, params, revision, boundSession, onEffect) {
+  async function perform(
+    id,
+    params,
+    revision,
+    boundSession,
+    onEffect,
+    recipeContext,
+  ) {
     const c = commands.get(id);
-    let before = await authorize(id, params, revision, boundSession),
+    let before = await authorize(
+        id,
+        params,
+        revision,
+        boundSession,
+        recipeContext,
+      ),
       expected = revision;
     const originalSession = before.session;
     let actionSession = originalSession;
     const currentCheck = () =>
-      authorize(id, params, expected, boundSession ?? actionSession);
+      authorize(
+        id,
+        params,
+        expected,
+        boundSession ?? actionSession,
+        recipeContext,
+      );
     async function effect(fn) {
       await boundary();
       await currentCheck();
@@ -267,6 +299,7 @@ export async function createDriverSession({
     async function move(locator) {
       await boundary();
       await currentCheck();
+      await cursor.ensure();
       if (locator.scrollIntoViewIfNeeded)
         await locator.scrollIntoViewIfNeeded();
       const box = await locator.boundingBox?.();
@@ -280,6 +313,9 @@ export async function createDriverSession({
       await currentCheck();
     }
     const x = {
+      get recipeContext() {
+        return recipeContext;
+      },
       boundary,
       effect,
       click: async (locator) => {
@@ -288,7 +324,19 @@ export async function createDriverSession({
       },
       fill: async (locator, value) => {
         await move(locator);
-        await effect(() => locator.fill(String(value), { timeout: 12000 }));
+        if (await supportsVisibleTyping(locator)) {
+          await effect(() => locator.fill("", { timeout: 12000 }));
+          for (const character of String(value)) {
+            await delay(speeds[speed].key);
+            await effect(() =>
+              locator.pressSequentially(character, { timeout: 12000 }),
+            );
+          }
+        } else {
+          // Dates, times and other native controls require Playwright's fill
+          // semantics; typing into browser-specific segments changes their value.
+          await effect(() => locator.fill(String(value), { timeout: 12000 }));
+        }
       },
       select: async (locator, value) => {
         await move(locator);
@@ -302,7 +350,8 @@ export async function createDriverSession({
     };
     await adapter.handlers[id](params, x);
     if (adapter.settle) await adapter.settle();
-    await boundary();
+    // An already dispatched effect must finish read-only verification even
+    // while paused or stopping. Boundaries still guard every future effect.
     const after = await raw();
     if (after.session !== originalSession && !c.changesSession)
       reject(
@@ -319,6 +368,7 @@ export async function createDriverSession({
         command: id,
         params,
         evidence: evidence ?? {},
+        ...(recipeContext ? { recipeContext } : {}),
       }),
     );
     if (
@@ -331,6 +381,8 @@ export async function createDriverSession({
     // Carry the exact verified observation into the next recipe step. Reading
     // the browser again here could silently adopt an intervening human edit.
     const verified = await inspect(after);
+    if (stopping || closed)
+      reject("stopped", "Stopped after the current action was verified.");
     return {
       outcome: verification.outcome,
       revision: verified.response.fingerprint,
@@ -512,6 +564,13 @@ export async function createDriverSession({
       return Promise.resolve(
         refused("revision_required", "An observed revision is required."),
       );
+    if (!recipe && commands.get(id)?.recipeOnly)
+      return Promise.resolve(
+        refused(
+          "recipe_scope_required",
+          "This command requires a canonical recipe step.",
+        ),
+      );
     presentation = null;
     busy = true;
     stopping = false;
@@ -523,7 +582,8 @@ export async function createDriverSession({
     stageStarted(profile, 0);
     const runIdentity = structuredClone(base().identity);
     active = (async () => {
-      let attempted = false;
+      let attempted = false,
+        effect;
       try {
         if (adapter.beginRun)
           await adapter.beginRun({ runId, command: id, recipe });
@@ -565,7 +625,13 @@ export async function createDriverSession({
               expected,
               session,
               () => (attempted = true),
+              supportsRecipeContext
+                ? Object.freeze({ recipe: id, step: index, session })
+                : undefined,
             );
+            // Verification may finish while paused, but a recipe must retain
+            // its active run until Resume or Stop decides whether it can finish.
+            await boundary();
             outcome = result.outcome;
             if (outcome.kind !== "success") {
               finishPresentation("halted", outcome.label);
@@ -597,30 +663,49 @@ export async function createDriverSession({
           if (profile && outcome.kind === "success") await holdStage(result);
           else if (profile) finishPresentation("halted", outcome.label);
         }
+        effect = await effectReport(attempted);
+        // An awaited boundary can itself yield to Pause or Stop. Recheck each
+        // return before publishing; no asynchronous work may separate these
+        // final control checks from the result and per-run cleanup decision.
+        if (recipe) {
+          do {
+            await boundary();
+          } while (paused);
+        }
+        if (stopping || closed)
+          reject("stopped", "Stopped after the current action was verified.");
         if (profile && presentation.status === "running")
           finishPresentation("completed");
-        execution = "completed";
+        execution = paused ? "paused" : "completed";
         lastResult = {
           ok: true,
-          execution,
+          execution: "completed",
           runId,
           outcome,
-          effect: await effectReport(attempted),
+          effect,
         };
         emit("run_completed", { outcome: outcome.kind });
       } catch (error) {
-        execution =
-          error?.code === "stopped"
-            ? "stopped"
-            : attempted
-              ? "failed"
-              : "rejected";
+        // Retain evidence already collected on the success path; never rerun
+        // the hook merely because Stop won the final publication decision.
+        effect ??= await effectReport(attempted);
+        const interrupted = stopping || closed || error?.code === "stopped";
+        const failure = publicError(error);
+        execution = interrupted ? "stopped" : attempted ? "failed" : "rejected";
         lastResult = {
           ok: false,
           execution,
           runId,
-          ...publicError(error),
-          effect: await effectReport(attempted),
+          ...(interrupted
+            ? {
+                error_code: "stopped",
+                error: "Stopped at an action boundary.",
+                ...(failure.error_code !== "stopped"
+                  ? { interruptionError: failure }
+                  : {}),
+              }
+            : failure),
+          effect,
         };
         if (profile)
           finishPresentation(
@@ -744,6 +829,8 @@ export async function createDriverSession({
     resume() {
       tickHold();
       paused = false;
+      if (!busy && execution === "paused")
+        execution = lastResult?.execution ?? "idle";
       wake();
       emit("resumed");
       return { ok: true, paused };
@@ -783,6 +870,7 @@ export async function createDriverSession({
         closed = true;
         const errors = [];
         for (const [name, cleanup] of [
+          ["cursor", () => cursor.close()],
           ["adapter", () => adapter.close?.()],
           ["engine", () => engine.close()],
           ["resources", () => resources?.close()],

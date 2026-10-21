@@ -1,0 +1,486 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { setImmediate as nextTurn } from "node:timers/promises";
+import { createDriverSession } from "../src/session.mjs";
+
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((r) => {
+    resolve = r;
+  });
+  return { promise, resolve };
+};
+async function until(check) {
+  const end = Date.now() + 3000;
+  while (!check()) {
+    assert.ok(Date.now() < end, "Expected lifecycle event was not observed");
+    await nextTurn();
+  }
+}
+
+async function fixture(t, kind, command = "edit", direct = false) {
+  const folder = await mkdtemp(join(tmpdir(), "driver-recipe-finalization-"));
+  const enginePath = join(folder, "engine.mjs");
+  await writeFile(
+    enginePath,
+    await readFile(new URL("./fake-engine.mjs", import.meta.url)),
+    { mode: 0o755 },
+  );
+  await writeFile(
+    join(folder, "fixture-config.json"),
+    JSON.stringify({
+      verifyOutcomes: { [command]: { kind, label: `Observed ${kind}` } },
+    }),
+  );
+  t.after(() => rm(folder, { recursive: true, force: true }));
+  const dispatched = deferred(),
+    release = deferred();
+  const facts = { text: "original", saved: false };
+  const effects = [],
+    ended = [];
+  let armed = false,
+    settled = false,
+    settleCount = 0;
+  const handler = (id) => async (params, x) => {
+    await x.effect(async () => {
+      if (id === "edit") facts.text = params.text;
+      else facts.saved = true;
+      if (armed) effects.push(id);
+      if (armed && id === command) {
+        dispatched.resolve();
+        await release.promise;
+      }
+    });
+  };
+  const driver = await createDriverSession({
+    page: { isClosed: () => false },
+    enginePath,
+    adapter: {
+      model: { id: "test", version: "1" },
+      observe: async () => ({
+        connected: true,
+        session: "alpha",
+        facts: { ...facts },
+      }),
+      handlers: { edit: handler("edit"), save: handler("save") },
+      settle: async () => {
+        if (armed) settleCount++;
+      },
+      effectStatus: () => ({ status: "uncertain" }),
+      endRun: async (info) => {
+        ended.push(info);
+      },
+    },
+  });
+  t.after(async () => {
+    release.resolve();
+    await driver.close();
+  });
+  const previous = await driver.execute(
+    "save",
+    {},
+    (await driver.snapshot()).revision,
+  );
+  const previousReport = driver.report({ runId: previous.runId });
+  const previousRunIds = driver.report().completedRunIds;
+  const previousEnds = ended.length;
+  armed = true;
+  const revision = (await driver.snapshot()).revision;
+  const running = direct
+    ? driver.execute(
+        command,
+        command === "edit" ? { text: "direct" } : {},
+        revision,
+      )
+    : driver.runRecipe("sample", revision);
+  running.then(() => {
+    settled = true;
+  });
+  await dispatched.promise;
+  const runId = driver.report().runId;
+  driver.pause();
+  release.resolve();
+  await until(() =>
+    driver
+      .report()
+      .events.some(
+        (e) =>
+          e.runId === runId && e.type === "verified" && e.command === command,
+      ),
+  );
+  // This observation passes through the same protocol process after verification;
+  // assertions below never rely on sleeping to keep the recipe alive.
+  const snapshot = await driver.snapshot();
+  return {
+    driver,
+    running,
+    runId,
+    snapshot,
+    previous,
+    previousReport,
+    previousRunIds,
+    effects,
+    ended: () => ended.length - previousEnds,
+    settled: () => settled,
+    settleCount: () => settleCount,
+  };
+}
+
+function assertHeld(f, kind, command) {
+  const expectedEffects = command === "save" ? ["edit", "save"] : ["edit"];
+  const events = f.driver.report().events.filter((e) => e.runId === f.runId);
+  assert.ok(
+    events.some(
+      (e) =>
+        e.type === "verified" && e.command === command && e.outcome === kind,
+    ),
+    "Read-only verification must finish while paused",
+  );
+  assert.equal(f.settleCount(), expectedEffects.length);
+  assert.deepEqual(
+    f.effects,
+    expectedEffects,
+    "Pause cannot dispatch a later recipe step",
+  );
+  assert.equal(f.snapshot.paused, true);
+  assert.equal(
+    f.snapshot.busy,
+    true,
+    "Verified recipe must remain active until Resume or Stop",
+  );
+  assert.equal(f.snapshot.execution, "paused");
+  assert.equal(
+    f.settled(),
+    false,
+    "Recipe promise must not publish a paused terminal result",
+  );
+  assert.equal(
+    f.ended(),
+    0,
+    "Per-run cleanup must wait for the explicit control decision",
+  );
+  assert.equal(f.driver.report({ runId: f.runId }), null);
+  assert.deepEqual(f.driver.report().completedRunIds, f.previousRunIds);
+  assert.deepEqual(f.snapshot.lastResult, f.previous);
+  assert.deepEqual(
+    f.driver.report({ runId: f.previous.runId }),
+    f.previousReport,
+  );
+  assert.ok(
+    events.every((e) => !["run_completed", "run_finished"].includes(e.type)),
+  );
+}
+
+for (const [kind, command, action] of [
+  ["unknown", "edit", "stop"],
+  ["unknown", "edit", "resume"],
+  ["unknown", "edit", "close"],
+  ["validation", "edit", "resume"],
+  ["recoverable_error", "edit", "resume"],
+  ["success", "save", "resume"],
+  ["validation", "save", "resume"],
+  ["recoverable_error", "save", "resume"],
+  ["unknown", "save", "resume"],
+  ["success", "save", "stop"],
+]) {
+  test(
+    `paused recipe ${kind} at ${command} awaits ${action} before finalizing`,
+    { timeout: 5000 },
+    async (t) => {
+      const f = await fixture(t, kind, command);
+      assertHeld(f, kind, command);
+      const expectedEffects = [...f.effects];
+      const closing = action === "close" ? f.driver.close() : null;
+      if (!closing) f.driver[action]();
+      const result = await f.running;
+      if (closing) await closing;
+      assert.equal(
+        result.execution,
+        action === "resume" ? "completed" : "stopped",
+      );
+      assert.equal(result.ok, action === "resume");
+      if (action === "resume")
+        assert.deepEqual(result.outcome, { kind, label: `Observed ${kind}` });
+      else {
+        assert.equal(result.error_code, "stopped");
+        assert.equal(
+          result.outcome,
+          undefined,
+          "Interruption cannot imply a successful application outcome",
+        );
+      }
+      assert.equal(result.effect.status, "uncertain");
+      assert.deepEqual(
+        f.effects,
+        expectedEffects,
+        "Finalization/control must not replay or advance an effect",
+      );
+      assert.equal(f.ended(), 1);
+      assert.deepEqual(f.driver.report().completedRunIds, [
+        ...f.previousRunIds,
+        f.runId,
+      ]);
+      assert.deepEqual(f.driver.report({ runId: f.runId }).lastResult, result);
+      assert.deepEqual(
+        f.driver.report({ runId: f.previous.runId }),
+        f.previousReport,
+      );
+    },
+  );
+}
+
+for (const kind of ["success", "validation", "recoverable_error", "unknown"]) {
+  test(
+    `paused dispatched direct command still completes ${kind} without Resume`,
+    { timeout: 5000 },
+    async (t) => {
+      const f = await fixture(t, kind, "edit", true);
+      const result = await f.running;
+      assert.equal(result.execution, "completed");
+      assert.deepEqual(result.outcome, { kind, label: `Observed ${kind}` });
+      assert.equal(result.effect.status, "uncertain");
+      assert.equal(f.ended(), 1);
+      assert.deepEqual(f.effects, ["edit"]);
+      const snapshot = await f.driver.snapshot();
+      assert.equal(snapshot.paused, true);
+      assert.equal(snapshot.busy, false);
+      assert.equal(snapshot.execution, "paused");
+      assert.deepEqual(
+        f.driver.report({ runId: result.runId }).lastResult,
+        result,
+      );
+    },
+  );
+}
+
+// Effect evidence is an asynchronous part of the active run. Controls accepted
+// while it is pending must still decide whether a terminal result can publish.
+async function reportingFixture(
+  t,
+  { recipe = true, outcome, terminalControl } = {},
+) {
+  const folder = await mkdtemp(join(tmpdir(), "driver-reporting-controls-"));
+  const enginePath = join(folder, "engine.mjs");
+  await writeFile(
+    enginePath,
+    await readFile(new URL("./fake-engine.mjs", import.meta.url)),
+    { mode: 0o755 },
+  );
+  if (outcome)
+    await writeFile(
+      join(folder, "fixture-config.json"),
+      JSON.stringify({ verifyOutcomes: { edit: outcome, save: outcome } }),
+    );
+  const entered = deferred(),
+    release = deferred(),
+    controlApplied = deferred();
+  let reportAtControl;
+  const facts = { text: "original", saved: false };
+  const effects = [];
+  let ended = 0,
+    reports = 0,
+    settled = false;
+  const driver = await createDriverSession({
+    page: { isClosed: () => false },
+    enginePath,
+    adapter: {
+      model: { id: "test", version: "1" },
+      observe: async () => ({
+        connected: true,
+        session: "alpha",
+        facts: { ...facts },
+      }),
+      handlers: {
+        edit: async (params, x) =>
+          x.effect(() => {
+            facts.text = params.text;
+            effects.push("edit");
+          }),
+        save: async (_, x) =>
+          x.effect(() => {
+            facts.saved = true;
+            effects.push("save");
+          }),
+      },
+      effectStatus: async () => {
+        reports++;
+        entered.resolve();
+        await release.promise;
+        if (terminalControl) {
+          // The last microtask runs after effectReport resolves and the async
+          // final boundary checks its initial state, before publication resumes.
+          queueMicrotask(() =>
+            queueMicrotask(() =>
+              queueMicrotask(() => {
+                reportAtControl = driver.report();
+                driver[terminalControl]();
+                controlApplied.resolve();
+              }),
+            ),
+          );
+        }
+        return { status: facts.saved ? "saved" : "uncertain" };
+      },
+      endRun: () => {
+        ended++;
+      },
+    },
+  });
+  t.after(async () => {
+    release.resolve();
+    await driver.close();
+    await rm(folder, { recursive: true, force: true });
+  });
+  const revision = (await driver.snapshot()).revision;
+  const running = recipe
+    ? driver.runRecipe("sample", revision)
+    : driver.execute("save", {}, revision);
+  running.then(() => {
+    settled = true;
+  });
+  await entered.promise;
+  return {
+    driver,
+    running,
+    runId: driver.report().runId,
+    release,
+    effects,
+    controlApplied: controlApplied.promise,
+    reportAtControl: () => reportAtControl,
+    ended: () => ended,
+    reports: () => reports,
+    settled: () => settled,
+  };
+}
+
+for (const action of ["resume", "stop", "close"]) {
+  test(`recipe pause during effect evidence awaits ${action} before finalization`, async (t) => {
+    const f = await reportingFixture(t);
+    f.driver.pause();
+    f.release.resolve();
+    const snapshot = await f.driver.snapshot();
+    assert.equal(
+      snapshot.busy,
+      true,
+      "A pause accepted during evidence must retain the active recipe",
+    );
+    assert.equal(snapshot.paused, true);
+    assert.equal(f.settled(), false);
+    assert.equal(
+      f.ended(),
+      0,
+      "Cleanup must await the paused recipe control decision",
+    );
+    assert.equal(f.driver.report({ runId: f.runId }), null);
+    assert.equal(snapshot.lastResult, null);
+    const closing = action === "close" ? f.driver.close() : null;
+    if (!closing) f.driver[action]();
+    const result = await f.running;
+    await closing;
+    assert.equal(
+      result.execution,
+      action === "resume" ? "completed" : "stopped",
+    );
+    assert.equal(result.ok, action === "resume");
+    assert.equal(result.effect.status, "saved");
+    if (action !== "resume") assert.equal(result.outcome, undefined);
+    assert.equal(
+      f.reports(),
+      1,
+      "Interruption must retain already-collected effect evidence",
+    );
+    assert.equal(f.ended(), 1);
+    assert.deepEqual(
+      f.effects,
+      ["edit", "save"],
+      "Finalization must not replay a write",
+    );
+  });
+}
+
+for (const action of ["stop", "close"]) {
+  test(`direct ${action} during effect evidence takes terminal precedence`, async (t) => {
+    const f = await reportingFixture(t, { recipe: false });
+    const closing = action === "close" ? f.driver.close() : null;
+    if (!closing) f.driver.stop();
+    f.release.resolve();
+    const result = await f.running;
+    await closing;
+    assert.equal(result.execution, "stopped");
+    assert.equal(result.ok, false);
+    assert.equal(result.outcome, undefined);
+    assert.equal(result.effect.status, "saved");
+    assert.equal(f.reports(), 1);
+    assert.equal(f.ended(), 1);
+    assert.deepEqual(f.effects, ["save"]);
+    assert.deepEqual(f.driver.report({ runId: f.runId }).lastResult, result);
+  });
+}
+
+for (const outcome of [{}, { kind: "malformed", label: "Invalid" }]) {
+  for (const action of ["pause", "stop"]) {
+    test(`${action} during invalid outcome evidence cannot create success or stall cleanup: ${JSON.stringify(outcome)}`, async (t) => {
+      const f = await reportingFixture(t, { outcome });
+      f.driver[action]();
+      f.release.resolve();
+      const result = await f.running;
+      assert.equal(result.execution, action === "stop" ? "stopped" : "failed");
+      assert.equal(result.ok, false);
+      assert.equal(result.outcome, undefined);
+      assert.equal(
+        action === "stop"
+          ? result.interruptionError?.error_code
+          : result.error_code,
+        "invalid_outcome",
+      );
+      assert.equal(result.effect.status, "uncertain");
+      assert.equal(f.reports(), 1);
+      assert.equal(f.ended(), 1);
+      assert.deepEqual(f.effects, ["edit"]);
+    });
+  }
+}
+
+for (const action of ["stop", "pause"]) {
+  test(`${action} accepted before recipe publication retains terminal precedence`, async (t) => {
+    const f = await reportingFixture(t, { terminalControl: action });
+    f.release.resolve();
+    await f.controlApplied;
+    await new Promise((resolve) => setImmediate(resolve));
+    const before = f.reportAtControl();
+    assert.equal(
+      before.lastResult,
+      null,
+      "Control must precede result publication",
+    );
+    assert.deepEqual(before.completedRunIds, []);
+    assert.equal(f.reports(), 1);
+    assert.deepEqual(f.effects, ["edit", "save"]);
+    if (action === "pause") {
+      assert.equal(f.settled(), false, "Pause must keep the recipe pending");
+      assert.equal(f.driver.report({ runId: f.runId }), null);
+      assert.equal(f.ended(), 0, "Cleanup must wait for Resume or Stop");
+      f.driver.resume();
+    }
+    const result = await f.running;
+    assert.equal(
+      result.execution,
+      action === "stop" ? "stopped" : "completed",
+      "Accepted Stop must prevent successful terminal publication",
+    );
+    assert.equal(result.ok, action !== "stop");
+    if (action === "stop") assert.equal(result.outcome, undefined);
+    assert.equal(result.effect.status, "saved");
+    assert.equal(f.reports(), 1, "Finalization must retain collected evidence");
+    assert.deepEqual(
+      f.effects,
+      ["edit", "save"],
+      "Finalization must not replay effects",
+    );
+    assert.equal(f.ended(), 1);
+    assert.deepEqual(f.driver.report({ runId: f.runId }).lastResult, result);
+  });
+}

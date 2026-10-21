@@ -1,3 +1,4 @@
+// Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 const $ = (id) => document.getElementById(id);
 const text = (value) =>
   value === null || value === undefined
@@ -271,6 +272,10 @@ function buildParameter(id, name, parameter) {
   }
   input.id = inputId;
   input.name = name;
+  let touched = false;
+  input.addEventListener("input", () => {
+    touched = true;
+  });
   // Required boolean means the value must be supplied; false remains a valid value.
   if (parameter.type !== "boolean")
     input.required = Boolean(parameter.required);
@@ -283,7 +288,9 @@ function buildParameter(id, name, parameter) {
       parameter.type === "boolean"
         ? input.checked
         : input.value === ""
-          ? undefined
+          ? parameter.type === "text" && touched
+            ? ""
+            : undefined
           : parameter.type === "number"
             ? Number(input.value)
             : parameter.type === "select"
@@ -335,6 +342,7 @@ function buildDescriptor(descriptor) {
     if (!emitted.has(state.id)) appendState(state, $("state-tree"));
   $("commands").replaceChildren();
   for (const command of descriptor.commands || []) {
+    if (command.recipeOnly) continue;
     const form = node("form", "command-card");
     form.dataset.commandId = command.id;
     const header = node("div", "command-heading");

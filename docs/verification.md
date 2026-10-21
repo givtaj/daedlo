@@ -1,5 +1,447 @@
 # Verification record
 
+## Public assisted alpha 0.1.4-alpha.2 — 2026-10-21
+
+**Released** at [daedlo.com/install](https://daedlo.com/install) and the
+[versioned GitHub prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
+The exact kit was built from clean source `044e76df10e90c68e9e3c7ff35e7c63a62354c60`,
+source-tree SHA-256 `6dd4febaa1f41ad6380f4e8cdac17704dd6d824162e08631e26777ed60257e45`.
+ZIP SHA-256 `b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1`
+(160,545 bytes); bundle manifest SHA-256
+`0338ed7d161c98e7ebced668ddc77ca5520ba14480b0c67369bb81d71e5be8c7`.
+Later website/evidence documentation commits do not change the packaged source.
+
+| Executed gate | Actual result |
+| --- | --- |
+| Installer regression | Genuine nested-workspace failure before the fix; standalone and nested cases now PASS. The exact shipped block also passed with real tools and a fresh offline npm cache; ancestor files unchanged. |
+| Source checks | 129 runtime, 23 Rust and 11 archive tests PASS; source quality, locked build, format/Clippy PASS. After installer correction, 105 release tests PASS. Source browser groups and controls described below passed; alpha.2 runtime/model code is unchanged from alpha.1. |
+| Exact installed alpha.2 | Eight browser/API groups, ten CLI, 25 finalization and nine browser-control cases PASS; no skips/failures/cancellations; installed bytes unchanged; owned cleanup PASS. |
+| Real application | Pinned Architecture Studio, synthetic data: seven acceptance checkpoints PASS; 13 Rust and seven Node checks PASS. Invalid empty name causes zero writes; exact save matches response/API/disk; reload restores fields; shutdown exports reports; attached fixture survives; CLI/browser relaunch repeats the flow. Live viewer inspected. |
+| Final integrity | 22 runtime, 26 tools and 11 crate files match the frozen archives before/after; 119 pinned application files and accepted model/adapter unchanged. All owned processes closed; fixture/viewer ports released. |
+| Remote CI | Clean source `044e76d`: [push run 39634235043](https://github.com/givtaj/browser-driver/actions/runs/39634235043) and PR run 39634245064 PASS, each on Node 22/24 Ubuntu, including complete public-kit assembly. |
+| Public contents | ZIP plus nested archives checked across 72 file boundaries: inventories/digests and canonical MIT/Apache notices PASS; no detected private paths, credentials or evaluation drafts. Only sanitized verification metadata is published. |
+| Website | 31 tests PASS; six-page/two-archive acceptance PASS. Desktop and 390px mobile review: no overflow or browser errors. Exact rendered installer matches the tested kit guide. |
+| Public delivery | Wrangler 4.147.0 dry-run and deployment PASS. Active version `8eebf633-35e6-498a-ae19-67f867c1b878` at 100%; all 21 served assets match frozen bytes on both apex and provider origins, seven private/missing paths return 404, CSP and nosniff present. Public installation page inspected. |
+| Downloaded installation | Fresh HTTPS ZIP, checksum and metadata exactly match the frozen release. The downloaded START_HERE block exits successfully with an initially empty npm cache; all 26 tools files and 13 extracted kit files match. Parent manifests unchanged; temporary workspace removed. |
+
+Scope: assisted macOS arm64 with Codex and existing toolchains/caches. Linux CI
+is technical coverage, not Linux customer onboarding. Windows, Claude Code,
+clean-OS setup, independent self-service onboarding, email delivery and customer
+adoption remain unverified. Customer relaunch covers the CLI and controlled
+browser, not an application-server restart; that flow does not establish broad
+concurrent-writer or save-fault coverage. Everyday Roots promotion remains
+separate and incomplete.
+
+Private receipts are retained in the isolated alpha worktree under
+`artifacts/alpha-20261021/alpha.2/`, `customer/alpha.2/`,
+`site-alpha2-review/` and `site-final/`. The public `release.json` contains only
+selected package identities and scoped results. Alpha.1, its installer failure,
+and the historical rc.1 demonstration remain separately identified below.
+
+## Alpha installer isolation correction — 2026-10-21
+
+**0.1.4-alpha.1 was withheld, not published.** Its exact installed package passed
+eight browser/API groups, ten CLI cases, 25 finalization cases and nine browser
+control cases with cleanup PASS. Clean source `216d188` also passed the complete
+Node 22/24 Linux CI [run 39632283284](https://github.com/givtaj/browser-driver/actions/runs/39632283284).
+The separate pinned Architecture Studio fixture passed invalid-name zero-write,
+exact save/read-back/reload, final report export, owned shutdown, attached fixture
+preservation and CLI/browser relaunch with a repeat save. Its seven acceptance
+groups and post-run integrity seal passed; the live viewer was inspected.
+
+The shipped tools-install block failed when extracted beneath an npm workspace:
+npm added a tools dependency to the ancestor manifest/lock instead of the intended
+`installed-tools` directory, then the local verifier could not be found. The guide
+recommended outside-workspace extraction, but the command still needed to preserve
+the parent project in this common placement. Two setup receipts and the accidental
+diffs are preserved. Only those owned changes were removed, with byte equality to
+the committed manifests checked before restoration. No normal customer checkout
+or everyday Roots dependency was changed.
+
+A new regression executes the exact rendered shell block with real npm and an
+offline tools fixture. Before the fix, standalone installation passed and nested
+installation failed at the genuine parent-manifest preservation assertion.
+The corrected block supplies an explicit installation prefix and disables npm
+workspace targeting. Both cases now pass, including unchanged parent manifests,
+lockfile and sentinel, expected local package path, and execution of the local
+verifier against the expected bundle/digest. **105 release checks pass** after the
+fix. Runtime/model behavior is unchanged.
+
+The corrected target is **0.1.4-alpha.2**. Its clean build, exact-package acceptance,
+customer rerun, selected-commit CI and public delivery remain pending at this
+checkpoint. The alpha.1 ZIP and its passing/failed receipts remain separate.
+Private evidence: `artifacts/alpha-20261021/`, including
+`installer-regression-red.log`, `installer-regression-green.log`,
+`release-tests-alpha2.log`, `installed-acceptance/`, `remote-ci.json`, `customer/`
+and `site/installer-check.json`.
+
+## Alpha source preparation — 2026-10-21
+
+Prepared isolated branch `codex/daedlo-alpha-release` from clean checkpoint
+`a563871`, targeting **0.1.4-alpha.1** with the existing public MIT/Apache notices.
+The mixed everyday checkout and normal Roots resources are preserved. This
+checkpoint establishes source verification, not publication or customer adoption.
+The [alpha delivery record](alpha-release.md) defines the supported scope/gates.
+
+Fresh macOS arm64 checks used Node 22.20.0 and Rust 1.96.0 with existing toolchains
+and caches. No clean OS installation or other-platform result is claimed.
+
+| Fresh check | Result |
+| --- | --- |
+| Runtime | 129/129 PASS |
+| Rust | 23 tests PASS; locked build, formatting and Clippy with warnings denied PASS |
+| Source quality | JavaScript syntax, public declarations and configured formatting PASS |
+| Release and public-kit contracts | 103/103 PASS, including the 21 restored public/license checks |
+| Historical workbench | 11/11 PASS; serving/archive checks, not fresh Roots application acceptance |
+| Source Chromium | Eight notebook browser/API groups, nine controls cases, ten CLI cases, four motion cases and two viewer cases PASS |
+| Independent review | Release scope, portable onboarding, CI kit assembly and installed-control helper reviewed; no blocking finding |
+| Exact alpha package, fresh real application, remote CI, publication | PENDING at this source checkpoint |
+
+The source unchanged from roots.8 includes its previously reproduced runtime
+fixes. This turn adds release verification and documentation: the missing public
+kit/license test suites are maintained on the release branch; installed acceptance
+now also requires exactly 10 CLI, 25 finalization and 9 browser-control passes
+with no skipped/cancelled cases before checking unchanged package bytes. CI builds
+the complete tools/ZIP distribution as well as the four-file bundle. Fresh default
+motion/viewer evidence directories preserve previous runs.
+
+Private logs are retained under ignored `artifacts/alpha-20261021/`; motion/viewer
+logs and screenshots are under `artifacts/alpha-test-integration-20261021/`.
+The new installed package and customer results must be recorded separately when
+they actually run. Historical Roots evidence availability and recovery limits
+below remain unchanged.
+
+## Durable recovery checkpoint — 2026-10-21
+
+The isolated Roots recovery source is committed locally as `a52a5ee7ba1abfe91f73b71d6ba6fce62a79695e`
+in `/Users/aidin/code/roots-driver-preservation/2026-10-21-recovery/roots`.
+Independent review verified 49 reconstructed source files, 27 reviewed A05/A08
+inputs and 161 application files. Later authentication pilot changes are excluded.
+48 final source hashes match historical tool output; one provenance test has
+complete literal source-write lineage without a printed historical hash.
+This is a new source checkpoint, not restoration of the lost Git commit or receipts.
+
+Fresh tests pass: 53 focused Node, 75 original-model and 88 candidate-model Rust,
+55 promotion-contract/inventory checks and two installation corruption refusals.
+The exact installed roots.8 runtime (22 files) and crate (11 files) match the
+immutable package. Full source/database and browser acceptance are pending on
+this recovered source. Normal Roots defaults remain unchanged.
+
+Shared-driver source at documentation checkpoint `af83862` and 276 available
+private evidence files have a fresh bundle/archive restoration under the durable
+recovery directory. Independent verification confirms all 202 tracked source
+files and all evidence bytes, clean restored HEAD, bundle verification and Git
+integrity. This is local source/evidence preservation; it does not restore missing
+Roots receipts, dependencies, databases or an active normal session. New review
+receipts are retained separately for a later closure archive.
+
+## Evidence availability check — 2026-10-21
+
+The shared driver implementation and immutable roots.8 package remain available.
+A read-only integrity review rechecked 22 recorded file hashes, including the
+installed-package receipts and logs, both ZIP copies, the preserved full-history
+source bundle, release metadata and runtime source. All match. The source bundle
+passes `git bundle verify`, the managed repository passes `git fsck`, and its
+implementation is unchanged from `42ef2a3`; the later `b74e830` checkpoint changes
+only documentation. The source and exact installed-package test evidence below
+remains inspectable; these tests were not rerun for this availability review.
+
+The temporary Roots consumer `/private/tmp/roots-daedlo-resume-20261019` is absent
+at this check. Its ignored Roots acceptance receipts and native evidence are not
+available at their recorded locations. The cause of the directory's disappearance
+has not been established. The final integration archive and strict closure were
+not completed, and no replacement is claimed. Recovery is in progress; recovered
+source must be verified, and unavailable acceptance evidence must be recovered or
+replaced by fresh isolated runs before it can support promotion.
+
+The October 19 Roots results below remain historical observations, including the
+passing paired runs and genuine earlier failures. Missing raw evidence does not
+turn those observed passes into failed tests, but prevents their current independent
+reinspection. The earlier driver source restoration is also historical: its
+receipt and valid bundle survive, while the named temporary restore directory is
+absent. That restoration never covered the final Roots integration. Migration
+promotion remains incomplete and the current Roots driver stays in place.
+
+The metadata-only integrity receipt is in ignored
+`artifacts/resume-20261021/driver-integrity-review.json`. Shared source/package
+receipts remain in this worktree's ignored `artifacts/resume-20261019/`.
+
+## Roots migration: historical roots.8 local acceptance — 2026-10-19
+
+The preserved fixes are integrated on `codex/daedlo-roots-fixes`. The current
+unpublished candidate is **0.1.3-roots.8**, built once from clean implementation
+commit `42ef2a380d20a4ea59a45f864467f60eade4da35`. Its immutable ZIP SHA-256 is
+`fe807d75ed2569e29228e7be8bbf5e576a0de2c97149f7589ce85c55ceff5d76`.
+Later documentation commits do not change the packaged source identity.
+The normal Roots driver remains the default. Migration promotion is incomplete.
+
+| Executed October 19 check | Recorded result and scope; see October 21 availability above |
+| --- | --- |
+| Shared source | Runtime 129/129 and release tooling 82/82 on both Node 22 and 24; Rust 23 tests, locked build, Clippy, formatting, JavaScript syntax and public types PASS. |
+| Exact installed roots.8 | Independent consumer: eight Chromium/API groups, ten CLI browser cases, 25 publication lifecycle cases and nine publication browser cases PASS. Runtime and crate files match the immutable archives before and after; recorded owned cleanup PASS. |
+| Paired Roots application | Both original and candidate PASS 189 actual cases: 105 primary plus 84 companion. The 110 main/wrapper rows include five wrappers, not five extra cases. Both full02 runs use frozen Roots `df301b1`, finish with exact source/binary provenance and zero drift. |
+| Commands, recipes and controls | Candidate 74 successful public commands, 74 stale guards, all 18 recipes, ten viewer/control groups, three receipt groups and four completion groups PASS. Direct commands exclude recipe internals. |
+| Additional application observations | Paired real-request Journal pending checks (three each) and Profile/sign-in residual checks (five each) PASS. Literal observed states and named temporal/business outcomes are recorded separately. |
+| Independence and recovery | Six direct browser groups PASS under explicit source-read denials. Missing observations and incompatible contracts fail closed. Four isolated update/rollback checks PASS, preserving session, draft, data and exact-one writes across the recorded attachments and restart. |
+| Roots source/database and packaging | Complete serial source/database checks PASS at recorded `612864a`: all six database modules and 148 frontend tests, build and lint. Source-input equivalence to final integration is recorded; later QA-only verifier/readiness changes have separate checks. The development web Docker build PASS; no production serving claim. |
+| Preservation and final strict decision | Final integration bundle/evidence restore and final strict receipt are pending at this documentation checkpoint. Earlier package/source restoration passed; it does not stand in for this final checkpoint. |
+
+The first roots.8 full candidate run remains **188 PASS / 1 FAIL**. Its creation
+case used direct DOM clicks without waiting for the disabled Save button to become
+ready. A real Roots regression held the readiness responses: the old native
+action produced no POST and failed the intended assertion; the corrected action
+waits for enabled state before the same rapid-click burst and produces exactly
+one POST and one row. Both complete full02 reruns pass the corrected case. This
+confirms a mechanism consistent with the original failure; the button state at
+that original instant was not captured. No application assertion was weakened.
+
+The ordinary launcher is still incomplete. With Node 24, L01 and L02 pass, but
+the separate ordinary bind-mounted PostgreSQL fixture fails its ownership check
+before L03–L08 could run. Exact owned diagnostics and cleanup were retained at
+that checkpoint; their recorded temporary location is now absent. The
+roots.7 launcher passes are historical and cannot pass roots.8. No open normal
+Roots session was found, so existing login/draft preservation remains NOT RUN.
+Applicable CI and coordinated default adoption also remain open. VoiceOver is
+**DEFERRED / NOT RUN** by the user's October 19 decision, not a current blocker.
+
+The accepted application is the frozen reviewed A05/A08 snapshot. Concurrent
+private-pilot authentication work in normal Roots is excluded. Read-only checks
+found the normal browser-driver checkout unchanged and the compared normal Roots
+dependency/entrypoint pins unchanged; other Roots source is changing in its owning
+chat. No whole-checkout unchanged claim is made for Roots.
+
+At this checkpoint, private raw evidence was stored in the isolated Roots
+consumer's ignored `.migration/resume-20261019/` and `QA/evidence/`, and this
+worktree's ignored `artifacts/resume-20261019/`. The October 21 check above records
+which evidence remains available. No publication, remote CI, deployment or everyday
+dependency/default promotion is claimed. The older sections below retain their
+dated scope, including superseded candidates and genuine failed receipts.
+
+## Resumed shared fixes and final-evidence controls — 2026-10-19
+
+Recovered the preserved `c8135fe` source bundle after verifying its SHA-256 and
+kept the immutable roots.6 ZIP. This isolated branch integrates the public-preview
+ancestry and the preserved migration corrections: visible guarded typing/cursor,
+canonical recipe context, explicit empty viewer text, verification controls,
+owned project CLI sessions, explicit browser overrides and paused finalization.
+The ordinary browser-driver and Roots checkouts are not integration targets.
+
+A new regression reproduced controls being ignored while an asynchronous
+`effectStatus` hook collected final evidence. Execution now remains active until
+that hook completes; recipe Pause holds publication, Stop/close wins, and the
+collected evidence is reused exactly once. Failure cleanup does not wait for
+Resume. This prepares a separate **unpublished `0.1.3-roots.7`** candidate.
+
+| Fresh check | Actual result |
+| --- | --- |
+| Preserved regression RED | Canonical context: 4 genuine failures on public-snapshot runtime; paused-finalization: 10 genuine failures on roots.5. |
+| New final-evidence RED | 7 lifecycle failures on roots.6; 4 real Chromium/HTTP failures after a verified saved request (3 existing cases passed). |
+| Runtime | Node 22 and 24: 127/127 each; focused finalization 23/23. |
+| Release tooling | Node 22 and 24: 82/82 each. |
+| Rust | Formatting, Clippy with warnings denied, locked build and 23 tests PASS. |
+| Source quality | JavaScript syntax, public types and formatting PASS. |
+| Source Chromium | Motion 4/4; controls 7/7; CLI 10/10; viewer 2/2; notebook browser/API 8/8. |
+| Visible presentation | Fresh cursor and viewer hold screenshots inspected; owned browser/server cleanup assertions passed. |
+| Exact roots.7 package / Roots application acceptance | NOT RUN at this source checkpoint; subsequent immutable artifact and integration receipts must establish these separately. |
+
+Evidence is retained under ignored `artifacts/resume-20261019/`; browser screenshot
+suites use their documented artifact paths. The viewer suite now also runs in CI,
+but no remote CI result, publication or normal Roots promotion is claimed.
+
+## Exact roots.7 artifact and isolated Roots acceptance — 2026-10-19
+
+Built the unpublished `0.1.3-roots.7` distribution from clean source commit
+`c8b481a870a841257da88fa079708dcd5d5797a2`. The immutable ZIP SHA-256 is
+`6c91036e4d54b101f3bee510caccf9d429c0d628efe123cfd16c478be25f30e2`;
+its manifest SHA-256 is
+`73ff58def5e7fe0f37024941d0ce5ef3403ca8d7f0e369119102c280d1d1a67e`.
+Later documentation commits do not change this artifact's source identity.
+
+The exact installed archives passed eight independent Chromium/API groups and
+all ten generic CLI browser cases. Runtime and crate trees remained byte-identical;
+all recorded owned processes, origins and fixtures closed. The clean source bundle
+was restored independently, checked with `git fsck`, and matched the source commit.
+This is verified local preservation, not an off-host backup.
+
+The isolated Roots consumer reconciles the reviewed A05/A08 snapshot with model
+`d1a7400-df20261011-daedlo.4` (131 declared leaves, 74 public commands, 18 recipes).
+The original driver remains present. Fresh candidate results now include:
+
+- Full application acceptance: 189 actual cases (105 primary plus 84 companion),
+  represented by 110 primary/wrapper rows and the five companion receipts.
+- All 18 recipes; six direct groups, eleven supplemental groups, three remaining
+  direct groups, and all 74 successful public commands plus all 74 stale guards.
+- All ten viewer/control groups, three receipt groups and four completion groups.
+- Current draft/validation acceptance: 39 checks. Actual zoom is separate;
+  VoiceOver spoken-output acceptance is DEFERRED / NOT RUN by user decision.
+
+These results use an explicit isolated application snapshot and disposable data.
+A simultaneous original-driver reference preserved its draft and navigation;
+that preservation result does not stand in for baseline control parity. No normal
+Roots service or browser tab was found during inspection, so the existing normal
+session gate remains NOT RUN. Baseline, launcher, rollback, final source/database
+and strict promotion outcomes are recorded separately when complete. The old
+roots.6 strict refusals remain unchanged. No remote CI, publication, deployment,
+or everyday Roots dependency/default promotion is claimed.
+
+Private Roots raw evidence was stored in the isolated consumer's
+`.migration/resume-20261019/` and ignored native `QA/evidence/` directories; those
+locations are unavailable at the October 21 check above. Shared runtime and exact
+package receipts remain in `artifacts/resume-20261019/`.
+
+## Final result publication race — 2026-10-19
+
+Independent review found a further race in the exact installed roots.7 runtime:
+Pause or Stop accepted after the final asynchronous boundary checked controls,
+but before result publication, was followed by a completed result and cleanup.
+Two installed-package unit assertions, two source assertions and two real Chromium
+assertions reproduced the defect; the seven existing browser cases still passed.
+The original red evidence and roots.7 artifact remain immutable. Its final strict
+receipt refuses promotion, including this independent-review failure.
+
+The final boundary now rechecks Pause after each asynchronous return and checks
+Stop synchronously immediately before publishing. It reuses the collected effect
+evidence and never replays the saved request. The focused source tests pass
+**25/25 lifecycle cases and 9/9 real Chromium cases**, including retained saved
+HTTP evidence and no cleanup before Resume. This prepares a separate unpublished
+**0.1.3-roots.8** candidate. Broader source and exact roots.8 package/customer
+acceptance are pending at this source checkpoint; roots.7 passes do not establish
+roots.8 acceptance. Normal Roots defaults remain unchanged.
+
+## Paused recipe finalization correction — 2026-10-11
+
+A real Roots launcher run against installed unpublished `0.1.3-roots.5` failed
+its uncertain-recipe Resume case: verification returned `unknown` while paused,
+then the recipe published `completed` and ran cleanup before Resume could decide
+to stop it. The old result and exact package remain preserved; passing independent
+recipes do not clear that launcher failure.
+
+The generic regression dispatches one guarded effect, pauses, and observes real
+protocol verification before checking that the recipe remains busy with no new
+completed report or `endRun` call. It also covers Resume, Stop, close, final-step
+success and non-success, immutable previous reports, and unchanged direct-command
+completion while paused. The unchanged roots5 runtime produced **10 genuine
+recipe failures and 4 direct-command passes**. The minimal recipe-only boundary
+now waits after verification and before halting or publishing a final result.
+
+Source verification: **14/14 new lifecycle cases**, **55/55 focused lifecycle,
+report, cleanup and presentation cases**, **118/118 runtime tests**, and JavaScript
+syntax, public types and formatting **PASS**. Private receipts and unchanged red
+logs are under `artifacts/recipe-finalization-20261011/`. These are protocol and
+runtime tests, not browser acceptance. The corrected installed-package and real
+Roots launcher/browser reruns are **NOT RUN**. The reviewed source is prepared
+as unpublished local `0.1.3-roots.6`; its later immutable artifact receipt records
+packaging and installed checks separately. No publication or customer dependency
+promotion is claimed.
+
+## Explicit empty viewer parameter correction — 2026-10-11
+
+The installed `0.1.3-roots.1` Roots control group reproduced a viewer failure:
+clearing the notes parameter submitted no notes, so the application inserted its
+default text instead of the required empty value. Candidate cleanup passed and a
+simultaneous preserved-original fixture retained its draft and usable navigation.
+That evidence is an explicit tmpfs-fixture comparison, not the normal-stack gate.
+
+An independent upstream Chromium regression failed at the same boundary: the
+viewer posted `{}` instead of `{notes:""}` after editing and clearing Notes. The
+minimal generic correction tracks input intent per field, preserving explicit
+empty text while leaving untouched optional fields and empty numeric fields
+omitted. Reload does not replay parameter intent. This source prepares a separate
+unpublished `0.1.3-roots.2`; the prior candidate remains immutable. New receipts
+are under `artifacts/roots-migration-0.1.3-roots.2/`. The focused viewer suite
+passes both browser groups, all 77 runtime tests and source checks pass, and all
+13 atomic-version/CLI checks pass. Exact installed-package proof is recorded with
+the candidate artifacts; full Roots controls remain a separate integration gate.
+
+## Unpublished Roots migration candidate preparation — 2026-10-11
+
+The isolated source prepares `0.1.3-roots.1` for local acceptance only. This is not
+a published release and has no asserted public download URL. It includes the
+visible-motion and canonical-recipe corrections below. The public rc.1 artifacts
+and the normal browser-driver checkout remain unchanged.
+
+The inherited release suite was repaired without changing production validation:
+MIT test fixtures now declare their license and the bundle fixture includes its
+notice; the portable-tools fixture includes the presentation document required by
+the frozen builder. The two old isolated integration dependency/lockfile pairs
+were first aligned to public rc.1, preserving their customer model pins, so the
+atomic version tool could prepare all nine version files coherently.
+
+The initial retained result was 67/82. Adding the license declarations exposed
+seven additional fixture failures for the missing presentation document; that
+intermediate result was 75/82. The corrected full release suite passes **82/82**.
+The version operation records previous `0.1.2-rc.1` and next `0.1.3-roots.1`.
+These results supersede the open release-tooling failures recorded below.
+
+All candidate preparation, package-build and installed-verification receipts are
+kept under ignored `artifacts/roots-migration-0.1.3-roots.1/`. Consult those receipts
+for the eventual exact source commit and artifact hashes. Packaging and source
+checks do not establish full Roots customer parity or publication.
+
+## Canonical recipe context correction — 2026-10-11
+
+The exact public engine rejected a canonical `recipeContext` request as an
+unexpected field, and the runtime sent no context to recipe actions. A model with
+recipe-only application guards therefore could not retain those guards while
+running its declared recipes. This correction adds generic negotiated scope,
+internal-command metadata and defaulted Rust hooks; it contains no Roots rules.
+
+| Check | Actual result and scope |
+| --- | --- |
+| Rust regression first | RED: two compiled protocol tests returned `invalid_request` for canonical context and context mismatch requests. |
+| Runtime regression first | RED: a full recipe lacked context, direct internal execution reached protocol dispatch, and an unsupported engine accepted an internal-command descriptor. All three assertions failed before implementation. A follow-up read-only handler-scope test then failed because the context was absent before that API was added. |
+| Rust workspace | PASS: 23 tests, including scope/direct/mismatched recipe, step, parameters and session cases; default normalization, typed hooks, unchanged fingerprints and verification after a session transition. |
+| Runtime | PASS: 77 Node tests, including full recipe context at every guard/verification, direct-context injection refusal and immutable handler scope for app verification. Existing engines without the optional capability retain prior request shape. |
+| Source | PASS: syntax, public TypeScript and formatting; locked offline Rust build and Clippy with warnings denied. |
+| Real Chromium | PASS: eight notebook browser/API groups with the rebuilt engine, four motion groups, and one viewer group including internal-card omission. These are independent shared-runtime fixtures. |
+| Installed candidate / full Roots parity | NOT RUN here: parent integration owner must assign a new version, build exact artifacts, and verify the installed consumer. No public release or remote CI claim. |
+
+Receipts remain under `artifacts/motion-parity-20261011/recipe-*`, including
+unmodified red logs and final Rust, runtime, source and browser logs. The new wire
+fields are negotiated within protocol 1. The Rust descriptor's new public bool
+field requires updates for users constructing struct literals; serde consumers
+and default authorization/verification hooks preserve prior behavior. The shared
+engine validates canonical scope but remains stateless; the trusted runtime owns
+run sequencing. See [the exact contract and compatibility limits](contracts.md#canonical-recipe-context-extension).
+
+The earlier release-tooling failures remain open and unchanged; they were not
+rerun for this protocol change. Public rc.1 bytes are preserved, and no artifact
+has been versioned or published from these corrections.
+
+## Roots visible-motion parity correction — 2026-10-11
+
+An isolated Roots migration consumer reproduced a failure in exact public Daedlo
+`0.1.2-rc.1` bytes: the accepted Slow QA / Fast QA typing check emitted four input
+events, below its minimum of fourteen. Both commands completed with the correct
+values, pointer movement and speed difference. The preserved Roots motion code
+emitted seventeen input events on the same independent form and showed its cursor.
+These are real Chromium primitive checks, not Roots application/API/database E2E.
+
+The correction was developed in an isolated checkout at `7e3e48d`, overlaid only
+with the public source receipt's 93 verified prepared files (local preservation
+commit `b8f7452`). The normal browser-driver workspace and Roots driver remain
+untouched. Shared text fill now types at the chosen pace, with guarded boundaries
+before each character. Native date/time fills retain browser form semantics. A
+session-owned pointer and click overlay survives reload and is removed on close.
+
+| Check | Actual result and scope |
+| --- | --- |
+| Regression first | RED: visible typing yielded 2 events on the upstream text-only fixture, cursor count was 0, and no first-character interruption point appeared. Native date/session checks already passed. |
+| Focused Chromium | PASS: four groups covering visible input/key events, speed, cursor reload/cleanup, preserved human input after pause, and native date/session behavior. Cursor screenshot inspected. |
+| Existing shared runtime | PASS: 73 Node tests. |
+| Source | PASS: JavaScript syntax, public TypeScript and format checks; locked offline Rust build. |
+| Existing browser checks | PASS: eight notebook browser/API groups and one presentation-viewer group. |
+| Release tooling | FAIL: 67/82 tests passed. Unchanged older release fixtures omit the license declarations required by the frozen public builder; a version test sees an old integration pin. These failures remain open and are not relabeled as a motion pass. |
+| New package / Roots migration / remote CI | NOT RUN: no new version, packaged candidate, full Roots parity or remote CI result is claimed. |
+
+Ignored upstream evidence is `artifacts/motion-parity-20261011/`, including the
+public source receipt, baseline identity, browser red/green logs, runtime/source
+checks, notebook and presentation logs, and the retained release failures. The
+consumer's package and preserved-reference receipts remain in its isolated
+`.migration/contract-probe/` directory. All probe browser/viewer resources closed.
+The public release bytes remain immutable; consuming the correction requires a
+separately versioned candidate and a new exact installed-package acceptance run.
+
 ## Shared presentation mode — 2026-10-09
 
 Implemented [presentation mode](presentation.md) for an existing command or
@@ -588,3 +1030,56 @@ services, dependencies, entrypoints or data. The owned fixture was removed.
 Later Roots changes are reviewed and selectively ported only when requested,
 following [the upstream-review workflow](development-workflow.md). There is no
 automatic synchronization or monitoring.
+
+### Local Roots migration interruption candidate, 2026-10-11
+
+Unpublished `0.1.3-roots.3` preserves read-only completion verification after a
+dispatched effect while Pause gates future effects. Stop retains a separate
+`interruptionError` if verification fails, alongside the independently reported
+effect status; no successful outcome is inferred from an unverified postcondition.
+
+The added independent Chromium/HTTP regression failed all three assertions before
+the fix (paused completion, stopped verification, stopped failed verification) and
+passed all three afterward. A recipe-step unit regression first observed zero
+verified steps while paused and now passes while still rejecting a human edit
+before the next effect. All 78 runtime tests, eight existing notebook browser
+groups, four motion groups, two viewer groups, syntax, types and format passed.
+Logs are retained in `artifacts/roots-migration-0.1.3-roots.3/`. Consumer Roots
+acceptance, its database, and publication are separate gates; this record does
+not claim them complete.
+
+### Local CLI browser overrides, 2026-10-11 — unpublished candidate
+
+The candidate CLI loads trusted `PLAYWRIGHT_MODULE` before project setup and
+passes `CHROMIUM` unchanged at browser launch. It has no module/executable fallback
+and retains its existing signal ownership. Thirteen actual CLI subprocess checks replace only the bare default
+Playwright import with a recording sentinel; no browser is launched by those tests.
+The pre-fix source had three passing default/help checks and ten actual assertion
+failures: explicit modules were ignored and executablePath was absent. Tightening
+help to require zero browser-module evaluations separately failed against the exact
+installed roots.4 CLI, then passed on the changed source. These are observed
+nonbrowser failures, not an OS executable-refusal or customer browser result.
+
+All thirteen strengthened environment checks pass. All 104 runtime checks pass,
+including paused factory cancellation and active saved-effect shutdown with selected
+executable options. Syntax, types and formatting pass. Private logs are retained
+in `artifacts/cli-environment-20261011/`.
+
+The exact installed roots.4 CLI also failed the real Chromium override assertion
+after successfully saving once and completing its owned cleanup: the selected
+module was never evaluated. The changed source passes ten real Chromium/HTTP CLI
+cases: the existing three, three override path forms, active saved-action SIGTERM,
+selected paused-startup cancellation, and missing/non-executable launch failures.
+Public response and final-report run IDs/effects match, with exactly one write for
+successful save scenarios and zero for interrupted startup. OS process path,
+realpath and SHA256 bind the selected actual browser; launch options stay unchanged.
+An earlier attempt retained five passes and five witness setup failures because
+Chromium rejected the optional command-line diagnostic. The corrected witness uses
+a browser-target process ID and an OS executable read, with no fallback or extra
+launch flag. All ten named fixture roots, fifteen child/browser PIDs and ten owned
+HTTP origins were absent in the independent cleanup audit.
+
+Unpublished local version `0.1.3-roots.5` will package these reviewed changes.
+Exact installed-candidate acceptance is recorded in its external LOCAL-CANDIDATE
+receipt after the clean build. Customer acceptance/pin selection, remote CI and
+publication remain separate; no existing Roots installation is changed here.

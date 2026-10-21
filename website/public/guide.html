@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="How Daedlo connects one agreed feature to a state model, guarded browser actions, and inspectable outcomes."
+    />
+    <meta name="theme-color" content="#f5f3ed" />
+    <link rel="canonical" href="https://daedlo.com/guide.html" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>Integration guide — Daedlo</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="34" height="34" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="/demo.html">Real demo</a
+        ><a href="/index.html#story">Our story</a
+        ><a class="nav-guide" href="/install.html"
+          >Get Daedlo <span aria-hidden="true">↗</span></a
+        >
+      </nav>
+    </header>
+    <main class="guide-main wrap" id="main">
+      <p class="eyebrow">Integration guide / Assisted alpha</p>
+      <h1>One feature. A shared definition of working.</h1>
+      <p class="guide-intro">
+        Assisted alpha for macOS arm64 with Codex. Start with one existing
+        flow and a relevant negative case. Your agent connects the model and
+        browser actions; your application keeps its own language and architecture.
+      </p>
+      <div class="guide-download">
+        <div>
+          <p class="eyebrow">Bring the kit to your coding agent</p>
+          <p>Download, verify, then start with one existing flow.</p>
+        </div>
+        <a class="button primary" href="/install.html"
+          >Get the alpha kit <span aria-hidden="true">↓</span></a
+        >
+      </div>
+      <p class="guide-demo-link">
+        <a href="/demo.html"
+          >See this process in a real recorded application flow →</a
+        >
+      </p>
+      <section class="guide-block">
+        <h2>1. Agree on the behavior</h2>
+        <p>
+          Choose a small, meaningful journey. Product, development, and QA
+          contributors agree what the application should do and what would
+          establish that it did it.
+        </p>
+        <p>
+          For draft retention, that means more than reopening an editor: write a
+          draft, navigate away, return, and compare the observed contents. For
+          recovery after an uncertain save, define what may be retried and what
+          proves that exactly one intended record exists.
+        </p>
+      </section>
+      <section class="guide-block">
+        <h2>2. Connect your application</h2>
+        <p>The current integration has two application-specific parts:</p>
+        <ul>
+          <li>
+            <strong>A Rust state model</strong> describes observed facts,
+            states, valid commands, guards, and expected outcomes.
+          </li>
+          <li>
+            <strong>A JavaScript adapter</strong> connects those commands to the
+            real browser, selectors, application observations, and evidence.
+          </li>
+        </ul>
+        <p>
+          Daedlo supplies the shared execution runtime and local viewer.
+          Application behavior, test data, fixtures, and the meaning of a
+          successful outcome remain part of your integration.
+        </p>
+      </section>
+      <section class="guide-block">
+        <h2>3. Run, watch, and inspect</h2>
+        <p>
+          Choose a valid command or an authored flow. The local viewer follows
+          the controlled browser and exposes execution progress. Pause, resume,
+          adjust the pace, or stop at a guarded action boundary.
+        </p>
+        <p>
+          Stopping execution cannot undo a request already sent. Fresh
+          observations and the application’s evidence determine what can safely
+          happen next.
+        </p>
+        <p>
+          Authored commands and flows run without an AI agent or model API key.
+          A coding agent can help author and maintain them.
+        </p>
+      </section>
+      <section class="guide-block">
+        <h2>4. Keep the result honest</h2>
+        <p>
+          Inspect three distinct things: whether execution completed, what the
+          application reported, and what the persistence evidence establishes. A
+          completed action can still lead to validation, recovery, or an
+          uncertain outcome.
+        </p>
+        <p>
+          Missing evidence does not become success. A click, a screenshot, or a
+          successful HTTP status alone is not a generic proof that the intended
+          data persisted.
+        </p>
+      </section>
+      <section class="guide-block">
+        <h2>Where this alpha stands</h2>
+        <p>
+          The Rust engine, Node/Playwright runtime, and local viewer have been
+          built and exercised in isolated integrations. Roots supplied the
+          original product work and remains the source of the origin story.
+        </p>
+        <p>
+          Application-specific integration is required. Linux, Windows and Claude
+          Code onboarding remain unverified. Fresh OS/toolchain installation and
+          independent self-service onboarding are outside this alpha. Complete
+          the handoff by preserving evidence, closing owned resources, then
+          relaunching and repeating the flow.
+        </p>
+        <div class="guide-callout">
+          <p>
+            <strong>Bring your own application.</strong> The homepage
+            interaction is an authored illustration, not a live test. It does
+            not connect to your browser, repository, or application.
+          </p>
+        </div>
+      </section>
+      <div class="guide-download">
+        <div>
+          <p class="eyebrow">Ready for your first flow?</p>
+          <p>The complete kit includes the agent handoff and setup guide.</p>
+        </div>
+        <a class="button primary" href="/install.html"
+          >Get the alpha kit <span aria-hidden="true">↓</span></a
+        >
+      </div>
+      <a class="back-link" href="/index.html">← Back to Daedlo</a>
+    </main>
+    <footer class="site-footer wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="28" height="28" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <p>Tools grow out of the work.</p>
+      <nav aria-label="Footer navigation">
+        <a href="/install.html">Download</a
+        ><a href="/privacy.html">Privacy &amp; contact</a>
+      </nav>
+    </footer>
+  </body>
+</html>

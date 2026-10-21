@@ -1,8 +1,8 @@
 {
   "name": "@browser-driver/runtime",
-  "version": "0.1.1-rc.5",
+  "version": "0.1.4-alpha.2",
   "description": "Visible browser control with a typed Rust application model",
-  "license": "MIT",
+  "license": "MIT AND Apache-2.0",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -19,7 +19,9 @@
   "files": [
     "src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses"
   ],
   "dependencies": {
     "playwright": "1.62.1"

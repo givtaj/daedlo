@@ -1,0 +1,11 @@
+{
+  "name": "daedlo",
+  "compatibility_date": "2026-10-09",
+  "workers_dev": true,
+  "preview_urls": false,
+  "routes": [{ "pattern": "daedlo.com", "custom_domain": true }],
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page",
+  },
+}

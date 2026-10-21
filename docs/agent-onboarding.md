@@ -1,10 +1,21 @@
-# Agent-led application onboarding
+# Daedlo agent-led application onboarding
 
-An agent installs browser-driver and helps product, development and QA contributors
+An agent installs Daedlo and helps product, development and QA contributors
 turn a user story into a Rust state model, guarded browser flows and inspectable
 evidence. The agent reads the application and does the integration work; the team
 defines the intended behavior and what counts as success. Authored flows can then
 run without an AI agent or model API key.
+
+The product name is Daedlo; the existing browser-driver package names, commands
+and skill paths below remain the supported technical identifiers.
+
+The current target is **0.1.4-alpha.2**, an assisted alpha for **macOS arm64 with
+Codex**, covering one agreed existing application flow and a relevant negative
+case. Exact candidate package and customer-flow verification are pending; this
+guide is not a release or acceptance receipt. Earlier public-preview and Roots
+candidate results retain their own identities. Linux, Windows, Claude Code,
+fresh OS/toolchain installation and independent self-service onboarding are not
+part of this alpha's acceptance claim.
 
 Keep the current native Rust engine and Node/Playwright runtime. A customer's
 backend can use JavaScript/TypeScript, Go, Rust, PHP or another language: the
@@ -17,14 +28,18 @@ every framework. No WASM conversion or application rewrite is required.
 The portable [browser-driver skill](../skills/browser-driver/SKILL.md) contains the
 workflow and its supporting references. Start with the verified portable tools
 package or a reviewed browser-driver source checkout at an explicit revision.
-Until the skill is installed, ask the agent to read that file directly. For example:
+Explicitly read that skill and its references even if automatic discovery is
+unavailable. For a packaged alpha kit, start with its `AGENT_START.md`; for an
+identified tools package or checkout, use this request:
 
 > Read `skills/browser-driver/SKILL.md` in the chosen browser-driver tools package or checkout. Onboard this
 > web app using the existing Rust engine and Node runtime. Inspect our current
 > setup, then help us agree the nested Rust enum, transition diagram and acceptance
 > for one useful flow. Reuse any agreement already recorded. Install the exact
 > candidate, connect the model and adapter, verify the flow in a visible viewer,
-> and leave instructions and evidence that another agent and our QA team can reuse.
+> verify a relevant negative case, and preserve the assertions and final report.
+> Close owned resources, relaunch from the recorded instructions, and repeat the
+> authored flow. Leave evidence that another agent and our QA team can reuse.
 > Preserve our existing services, data, dependency choices and unrelated work.
 
 Specify an already-agreed story when one exists. If only onboarding is requested,
@@ -33,16 +48,18 @@ inventing or implementing a new product feature. A design-only request stops wit
 the proposed model and acceptance. Continue approved implementation without asking
 the team to approve the same decisions again.
 
-## Install the instructions for Codex or Claude Code
+## Install the instructions for Codex
 
-Use the same complete skill folder for both hosts. Installation belongs in the
-customer repository, so future contributors inherit the workflow. The agent should
-inspect existing instructions first and preserve them.
+Install the complete skill folder in the customer repository so future
+contributors inherit the workflow. The agent should inspect existing instructions
+first and preserve them. Codex is the assisted alpha path. The existing Claude
+Code location below remains compatibility guidance; it does not establish tested
+Claude Code onboarding.
 
-| Host | Project skill directory | Explicit invocation |
-| --- | --- | --- |
-| Codex | `.agents/skills/browser-driver/` | Select the skill, or use `$browser-driver` in CLI/IDE |
-| Claude Code | `.claude/skills/browser-driver/` | `/browser-driver` |
+| Host        | Project skill directory          | Explicit invocation                                   |
+| ----------- | -------------------------------- | ----------------------------------------------------- |
+| Codex       | `.agents/skills/browser-driver/` | Select the skill, or use `$browser-driver` in CLI/IDE |
+| Claude Code | `.claude/skills/browser-driver/` | `/browser-driver`                                     |
 
 From the customer repository root, the agent can copy the reviewed folder into a
 fresh destination. Set `driver_source` to the installed tools package root (the
@@ -63,8 +80,10 @@ Copy supporting references and assets too. If the destination exists, compare it
 and make a scoped update instead of overwriting local customizations. For teams
 using both hosts, copy the same revision to both locations and record their source
 revision in the application's onboarding record. Update the copies deliberately;
-there is no automatic synchronization. Check discovery in the agent's skill list;
-if a new skill is not visible, reload the host or explicitly read its `SKILL.md`.
+there is no automatic synchronization. Check discovery in the agent's skill list
+and record whether it succeeded. If the skill is not visible, explicitly read its
+`SKILL.md` and linked references and continue the assisted workflow. Installing
+files and explicitly reading them do not prove automatic host discovery.
 
 Add a short pointer to the project's existing `AGENTS.md` and/or `CLAUDE.md` when
 appropriate. Point to the installed skill, the accepted application model, its flow
@@ -79,19 +98,21 @@ MCP server or registry installer. It is not included in the current runtime tarb
 
 ## Dependency preflight
 
-Read the selected candidate's manifests before installing. The following describes
-`0.1.1-rc.2`; later instructions must follow the selected version rather than
-silently upgrading a working consumer.
+Read the selected candidate's manifests before installing. The requirements below
+describe the `0.1.4-alpha.2` candidate; its exact-package verification remains a
+release gate. Use the selected kit and independently supplied verification receipt.
+The existing public `0.1.2-rc.1` download is a different package identity. Follow
+the selected manifests rather than silently upgrading a working consumer.
 
-| Component | Current requirement | Purpose |
-| --- | --- | --- |
-| Node.js | Runtime declares `>=22`; CI exercises 22 and 24 | Session runtime, CLI, viewer and browser adapter; Node 24 also satisfies the Roots fixture requirement |
-| npm | No separate minimum declared | Install the exact runtime artifact and retain the consumer lockfile; repository development uses `npm ci` |
-| Rust and Cargo | Rust minimum 1.96; repository pins 1.96.0 | Build the customer's typed `ApplicationModel` against the shared crate |
-| Playwright | Runtime pins `1.62.1` | Browser control; install its matching Chromium separately |
-| Chromium system libraries | Platform-dependent | Linux may need Playwright's system dependency installation; use the host's normal permission flow |
-| Docker | Conditional on the customer's fixture | Roots uses an isolated PostgreSQL container; shared runtime and notebook acceptance do not require Docker |
-| Application build/data tools | Customer-specific | Read the application's manifests and setup guide; its requirements may exceed the driver's |
+| Component                    | Current requirement                             | Purpose                                                                                                   |
+| ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Node.js                      | Runtime declares `>=22`; CI exercises 22 and 24 | Session runtime, CLI, viewer and browser adapter; Node 24 also satisfies the Roots fixture requirement    |
+| npm                          | No separate minimum declared                    | Install the exact runtime artifact and retain the consumer lockfile; repository development uses `npm ci` |
+| Rust and Cargo               | Rust minimum 1.96; repository pins 1.96.0       | Build the customer's typed `ApplicationModel` against the shared crate                                    |
+| Playwright                   | Runtime pins `1.62.1`                           | Browser control; install its matching Chromium separately                                                 |
+| Chromium system libraries    | Platform-dependent                              | Linux may need Playwright's system dependency installation; use the host's normal permission flow         |
+| Docker                       | Conditional on the customer's fixture           | Roots uses an isolated PostgreSQL container; shared runtime and notebook acceptance do not require Docker |
+| Application build/data tools | Customer-specific                               | Read the application's manifests and setup guide; its requirements may exceed the driver's                |
 
 The shared Rust crate directly depends on `serde`, `serde_json` and `sha2`. The
 workspace's TypeScript, Node type definitions, Prettier, rustfmt and Clippy support
@@ -158,18 +179,36 @@ follow the customer's test-first requirements. For already-working behavior,
 establish truthful passing coverage instead of manufacturing a failure. Verify the
 actual UI and any persistence/retry claims with appropriate independent read-back.
 
-Onboarding is complete when another contributor or agent can find the pinned
-dependencies, build and launch the integration, understand the accepted model, run
-the first flow and inspect its evidence and limitations. Record environment,
-application/model/runtime identities, precise assertions and cleanup or retained
-session ownership. Persist sanitized evidence deliberately: the runtime's latest
-16 completed reports are in memory, not a durable team archive.
+Complete the assisted handoff against the exact installed package pair:
 
-The Roots experience is the source of this workflow; its normal embedded driver
-remains unchanged. This instruction layer does not establish new customer browser
-coverage, Claude Code end-to-end onboarding, a container image, or a public release.
-The selected source checkout's `docs/verification.md` records checks actually
-performed; it is not included in portable tools. For published artifact provenance,
-read the selected GitHub release's `VERIFICATION.md` asset. Access to a private
-release requires repository access. Neither record substitutes for running the
-customer's own acceptance against its chosen package pair.
+1. Record the environment, application/model/runtime identities, verified kit
+   path, integration lockfiles, fixture prerequisites and build/launch commands.
+2. Run the agreed flow and negative case through the visible viewer. Check the
+   actual fields and application outcomes; record independent persistence
+   assertions for any save and a no-write assertion where rejection requires it.
+3. Preserve the customer assertions and useful completed reports before they are
+   evicted. The runtime retains only the latest 16 completed reports in memory.
+   An integration using the session API can capture `session.report({runId})`;
+   raw application observations and persistence evidence require separate records.
+4. Launch the CLI with `--report` pointing to a fresh file in an existing ignored
+   report directory. When finished, send Ctrl+C once and wait for finalization.
+   Inspect the final session report and owned-resource cleanup before claiming
+   success. The final session view is not a durable archive of every run.
+5. If cleanup fails, retain the reported handles, investigate the owned resource,
+   then use the CLI's documented Ctrl+C or SIGTERM retry. Preserve attached
+   services and sessions. If a viewer is intentionally retained for inspection,
+   record its owner, close procedure and pending shutdown; this leaves the
+   shutdown acceptance step open.
+6. Relaunch using the same recorded package/model/adapter combination and a new
+   report filename. Re-establish only the documented fixture prerequisites and
+   repeat the authored flow. Record the result and final cleanup.
+
+Onboarding is complete when another contributor or agent can follow this handoff
+and inspect its evidence and limitations. Keep private reports, credentials and
+raw traces out of shared records. A concrete setup or application blocker belongs
+in the result as blocked, failed or not run; it is not completed onboarding.
+
+The Roots experience is the source of this workflow. Read the public kit manifest
+and tools receipt for artifact provenance. Repository examples and docs/verification.md
+are not included in portable tools. Customer acceptance still requires running
+the chosen package, model and adapter combination.
