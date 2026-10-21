@@ -1,0 +1,46 @@
+{
+  "format": "daedlo-historical-public-files/1",
+  "description": "Frozen public rc.1 archive/metadata and recorded Architecture Studio demo dated 11 October 2026",
+  "files": [
+    {
+      "path": "public/demo-evidence.json",
+      "bytes": 2486,
+      "sha256": "f8e43b47184f98d2d82d0f562b6128474d86030c5ad2b919fc73192eb922bff3"
+    },
+    {
+      "path": "public/demo-restored-fields.png",
+      "bytes": 101024,
+      "sha256": "d71b8cb8988193911e824615bbb688fbf16ec995d7b4a3099787edfa1d926131"
+    },
+    {
+      "path": "public/demo-verified-save.png",
+      "bytes": 78570,
+      "sha256": "f004ed78f06d8233b15d5282afcc0c6c94ffcf4290662e2df9be918f28158b8b"
+    },
+    {
+      "path": "public/demo.css",
+      "bytes": 6215,
+      "sha256": "9c7be4bf8380f08a7a9cf38d2489a86948d8283ce63b289fc7bfa66ebfd4b4e9"
+    },
+    {
+      "path": "public/demo.html",
+      "bytes": 11181,
+      "sha256": "58d0d26183430d5329956237a6d6ee9aaeb6a987b7134104122b6a2b49c65846"
+    },
+    {
+      "path": "public/downloads/0.1.2-rc.1/SHA256SUMS",
+      "bytes": 88,
+      "sha256": "b5635817e49c00db75490c79d7112b53b90811be3742f728da71dcb9f6e30e9e"
+    },
+    {
+      "path": "public/downloads/0.1.2-rc.1/daedlo-0.1.2-rc.1.zip",
+      "bytes": 147172,
+      "sha256": "da5ce1387eb147a3fb3a7225decd3e51e9fc355a505583ccc20cb2a9bf33963b"
+    },
+    {
+      "path": "public/downloads/0.1.2-rc.1/release.json",
+      "bytes": 6558,
+      "sha256": "1ff4b7053ffbd2f1196974fa3691c30531964f121b7a8161871bd6cecbfe9060"
+    }
+  ]
+}

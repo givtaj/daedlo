@@ -1,0 +1,33 @@
+# Deny every asset unless explicitly selected below. Metadata is handled by Wrangler.
+*
+*.zip
+
+# Reviewed public pages and local assets.
+!/index.html
+!/guide.html
+!/privacy.html
+!/install.html
+!/demo.html
+!/demo.css
+!/demo-evidence.json
+!/demo-verified-save.png
+!/demo-restored-fields.png
+!/404.html
+!/styles.css
+!/workflow.js
+!/mark.svg
+!/robots.txt
+!/sitemap.xml
+
+# Exact frozen preview only. Other archives, nested files and versions stay excluded.
+!/downloads/
+!/downloads/0.1.2-rc.1/
+!/downloads/0.1.2-rc.1/daedlo-0.1.2-rc.1.zip
+!/downloads/0.1.2-rc.1/SHA256SUMS
+!/downloads/0.1.2-rc.1/release.json
+
+# Exact assisted alpha; existing preview bytes remain immutable.
+!/downloads/0.1.4-alpha.2/
+!/downloads/0.1.4-alpha.2/daedlo-0.1.4-alpha.2.zip
+!/downloads/0.1.4-alpha.2/SHA256SUMS
+!/downloads/0.1.4-alpha.2/release.json

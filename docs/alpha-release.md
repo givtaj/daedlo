@@ -1,6 +1,7 @@
 # Daedlo alpha delivery — 21 October 2026
 
-Release target: **0.1.4-alpha.2**. Status: **candidate in preparation; not published**.
+Release: **0.1.4-alpha.2**. Status: **published assisted alpha**.
+[Install](https://daedlo.com/install) · [Versioned release](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
 This is the current product/release decision record. Actual test outcomes belong
 in [verification](verification.md); historical records keep their original scope.
 
@@ -35,7 +36,8 @@ The dedicated branch is `codex/daedlo-alpha-release`. Version 0.1.4 avoids sorti
 below the existing roots.8 candidate. Alpha.1 passed technical and real-application
 checks but was withheld after its installer modified an ancestor npm workspace.
 Alpha.2 uses an explicit install prefix and disables workspace targeting; a real
-nested-workspace regression must prove the ancestor manifests remain unchanged.
+nested-workspace regression and the shipped installer prove the ancestor manifests
+remain unchanged.
 The integration owner controls version fields, lockfiles, entrypoints and release
 assembly. Existing application pins and live services remain untouched.
 
@@ -43,13 +45,13 @@ assembly. Existing application pins and live services remain untouched.
 
 | Gate | Required evidence | Current decision |
 | --- | --- | --- |
-| Reviewed source | Clean committed source; complete portable guides/notices; one recorded package identity | Pending final freeze |
-| Source checks | Runtime, Rust, release, archive and source Chromium suites | Running; see verification for completed results |
-| Exact installed bytes | Eight browser/API groups plus CLI ownership and finalization/control regressions against the installed runtime | Pending final package |
-| Complete distribution | Clean runtime/crate bundle, portable tools, full skill, public ZIP and trustworthy digests; actual START_HERE block succeeds | Pending final package |
-| Real application handoff | Pinned Architecture Studio synthetic fixture: invalid input causes zero writes; save/read-back/reload; export evidence; owned shutdown and relaunch/repeat | Pending fresh alpha run |
-| Remote CI | Selected alpha commit on the existing Node 22/24 Linux matrix, including complete public-kit assembly | Pending push/CI |
-| Public delivery | Reviewed versioned release/download, visible install journey, live digest read-back and rollback identity | Pending all earlier gates |
+| Reviewed source | Clean committed source; complete portable guides/notices; one recorded package identity | PASS: clean package source `044e76d`; exact public notices/digests reviewed |
+| Source checks | Runtime, Rust, release, archive and source Chromium suites | PASS: local source checks and Node 22/24 CI |
+| Exact installed bytes | Eight browser/API groups plus CLI ownership and finalization/control regressions against the installed runtime | PASS: frozen alpha.2 kit and exact installed checks |
+| Complete distribution | Clean runtime/crate bundle, portable tools, full skill, public ZIP and trustworthy digests; actual START_HERE block succeeds | PASS: frozen alpha.2 kit and exact installed checks |
+| Real application handoff | Pinned Architecture Studio synthetic fixture: invalid input causes zero writes; save/read-back/reload; export evidence; owned shutdown and relaunch/repeat | PASS: seven fresh Architecture Studio acceptance checkpoints; final integrity and cleanup |
+| Remote CI | Selected alpha commit on the existing Node 22/24 Linux matrix, including complete public-kit assembly | PASS: source `044e76d`, runs 39634235043 and 39634245064 |
+| Public delivery | Reviewed versioned release/download, visible install journey, live digest read-back and rollback identity | PASS: live alpha site; all 21 served assets match on both origins; seven boundary paths return 404 |
 
 Publication requires all required gates to pass. A setup failure, absent receipt
 or historical result is not a passing gate. Keep failed runs and later corrections
@@ -73,3 +75,22 @@ technical checks.
 Measure time to the first verified flow, interventions needed, repeat-run success
 and whether another agent can use the handoff. No customer adoption, revenue or
 self-service onboarding result is claimed before those observations exist.
+
+## Release identity and next product milestone
+
+The tested ZIP is `daedlo-0.1.4-alpha.2.zip` (160,545 bytes), SHA-256
+`b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1`.
+It was built once from clean `044e76df10e90c68e9e3c7ff35e7c63a62354c60`;
+later documentation/website commits do not change this package identity.
+Cloudflare version `8eebf633-35e6-498a-ae19-67f867c1b878` serves 100% of the
+existing Daedlo Worker traffic. The prior static version remains the compatible
+rollback; see [hosting](website-hosting.md). No application database is hosted by
+this site. The historical rc.1 download and recorded demo remain unchanged.
+
+The next product milestone is an assisted onboarding with an external builder:
+agree one useful existing flow and negative case, measure elapsed setup time and
+agent interventions, verify the repeat run, and collect the builder's evidence
+assessment. This release has technical and representative application acceptance;
+external customer adoption has not yet been demonstrated. Contacting or inviting
+people is separate work and has not been performed. Use the findings to choose
+the next platform or onboarding improvement before expanding the support claim.

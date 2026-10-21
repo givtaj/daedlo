@@ -1,5 +1,42 @@
 # Verification record
 
+## Public assisted alpha 0.1.4-alpha.2 — 2026-10-21
+
+**Released** at [daedlo.com/install](https://daedlo.com/install) and the
+[versioned GitHub prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
+The exact kit was built from clean source `044e76df10e90c68e9e3c7ff35e7c63a62354c60`,
+source-tree SHA-256 `6dd4febaa1f41ad6380f4e8cdac17704dd6d824162e08631e26777ed60257e45`.
+ZIP SHA-256 `b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1`
+(160,545 bytes); bundle manifest SHA-256
+`0338ed7d161c98e7ebced668ddc77ca5520ba14480b0c67369bb81d71e5be8c7`.
+Later website/evidence documentation commits do not change the packaged source.
+
+| Executed gate | Actual result |
+| --- | --- |
+| Installer regression | Genuine nested-workspace failure before the fix; standalone and nested cases now PASS. The exact shipped block also passed with real tools and a fresh offline npm cache; ancestor files unchanged. |
+| Source checks | 129 runtime, 23 Rust and 11 archive tests PASS; source quality, locked build, format/Clippy PASS. After installer correction, 105 release tests PASS. Source browser groups and controls described below passed; alpha.2 runtime/model code is unchanged from alpha.1. |
+| Exact installed alpha.2 | Eight browser/API groups, ten CLI, 25 finalization and nine browser-control cases PASS; no skips/failures/cancellations; installed bytes unchanged; owned cleanup PASS. |
+| Real application | Pinned Architecture Studio, synthetic data: seven acceptance checkpoints PASS; 13 Rust and seven Node checks PASS. Invalid empty name causes zero writes; exact save matches response/API/disk; reload restores fields; shutdown exports reports; attached fixture survives; CLI/browser relaunch repeats the flow. Live viewer inspected. |
+| Final integrity | 22 runtime, 26 tools and 11 crate files match the frozen archives before/after; 119 pinned application files and accepted model/adapter unchanged. All owned processes closed; fixture/viewer ports released. |
+| Remote CI | Clean source `044e76d`: [push run 39634235043](https://github.com/givtaj/browser-driver/actions/runs/39634235043) and PR run 39634245064 PASS, each on Node 22/24 Ubuntu, including complete public-kit assembly. |
+| Public contents | ZIP plus nested archives checked across 72 file boundaries: inventories/digests and canonical MIT/Apache notices PASS; no detected private paths, credentials or evaluation drafts. Only sanitized verification metadata is published. |
+| Website | 31 tests PASS; six-page/two-archive acceptance PASS. Desktop and 390px mobile review: no overflow or browser errors. Exact rendered installer matches the tested kit guide. |
+| Public delivery | Wrangler 4.147.0 dry-run and deployment PASS. Active version `8eebf633-35e6-498a-ae19-67f867c1b878` at 100%; all 21 served assets match frozen bytes on both apex and provider origins, seven private/missing paths return 404, CSP and nosniff present. Public installation page inspected. |
+
+Scope: assisted macOS arm64 with Codex and existing toolchains/caches. Linux CI
+is technical coverage, not Linux customer onboarding. Windows, Claude Code,
+clean-OS setup, independent self-service onboarding, email delivery and customer
+adoption remain unverified. Customer relaunch covers the CLI and controlled
+browser, not an application-server restart; that flow does not establish broad
+concurrent-writer or save-fault coverage. Everyday Roots promotion remains
+separate and incomplete.
+
+Private receipts are retained in the isolated alpha worktree under
+`artifacts/alpha-20261021/alpha.2/`, `customer/alpha.2/`,
+`site-alpha2-review/` and `site-final/`. The public `release.json` contains only
+selected package identities and scoped results. Alpha.1, its installer failure,
+and the historical rc.1 demonstration remain separately identified below.
+
 ## Alpha installer isolation correction — 2026-10-21
 
 **0.1.4-alpha.1 was withheld, not published.** Its exact installed package passed

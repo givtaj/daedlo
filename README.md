@@ -8,13 +8,14 @@ Rust model and guarded Node/Playwright actions. Watch the controlled browser,
 choose valid commands, pause or stop execution, and inspect evidence of the
 application outcome. Authored flows run without an AI agent or model API key.
 
-**Preparing 0.1.4-alpha.2: assisted macOS arm64 onboarding with Codex.** This
-candidate incorporates the shared fixes from `0.1.3-roots.8`. Its exact-package
-verification and customer first-flow acceptance are pending. It is not published
-or promoted into normal Roots. The existing public download is
-[0.1.2-rc.1](https://daedlo.com/install.html); earlier test results do not establish
-acceptance of the alpha candidate. The [verification record](docs/verification.md)
-owns measured results and remaining gates.
+**0.1.4-alpha.2 is released: assisted macOS arm64 onboarding with Codex.**
+[Download the verified kit](https://daedlo.com/install) or read the
+[versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
+The exact installed kit, real-application flow, source CI and public delivery
+passed their scoped checks on 21 October 2026. The [verification record](docs/verification.md)
+owns measured results and limits; [alpha delivery](docs/alpha-release.md) owns the
+product scope and next acceptance milestone. Everyday Roots dependencies remain
+unchanged.
 
 ## The first alpha journey
 

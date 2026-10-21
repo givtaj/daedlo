@@ -1,0 +1,74 @@
+{
+  "recordedOn": "2026-10-11",
+  "status": "PASS",
+  "release": {
+    "version": "0.1.2-rc.1",
+    "zipSha256": "da5ce1387eb147a3fb3a7225decd3e51e9fc355a505583ccc20cb2a9bf33963b",
+    "packagesUnchanged": true
+  },
+  "application": {
+    "name": "Architecture Studio",
+    "sourceCommit": "d8cb9396609b722418015cdd3367b3ef659aeb69",
+    "fixture": "Isolated synthetic workspace",
+    "model": { "id": "architecture-studio-first-flow", "version": "1.0.0" }
+  },
+  "environment": {
+    "platform": "macOS arm64",
+    "node": "22.20.0",
+    "rust": "1.96.0",
+    "playwright": "1.62.1",
+    "chromium": "151.0.7922.34",
+    "installation": "New empty npm, Cargo and browser caches; existing Node, npm and Rust toolchains",
+    "viewer": "Controlled headless Chromium streamed into the visible Codex in-app browser"
+  },
+  "tests": { "rust": 13, "node": 7 },
+  "negativeCase": {
+    "input": "Empty model name",
+    "outcome": "Validation; Save and Reload unavailable",
+    "workspacePutRequests": 0,
+    "revisionUnchanged": true
+  },
+  "presentation": {
+    "runId": "9feb54d4-6ca0-431a-82d1-8da2ed206657",
+    "stages": 5,
+    "workspacePutRequests": 1,
+    "effect": "saved",
+    "previousRevision": 2,
+    "responseApiDiskAgreement": true,
+    "saveEvidence": {
+      "save_status": 200,
+      "persisted": true,
+      "disk_revision": 3,
+      "disk_name": "Daedlo delivery pipeline — verified",
+      "disk_notes": "Saved from a clean public Daedlo installation."
+    }
+  },
+  "reopenedEditor": {
+    "runId": "d0383d18-678a-4085-8235-fa3f2b0e6883",
+    "workspacePutRequests": 0,
+    "revision": 3,
+    "outcome": {
+      "kind": "success",
+      "label": "Editor opened with persisted model fields"
+    }
+  },
+  "notEstablished": [
+    "Clean OS/toolchain installation",
+    "Linux/Windows",
+    "Claude Code",
+    "Automatic agent skill discovery",
+    "Independent human onboarding",
+    "Concurrent writers or save fault injection"
+  ],
+  "captures": [
+    {
+      "path": "/demo-verified-save.png",
+      "description": "Recorded viewer after all five presentation stages completed"
+    },
+    {
+      "path": "/demo-restored-fields.png",
+      "description": "Recorded viewer after reopening the editor and verifying both persisted fields"
+    }
+  ],
+  "scope": "Real editor and persistence checked with synthetic data. Architecture Studio topology is an authored simulation. This is recorded acceptance evidence, not online execution or a bundled runnable application."
+}
