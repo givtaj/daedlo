@@ -1,11 +1,13 @@
-# Install Daedlo 0.1.2-rc.1
+# Install Daedlo 0.1.4-alpha.1
 
-This public developer preview pairs the Daedlo runtime, Rust engine source,
+This alpha candidate pairs the Daedlo runtime, Rust engine source,
 portable release tools and complete agent skill. Existing `browser-driver`
 package names, commands and protocol identifiers remain unchanged.
 
-Start at the [public installation page](https://daedlo.com/install.html). Download
-the versioned kit and follow its `START_HERE.md` instructions. That guide supplies
+Use the selected release receipt to obtain the exact versioned kit and follow
+its `START_HERE.md` instructions. During preparation this candidate is local; the
+[public installation page](https://daedlo.com/install.html) may still serve the
+earlier preview. Do not infer publication from this source guide. That guide supplies
 the exact archive names, verification values and installation commands for the
 selected release. Use `AGENT_START.md` in the same kit to give a coding agent the
 installation and first-flow job. These kit guides sit outside the installed tools
@@ -28,10 +30,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `browser-driver-runtime-0.1.2-rc.1.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
-| `browser-driver-engine-0.1.2-rc.1.crate` | Rust library source for the customer's application model                                                                |
+| `browser-driver-runtime-0.1.4-alpha.1.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
+| `browser-driver-engine-0.1.4-alpha.1.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `browser-driver-tools-0.1.2-rc.1.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
+| `browser-driver-tools-0.1.4-alpha.1.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -80,9 +82,10 @@ launcher. Test each replacement runtime/crate/model/adapter combination separate
 before promoting customer pins. Keep the accepted combination available for
 rollback. No automatic updater, hosted browser service or account is installed.
 
-Authored flows run without a model API key. Windows, complete onboarding across
-unfamiliar frameworks and end-to-end discovery in both agent hosts have not been
-verified. A selected integration's pass is not universal application coverage.
+Authored flows run without a model API key. Initial onboarding targets assisted
+macOS arm64 use with Codex and an explicitly read skill. Linux/Windows onboarding,
+Claude Code, automatic skill discovery and complete onboarding across unfamiliar
+frameworks are unverified. A selected integration's pass is not universal application coverage.
 
 Read the supplied `LICENSE`, `THIRD_PARTY_NOTICES.md`, and preserved MIT and
 Apache-2.0 texts. The `MIT AND Apache-2.0` declaration describes the applicable

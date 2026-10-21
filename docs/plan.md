@@ -1,5 +1,9 @@
 # Implementation plan
 
+Current release work: [Daedlo alpha delivery — 21 October 2026](alpha-release.md).
+That record owns the bounded alpha scope and gates. The milestones below retain
+their historical scope and do not by themselves establish a current release.
+
 ## Goal and approved constraints
 
 Build the dedicated browser-driver product described in this conversation, with

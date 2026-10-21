@@ -92,7 +92,7 @@ test("visible cursor survives page reload and removes its own overlay on close",
   assert.equal(await f.page.locator("[data-browser-driver-cursor]").count(), 1);
   const out = resolve(
     process.env.MOTION_EVIDENCE_DIR ||
-      "artifacts/motion-parity-20261011/browser",
+      `artifacts/motion-browser-${Date.now()}-${process.pid}`,
   );
   mkdirSync(out, { recursive: true });
   await f.page.screenshot({ path: resolve(out, "cursor.png") });

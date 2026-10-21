@@ -73,12 +73,25 @@ jobs:
         env:
           EXPECTED_MANIFEST_SHA256: ${{ steps.bundle.outputs.manifest-sha256 }}
         run: node tests/release-acceptance.mjs artifacts/ci-bundle artifacts/ci-package-acceptance "$EXPECTED_MANIFEST_SHA256"
+      - name: Build and verify the complete public installation kit
+        env:
+          EXPECTED_MANIFEST_SHA256: ${{ steps.bundle.outputs.manifest-sha256 }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { buildToolsArchive } from './scripts/release/tools.mjs';
+          import { buildPublicKit } from './scripts/release/public-kit.mjs';
+          const repoRoot = process.cwd();
+          const tools = await buildToolsArchive({repoRoot, output: 'artifacts/ci-tools', allowDirty: false});
+          await buildPublicKit({repoRoot, bundle: 'artifacts/ci-bundle', tools: 'artifacts/ci-tools', output: 'artifacts/ci-public-kit', expectedManifestSha256: process.env.EXPECTED_MANIFEST_SHA256, expectedToolsSha256: tools.sha256});
+          NODE
       # Only distributable bytes are uploaded. Browser evidence and local logs stay private.
       # This is a workflow artifact, not a GitHub Release or registry publication.
       - name: Retain the verified candidate bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: browser-driver-${{ steps.bundle.outputs.version }}-node${{ matrix.node }}-${{ github.sha }}
-          path: artifacts/ci-bundle/*
+          path: |
+            artifacts/ci-bundle/*
+            artifacts/ci-public-kit/*
           if-no-files-found: error
           retention-days: 14

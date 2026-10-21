@@ -283,7 +283,10 @@ test("presentation viewer renders human pacing and operates controls without rep
       pauseBox.y + pauseBox.height <= 1000,
       "Presenter controls must remain visible beside the application at desktop viewport size",
     );
-    const out = resolve("artifacts/presentation-20261009");
+    const out = resolve(
+      process.env.VIEWER_EVIDENCE_DIR ||
+        `artifacts/viewer-browser-${Date.now()}-${process.pid}`,
+    );
     await mkdir(out, { recursive: true });
     await ui.screenshot({
       path: resolve(out, "viewer-contract-hold.png"),

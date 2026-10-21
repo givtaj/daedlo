@@ -1,4 +1,4 @@
-# Daedlo 0.1.2-rc.1 portable release tools
+# Daedlo 0.1.4-alpha.1 portable release tools
 
 The `@browser-driver/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding
@@ -6,7 +6,9 @@ guides and complete `browser-driver` agent skill. It does not install a customer
 runtime, compile an application model, change application dependencies or restart
 services.
 
-Get the public kit from the [installation page](https://daedlo.com/install.html).
+Obtain the exact kit named by the selected release receipt. During preparation
+this alpha candidate is local; the [installation page](https://daedlo.com/install.html)
+may still serve the earlier preview.
 Follow the surrounding kit's `START_HERE.md` for the selected archive's trusted
 digests and exact installation commands, and `AGENT_START.md` for the first-flow
 handoff. Those files are kit-level guides, not files inside this installed tools
@@ -55,12 +57,11 @@ from the trusted receipt, not merely the downloaded bundle's own checksum file.
 `verify`, `update` and `rollback` require a compatible Rust compiler as well as
 Node. `status`, `check` and `download` do not measure Rust compatibility.
 
-This preview records `source.dirty: true`: it was prepared from the recorded base
-commit plus the exact source-tree digest, not a clean tagged commit. Direct
-`verify` and installation do not require an extra flag. If you choose the optional
-archive store, `update` and a later `rollback` to this preview require the explicit
-`--allow-dirty` flag. That flag preserves the source disclosure; it does not
-establish customer acceptance or change the package bytes.
+The alpha release requires `source.dirty: false` and a recorded commit. Check the
+selected manifest rather than inferring provenance from a version name. An older
+preview such as `0.1.2-rc.1` records `source.dirty: true`; selecting or rolling back
+to that historic archive requires the explicit `--allow-dirty` flag. That flag
+preserves its source disclosure and does not establish customer acceptance.
 Maintainer `build`, `build-tools` and `version` commands are not available in this
 portable client.
 

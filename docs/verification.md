@@ -1,5 +1,41 @@
 # Verification record
 
+## Alpha source preparation — 2026-10-21
+
+Prepared isolated branch `codex/daedlo-alpha-release` from clean checkpoint
+`a563871`, targeting **0.1.4-alpha.1** with the existing public MIT/Apache notices.
+The mixed everyday checkout and normal Roots resources are preserved. This
+checkpoint establishes source verification, not publication or customer adoption.
+The [alpha delivery record](alpha-release.md) defines the supported scope/gates.
+
+Fresh macOS arm64 checks used Node 22.20.0 and Rust 1.96.0 with existing toolchains
+and caches. No clean OS installation or other-platform result is claimed.
+
+| Fresh check | Result |
+| --- | --- |
+| Runtime | 129/129 PASS |
+| Rust | 23 tests PASS; locked build, formatting and Clippy with warnings denied PASS |
+| Source quality | JavaScript syntax, public declarations and configured formatting PASS |
+| Release and public-kit contracts | 103/103 PASS, including the 21 restored public/license checks |
+| Historical workbench | 11/11 PASS; serving/archive checks, not fresh Roots application acceptance |
+| Source Chromium | Eight notebook browser/API groups, nine controls cases, ten CLI cases, four motion cases and two viewer cases PASS |
+| Independent review | Release scope, portable onboarding, CI kit assembly and installed-control helper reviewed; no blocking finding |
+| Exact alpha package, fresh real application, remote CI, publication | PENDING at this source checkpoint |
+
+The source unchanged from roots.8 includes its previously reproduced runtime
+fixes. This turn adds release verification and documentation: the missing public
+kit/license test suites are maintained on the release branch; installed acceptance
+now also requires exactly 10 CLI, 25 finalization and 9 browser-control passes
+with no skipped/cancelled cases before checking unchanged package bytes. CI builds
+the complete tools/ZIP distribution as well as the four-file bundle. Fresh default
+motion/viewer evidence directories preserve previous runs.
+
+Private logs are retained under ignored `artifacts/alpha-20261021/`; motion/viewer
+logs and screenshots are under `artifacts/alpha-test-integration-20261021/`.
+The new installed package and customer results must be recorded separately when
+they actually run. Historical Roots evidence availability and recovery limits
+below remain unchanged.
+
 ## Durable recovery checkpoint — 2026-10-21
 
 The isolated Roots recovery source is committed locally as `a52a5ee7ba1abfe91f73b71d6ba6fce62a79695e`

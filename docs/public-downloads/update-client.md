@@ -55,12 +55,11 @@ from the trusted receipt, not merely the downloaded bundle's own checksum file.
 `verify`, `update` and `rollback` require a compatible Rust compiler as well as
 Node. `status`, `check` and `download` do not measure Rust compatibility.
 
-This preview records `source.dirty: true`: it was prepared from the recorded base
-commit plus the exact source-tree digest, not a clean tagged commit. Direct
-`verify` and installation do not require an extra flag. If you choose the optional
-archive store, `update` and a later `rollback` to this preview require the explicit
-`--allow-dirty` flag. That flag preserves the source disclosure; it does not
-establish customer acceptance or change the package bytes.
+The alpha release requires `source.dirty: false` and a recorded commit. Check the
+selected manifest rather than inferring provenance from a version name. An older
+preview such as `0.1.2-rc.1` records `source.dirty: true`; selecting or rolling back
+to that historic archive requires the explicit `--allow-dirty` flag. That flag
+preserves its source disclosure and does not establish customer acceptance.
 Maintainer `build`, `build-tools` and `version` commands are not available in this
 portable client.
 
