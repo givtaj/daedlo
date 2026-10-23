@@ -33,6 +33,10 @@ const documents = [
   "presentation",
   "ninja-update",
 ];
+const trustFiles = [
+  "docs/update-trust/production.json",
+  "docs/update-trust/daedlo-release-2026-10.pem",
+];
 const skillFiles = [
   "SKILL.md",
   "LICENSE",
@@ -72,6 +76,7 @@ async function fixture(t) {
     files[`scripts/release/${name}.mjs`] =
       `export const fixture = ${JSON.stringify(name)};\n`;
   for (const name of documents) files[`docs/${name}.md`] = `# ${name}\n`;
+  for (const name of trustFiles) files[name] = `Public trust fixture ${name}\n`;
   for (const name of skillFiles)
     files[`skills/browser-driver/${name}`] = `Fixture ${name}\n`;
   for (const [path, bytes] of Object.entries(files)) {
@@ -112,6 +117,7 @@ test("portable tools have a closed consumer inventory and complete agent referen
     "lib/ninja-ui.html",
     ...libraries.map((name) => `lib/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
+    ...trustFiles,
     ...skillFiles.map((name) => `skills/browser-driver/${name}`),
   ].sort();
   assert.deepEqual(

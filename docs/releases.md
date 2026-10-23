@@ -1,13 +1,13 @@
-# Install Daedlo 0.1.4-alpha.2
+# Install Daedlo 0.1.4-alpha.3
 
-This alpha candidate pairs the Daedlo runtime, Rust engine source,
+This alpha release pairs the Daedlo runtime, Rust engine source,
 portable release tools and complete agent skill. Existing `browser-driver`
 package names, commands and protocol identifiers remain unchanged.
 
 Use the selected release receipt to obtain the exact versioned kit and follow
-its `START_HERE.md` instructions. During preparation this candidate is local; the
-[public installation page](https://daedlo.com/install.html) may still serve the
-earlier preview. Do not infer publication from this source guide. That guide supplies
+its `START_HERE.md` instructions at the
+[public installation page](https://daedlo.com/install). The release receipt records
+publication and verification separately from this guide. `START_HERE.md` supplies
 the exact archive names, verification values and installation commands for the
 selected release. Use `AGENT_START.md` in the same kit to give a coding agent the
 installation and first-flow job. These kit guides sit outside the installed tools
@@ -30,10 +30,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `browser-driver-runtime-0.1.4-alpha.2.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
-| `browser-driver-engine-0.1.4-alpha.2.crate` | Rust library source for the customer's application model                                                                |
+| `browser-driver-runtime-0.1.4-alpha.3.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
+| `browser-driver-engine-0.1.4-alpha.3.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `browser-driver-tools-0.1.4-alpha.2.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
+| `browser-driver-tools-0.1.4-alpha.3.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -71,6 +71,13 @@ inspect the visible browser, and record package identities, evidence and ownersh
 
 ## Updates and limits
 
+Alpha.3 adds Operation Ninja-Update. After assisted project registration, its
+separate local update screen checks the signed production catalog, installs and
+validates a complete replacement, then offers Restart and Revert. Read the
+installed `docs/ninja-update.md` and pinned `docs/update-trust/production.json`.
+Original project files and application data remain outside updater ownership.
+
+
 For public downloads, revisit the [installation page](https://daedlo.com/install.html)
 and follow the selected kit's receipt. The portable client's `check` and `download`
 operations support GitHub releases only; they do not discover or download website
@@ -80,7 +87,7 @@ GitHub. Read `docs/update-client.md` in the installed tools package for their sc
 An archive-store selection does not install application dependencies or change a
 launcher. Test each replacement runtime/crate/model/adapter combination separately
 before promoting customer pins. Keep the accepted combination available for
-rollback. No automatic updater, hosted browser service or account is installed.
+rollback. No background installation, hosted browser service or account is enabled.
 
 Authored flows run without a model API key. Initial onboarding targets assisted
 macOS arm64 use with Codex and an explicitly read skill. Linux/Windows onboarding,

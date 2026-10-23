@@ -1,8 +1,13 @@
-// Real application acceptance using immutable public alpha.2 and a separate local candidate.
-// The feed key/fetch transport are a local test seam, not a production signing claim.
+// Real application acceptance using immutable public alpha.2 and alpha.3.
+// Default: local signed-catalog seam. Published mode uses pinned trust and real HTTPS.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { createHash, generateKeyPairSync, sign } from "node:crypto";
+import {
+  createHash,
+  createPublicKey,
+  generateKeyPairSync,
+  sign,
+} from "node:crypto";
 import {
   cp,
   mkdir,
@@ -29,6 +34,150 @@ import {
 
 const exec = promisify(execFile),
   hash = (value) => createHash("sha256").update(value).digest("hex");
+
+function publishedConfiguration(env, keyBytes) {
+  const names = [
+    "NINJA_PUBLISHED_CATALOG_URL",
+    "NINJA_PUBLISHED_KEY_ID",
+    "NINJA_PUBLISHED_PUBLIC_KEY_FILE",
+    "NINJA_PUBLISHED_KEY_SHA256",
+  ];
+  if (!names.some((name) => env[name] !== undefined)) return null;
+  let url;
+  try {
+    url = new URL(env.NINJA_PUBLISHED_CATALOG_URL);
+  } catch {}
+  assert.ok(
+    url &&
+      url.protocol === "https:" &&
+      !url.username &&
+      !url.password &&
+      !url.hash &&
+      !url.search &&
+      !/%|\\/.test(url.pathname),
+    "Published catalog requires a plain HTTPS URL",
+  );
+  assert.match(
+    env.NINJA_PUBLISHED_KEY_ID ?? "",
+    /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/,
+    "Published key ID is required",
+  );
+  assert.ok(
+    env.NINJA_PUBLISHED_PUBLIC_KEY_FILE,
+    "Published public key file is required",
+  );
+  assert.match(
+    env.NINJA_PUBLISHED_KEY_SHA256 ?? "",
+    /^[a-f0-9]{64}$/,
+    "Published PEM file SHA256 pin is required",
+  );
+  const result = {
+    url: url.href,
+    publisher: "daedlo",
+    channel: "preview",
+    publicKeyFile: resolve(env.NINJA_PUBLISHED_PUBLIC_KEY_FILE),
+    pemSha256: env.NINJA_PUBLISHED_KEY_SHA256,
+  };
+  if (keyBytes !== undefined) {
+    assert.equal(
+      hash(keyBytes),
+      result.pemSha256,
+      "Published PEM file SHA256 pin mismatch",
+    );
+    assert.match(
+      keyBytes.toString("utf8"),
+      /^-----BEGIN PUBLIC KEY-----\r?\n/,
+      "Expected a public PEM key",
+    );
+    const key = createPublicKey(keyBytes);
+    assert.equal(
+      key.asymmetricKeyType,
+      "ed25519",
+      "Published key must use Ed25519",
+    );
+    result.spkiSha256 = hash(key.export({ type: "spki", format: "der" }));
+    result.trustedKeys = [
+      { id: env.NINJA_PUBLISHED_KEY_ID, publicKey: keyBytes.toString("utf8") },
+    ];
+  }
+  return result;
+}
+
+// Run fail-closed transport/trust regressions without installing or starting an app.
+if (process.argv.includes("--test-published-config")) {
+  const { publicKey } = generateKeyPairSync("ed25519");
+  const pem = Buffer.from(publicKey.export({ type: "spki", format: "pem" }));
+  const env = {
+    NINJA_PUBLISHED_CATALOG_URL: "https://daedlo.com/updates/preview.json",
+    NINJA_PUBLISHED_KEY_ID: "daedlo-release-2026-10",
+    NINJA_PUBLISHED_PUBLIC_KEY_FILE: "/owned/production-public-key.pem",
+    NINJA_PUBLISHED_KEY_SHA256: hash(pem),
+  };
+  assert.throws(
+    () =>
+      publishedConfiguration(
+        {
+          ...env,
+          NINJA_PUBLISHED_CATALOG_URL: "http://daedlo.com/updates/preview.json",
+        },
+        pem,
+      ),
+    /HTTPS/,
+  );
+  assert.throws(
+    () => publishedConfiguration({ ...env, NINJA_PUBLISHED_KEY_ID: "" }, pem),
+    /key ID/,
+  );
+  assert.throws(
+    () =>
+      publishedConfiguration(
+        { ...env, NINJA_PUBLISHED_KEY_SHA256: "0".repeat(64) },
+        pem,
+      ),
+    /SHA256/,
+  );
+  assert.throws(
+    () =>
+      publishedConfiguration(
+        {
+          ...env,
+          NINJA_PUBLISHED_CATALOG_URL:
+            "https://user:password@daedlo.com/updates/preview.json",
+        },
+        pem,
+      ),
+    /HTTPS/,
+  );
+  assert.equal(publishedConfiguration({}, undefined), null);
+  assert.equal(
+    publishedConfiguration(env, pem).trustedKeys[0].id,
+    env.NINJA_PUBLISHED_KEY_ID,
+  );
+  assert.throws(
+    () =>
+      publishedConfiguration(
+        { NINJA_PUBLISHED_KEY_ID: env.NINJA_PUBLISHED_KEY_ID },
+        pem,
+      ),
+    /HTTPS/,
+  );
+  const ec = Buffer.from(
+    generateKeyPairSync("ec", { namedCurve: "prime256v1" }).publicKey.export({
+      type: "spki",
+      format: "pem",
+    }),
+  );
+  assert.throws(
+    () =>
+      publishedConfiguration(
+        { ...env, NINJA_PUBLISHED_KEY_SHA256: hash(ec) },
+        ec,
+      ),
+    /Ed25519/,
+  );
+  console.log("PASS 8 published transport/trust configuration assertions");
+  process.exit(0);
+}
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const toolsRoot = resolve(
   process.env.NINJA_TOOLS_ROOT ?? join(repo, "scripts/release"),
@@ -40,7 +189,7 @@ const [
   { createNinjaServer },
   { prepareInstallation, verifyInstallation, snapshotProject },
   { createNinjaProvider, NINJA_CONTRACTS },
-  { ninjaCatalogSigningBytes },
+  { ninjaCatalogSigningBytes, fetchNinjaCatalog },
 ] = await Promise.all([
   loadTool("ninja-manager.mjs"),
   loadTool("ninja-supervisor.mjs"),
@@ -53,6 +202,32 @@ const publicKit = resolve(
   process.env.NINJA_ACCEPTED_KIT ??
     join(repo, "artifacts/alpha-20261021/alpha.2/public-release"),
 );
+const publishedInput = publishedConfiguration(process.env);
+const published = publishedInput
+  ? publishedConfiguration(
+      process.env,
+      await readFile(publishedInput.publicKeyFile),
+    )
+  : null;
+if (process.argv.includes("--published-preflight")) {
+  assert.ok(published, "Published mode configuration is required");
+  console.log(
+    JSON.stringify(
+      {
+        status: "PASS",
+        mode: "published",
+        catalogUrl: published.url,
+        keyId: published.trustedKeys[0].id,
+        pemSha256: published.pemSha256,
+        spkiSha256: published.spkiSha256,
+        network: "NOT RUN",
+      },
+      null,
+      2,
+    ),
+  );
+  process.exit(0);
+}
 const candidateKit = resolve(
   process.env.NINJA_CANDIDATE_DIR ??
     process.env.NINJA_CANDIDATE_KIT ??
@@ -85,13 +260,27 @@ const results = {
   work,
   output,
   toolsRoot,
-  candidateKit,
+  ...(published
+    ? {
+        catalogUrl: published.url,
+        publisherKey: {
+          id: published.trustedKeys[0].id,
+          pemSha256: published.pemSha256,
+          spkiSha256: published.spkiSha256,
+        },
+      }
+    : { candidateKit }),
+  mode: published ? "published" : "local-catalog",
   checks: [],
   limits: [
     "Existing macOS arm64 Node/Rust/browser toolchains and Cargo cache",
-    "Local ephemeral signed catalog with exact frozen ZIP bytes; no production feed/signing claim",
+    published
+      ? "Actual production HTTPS catalog and assets; local pinned Ed25519 public key, no injected fetch transport"
+      : "Local ephemeral signed catalog with exact frozen ZIP bytes; no production feed/signing claim",
     "Pinned Architecture Studio synthetic fixture; no WBF or everyday application access",
-    "Candidate is unpublished; manager implementation is identified by toolsRoot and its file inventory",
+    published
+      ? "Published release acceptance uses synthetic data; no WBF or clean-OS acceptance claim"
+      : "Candidate is unpublished; manager implementation is identified by toolsRoot and its file inventory",
   ],
 };
 await writeJson(join(output, "result.json"), results);
@@ -224,9 +413,118 @@ async function openViewer(version) {
   return { observe, command, url: live.running.viewerUrl };
 }
 
+async function publishedProvider(config) {
+  const verified = await fetchNinjaCatalog({
+    url: config.url,
+    publisher: config.publisher,
+    trustedKeys: config.trustedKeys,
+    previousState: null,
+    now: Date.now(),
+  });
+  const entries = ["0.1.4-alpha.2", "0.1.4-alpha.3"].map((version) => {
+    const entry = verified.catalog.releases.find(
+      (release) => release.version === version,
+    );
+    assert.ok(entry, `Published catalog must contain ${version}`);
+    assert.equal(entry.channel, "preview");
+    assert.deepEqual(entry.contracts, NINJA_CONTRACTS);
+    assert.ok(
+      entry.platforms.some(
+        (platform) =>
+          platform.os === process.platform && platform.arch === process.arch,
+      ),
+    );
+    return entry;
+  });
+  // The established baseline is downloaded over HTTPS too; its bytes must equal
+  // the retained immutable public kit before the real installer can use them.
+  const baselineMetadata = await readJson(join(publicKit, "release.json"));
+  assert.equal(
+    entries[0].kit.sha256,
+    hash(await readFile(join(publicKit, baselineMetadata.archive.file))),
+  );
+  await writeJson(join(output, "published-catalog.json"), {
+    url: config.url,
+    publisher: config.publisher,
+    keyId: config.trustedKeys[0].id,
+    pemSha256: config.pemSha256,
+    spkiSha256: config.spkiSha256,
+    checkpoint: verified.checkpoint,
+    catalog: verified.catalog,
+    transport: "Default real HTTPS fetch; no response or fetch injection",
+    baselinePolicy:
+      "Pin authenticated alpha.2 only for initial test setup; normal provider selection follows",
+  });
+  await cp(config.publicKeyFile, join(output, "publisher-public-key.pem"));
+  const actual = createNinjaProvider(config);
+  let baselineOnly = true;
+  const transport = [];
+  const saveTransport = () =>
+    writeJson(join(output, "published-transport.json"), transport);
+  return {
+    offerCandidate() {
+      baselineOnly = false;
+    },
+    provider: {
+      async check(context) {
+        const result = await actual.check(context);
+        assert.deepEqual(
+          result.checkpoint,
+          verified.checkpoint,
+          "Production catalog changed during the acceptance run",
+        );
+        assert.equal(
+          result.available?.version,
+          entries[1].version,
+          "Normal production discovery must offer the expected alpha.3 release",
+        );
+        transport.push({
+          kind: "catalog",
+          at: new Date().toISOString(),
+          url: config.url,
+          checkpoint: result.checkpoint,
+          normallySelected: result.available.version,
+          baselinePinApplied: baselineOnly,
+        });
+        await saveTransport();
+        return baselineOnly
+          ? { ...result, available: { ...entries[0], id: entries[0].version } }
+          : result;
+      },
+      async download(release, destination) {
+        const entry = entries.find(
+          (value) => value.version === release.version,
+        );
+        assert.ok(
+          entry,
+          "Only the two authenticated acceptance releases may install",
+        );
+        const downloaded = await actual.download(release, destination);
+        const archive = await readFile(
+          join(destination, `daedlo-${entry.version}.zip`),
+        );
+        assert.equal(hash(archive), entry.kit.sha256);
+        assert.equal(archive.length, entry.kit.bytes);
+        transport.push({
+          kind: "download",
+          at: new Date().toISOString(),
+          version: entry.version,
+          kit: entry.kit,
+          metadata: entry.metadata,
+          checksums: entry.checksums,
+          verifiedIdentity: downloaded.identity,
+        });
+        await saveTransport();
+        return downloaded;
+      },
+    },
+  };
+}
+
 try {
   assert.equal(process.platform, "darwin");
   assert.equal(process.arch, "arm64");
+  const production = published ? await publishedProvider(published) : null;
   const toolsBefore = await originalFiles(toolsRoot);
   await writeJson(join(output, "tools-before.json"), toolsBefore);
   const sourceBefore = await originalFiles(acceptedSource);
@@ -314,82 +612,92 @@ try {
     },
   );
 
-  const origin = "https://ninja-customer.test",
-    { privateKey, publicKey } = generateKeyPairSync("ed25519"),
-    keyId = "local-acceptance-key",
-    assets = new Map(),
-    entries = [];
-  for (const directory of [publicKit, candidateKit]) {
-    const metadata = await readJson(join(directory, "release.json")),
-      version = metadata.version;
-    const asset = async (file) => {
-      const bytes = await readFile(join(directory, file)),
-        url = `${origin}/downloads/${version}/${file}`;
-      assets.set(url, bytes);
-      return { url, bytes: bytes.length, sha256: hash(bytes) };
-    };
-    entries.push({
-      version,
-      channel: "preview",
-      platforms: [{ os: process.platform, arch: process.arch }],
-      contracts: structuredClone(NINJA_CONTRACTS),
-      notesUrl: origin + "/notes/" + version,
-      kit: await asset(metadata.archive.file),
-      metadata: await asset("release.json"),
-      checksums: await asset("SHA256SUMS"),
-    });
-  }
-  assert.equal(entries[0].version, "0.1.4-alpha.2");
-  assert.equal(entries[1].version, "0.1.4-alpha.3");
-  let generation = 1,
-    offered = [entries[0]],
-    feed;
-  function publishTestFeed() {
-    const now = Date.now();
-    const signed = {
-      schemaVersion: 1,
-      kind: "daedlo-public-kit-catalog",
-      publisher: "daedlo",
-      generation,
-      issuedAt: new Date(now - 10000).toISOString(),
-      expiresAt: new Date(now + 86400000).toISOString(),
-      releases: offered,
-    };
-    feed = Buffer.from(
-      JSON.stringify({
+  let provider = production?.provider,
+    offerCandidate = production?.offerCandidate;
+  if (!published) {
+    const origin = "https://ninja-customer.test",
+      { privateKey, publicKey } = generateKeyPairSync("ed25519"),
+      keyId = "local-acceptance-key",
+      assets = new Map(),
+      entries = [];
+    for (const directory of [publicKit, candidateKit]) {
+      const metadata = await readJson(join(directory, "release.json")),
+        version = metadata.version;
+      const asset = async (file) => {
+        const bytes = await readFile(join(directory, file)),
+          url = `${origin}/downloads/${version}/${file}`;
+        assets.set(url, bytes);
+        return { url, bytes: bytes.length, sha256: hash(bytes) };
+      };
+      entries.push({
+        version,
+        channel: "preview",
+        platforms: [{ os: process.platform, arch: process.arch }],
+        contracts: structuredClone(NINJA_CONTRACTS),
+        notesUrl: origin + "/notes/" + version,
+        kit: await asset(metadata.archive.file),
+        metadata: await asset("release.json"),
+        checksums: await asset("SHA256SUMS"),
+      });
+    }
+    assert.equal(entries[0].version, "0.1.4-alpha.2");
+    assert.equal(entries[1].version, "0.1.4-alpha.3");
+    let generation = 1,
+      offered = [entries[0]],
+      feed;
+    function publishTestFeed() {
+      const now = Date.now();
+      const signed = {
         schemaVersion: 1,
-        kind: "daedlo-signed-catalog",
-        signed,
-        signature: {
-          keyId,
-          value: sign(
-            null,
-            ninjaCatalogSigningBytes(signed),
-            privateKey,
-          ).toString("base64"),
-        },
-      }),
-    );
-  }
-  publishTestFeed();
-  const provider = createNinjaProvider(
-    {
-      url: origin + "/catalog.json",
-      publisher: "daedlo",
-      trustedKeys: [{ id: keyId, publicKey }],
-      channel: "preview",
-    },
-    {
-      fetchImpl: async (url) => {
-        const bytes = url === origin + "/catalog.json" ? feed : assets.get(url);
-        assert.ok(bytes, url);
-        return new Response(bytes, {
-          status: 200,
-          headers: { "Content-Length": String(bytes.length) },
-        });
+        kind: "daedlo-public-kit-catalog",
+        publisher: "daedlo",
+        generation,
+        issuedAt: new Date(now - 10000).toISOString(),
+        expiresAt: new Date(now + 86400000).toISOString(),
+        releases: offered,
+      };
+      feed = Buffer.from(
+        JSON.stringify({
+          schemaVersion: 1,
+          kind: "daedlo-signed-catalog",
+          signed,
+          signature: {
+            keyId,
+            value: sign(
+              null,
+              ninjaCatalogSigningBytes(signed),
+              privateKey,
+            ).toString("base64"),
+          },
+        }),
+      );
+    }
+    publishTestFeed();
+    provider = createNinjaProvider(
+      {
+        url: origin + "/catalog.json",
+        publisher: "daedlo",
+        trustedKeys: [{ id: keyId, publicKey }],
+        channel: "preview",
       },
-    },
-  );
+      {
+        fetchImpl: async (url) => {
+          const bytes =
+            url === origin + "/catalog.json" ? feed : assets.get(url);
+          assert.ok(bytes, url);
+          return new Response(bytes, {
+            status: 200,
+            headers: { "Content-Length": String(bytes.length) },
+          });
+        },
+      },
+    );
+    offerCandidate = () => {
+      generation++;
+      offered = entries;
+      publishTestFeed();
+    };
+  }
   app = await startFixture({
     appRoot,
     seed,
@@ -448,11 +756,9 @@ try {
     },
   );
 
-  generation++;
-  offered = entries;
-  publishTestFeed();
+  offerCandidate();
   await uiAction("check");
-  await writeJson(acceptanceGateFile, { rejectVersion: entries[1].version });
+  await writeJson(acceptanceGateFile, { rejectVersion: "0.1.4-alpha.3" });
   const beforeFailure = await storage(app),
     failResult = await uiAction("install", { fail: true });
   assert.equal(failResult.status.selected.id, initial.id);

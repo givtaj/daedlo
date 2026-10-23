@@ -148,7 +148,12 @@ commands, assertions, evidence locations and remaining limits. Complete onboardi
 requires the agreed flow, negative case, repeat run and cleanup to be verified;
 report a concrete blocker without labelling incomplete onboarding successful.
 
-For later versions, follow the website's manual download path in `START_HERE.md`.
-Test a candidate separately before promoting the full runtime/crate/model/adapter
-combination. Existing GitHub-only `check`/`download` commands do not fetch website
-releases; selecting an archive store does not change customer dependencies.
+For later versions, read the installed `docs/ninja-update.md`. Alpha.3 includes
+production preview-feed metadata and a pinned public key in `docs/update-trust`.
+Prepare the reviewed managed registration and disposable acceptance/health hooks
+without changing accepted model/adapter source. Verify a complete candidate before
+Restart; retain and test the previous installation with Revert. Preserve current
+authoring files and application data. Ordinary `createProject` integrations need
+an explicit managed launcher; they are not silently converted. The manual kit
+path in `START_HERE.md` remains available. Legacy archive selection does not
+install or activate a customer project.

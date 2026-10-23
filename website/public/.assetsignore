@@ -31,3 +31,14 @@
 !/downloads/0.1.4-alpha.2/daedlo-0.1.4-alpha.2.zip
 !/downloads/0.1.4-alpha.2/SHA256SUMS
 !/downloads/0.1.4-alpha.2/release.json
+
+# Exact managed-update alpha; older releases remain immutable.
+!/downloads/0.1.4-alpha.3/
+!/downloads/0.1.4-alpha.3/daedlo-0.1.4-alpha.3.zip
+!/downloads/0.1.4-alpha.3/SHA256SUMS
+!/downloads/0.1.4-alpha.3/release.json
+!/updates.html
+!/updates/
+!/updates/preview.json
+!/updates/keys/
+!/updates/keys/daedlo-release-2026-10.pem

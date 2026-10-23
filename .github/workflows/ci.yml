@@ -50,6 +50,7 @@ jobs:
         run: |
           npm test
           node --test tests/release-*.test.mjs
+          node tests/ninja-architecture-acceptance.mjs --test-published-config
           npm run test:roots-example
       - name: Install Chromium and its system dependencies
         run: npx playwright install --with-deps chromium
@@ -60,6 +61,7 @@ jobs:
           npm run test:controls
           npm run test:cli
           npm run test:viewer
+          npm run test:ninja:ui
       - name: Build an immutable candidate bundle from the clean checkout
         id: bundle
         run: |

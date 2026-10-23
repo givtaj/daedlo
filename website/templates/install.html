@@ -56,7 +56,8 @@
         <div class="download-support">
           <a href="/downloads/{{VERSION}}/SHA256SUMS" download
             >Download SHA256SUMS</a
-          ><a href="/downloads/{{VERSION}}/release.json">Release &amp; verification metadata</a
+          ><a href="/downloads/{{VERSION}}/release.json"
+            >Release &amp; verification metadata</a
           ><a href="#manual">Manual setup</a>
         </div>
       </section>
@@ -93,30 +94,63 @@
       <section class="guide-block" aria-labelledby="alpha-changes-title">
         <h2 id="alpha-changes-title">What changed in this alpha</h2>
         <ul>
+          <li>
+            Ninja-Update verifies and tests new versions separately, then lets
+            you restart or revert while preserving your authored integration and
+            application data.
+          </li>
           <li>Cleared text stays empty when you submit a viewer command.</li>
-          <li>Pause and Stop remain effective while final evidence is collected.</li>
-          <li>Visible typing and cursor movement make guarded actions easier to follow.</li>
-          <li>CLI shutdown preserves the final report and retries failed owned cleanup.</li>
+          <li>
+            Pause and Stop remain effective while final evidence is collected.
+          </li>
+          <li>
+            Visible typing and cursor movement make guarded actions easier to
+            follow.
+          </li>
+          <li>
+            CLI shutdown preserves the final report and retries failed owned
+            cleanup.
+          </li>
         </ul>
-        <p>Stopping cannot undo a request already sent. Execution, application
-          outcome and persistence evidence remain separate.</p>
-        <p><strong>Release checks on 21 October 2026.</strong> Source CI passed
-          on Node.js 22 and 24 on Ubuntu. This exact kit passed macOS arm64
-          acceptance: eight browser/API groups, 10 CLI cases, 25 finalization
-          cases and nine browser-control cases, including owned cleanup.</p>
-        <p>The Architecture Studio flow passed seven acceptance checkpoints,
-          plus 13 Rust and seven Node tests. An empty required name was refused
+        <p>
+          Stopping cannot undo a request already sent. Execution, application
+          outcome and persistence evidence remain separate.
+        </p>
+        <p>
+          <strong>Previous alpha.2 release checks on 21 October 2026.</strong>
+          Source CI passed on Node.js 22 and 24 on Ubuntu. That exact alpha.2
+          kit passed macOS arm64 acceptance: eight browser/API groups, 10 CLI
+          cases, 25 finalization cases and nine browser-control cases, including
+          owned cleanup.
+        </p>
+        <p>
+          The Architecture Studio flow passed seven acceptance checkpoints, plus
+          13 Rust and seven Node tests. An empty required name was refused
           without a write. A save agreed across the response, independent API
-          and disk reads, and the editor restored its fields after reload.
-          CLI shutdown retained the report; relaunching the CLI and controlled
+          and disk reads, and the editor restored its fields after reload. CLI
+          shutdown retained the report; relaunching the CLI and controlled
           browser repeated the save. Owned processes closed and ports were
-          released. The application server was not restarted.</p>
-        <p>Read the
-          <a href="/downloads/{{VERSION}}/release.json">dated verification record</a>
+          released. The application server was not restarted.
+        </p>
+        <p>
+          Read the
+          <a href="/downloads/{{VERSION}}/release.json"
+            >dated verification record</a
+          >
           for the exact source, package, customer handoff and remaining limits.
           Ubuntu CI provides technical coverage; Linux customer onboarding
-          remains unverified.</p>
+          remains unverified.
+        </p>
       </section>
+      <div class="guide-callout">
+        <p>
+          <strong>Already have an accepted integration?</strong>
+          <a href="/updates.html">Set up signed managed updates</a> once with
+          your agent. Then install, validate and revert from the local update
+          screen. Your model, states, flows, adapter and project data stay in
+          place.
+        </p>
+      </div>
       <nav class="install-steps" aria-label="Installation steps">
         <a href="#verify">01 / Verify download</a>
         <a href="#tools">02 / Install tools</a>
@@ -210,8 +244,8 @@ NODE
       <section class="guide-block" id="agent" aria-labelledby="agent-title">
         <h2 id="agent-title">3. Connect one flow with your agent</h2>
         <p>
-          In Codex, open your application project and point the
-          agent to <code>AGENT_START.md</code> inside the extracted
+          In Codex, open your application project and point the agent to
+          <code>AGENT_START.md</code> inside the extracted
           <code>daedlo-{{VERSION}}</code> folder. Give it the actual path and
           one existing flow you want to verify.
         </p>
@@ -235,9 +269,9 @@ NODE
         <p>
           The agent follows the kit’s installation instructions, checks
           dependencies, and helps connect your application. Explicitly read the
-          bundled skill if automatic discovery is unavailable. The alpha requires
-          an application-specific Rust model and JavaScript adapter; downloading
-          the kit does not discover those for you.
+          bundled skill if automatic discovery is unavailable. The alpha
+          requires an application-specific Rust model and JavaScript adapter;
+          downloading the kit does not discover those for you.
         </p>
       </section>
       <section class="guide-block" id="run" aria-labelledby="run-title">
@@ -252,10 +286,9 @@ NODE
           local viewer.
         </p>
         <p>
-          Authored checks run without an AI agent or model API key.
-          Assisted setup uses your own Codex access.
-          Customer application dependencies and any fixture services are
-          separate from the kit.
+          Authored checks run without an AI agent or model API key. Assisted
+          setup uses your own Codex access. Customer application dependencies
+          and any fixture services are separate from the kit.
         </p>
         <p>
           <a href="/demo.html">See what a verified first flow looks like</a>, or
@@ -302,7 +335,9 @@ NODE
         </dl>
       </section>
       <section class="guide-block" aria-labelledby="license-title">
-        <h2 id="license-title">Public component licences, with their history intact.</h2>
+        <h2 id="license-title">
+          Public component licences, with their history intact.
+        </h2>
         <p>
           Daedlo additions are under the MIT licence. Roots-derived portions
           retain Apache-2.0 terms. The kit includes licence texts and notices
@@ -316,10 +351,11 @@ NODE
         </p>
         <div class="guide-callout">
           <p>
-            <strong>Start small.</strong> Linux, Windows and Claude Code onboarding
-            remain unverified. Fresh OS/toolchain installation, unfamiliar-framework
-            coverage and independent self-service onboarding are outside this alpha.
-            An installed kit begins your application’s acceptance work.
+            <strong>Start small.</strong> Linux, Windows and Claude Code
+            onboarding remain unverified. Fresh OS/toolchain installation,
+            unfamiliar-framework coverage and independent self-service
+            onboarding are outside this alpha. An installed kit begins your
+            application’s acceptance work.
           </p>
         </div>
       </section>

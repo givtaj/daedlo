@@ -1,10 +1,9 @@
 # Operation Ninja-Update
 
 Ninja-Update prepares, validates, activates and reverts a complete managed Daedlo
-project installation. It is a local alpha.3 candidate feature. The published
-alpha.2 archive client cannot bootstrap it by itself. A configured publisher
-catalog and one-time project registration are prerequisites; no public update
-feed or publisher key is enabled by default.
+project installation. It is included in alpha.3. The older alpha.2 archive client
+cannot bootstrap it by itself. A configured publisher catalog and one-time project
+registration are prerequisites; the manager never enables publisher trust silently.
 
 The update screen offers **Check for updates → Install update → Ready → Restart
 Daedlo** and **Revert update**. The manager does not write to the authored project or
@@ -15,6 +14,19 @@ incompatible interfaces, changed states/commands/recipes, active runs and unsave
 or unknown browser drafts block replacement.
 
 ## Bootstrap once
+
+The verified alpha.3 tools include `docs/update-trust/production.json` and
+`docs/update-trust/daedlo-release-2026-10.pem`. These pin publisher `daedlo`, key ID
+`daedlo-release-2026-10`, and the preview catalog at
+`https://daedlo.com/updates/preview.json`. Use that bundled PEM in the configuration
+below, with a path relative to the local configuration file or an absolute path.
+Its PEM SHA-256 is
+`df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297`;
+the Ed25519 SPKI DER fingerprint is
+`8055c415145b311263b6771c9a3204401836be00bfa1b5274a8e70cb36ff4761`.
+The [production update page](https://daedlo.com/updates) describes the bootstrap.
+Confirm the selected kit's trusted receipt first. Downloading a different key from
+the feed is not authorization to replace the pinned key.
 
 An agent prepares the registration from the accepted integration and records the
 existing model, flows, adapter, dependency locks, configuration, instructions and
@@ -46,10 +58,10 @@ be supplied from the actual accepted integration:
   "schemaVersion": 1,
   "store": "/absolute/separate/ninja-project-store",
   "catalog": {
-    "url": "https://publisher.example/updates/catalog.json",
-    "publisher": "configured-publisher",
+    "url": "https://daedlo.com/updates/preview.json",
+    "publisher": "daedlo",
     "channel": "preview",
-    "trustedKeys": [{"id": "publisher-key-1", "publicKeyFile": "publisher-public.pem"}]
+    "trustedKeys": [{"id": "daedlo-release-2026-10", "publicKeyFile": "daedlo-release-2026-10.pem"}]
   },
   "registration": {
     "schemaVersion": 1,
@@ -69,7 +81,9 @@ be supplied from the actual accepted integration:
 }
 ```
 
-This is a schema illustration, not a ready registration or a WBF fixture. Add all
+The publisher fields are production values; project paths, hooks and model remain
+a schema illustration, not a ready registration or a WBF fixture. Copy the bundled
+public PEM beside this configuration, or use its explicit installed path. Add all
 transitively imported source and relevant project-owned files. The store must be
 disjoint from the source, initially empty or already owned by this project.
 `settings` is explicit trusted launcher configuration; never place live credentials
@@ -165,5 +179,12 @@ server resolves release/operation IDs. It cannot provide shell commands, file
 paths or download URLs. Loopback binding, exact Host/Origin, per-server token,
 bounded JSON, CSP and mutation/replay guards protect the control endpoint.
 
-Publication, production signing-key provisioning, Windows/Linux customer
-acceptance and WBF's own agreed fixture are separate release/onboarding gates.
+The publisher renews catalogs with a greater generation before their seven-day
+expiry. Expired metadata blocks discovery and new downloads; an accepted local
+installation and local rollback remain available. Feed renewal does not rebuild
+or replace immutable release artifacts. No client-side background installation
+or trust-key replacement is enabled.
+
+Publication and live-feed evidence belong to the selected release receipt.
+Windows/Linux customer acceptance and WBF's own agreed fixture remain separate
+onboarding gates.

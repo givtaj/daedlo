@@ -12,11 +12,14 @@ import {
   verifyReleaseDirectory,
 } from "./stage-release.mjs";
 
+import { readStagedUpdates, UPDATE_TRUST } from "./stage-updates.mjs";
+
 export const PUBLIC_FILES = new Set([
   "index.html",
   "guide.html",
   "privacy.html",
   "install.html",
+  "updates.html",
   "demo.html",
   "demo.css",
   "demo-evidence.json",
@@ -35,6 +38,7 @@ export const CONTROL_FILES = new Set(["_headers", ".assetsignore"]);
 
 export async function createWebsiteManifest({
   websiteRoot = DEFAULT_WEBSITE_ROOT,
+  updateTrust = UPDATE_TRUST,
 } = {}) {
   const root = resolve(websiteRoot);
   const publicRoot = join(root, "public");
@@ -52,6 +56,16 @@ export async function createWebsiteManifest({
     await readRegularFile(join(publicRoot, ".assetsignore"))
   ).toString("utf8");
   for (const name of (await readdir(publicRoot)).sort()) {
+    if (name === "updates") {
+      const updates = await readStagedUpdates({ publicRoot, updateTrust });
+      for (const f of updates.files)
+        files.push({
+          path: `public/updates/${f.file}`,
+          bytes: f.bytes,
+          sha256: f.sha256,
+        });
+      continue;
+    }
     if (name === "downloads") {
       const downloads = join(publicRoot, name);
       await requireDirectory(downloads);

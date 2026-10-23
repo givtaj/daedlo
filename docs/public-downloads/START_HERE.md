@@ -130,13 +130,22 @@ or a specific remaining blocker is reported without claiming completion.
 
 ## Future updates
 
-Choose a new version from the Daedlo website, download its separate kit and verify
-it in a fresh directory. Test the candidate with your model and adapter before
-changing accepted dependencies or launchers. Preserve the previous complete
-combination for rollback.
+Alpha.3 includes Operation Ninja-Update. Read
+`installed-tools/node_modules/@browser-driver/release-tools/docs/ninja-update.md`.
+The tools include the pinned production public key and preview feed metadata in
+`docs/update-trust/production.json`. An agent registers the accepted model, flows,
+adapter, dependency locks, isolated validation hooks and managed launcher once.
+Then the local update screen offers Check, Install, Validate, Restart and Revert.
+The complete previous installation stays available; rollback preserves business
+writes and does not overwrite the authored project. A failed validation leaves
+the accepted installation selected. Never substitute production data in test hooks.
 
-The portable CLI's current `check` and `download` commands use GitHub and require
-access to the selected repository; they do not discover or download website
-releases. Website updates are manual. The local `update` command only selects
-archives in a store; it does not install them into your application. No background
-updater is installed.
+The signed feed is `https://daedlo.com/updates/preview.json`. Trust the public key
+bundled with this verified kit; do not automatically trust a replacement key from
+the feed. Catalog expiry blocks new checks/installation, not existing local use
+or rollback. The publisher renews signed metadata separately from release bytes.
+
+Manual installation of a verified separate kit remains available. The legacy
+portable `check` and `download` commands use GitHub and expect a different release
+asset format; they are not the managed updater. The legacy local `update` command
+selects archives only. No background installation or customer migration is enabled.

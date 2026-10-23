@@ -180,6 +180,8 @@ export async function buildToolsArchive({
     copy(`scripts/release/${name}.mjs`, `lib/${name}.mjs`);
   copy("scripts/release/ninja-ui.html", "lib/ninja-ui.html");
   for (const name of documents) copy(`docs/${name}.md`);
+  copy("docs/update-trust/production.json");
+  copy("docs/update-trust/daedlo-release-2026-10.pem");
   copy("docs/update-client.md", "README.md");
   // This guide is also the package-root README; keep its local guide link valid.
   entries.get("README.md").bytes = Buffer.from(

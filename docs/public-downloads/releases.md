@@ -69,6 +69,13 @@ inspect the visible browser, and record package identities, evidence and ownersh
 
 ## Updates and limits
 
+Alpha.3 adds Operation Ninja-Update. After assisted project registration, its
+separate local update screen checks the signed production catalog, installs and
+validates a complete replacement, then offers Restart and Revert. Read the
+installed `docs/ninja-update.md` and pinned `docs/update-trust/production.json`.
+Original project files and application data remain outside updater ownership.
+
+
 For public downloads, revisit the [installation page](https://daedlo.com/install.html)
 and follow the selected kit's receipt. The portable client's `check` and `download`
 operations support GitHub releases only; they do not discover or download website
@@ -78,7 +85,7 @@ GitHub. Read `docs/update-client.md` in the installed tools package for their sc
 An archive-store selection does not install application dependencies or change a
 launcher. Test each replacement runtime/crate/model/adapter combination separately
 before promoting customer pins. Keep the accepted combination available for
-rollback. No automatic updater, hosted browser service or account is installed.
+rollback. No background installation, hosted browser service or account is enabled.
 
 Authored flows run without a model API key. Windows, complete onboarding across
 unfamiliar frameworks and end-to-end discovery in both agent hosts have not been

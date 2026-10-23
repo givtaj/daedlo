@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Set up signed Daedlo updates once, then install and revert versions while preserving your accepted model, flows, adapter and project data."
+    />
+    <meta name="theme-color" content="#f5f3ed" />
+    <link rel="canonical" href="https://daedlo.com/updates.html" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>Managed updates — Daedlo {{VERSION}}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="34" height="34" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="/install.html">Install Daedlo</a
+        ><a href="/guide.html">Integration guide</a>
+      </nav>
+    </header>
+    <main id="main" class="wrap guide-main">
+      <section>
+        <p class="eyebrow">OPERATION NINJA-UPDATE · ASSISTED ALPHA</p>
+        <h1>Update Daedlo.<br />Keep your work.</h1>
+        <p class="guide-intro">
+          After a one-time setup with Codex, use
+          <strong>Install update</strong> to prepare a new version separately.
+          Your accepted model, states, flows, adapter, instructions and project
+          data stay in place.
+        </p>
+        <p>
+          Current release: <strong>{{VERSION}}</strong>. Supported assisted
+          path: macOS arm64 and Codex. WBF needs its own agreed disposable
+          fixture and acceptance before an update is ready for that project.
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="setup-title">
+        <h2 id="setup-title">1. Set up managed updates once</h2>
+        <p>
+          <a href="/install.html">Verify and install the alpha.3 tools</a> in a
+          separate directory. Alpha.2 cannot upgrade the manager itself. Read
+          <code>docs/ninja-update.md</code> in the installed tools, then ask
+          your agent:
+        </p>
+        <div class="agent-prompt">
+          <blockquote>
+            Use our accepted Daedlo integration to register this project for
+            Ninja-Update. Preserve the exact model, states, flows, adapter,
+            configuration, dependency locks, instructions and custom skills. Add
+            a reviewed managed launcher and acceptance checks using disposable
+            data. Keep our application and its persistent data outside the
+            update store. Verify the public publisher key below, then configure
+            the signed preview feed. Show the first accepted flow and a relevant
+            no-write failure before calling this project ready.
+          </blockquote>
+        </div>
+        <p>
+          The agent supplies the real paths and model identity. This is an
+          integration step: a signed download alone does not establish that your
+          application still behaves correctly. Unsupported contracts or source
+          changes need review.
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="trust-title">
+        <h2 id="trust-title">2. Pin the publisher key</h2>
+        <p>
+          The feed is signed with Ed25519. The trusted key is
+          <code>{{KEY_ID}}</code>, published by <code>daedlo</code>. Download
+          the public key and compare its exact PEM file SHA-256 with this
+          reviewed value before adding it to your local configuration. Also
+          compare it with <code>docs/update-trust/production.json</code> and the
+          bundled public PEM in your independently verified installed tools. The
+          key and checksum on this page alone are not an independent trust
+          source. Keep that pin; never replace it with a key suggested by an
+          unverified feed.
+        </p>
+        <div class="checksum-box">
+          <span class="section-number">PUBLIC KEY PEM SHA-256</span
+          ><code>{{KEY_SHA256}}</code>
+        </div>
+        <p>
+          <a href="{{KEY_URL}}" download>Download the public key</a> ·
+          <a href="/updates/preview.json">Inspect the signed preview catalog</a>
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Download and verify the public update key"
+        ><code>mkdir daedlo-update-trust &amp;&amp; cd daedlo-update-trust
+curl --fail --show-error --proto '=https' \
+  'https://daedlo.com{{KEY_URL}}' --output '{{KEY_ID}}.pem'
+printf '%s  %s\n' '{{KEY_SHA256}}' '{{KEY_ID}}.pem' | shasum -a 256 -c -</code></pre>
+        <p>
+          Continue only when verification reports OK. The agent adds this
+          catalog section to the project’s trusted local configuration, placing
+          the verified PEM beside that configuration:
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Signed preview feed configuration"
+        ><code>{
+  "url": "{{FEED_URL}}",
+  "publisher": "daedlo",
+  "channel": "preview",
+  "trustedKeys": [{
+    "id": "{{KEY_ID}}",
+    "publicKeyFile": "{{KEY_ID}}.pem"
+  }]
+}</code></pre>
+        <p>
+          This is only the <code>catalog</code> section. Your complete
+          configuration also needs the reviewed registration, a separate managed
+          store, and trusted launcher settings. It must not contain production
+          credentials for disposable acceptance.
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="operate-title">
+        <h2 id="operate-title">3. Install, validate, restart</h2>
+        <p>
+          From the installed tools directory, launch the local update screen
+          using the actual configuration path prepared by your agent:
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Open the local update screen"
+        ><code>node node_modules/@browser-driver/release-tools/lib/ninja.mjs serve \
+  --config /absolute/path/to/ninja-local.json</code></pre>
+        <p>
+          Open the loopback URL printed by the command. It contains a private
+          local token; keep it local. Choose
+          <strong>Check for updates → Install update</strong>. The manager
+          verifies the release, rebuilds the unchanged Rust model, installs
+          isolated dependencies and runs registered checks.
+          <strong>Ready</strong> means those checks passed.
+        </p>
+        <p>
+          Choose <strong>Restart Daedlo</strong> at a safe boundary. Active
+          runs, paused runs and unsaved or unknown browser drafts block
+          replacement. The manager saves the final report and closes its owned
+          driver resources; attached application services stay running. Startup
+          connects and observes without replaying your application flow.
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="revert-title">
+        <h2 id="revert-title">Revert without overwriting your project</h2>
+        <p>
+          <strong>Revert update</strong> selects the previous verified
+          installation, including its recorded adapter and source snapshot.
+          Current authored files and application data remain unchanged. Business
+          writes already made are not undone, and browser login state or unsaved
+          drafts are not promised to survive a restart.
+        </p>
+        <p>
+          Keep the previous installation and accepted browser cache. The browser
+          executable and observed version are checked again; a missing or
+          changed executable blocks startup or rollback. Linked browser
+          frameworks are not sealed by that executable hash. Failed or uncertain
+          cleanup also blocks replacement and retains evidence for review.
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="freshness-title">
+        <h2 id="freshness-title">A short-lived signed feed</h2>
+        <p>
+          This catalog expires at <strong>{{EXPIRES_AT}}</strong>. Catalog
+          validity is at most seven days. The publisher renews it manually with
+          an increasing generation; no renewal schedule is configured.
+        </p>
+        <p>
+          An expired catalog blocks new update checks and downloads. It leaves
+          the installed version running and existing local rollback available,
+          subject to the same integrity and safe-restart checks. Do not bypass
+          expiry or replace your pinned key to recover; contact
+          <a href="mailto:support@daedlo.com">support@daedlo.com</a>.
+        </p>
+        <p>
+          Historical downloads remain available at their immutable version URLs,
+          including
+          <a href="/downloads/0.1.4-alpha.2/release.json">alpha.2 metadata</a>.
+          The current
+          <a href="/downloads/{{VERSION}}/release.json"
+            >release verification record</a
+          >
+          separates package checks, real application acceptance and platform
+          limits.
+        </p>
+      </section>
+    </main>
+    <footer class="site-footer wrap">
+      <a class="wordmark" href="/index.html"
+        >daedlo<span class="wordmark-dot">.</span></a
+      >
+      <p>Make “it works” something you can show.</p>
+      <a href="/privacy.html">Privacy &amp; contact</a>
+    </footer>
+  </body>
+</html>

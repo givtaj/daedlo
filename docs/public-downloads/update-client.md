@@ -2,9 +2,11 @@
 
 The `@browser-driver/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding
-guides and complete `browser-driver` agent skill. It does not install a customer
-runtime, compile an application model, change application dependencies or restart
-services.
+guides and complete `browser-driver` agent skill. Its legacy archive commands do
+not install or activate a customer project. Alpha.3 adds the separate Ninja-Update
+manager for registered project installation, validation, restart and whole-slot
+rollback. Read `docs/ninja-update.md` and the bundled `docs/update-trust` public
+key and production feed metadata before assisted bootstrap.
 
 Get the public kit from the [installation page](https://daedlo.com/install.html).
 Follow the surrounding kit's `START_HERE.md` for the selected archive's trusted
@@ -67,8 +69,9 @@ portable client.
 
 To obtain another public version, return to the
 [installation page](https://daedlo.com/install.html), download its kit and follow
-its receipt before using local verification. The client currently has no website
-release discovery or website download operation.
+its receipt before using local verification. The legacy archive commands have no
+website discovery/download operation. Ninja-Update uses the configured signed
+production catalog instead.
 
 `check` and `download` use the installed `gh` CLI and its existing authentication
 for the repository explicitly supplied through `--repo`. They support GitHub

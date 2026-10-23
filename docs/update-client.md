@@ -1,4 +1,4 @@
-# Daedlo 0.1.4-alpha.3 candidate portable release tools
+# Daedlo 0.1.4-alpha.3 portable release tools
 
 The `@browser-driver/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding
@@ -7,17 +7,16 @@ not install a customer runtime or activate a project.
 
 The separate [Operation Ninja-Update manager](ninja-update.md) adds project
 registration, isolated installation/build/checks, a local Install/Restart/Revert
-screen, and whole-installation rollback. This is an unpublished alpha.3 candidate;
-publisher feed/key provisioning and customer registration are explicit bootstrap
-steps. The existing public alpha.2 cannot bootstrap it automatically. In particular,
+screen, and whole-installation rollback. Alpha.3 includes the pinned production
+public key and preview-feed configuration in `docs/update-trust/production.json`.
+Customer registration and explicit publisher trust are one-time bootstrap steps. The existing public alpha.2 cannot bootstrap it automatically. In particular,
 the legacy GitHub downloader expects a four-file top-level bundle, whereas the
 public alpha.2 release publishes a kit ZIP plus metadata and checksums. Use the
 public kit instructions for alpha.2; do not treat release discovery as proof that
 the legacy downloader supports that asset format.
 
-Obtain the exact kit named by the selected release receipt. During preparation
-this alpha candidate is local; the [installation page](https://daedlo.com/install.html)
-may still serve the earlier preview.
+Obtain the exact kit named by the selected release receipt at the
+[installation page](https://daedlo.com/install).
 Follow the surrounding kit's `START_HERE.md` for the selected archive's trusted
 digests and exact installation commands, and `AGENT_START.md` for the first-flow
 handoff. Those files are kit-level guides, not files inside this installed tools

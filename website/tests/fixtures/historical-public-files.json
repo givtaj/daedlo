@@ -1,6 +1,6 @@
 {
   "format": "daedlo-historical-public-files/1",
-  "description": "Frozen public rc.1 archive/metadata and recorded Architecture Studio demo dated 11 October 2026",
+  "description": "Frozen public rc.1 and alpha.2 releases plus recorded Architecture Studio demo dated 11 October 2026",
   "files": [
     {
       "path": "public/demo-evidence.json",
@@ -41,6 +41,21 @@
       "path": "public/downloads/0.1.2-rc.1/release.json",
       "bytes": 6558,
       "sha256": "1ff4b7053ffbd2f1196974fa3691c30531964f121b7a8161871bd6cecbfe9060"
+    },
+    {
+      "path": "public/downloads/0.1.4-alpha.2/SHA256SUMS",
+      "bytes": 91,
+      "sha256": "8fc8a1e1cd8e1777396f12a99c2ed0eb3414d5f246aaf9019c47400195d62cc9"
+    },
+    {
+      "path": "public/downloads/0.1.4-alpha.2/daedlo-0.1.4-alpha.2.zip",
+      "bytes": 160545,
+      "sha256": "b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1"
+    },
+    {
+      "path": "public/downloads/0.1.4-alpha.2/release.json",
+      "bytes": 7184,
+      "sha256": "666d3389c182d6aba28fa650ce5b9768a20cf4f75cbd7b3ff03af168ec862cc5"
     }
   ]
 }

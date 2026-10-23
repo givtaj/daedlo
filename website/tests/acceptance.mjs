@@ -10,6 +10,11 @@ import {
   verifyReleaseDirectory,
 } from "../scripts/stage-release.mjs";
 
+import {
+  readStagedUpdates,
+  renderUpdatesTemplate,
+} from "../scripts/stage-updates.mjs";
+
 export async function checkWebsite({
   websiteRoot = DEFAULT_WEBSITE_ROOT,
 } = {}) {
@@ -103,6 +108,23 @@ export async function checkWebsite({
       install.equals(renderInstallTemplate(template, release.metadata)),
       "Rendered installation page must match the verified archive version, size and digest.",
     );
+    if (publicFiles.includes("updates/preview.json")) {
+      const updates = await readStagedUpdates({ publicRoot: root });
+      const updateTemplate = await readFile(
+        join(resolve(websiteRoot), "templates/updates.html"),
+        "utf8",
+      );
+      const expected = renderUpdatesTemplate(updateTemplate, {
+        catalog: updates.catalog,
+        version,
+        publicKeySha256: updates.files.find((f) => f.file.endsWith(".pem"))
+          .sha256,
+      });
+      assert.ok(
+        (await readFile(join(root, "updates.html"))).equals(expected),
+        "Update instructions must match the signed catalog expiry, pinned key and current release.",
+      );
+    }
   }
   return {
     pages: pages.length,

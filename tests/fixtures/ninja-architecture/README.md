@@ -25,10 +25,36 @@ Chromium toolchains. The default evidence directory is ignored by Git. Set:
   the reverted viewer is retained for a second inspection receipt afterward.
 
 The harness uses a freshly generated local catalog signing key and an in-memory
-fetch seam serving the exact supplied archives. This checks signature and archive
-verification without claiming a production feed. A separate registered acceptance
+fetch seam by default, serving the exact supplied archives. This checks signature
+and archive verification without claiming a production feed. A separate registered acceptance
 gate intentionally rejects one candidate after its real browser checks, proving
 that preparation failure preserves the running installation and application data.
+
+For acceptance against a published release, also set all four trust variables:
+
+- `NINJA_PUBLISHED_CATALOG_URL`: the production HTTPS signed catalog URL.
+- `NINJA_PUBLISHED_KEY_ID`: the expected publisher key ID.
+- `NINJA_PUBLISHED_PUBLIC_KEY_FILE`: an independently pinned local public PEM file.
+- `NINJA_PUBLISHED_KEY_SHA256`: SHA-256 of the **exact PEM file bytes**, not the DER
+  SPKI fingerprint. The receipt records both fingerprints with distinct names.
+
+Published mode uses the real provider's default HTTPS fetch for the catalog and
+every archive, release metadata file, and checksum file. It neither injects fetch
+responses nor generates a signing key. Both alpha.2 and alpha.3 must appear in the
+authenticated catalog. The first test setup explicitly selects the authenticated
+alpha.2 baseline and checks its ZIP against the retained immutable public kit;
+subsequent discovery uses normal provider selection for alpha.3. The catalog
+checkpoint must remain unchanged throughout the run. `NINJA_CANDIDATE_DIR` is
+unused in this mode. Use the exact installed release tools through
+`NINJA_TOOLS_ROOT`; the same real flows, deliberate hook rejection, rollback,
+preservation, reporting, and cleanup assertions still run.
+
+`node tests/ninja-architecture-acceptance.mjs --test-published-config` checks
+fail-closed transport and trust configuration without starting an application.
+With the four trust variables set, `--published-preflight` verifies the local
+public key and prints its fingerprints without network access, installation, or
+application startup. The full published run preserves the authenticated catalog,
+public key, and distinct real transport/download receipts in its output directory.
 
 Success requires the same real empty-name rejection and exact save/reload flow on
 alpha.2, the candidate, and the reverted installation; unchanged customer source;
