@@ -1,6 +1,6 @@
 # Daedlo public website
 
-Static product introduction, Roots origin story, assisted alpha installation,
+Static product introduction, Roots origin story, one-prompt assisted onboarding,
 integration guide, privacy/contact page and recorded real-application demo.
 The supported alpha path is macOS arm64 with Codex and one existing application
 flow. The dated verification in the current release metadata records its exact
@@ -12,6 +12,21 @@ account, data submission or live browser connection. The two curated screenshots
 and evidence summary preserve the Architecture Studio recording from 11 October
 2026 and the public `0.1.2-rc.1` kit. The separate workflow sketches are labelled
 as illustrations. Private traces and customer source must never enter this tree.
+
+## One onboarding entrypoint
+
+`/install` is the canonical journey: open the customer project in Codex, copy one
+complete prompt, then inspect its first-flow and update-registration evidence.
+The prompt is rendered from `templates/install.html` using the verified release
+URL and ZIP/tools/bundle digests. It has no kit-path placeholder. The homepage,
+integration guide and updates reference lead to this same journey. Manual
+installation and historical release evidence remain in collapsed references.
+
+`public/onboarding.js` copies exactly the selectable prompt's `textContent.trim()`.
+Clipboard denial selects the full prompt and reports a manual-copy fallback;
+without JavaScript the prompt and guidance remain visible and the button is hidden.
+No project information is collected or sent by this page. Site acceptance does
+not establish that the prompt has onboarded WBF or another customer application.
 
 ## Reproduce the release website
 
@@ -84,6 +99,8 @@ Run these from the repository root after staging every release and the signed fe
 ```sh
 node --test website/tests/*.test.mjs
 node website/tests/acceptance.mjs
+node website/tests/onboarding-browser.mjs --website-root website
+node --check website/public/onboarding.js
 node --check website/public/workflow.js
 node --check website/scripts/serve.mjs
 node website/scripts/manifest.mjs > artifacts/website-manifest.json

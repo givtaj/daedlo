@@ -1,5 +1,32 @@
 # Verification record
 
+## Unified website onboarding — local acceptance, 2026-10-23
+
+The canonical `/install` journey now puts one complete Codex prompt before manual
+references. It covers verified installation, the opened project (including WBF),
+one accepted flow plus negative/persistence/relaunch evidence, and Ninja-Update
+registration. Home, guide and updates lead to that same entrypoint; updates no
+longer contains a competing setup prompt. The frozen alpha.3 kit and historical
+public evidence remain unchanged. This entry records website acceptance; actual
+WBF installation, project acceptance and its upgrade/rollback drills are **NOT RUN**.
+
+| Check | Actual result |
+| --- | --- |
+| Regression before implementation | Genuine FAIL: missing single accessible prompt, copy control and canonical updates link; 1/6 passed. Retained `regression-red.log`. |
+| Staged website | PASS, 55/55 tests, including six new onboarding-contract checks. All seven pages have allowlisted links; three immutable archives verified; 30 public entries including control files. |
+| Clipboard and browser acceptance | PASS, 9 checks in headless Chromium on the staged local site: desktop 1280px, narrow 390px, exact complete 4,791-character payload, real Clipboard API readback in an isolated permission-granted context, denied-copy selection/feedback, JavaScript-disabled manual prompt, canonical updates link. No horizontal overflow; browser/server cleanup passed. |
+| Visual review | PASS: root inspected the desktop preview in the app browser; desktop, narrow, denied-copy and no-JavaScript screenshots were inspected. No customer application was involved. |
+| Renewal pipeline | Genuine FAIL first: exact served asset count expected 27 after adding the copy script. Corrected to 28 with an explicit byte comparison for staged `onboarding.js`; 22/22 affected renewal tests passed. |
+| Source quality | PASS: `npm run check`, affected website formatting and copy-script syntax. No Rust/runtime implementation changed. |
+
+Evidence is retained under ignored `artifacts/unified-onboarding/`: the red/green
+logs, manifest, staged site, and `browser-Qs27lC/results.json` with six screenshots.
+The earlier `browser-p9YECO/` retains its eight-check run and the full-page screenshot
+capture artifact; the final run adds native clipboard readback and resets scroll
+before screenshots. Publication is separately verified by the existing production
+renewal workflow, which carries the new allowlisted asset through its frozen source
+manifest, live-byte checks and increasing signed catalog checkpoint.
+
 ## Automatic catalog renewal — activated and verified, 2026-10-23
 
 Daily **04:23 UTC** renewal is active on `main`. Two manually dispatched runs

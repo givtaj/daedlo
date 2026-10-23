@@ -612,6 +612,11 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
       await fs.readFile(join(f.options.output, "site", file.path)),
     );
   }
+  assert.deepEqual(
+    served.get(origin + "/onboarding.js"),
+    await fs.readFile(join(repo, "website/public/onboarding.js")),
+    "The new copy script must be staged and verified as exact public source bytes",
+  );
   let mode = "good";
   const fetchImpl = async (url, options) => {
     if (url === origin + "/index.html") {
@@ -649,7 +654,7 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
         ),
       ),
     ),
-    { status: "PASS", generation: 2, servedAssets: 27, privateBoundaries: 9 },
+    { status: "PASS", generation: 2, servedAssets: 28, privateBoundaries: 9 },
   );
   mode = "cache";
   await assert.rejects(

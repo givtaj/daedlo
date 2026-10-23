@@ -46,28 +46,25 @@
       <section class="guide-block" aria-labelledby="setup-title">
         <h2 id="setup-title">1. Set up managed updates once</h2>
         <p>
-          <a href="/install.html">Verify and install the alpha.3 tools</a> in a
-          separate directory. Alpha.2 cannot upgrade the manager itself. Read
-          <code>docs/ninja-update.md</code> in the installed tools, then ask
-          your agent:
+          Use the
+          <a href="/install.html#agent">single Codex onboarding prompt</a> to
+          install Daedlo, connect your first flow and register Ninja-Update
+          together. It also reuses an existing accepted integration. You do not
+          need a second setup prompt.
         </p>
-        <div class="agent-prompt">
-          <blockquote>
-            Use our accepted Daedlo integration to register this project for
-            Ninja-Update. Preserve the exact model, states, flows, adapter,
-            configuration, dependency locks, instructions and custom skills. Add
-            a reviewed managed launcher and acceptance checks using disposable
-            data. Keep our application and its persistent data outside the
-            update store. Verify the public publisher key below, then configure
-            the signed preview feed. Show the first accepted flow and a relevant
-            no-write failure before calling this project ready.
-          </blockquote>
-        </div>
         <p>
-          The agent supplies the real paths and model identity. This is an
-          integration step: a signed download alone does not establish that your
-          application still behaves correctly. Unsupported contracts or source
-          changes need review.
+          The agent verifies the alpha.3 tools in a separate directory, reads
+          <code>docs/ninja-update.md</code>, and supplies your real paths, model
+          identity and managed launcher. Acceptance checks use disposable data.
+          The registration records dependency locks and custom skills alongside
+          the model, states, flows, adapter and configuration. Alpha.2 cannot
+          upgrade the manager itself.
+        </p>
+        <p>
+          A signed download alone does not establish that your application
+          behaves correctly. Unsupported contracts or source changes need
+          review. The sections below are the trust and operating reference for
+          the setup your agent leaves.
         </p>
       </section>
       <section class="guide-block" aria-labelledby="trust-title">
@@ -173,10 +170,11 @@ printf '%s  %s\n' '{{KEY_SHA256}}' '{{KEY_ID}}.pem' | shasum -a 256 -c -</code><
         <h2 id="freshness-title">A short-lived signed feed</h2>
         <p>
           This catalog expires at <strong>{{EXPIRES_AT}}</strong>. Catalog
-          validity is at most seven days. GitHub Actions renews this catalog daily
-          with an increasing generation and verifies the published result. Release
-          downloads stay unchanged. If renewal fails, the publisher must resolve
-          it before the displayed expiry; clients never bypass expiry checks.
+          validity is at most seven days. GitHub Actions renews this catalog
+          daily with an increasing generation and verifies the published result.
+          Release downloads stay unchanged. If renewal fails, the publisher must
+          resolve it before the displayed expiry; clients never bypass expiry
+          checks.
         </p>
         <p>
           An expired catalog blocks new update checks and downloads. It leaves

@@ -1570,3 +1570,122 @@ h1 {
     padding: 20px;
   }
 }
+
+/* One assisted onboarding path; manual references stay available below it. */
+.onboarding-steps {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  padding: 0;
+  margin: 30px 0;
+}
+.onboarding-steps p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 10px;
+}
+.onboarding-card {
+  padding: 28px;
+  border: 1px solid #c9d1ee;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 0 #e4e8f2;
+  scroll-margin-top: 24px;
+}
+.prompt-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.prompt-heading h2 {
+  font-size: 25px;
+  letter-spacing: -0.7px;
+  margin-top: 7px;
+}
+.prompt-heading .button {
+  flex-shrink: 0;
+}
+.prompt-heading [hidden] {
+  display: none;
+}
+.prompt-intro {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 18px;
+  line-height: 1.7;
+}
+.copy-status {
+  min-height: 24px;
+  font-size: 13px;
+  color: var(--blue);
+  margin-top: 12px;
+}
+#onboarding-prompt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-y: auto;
+  max-height: 320px;
+  padding: 20px;
+  background: #f2f4f9;
+  border: 1px solid #e1e5ef;
+  border-radius: 5px;
+  font: 13px/1.8 var(--mono);
+  color: #343e5c;
+  margin: 10px 0 18px;
+}
+#onboarding-prompt:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+.onboarding-card .install-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.onboarding-details {
+  margin: 20px 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 20px;
+}
+.onboarding-details > summary {
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+}
+.onboarding-details > .install-note {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 16px 0;
+}
+.onboarding-details[open] > summary {
+  margin-bottom: 24px;
+}
+@media (max-width: 600px) {
+  .onboarding-steps {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+  .onboarding-steps p {
+    margin-top: 4px;
+  }
+  .onboarding-card {
+    padding: 20px;
+  }
+  .prompt-heading .button {
+    width: 100%;
+    justify-content: center;
+  }
+  .onboarding-details {
+    padding: 16px;
+  }
+  #onboarding-prompt {
+    max-height: 280px;
+    padding: 14px;
+  }
+}

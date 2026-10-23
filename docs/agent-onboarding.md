@@ -25,6 +25,18 @@ every framework. No WASM conversion or application rewrite is required.
 
 ## Give an agent the onboarding job
 
+The public entrypoint is [Get started](https://daedlo.com/install#agent): open the
+application repository in Codex and copy its one complete prompt. It includes the
+frozen kit URL/digests, installation, first-flow acceptance and Ninja-Update
+registration. The update page links back to the same prompt. The source/template
+owns this website handoff; the published alpha.3 kit remains immutable.
+
+For every scoped npm install, use both `--prefix` and `--workspaces=false` and
+verify ancestor manifests/locks remain unchanged, including when a bundled
+example omits the workspace flag. Design new QA integrations for the managed
+contract from the outset; review unsupported existing contracts without changing
+accepted behavior silently. A successful website copy is not customer acceptance.
+
 The portable [browser-driver skill](../skills/browser-driver/SKILL.md) contains the
 workflow and its supporting references. Start with the verified portable tools
 package or a reviewed browser-driver source checkout at an explicit revision.
