@@ -1,0 +1,100 @@
+name: Probe public Ninja Update delivery
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-ninja-feed-probe
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Check out trusted default-branch source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Classify fixed public responses without exposing bodies
+        run: |
+          node --input-type=module <<'NODE'
+          const origins = ['https://daedlo.com', 'https://daedlo.givtaj.workers.dev'];
+          const paths = ['/updates/preview.json', '/updates/keys/daedlo-release-2026-10.pem'];
+          for (const version of ['0.1.2-rc.1', '0.1.4-alpha.2', '0.1.4-alpha.3']) {
+            for (const file of [`daedlo-${version}.zip`, 'release.json', 'SHA256SUMS']) paths.push(`/downloads/${version}/${file}`);
+          }
+          const variants = [
+            {name: 'node-default', headers: {'Cache-Control': 'no-cache'}},
+            {name: 'identified-publisher', headers: {'Cache-Control': 'no-cache', 'User-Agent': 'Daedlo-Ninja-Update-Publisher/1.0'}},
+          ];
+          const limit = 32 * 1024;
+          const safeHeader = value => value === null ? null : value.replace(/[^\x20-\x7e]/g, '').slice(0, 160);
+          function safeLocation(value, requested) {
+            if (value === null) return null;
+            try {
+              const url = new URL(value, requested);
+              if (!origins.includes(url.origin) || url.username || url.password) return 'redacted-external-location';
+              // Do not expose query/fragment values or unexpected path contents.
+              return url.origin + (paths.includes(url.pathname) ? url.pathname : '/[unlisted-path]');
+            } catch { return 'invalid-location'; }
+          }
+          function classify(bytes, response) {
+            const text = bytes.toString('utf8');
+            if (response.headers.get('cf-mitigated') === 'challenge' || /cf-chl-|challenge-platform|<title>Just a moment/i.test(text)) return 'challenge';
+            if (bytes.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))) return 'archive';
+            if (/^\s*-----BEGIN PUBLIC KEY-----/.test(text)) return 'public-key';
+            if (/^\s*(?:<!doctype html|<html)/i.test(text)) return 'html';
+            try { JSON.parse(text); return 'json'; } catch {}
+            if (/^[a-f0-9]{64}\s{2}[^\r\n]+\r?\n?$/.test(text)) return 'checksums';
+            return bytes.length === 0 ? 'empty' : 'unclassified';
+          }
+          async function probe(url, variant) {
+            const record = {url, userAgent: variant.name};
+            try {
+              const response = await fetch(url, {method: 'GET', redirect: 'manual', headers: variant.headers, signal: AbortSignal.timeout(15000)});
+              Object.assign(record, {
+                status: response.status,
+                contentType: safeHeader(response.headers.get('content-type')),
+                cfMitigated: safeHeader(response.headers.get('cf-mitigated')),
+                server: safeHeader(response.headers.get('server')),
+                location: safeLocation(response.headers.get('location'), url),
+              });
+              const reader = response.body?.getReader();
+              const chunks = []; let total = 0;
+              if (reader) {
+                try {
+                  while (total < limit) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    const sample = value.subarray(0, limit - total);
+                    chunks.push(Buffer.from(sample)); total += sample.length;
+                  }
+                } finally {
+                  await reader.cancel().catch(() => {});
+                  reader.releaseLock();
+                }
+              }
+              Object.assign(record, {sampleBytes: total, sampleLimitReached: total === limit, classification: classify(Buffer.concat(chunks, total), response)});
+            } catch (error) {
+              record.error = ['AbortError', 'TimeoutError', 'TypeError'].includes(error?.name) ? error.name : 'request-failed';
+            }
+            console.log(JSON.stringify(record));
+            return record;
+          }
+          const requests = origins.flatMap(origin => paths.flatMap(path => variants.map(variant => ({url: origin + path, variant}))));
+          const results = [];
+          for (let index = 0; index < requests.length; index += 2) {
+            results.push(...await Promise.all(requests.slice(index, index + 2).map(({url, variant}) => probe(url, variant))));
+          }
+          console.log(JSON.stringify({kind: 'probe-summary', requests: results.length, errors: results.filter(r => r.error).length, non200: results.filter(r => r.status !== undefined && r.status !== 200).length, challenges: results.filter(r => r.classification === 'challenge').length}));
+          NODE

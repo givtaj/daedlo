@@ -7,8 +7,19 @@ has been stored in `DAEDLO_UPDATE_SIGNING_KEY`, with the Cloudflare account ID a
 repository variable. Following explicit approval, the token scoped to
 **Individual Workers → daedlo → Editor** was created and stored as
 `CLOUDFLARE_API_TOKEN` at `2026-10-23T11:18:25Z`. A read-only request authenticated
-it against the existing Daedlo deployment. **Automatic publication is NOT YET
-ENABLED OR VERIFIED.** The existing generation 1 feed remains live.
+it against the existing Daedlo deployment. The workflow is active on `main`
+after PR #2 merged as `e5e47d97c8226ff0f3a3f390e8c95926e7c44039`; its reviewed
+head `7e2e8ff` passed all four Node 22/24 push and PR CI jobs. **The first automatic
+publication has NOT succeeded.** Generation 1 remains live.
+
+Initial dispatch [39946067474](https://github.com/givtaj/browser-driver/actions/runs/39946067474)
+passed all 113 pre-secret checks and initial checkpoint restoration, then failed
+preparation on an unexpected public HTTP status. It created no checkpoint artifact;
+validation, upload, activation and live verification were skipped, and temporary
+key cleanup passed. Its masked failure log is retained. The recovery adds safe
+path/status diagnostics, a separate read-only runner probe and a single reviewed
+exception bound to the exact failed run and original generation-1 floor. No
+renewal retry is authorized by an unknown response or missing history.
 
 The workflow, signer orchestration and signed-checkpoint restoration passed
 independent review. The exact pre-secret workflow command passed **113 tests**

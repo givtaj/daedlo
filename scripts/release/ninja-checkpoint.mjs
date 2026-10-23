@@ -10,11 +10,155 @@ const REPOSITORY = "givtaj/browser-driver";
 const WORKFLOW = ".github/workflows/ninja-renew.yml";
 const ARTIFACT = /^ninja-renewal-checkpoint-([1-9][0-9]*)$/;
 const MAX_BYTES = 4 * 1024 * 1024;
+// One reviewed recovery for the first production run, which failed before any
+// checkpoint or Cloudflare mutation. This is not a configurable retry policy.
+const FAILED_BOOTSTRAP = {
+  id: 39946067474,
+  run_number: 1,
+  run_attempt: 1,
+  workflow_id: 393961684,
+  path: WORKFLOW,
+  event: "workflow_dispatch",
+  head_branch: "main",
+  head_sha: "e5e47d97c8226ff0f3a3f390e8c95926e7c44039",
+  status: "completed",
+  conclusion: "failure",
+};
+const FAILED_BOOTSTRAP_STEPS = [
+  [1, "Set up job", "success"],
+  [2, "Check out trusted default-branch source", "success"],
+  [3, "Set up Node", "success"],
+  [
+    4,
+    "Install locked source dependencies and pinned deployment tool",
+    "success",
+  ],
+  [
+    5,
+    "Check renewal and publication safety before credential scope",
+    "success",
+  ],
+  [6, "Restore authenticated renewal high-water checkpoint", "success"],
+  [7, "Prepare verified public renewal with temporary signing key", "failure"],
+  [8, "Validate the exact staged public website", "skipped"],
+  [9, "Persist signed renewal checkpoint", "skipped"],
+  [10, "Upload only the frozen existing-worker version", "skipped"],
+  [
+    11,
+    "Recheck the live baseline and activate the exact uploaded version",
+    "skipped",
+  ],
+  [12, "Verify the active deployment identity", "skipped"],
+  [
+    13,
+    "Verify the live feed, exact public assets and security policies",
+    "skipped",
+  ],
+  [14, "Remove any remaining temporary signing key", "success"],
+  [27, "Post Set up Node", "skipped"],
+  [28, "Post Check out trusted default-branch source", "success"],
+  [29, "Complete job", "success"],
+];
 const fail = (message) => {
   throw Error(message);
 };
 function positive(n) {
   return Number.isSafeInteger(n) && n > 0;
+}
+function matches(record, expected) {
+  return Object.entries(expected).every(
+    ([key, value]) => record?.[key] === value,
+  );
+}
+function reviewedBootstrapRecovery(
+  current,
+  workflow,
+  history,
+  listingCount,
+  branch,
+) {
+  if (
+    branch !== "main" ||
+    workflow.id !== FAILED_BOOTSTRAP.workflow_id ||
+    !matches(current, {
+      run_number: 2,
+      run_attempt: 1,
+      workflow_id: FAILED_BOOTSTRAP.workflow_id,
+      event: "workflow_dispatch",
+      head_branch: "main",
+      status: "in_progress",
+      conclusion: null,
+    }) ||
+    listingCount !== 2 ||
+    history.length !== 2 ||
+    !/^[a-f0-9]{40}$/.test(current.head_sha ?? "") ||
+    !matches(history[0].run, {
+      id: current.id,
+      run_number: 2,
+      run_attempt: 1,
+      workflow_id: FAILED_BOOTSTRAP.workflow_id,
+      path: WORKFLOW,
+      event: "workflow_dispatch",
+      head_branch: "main",
+      head_sha: current.head_sha,
+      status: "in_progress",
+      conclusion: null,
+    }) ||
+    history[0].run.head_repository?.full_name !== REPOSITORY ||
+    !matches(history[1].run, FAILED_BOOTSTRAP) ||
+    history[1].run.head_repository?.full_name !== REPOSITORY ||
+    history.some(
+      (entry) =>
+        entry.artifacts?.total_count !== 0 ||
+        entry.artifacts.artifacts.length !== 0,
+    )
+  )
+    return null;
+  const evidence = history[1].attempts;
+  if (
+    evidence.length !== 1 ||
+    !matches(evidence[0].record, FAILED_BOOTSTRAP) ||
+    evidence[0].record.head_repository?.full_name !== REPOSITORY ||
+    evidence[0].jobs.total_count !== 1 ||
+    evidence[0].jobs.jobs.length !== 1
+  )
+    return null;
+  const job = evidence[0].jobs.jobs[0];
+  if (
+    !matches(job, {
+      id: 120388922333,
+      run_id: FAILED_BOOTSTRAP.id,
+      run_attempt: 1,
+      head_sha: FAILED_BOOTSTRAP.head_sha,
+      name: "renew",
+      status: "completed",
+      conclusion: "failure",
+    }) ||
+    !Array.isArray(job.steps) ||
+    job.steps.length !== FAILED_BOOTSTRAP_STEPS.length ||
+    !FAILED_BOOTSTRAP_STEPS.every(([number, name, conclusion], index) =>
+      matches(job.steps[index], {
+        number,
+        name,
+        conclusion,
+        status: "completed",
+      }),
+    )
+  )
+    return null;
+  // No checkpoint file is fabricated. With none, ninja-renew's independent
+  // production policy still requires the exact released generation-1 payload.
+  return {
+    bootstrap: true,
+    recovery: {
+      failedRunId: FAILED_BOOTSTRAP.id,
+      failedRunAttempt: 1,
+      failedHeadSha: FAILED_BOOTSTRAP.head_sha,
+      requiredGeneration: 1,
+      requiredCatalogPayloadSha256:
+        "bde773d01a3cb0bb33330b74b17dd7e5068e33fb650a55d558d446a10f5bbad0",
+    },
+  };
 }
 async function readResponse(response) {
   const chunks = [];
@@ -213,6 +357,7 @@ export async function restoreCheckpoint({
     fail("Checkpoint run attempt mismatch");
   let priorRuns = 0;
   let expectedRunNumber = current.run_number;
+  const history = [];
   for (let page = 1; page <= 10; page++) {
     const listing = await request(
       `/actions/workflows/${workflow.id}/runs?per_page=100&page=${page}`,
@@ -234,6 +379,8 @@ export async function restoreCheckpoint({
       checkRun(run);
       if (run.run_number !== expectedRunNumber--)
         fail("Checkpoint workflow history has an unexplained run-number gap");
+      const evidence = { run, attempts: [] };
+      history.push(evidence);
       if (run.head_branch !== branch) {
         if (run.status !== "completed" || run.conclusion !== "skipped")
           fail("Non-default checkpoint workflow run was not safely skipped");
@@ -252,6 +399,7 @@ export async function restoreCheckpoint({
         found.artifacts.length > 100
       )
         fail("Incomplete checkpoint artifact inventory");
+      evidence.artifacts = found;
       const artifacts = found.artifacts
         .filter((a) => ARTIFACT.test(a.name))
         .map((a) => ({ ...a, attempt: Number(a.name.match(ARTIFACT)[1]) }))
@@ -275,6 +423,7 @@ export async function restoreCheckpoint({
         );
         if (!Array.isArray(jobs.jobs) || jobs.total_count !== jobs.jobs.length)
           fail("Incomplete checkpoint job inventory");
+        evidence.attempts.push({ record: attemptRecord, jobs });
         if (
           jobs.jobs.some((job) =>
             job.steps?.some(
@@ -329,8 +478,17 @@ export async function restoreCheckpoint({
       }
     }
     if (page * 100 >= listing.total_count) {
-      if (priorRuns || runAttempt !== 1 || current.run_number !== 1)
+      if (priorRuns || runAttempt !== 1 || current.run_number !== 1) {
+        const recovery = reviewedBootstrapRecovery(
+          current,
+          workflow,
+          history,
+          listing.total_count,
+          branch,
+        );
+        if (recovery) return recovery;
         fail("Missing prior checkpoint; bootstrap is first-run only");
+      }
       return { bootstrap: true };
     }
   }
