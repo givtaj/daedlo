@@ -10,7 +10,20 @@ import test from "node:test";
 import { buildToolsArchive } from "../scripts/release/tools.mjs";
 
 const version = "0.1.1-rc.2";
-const libraries = ["consumer-cli", "commands", "manifest", "store", "remote"];
+const libraries = [
+  "consumer-cli",
+  "commands",
+  "manifest",
+  "store",
+  "remote",
+  "ninja",
+  "ninja-catalog",
+  "ninja-installation",
+  "ninja-manager",
+  "ninja-supervisor",
+  "ninja-child",
+  "ninja-server",
+];
 const documents = [
   "contracts",
   "agent-onboarding",
@@ -18,6 +31,11 @@ const documents = [
   "releases",
   "update-client",
   "presentation",
+  "ninja-update",
+];
+const trustFiles = [
+  "docs/update-trust/production.json",
+  "docs/update-trust/daedlo-release-2026-10.pem",
 ];
 const skillFiles = [
   "SKILL.md",
@@ -51,11 +69,14 @@ async function fixture(t) {
     "scripts/release/version.mjs":
       'throw Error("Maintainer version mutation must never ship");\n',
     "unrelated.txt": "Do not distribute the entire repository.\n",
+    "scripts/release/ninja-ui.html":
+      "<!doctype html><title>Ninja updates</title>\n",
   };
   for (const name of libraries)
     files[`scripts/release/${name}.mjs`] =
       `export const fixture = ${JSON.stringify(name)};\n`;
   for (const name of documents) files[`docs/${name}.md`] = `# ${name}\n`;
+  for (const name of trustFiles) files[name] = `Public trust fixture ${name}\n`;
   for (const name of skillFiles)
     files[`skills/browser-driver/${name}`] = `Fixture ${name}\n`;
   for (const [path, bytes] of Object.entries(files)) {
@@ -93,8 +114,10 @@ test("portable tools have a closed consumer inventory and complete agent referen
     "README.md",
     "LICENSE",
     "SOURCE.json",
+    "lib/ninja-ui.html",
     ...libraries.map((name) => `lib/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
+    ...trustFiles,
     ...skillFiles.map((name) => `skills/browser-driver/${name}`),
   ].sort();
   assert.deepEqual(
@@ -128,6 +151,7 @@ test("portable tools have a closed consumer inventory and complete agent referen
   assert.equal(pkg.private, true);
   assert.deepEqual(pkg.bin, {
     "browser-driver-release": "lib/consumer-cli.mjs",
+    "ninja-update": "lib/ninja.mjs",
   });
   assert.equal(pkg.dependencies, undefined);
   assert.equal(pkg.scripts, undefined);
@@ -269,6 +293,7 @@ test("the exact archive installs offline and runs real consumer commands outside
   for (const path of [
     "LICENSE",
     "docs/update-client.md",
+    "scripts/release/ninja-ui.html",
     ...libraries.map((name) => `scripts/release/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
     ...skillFiles.map((name) => `skills/browser-driver/${name}`),
@@ -359,7 +384,7 @@ test("the exact archive installs offline and runs real consumer commands outside
   );
   assert.deepEqual(
     (await fs.readdir(join(installed, "lib"))).sort(),
-    libraries.map((name) => `${name}.mjs`).sort(),
+    [...libraries.map((name) => `${name}.mjs`), "ninja-ui.html"].sort(),
   );
   assert.deepEqual(
     Object.keys(

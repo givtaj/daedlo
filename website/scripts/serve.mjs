@@ -10,6 +10,7 @@ import {
   verifyReleaseDirectory,
 } from "./stage-release.mjs";
 
+import { readStagedUpdates, UPDATE_TRUST } from "./stage-updates.mjs";
 const root = join(DEFAULT_WEBSITE_ROOT, "public");
 const types = {
   ".html": "text/html; charset=utf-8",
@@ -20,11 +21,12 @@ const types = {
   ".txt": "text/plain; charset=utf-8",
   ".xml": "application/xml",
   ".zip": "application/zip",
+  ".pem": "text/plain; charset=utf-8",
   ".json": "application/json; charset=utf-8",
 };
 export async function readPreviewResponse(
   requestUrl,
-  { publicRoot = root } = {},
+  { publicRoot = root, updateTrust = UPDATE_TRUST } = {},
 ) {
   try {
     await requireDirectory(publicRoot);
@@ -35,6 +37,11 @@ export async function readPreviewResponse(
     let body;
     if (PUBLIC_FILES.has(relative) && !CONTROL_FILES.has(relative)) {
       body = await readRegularFile(join(publicRoot, relative));
+    } else if (relative.startsWith("updates/")) {
+      const updates = await readStagedUpdates({ publicRoot, updateTrust });
+      const file = updates.files.find((f) => "updates/" + f.file === relative);
+      if (!file) throw Error("Unknown public update path");
+      body = file.content;
     } else {
       const parts = relative.split("/");
       if (
@@ -59,7 +66,12 @@ export async function readPreviewResponse(
         basename(relative) === "SHA256SUMS"
           ? "text/plain; charset=utf-8"
           : types[extname(relative)] || "application/octet-stream",
-      "Cache-Control": "no-store",
+      "Cache-Control":
+        relative === "updates/preview.json"
+          ? "no-cache, max-age=0, must-revalidate"
+          : /^(downloads\/|updates\/keys\/)/.test(relative)
+            ? "public, max-age=31536000, immutable"
+            : "no-store",
       "X-Content-Type-Options": "nosniff",
     };
     if (extname(relative) === ".zip")

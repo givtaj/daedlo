@@ -1,5 +1,214 @@
 # Verification record
 
+## Automatic catalog renewal — implementation in progress, 2026-10-23
+
+The owner selected daily GitHub Actions renewal. The same production signing key
+has been stored in `DAEDLO_UPDATE_SIGNING_KEY`, with the Cloudflare account ID as a
+repository variable. Following explicit approval, the token scoped to
+**Individual Workers → daedlo → Editor** was created and stored as
+`CLOUDFLARE_API_TOKEN` at `2026-10-23T11:18:25Z`. A read-only request authenticated
+it against the existing Daedlo deployment. **Automatic publication is NOT YET
+ENABLED OR VERIFIED.** The existing generation 1 feed remains live.
+
+The workflow, signer orchestration and signed-checkpoint restoration passed
+independent review. The exact pre-secret workflow command passed **113 tests**
+with no skips, including 19 renewal and 15 checkpoint cases. Genuine failing
+assertions preceded the initial implementation and review fixes for canonical
+HTML redirects, checkpoint receipt changes, missing newer artifacts, deleted run
+history and stale reruns.
+
+A local preflight used the real production feed and protected key to prepare an
+isolated generation 2 candidate without deploying it: **49 website tests**,
+seven-page/three-archive acceptance, exact 30-file manifest revalidation and
+Wrangler 4.147.0 deployment dry run passed. The rendered renewal copy and expiry
+were inspected. That unpublished candidate is not an issued production checkpoint.
+Evidence is retained in ignored `artifacts/ninja-renewal/`.
+
+Quality checks passed. The full 246-case release run passed 245 and exposed one
+packaged-guide reference failure introduced by the new maintainer documentation.
+Those references were corrected without changing assertions; all eight portable
+tools tests then passed, including exact offline consumer installation. The
+initial failed result is retained. Full source/browser/exact-package push CI on
+`74cf5398ce017d19d18f05e35916cc87db2ec8cb` passed on Node 22 and 24, run
+[39942884250](https://github.com/givtaj/browser-driver/actions/runs/39942884250).
+The same-tree PR run passed Node 24 but Node 22 timed out waiting ten seconds for
+an installed CLI fixture to exit after its functional assertions passed. Its
+cleanup cause was not established from the original logs. Test-only bounded,
+sanitized resource-phase diagnostics were added without changing the timeout or
+assertions; the focused ten-case CLI suite passed. Runtime code and published
+assets were unchanged. Failed evidence remains in `artifacts/ninja-renewal/ci-review/`.
+
+These changes preserve immutable alpha.3 assets and its frozen source tag;
+the original published upgrade/rollback acceptance below remains valid for those
+exact bytes. The [publisher runbook](ninja-publishing.md) describes daily 04:23 UTC
+operation, secret custody, durable public checkpoints and recovery that refuses
+a lower generation. Actual test and live execution results will replace this
+in-progress status after verification.
+
+## Published Ninja-Update alpha.3 — 2026-10-23
+
+**Published** at [Daedlo](https://daedlo.com/install), with the
+[signed production feed](https://daedlo.com/updates/preview.json) and
+[versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3).
+The earlier local alpha.3 candidate below is historical evidence with different
+bytes. This release was built from clean source
+`558366b6b4de9a158a9ad49bb7b45d3080d5497e`, tree SHA-256
+`5974624f8a85af01ff2404779f53d9117d8bab5183ce152cd45dd1fc3c8f15f1`.
+Its ZIP is **206,234 bytes**, SHA-256
+`f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190`;
+bundle manifest `f2d977da2756997671c63f052dc7c387496aba7fb578d046042fd9204f31de6a`;
+tools `56b6c5f1663dc633870a58ba1c3e6322f03b2182ab64947b61fe2a58ab70adf3`.
+Later delivery documentation does not change the signed or packaged bytes.
+
+| Executed gate | Actual result |
+| --- | --- |
+| Source and release checks | PASS: syntax/types/format, 212 release checks with no skips; Node 22/24 source, browser and exact-package CI on frozen source, run [39936785918](https://github.com/givtaj/browser-driver/actions/runs/39936785918). |
+| Exact installed package | PASS: eight browser/API groups, 10 CLI, 25 finalization and nine browser-control cases; owned processes/directories cleaned. |
+| Exact downloaded installer | PASS: fresh HTTPS downloads of all three files match the frozen kit; the downloaded START_HERE block installed offline with a fresh npm cache in an isolated nested workspace. All 37 installed tools files and bundled production trust match their inventory; ancestor/repository manifests unchanged. |
+| GitHub asset read-back | PASS: exactly three published assets, correct frozen source target, each byte-identical to both the frozen kit and fresh Daedlo download. |
+| Final kit before publication | PASS: eight Architecture Studio upgrade/rollback/integrity checkpoints using the final installed tools and a local signed catalog; 21 main browser runs, three intended saves, four closed reports and cleanup. Independent visual inspection was not repeated in this prepublication run. |
+| Published feed application acceptance | PASS: all eight checkpoints with actual HTTPS discovery/downloads, independently pinned production key and newly downloaded installed tools. Independent live Updated/Reverted inspection passed; final integrity, durable reports, relaunch and owned cleanup passed. |
+| Website | PASS: 49 tests, seven pages and three archives; frozen manifest preserved; actual installation/update pages inspected. Both live origins serve all 27 files byte-identical, with nine private paths returning 404 each, security headers and correct mutable/immutable cache policies. |
+
+Published run `customer-published/run-ESmQK9/` authenticated the production catalog
+and downloaded both releases without an injected fetch transport. The unchanged
+accepted integration passed on public alpha.2. A deliberately rejecting hook,
+after its real isolated checks, left alpha.2 and the data intact. The accepted
+alpha.3 then installed and activated; rollback selected the complete retained
+alpha.2 installation. Exact data and the model descriptor were unchanged at both
+switch boundaries, before repeating the accepted flow. Invalid input produced no
+write; each intended save agreed across response, independent API and disk reads,
+then restored the fields on reload. The state model, flows, adapter, configuration,
+locks and instructions stayed unchanged, as did 119 pinned application source
+files, 18 accepted integration files, all 23 registered inputs and 37 installed
+tools files. Existing model checks passed (13 Rust and seven Node). Four final
+session reports recorded owned closure; driver relaunch passed while the attached
+application survived. Independent background IAB inspection confirmed selected and
+running versions and the actual controlled application after both switches. The
+test finished at `2026-10-23T10:26:35.780Z`; private evidence and retained isolated
+installations remain available for audit.
+
+The production signer verifies exact public kits before signing, rejects unsafe key
+files and preserves prior authenticated entries during renewal. Meaningful failing
+assertions were recorded before implementation; 20 focused publisher cases passed,
+including the exact retained alpha.2 kit (19 are in the standard release suite).
+Public-trust packaging tests first failed on missing files, then passed. Website
+regressions covered raw-file versus signed-payload digests and independent trust
+wording; published-mode configuration checks reject partial or altered trust.
+
+At initial publication the feed was generation **1**, issued `2026-10-23T10:16:16.000Z`, expires
+**2026-10-30T10:16:16.000Z**, and authenticates alpha.2 and alpha.3. Raw envelope
+SHA-256: `09fcadcbbf1a7bcdb6300d8489faf4949477997550e0a4993ab553c40e22e80e`;
+signed-payload checkpoint: `bde773d01a3cb0bb33330b74b17dd7e5068e33fb650a55d558d446a10f5bbad0`.
+Ed25519 key `daedlo-release-2026-10` is independently pinned in
+`docs/update-trust/production.json`. The private key remains local, owner-only,
+outside Git/packages/site; an off-device backup is **NOT VERIFIED**.
+At initial publication renewal was manual and no cloud signing secret was
+configured. The later automatic-renewal section above owns current setup status. Expiry blocks new update checks/downloads, not accepted
+local use or verified local rollback. See [publisher operations](ninja-publishing.md).
+
+Operational evidence retains the initial canonical-timestamp configuration refusal,
+the local-preview checker failing its production-only CSP expectation, and live
+read-back initially refusing Cloudflare's 307 HTML canonical redirects. The final
+checker follows only the observed exact same-origin HTML canonical paths; catalog,
+key and release requests still reject redirects. Wrangler retried two transient
+asset-upload failures before successful deployment. No product browser assertion
+was weakened and no private data entered the public tree.
+
+Evidence remains in ignored `artifacts/ninja-production/`: final package receipts,
+`exact-installed/`, `published-installer/`, `customer-prepublication/`,
+`customer-published/`, website checks and both live read-backs. Supported acceptance
+is macOS arm64 with existing toolchains/caches and a pinned Architecture Studio
+synthetic fixture. WBF, clean OS setup, Linux/Windows customer onboarding and Claude
+Code onboarding are **NOT RUN**. Runtime rollback does not undo application writes.
+Browser identity checks do not seal linked frameworks. No everyday Roots checkout,
+dependency pins or services were changed.
+
+## Operation Ninja-Update local implementation — 2026-10-23
+
+**Local alpha.3 candidate, not published.** The external manager now implements
+signed public-kit discovery, project registration, isolated runtime/dependency
+installation and unchanged-model builds, acceptance/health gates, a local
+Install/Restart/Revert screen, atomic activation, failed-boot recovery and
+historical whole-installation rollback. See [the client contract](ninja-update.md).
+The public alpha.2 release and ordinary Roots dependencies are unchanged.
+
+Source validation: 129 runtime, 23 Rust and **193 release checks PASS**, including
+the managed updater's integrity, lifecycle, concurrency, HTTP security and real
+OS-process crash cases. Syntax/types/format checks PASS. Two independent Chromium
+update-screen tests PASS; their controller fixture is distinct from the following
+real application proof.
+
+Architecture Studio source-manager acceptance: **seven checkpoint groups PASS**.
+Pinned application `d8cb9396609b722418015cdd3367b3ef659aeb69` (119 source files),
+18 existing integration files and all 23 registered inputs remain unchanged.
+The exact published alpha.2 kit was installed, a deliberately rejected alpha.3
+acceptance hook left alpha.2 running/data intact, then the compatible local alpha.3
+activated and reverted to the complete alpha.2 slot. Both switches preserved exact
+application data and the state/command/recipe descriptor. The same invalid-input,
+save/read-back/reload flow passed on each version: zero writes for invalid input,
+one PUT for each intended save, with independent API/disk agreement. Existing
+model tests (13 Rust, seven Node) passed in the isolated builds. Four final session
+reports show owned-resource closure; an explicit driver relaunch preserved the
+attached application. Root inspection confirmed the actual updated control and
+application viewer; rollback screenshots and all cleanup receipts were retained.
+
+Exact installed-package acceptance: **eight checkpoint groups PASS**, repeating
+the complete alpha.2 → rejected candidate → alpha.3 → alpha.2 sequence through
+the installed tools' real control page, provider, isolated build and supervisor.
+Both Updated and Reverted control/application views passed independent live
+inspection. The same source, descriptor, exact data, save/no-write, four final
+reports, driver relaunch and attached-service assertions passed. All 35 installed
+tools files match their frozen inventory before/after. Owned processes and ports
+were closed; evidence and isolated installation directories were retained.
+Receipt: `artifacts/ninja-update/customer-packaged/run-aIWtrN/result.json`.
+
+The tested unpublished alpha.3 kit was built from clean source
+`4948b81bf5d57de71888aeca0293a24288a0373b`, source-tree SHA-256
+`7a06b78300e3159cfb1fcb82482d648d870e66be38ce26d809ec0e4af1a2a8d1`.
+ZIP SHA-256 `628a49cebeac853e66f3755e78e134d4a3e76987e9c9ec382c34003e8be1882b`;
+bundle manifest `090c88b081df2788afb7f739952cfa1bb30651cb91500a9e7af3c33b492964e1`;
+tools archive `f6e6f4031f4faea0ab5c9923f0b5ea889236c21ba26a99832505191c013f7397`.
+The tools were installed outside Git with a fresh offline npm cache. Subsequent
+documentation records this evidence and clarifies that only npm lifecycle scripts
+are disabled: Rust builds/tests and registered hooks execute trusted code, whose
+isolation contract is not an OS sandbox. That documentation follow-up does not
+change the frozen, tested executable bytes or constitute publication.
+
+Genuine regression failures retained separately include missing implementation
+assertions, accepting overridden fetched catalog bytes, failure to reject a final
+dirty draft, missing closed-resource status in the durable shutdown report,
+modified browser dependency/receipt/source paths, and absent acceptance evidence.
+Setup/import/fixture-lifecycle errors are not counted as browser scenario failures.
+The first fixture lifecycle failure and two stale-view refusals remain recorded
+as failed runs; neither is rewritten as success. The passing source run is
+`artifacts/ninja-update/customer/run-qYHzFV/`. Private logs and frozen unpublished
+candidate receipts remain in ignored
+`artifacts/ninja-update/` and `artifacts/ninja-update-20261023/`.
+
+At this earlier local checkpoint, the catalog tests used an ephemeral explicitly
+trusted signing key, including the exact published alpha.2 ZIP, and the production
+update feed/signing key was unconfigured. See the subsequent publication above.
+Browser receipts bind executable SHA-256 and observed version; they do not seal
+the external browser distribution/frameworks. WBF was not accessed or accepted.
+Publication, customer onboarding and cross-platform acceptance remain separate.
+
+## Operation Ninja-Update design review — 2026-10-23
+
+Recorded the [upgrade design and delivery plan](operations/ninja-update.md) after
+reviewing released source `a0dfa27296014cf455a90938d0a641f1c7f9bdfe`.
+This is a source/documentation review, not an implementation or acceptance run.
+Current archive-store update/rollback does not install dependencies, rebuild a
+customer engine or activate a launcher. The legacy GitHub bundle downloader also
+expects a different asset inventory from the public alpha.2 kit.
+
+The proposed managed updater preserves customer model/adapter source and data,
+rebuilds derived artifacts separately, validates the selected combination, and
+retains the previous complete installation. Compatibility preflight cannot reuse
+ordinary CLI startup against production: the customer factory and navigation
+precede model validation. NINJA-01 through NINJA-06 remain planned. No WBF system
+was accessed, no upgrade UI was added, and no new release or promotion occurred.
+
 ## Public assisted alpha 0.1.4-alpha.2 — 2026-10-21
 
 **Released** at [daedlo.com/install](https://daedlo.com/install) and the

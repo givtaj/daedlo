@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { renderInstallTemplate } from "../scripts/stage-release.mjs";
 
-const website = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const sourceWebsite = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const website = resolve(process.env.DAEDLO_WEBSITE_ROOT ?? sourceWebsite);
 
 test("homepage and guide give the preview an explicit installation path", async () => {
   for (const name of ["index.html", "guide.html"]) {
@@ -58,14 +59,27 @@ test("published tools block matches the version-specific verified setup instruct
     resolve(website, "templates/install.html"),
     "utf8",
   );
-  const install = await readFile(resolve(website, "public/install.html"), "utf8");
+  const install = await readFile(
+    resolve(website, "public/install.html"),
+    "utf8",
+  );
   const version = install.match(/href="\/downloads\/([^/]+)\/daedlo-/)[1];
   const directory = resolve(website, "public/downloads", version);
-  const metadata = JSON.parse(await readFile(resolve(directory, "release.json"), "utf8"));
-  const renderedGuide = execFileSync("python3", ["-c",
-    "import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); print(z.read(sys.argv[2]).decode(),end='')",
-    resolve(directory, metadata.archive.file), `daedlo-${version}/START_HERE.md`], {encoding: "utf8"});
-  const kitGuide = renderedGuide.replaceAll(version, "{{VERSION}}")
+  const metadata = JSON.parse(
+    await readFile(resolve(directory, "release.json"), "utf8"),
+  );
+  const renderedGuide = execFileSync(
+    "python3",
+    [
+      "-c",
+      "import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); print(z.read(sys.argv[2]).decode(),end='')",
+      resolve(directory, metadata.archive.file),
+      `daedlo-${version}/START_HERE.md`,
+    ],
+    { encoding: "utf8" },
+  );
+  const kitGuide = renderedGuide
+    .replaceAll(version, "{{VERSION}}")
     .replaceAll(metadata.tools.sha256, "{{TOOLS_SHA256}}")
     .replaceAll(metadata.bundle.manifestSha256, "{{MANIFEST_SHA256}}");
   const actual = template.match(
@@ -83,11 +97,25 @@ test("published tools block matches the version-specific verified setup instruct
     decoded.trim(),
     kitGuide.match(/```sh\n([\s\S]*?)\n```/)[1].trim(),
   );
-  const publishedBlock = install.match(/<code id="tools-install-code">([\s\S]*?)<\/code>/)?.[1];
-  assert.ok(publishedBlock, "The rendered public page needs the exact verified installer block.");
-  const publishedDecoded = publishedBlock.replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
-  assert.equal(publishedDecoded.trim(), renderedGuide.match(/```sh\n([\s\S]*?)\n```/)[1].trim());
-  assert.match(publishedDecoded, /npm install --prefix "\$driver_kit\/installed-tools" --workspaces=false/);
+  const publishedBlock = install.match(
+    /<code id="tools-install-code">([\s\S]*?)<\/code>/,
+  )?.[1];
+  assert.ok(
+    publishedBlock,
+    "The rendered public page needs the exact verified installer block.",
+  );
+  const publishedDecoded = publishedBlock
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&");
+  assert.equal(
+    publishedDecoded.trim(),
+    renderedGuide.match(/```sh\n([\s\S]*?)\n```/)[1].trim(),
+  );
+  assert.match(
+    publishedDecoded,
+    /npm install --prefix "\$driver_kit\/installed-tools" --workspaces=false/,
+  );
   const page = template.replace(/\s+/g, " ");
   assert.match(page, /fresh dependency caches/i);
   assert.match(page, /existing[^<]*toolchains/i);

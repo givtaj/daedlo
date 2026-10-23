@@ -15,7 +15,8 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
-const website = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const sourceWebsite = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const website = resolve(process.env.DAEDLO_WEBSITE_ROOT ?? sourceWebsite);
 const version = "0.1.2-rc.1";
 const zipName = `daedlo-${version}.zip`;
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -65,7 +66,7 @@ test("manifest recursively includes a curated versioned archive", async (t) => {
     await writeFile(join(destination, name), await readFile(join(kit, name)));
   const result = spawnSync(
     process.execPath,
-    [join(website, "scripts/manifest.mjs"), "--website-root", site],
+    [join(sourceWebsite, "scripts/manifest.mjs"), "--website-root", site],
     { encoding: "utf8" },
   );
   assert.equal(result.status, 0, result.stderr);
@@ -268,7 +269,7 @@ test("website acceptance checks real download links and refuses a stale installa
   const { checkWebsite } = await import("./acceptance.mjs");
   const { PUBLIC_FILES } = await import("../scripts/manifest.mjs");
   for (const name of PUBLIC_FILES) {
-    if (name === "install.html") continue;
+    if (["install.html", "updates.html"].includes(name)) continue;
     const content = await readFile(join(website, "public", name)).catch(
       (error) => {
         if (error.code === "ENOENT") return null;
@@ -281,10 +282,14 @@ test("website acceptance checks real download links and refuses a stale installa
     join(site, "templates/install.html"),
     await readFile(join(website, "templates/install.html")),
   );
+  await writeFile(
+    join(site, "public/updates.html"),
+    "<h1>Managed updates fixture</h1>",
+  );
   await stageRelease({ releaseDirectory: kit, websiteRoot: site });
   const result = await checkWebsite({ websiteRoot: site });
   assert.equal(result.archives, 1);
-  assert.equal(result.pages, 6);
+  assert.equal(result.pages, 7);
   const path = join(site, "public/install.html");
   await writeFile(
     path,

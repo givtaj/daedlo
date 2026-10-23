@@ -7,8 +7,8 @@ The user approved implementation of the proposed local driver and isolated Roots
 
 ## Ownership
 
-- One Node package: `@browser-driver/runtime`, alpha candidate `0.1.4-alpha.2`, Node >=22, ESM; protocol 1.
-- One Rust library: `browser-driver-engine`, alpha candidate `0.1.4-alpha.2`; compiled customer engine binaries implement `ApplicationModel`.
+- One Node package: `@browser-driver/runtime`, version `0.1.4-alpha.3`, Node >=22, ESM; protocol 1.
+- One Rust library: `browser-driver-engine`, version `0.1.4-alpha.3`; compiled customer engine binaries implement `ApplicationModel`.
 - Runtime owns one execution, revisions, interruption, transport and the viewer. Customer owns facts, nested state enums, commands, guards, outcome interpretation, browser handlers and fixture semantics.
 - App integrations are trusted code. Guarded action helpers are the supported effect path, not an isolation boundary against malicious adapters.
 - The first Roots consumer remains tied to commit `d4008e39aeaa137bb54ff48ca2d11748083a971a`. The explicitly requested Journal edit port may stage a reviewed working-tree feature overlay on pinned base `96275b53145e00e282d7c6a6f80faf3a5ad6df10` through the source checkout's `integrations/roots/prepare-feature.mjs` (not included in portable tools). Only selected source files whose bytes match the supplied review receipts are copied into the isolated snapshot. Record its source digest and distinguish this overlay from committed Roots source; unrelated dirty files remain untouched. Later ports still require a requested review of explicit source identities. No automatic sync or services.
@@ -31,7 +31,7 @@ The public `ApplicationModel` trait exposes associated `Facts`, `State`, `Comman
 
 ## Canonical recipe context extension
 
-The next candidate retains protocol 1 and advertises
+The published alpha.2 and alpha.3 runtime/engine pair retains protocol 1 and advertises
 `hello.capabilities.recipeContext:1`. Its `command` and `verify` operations accept
 optional `recipeContext:{recipe:string,step:number,session:string}`; `step` is the
 zero-based canonical recipe index and `session` is the original run session. The
@@ -69,9 +69,14 @@ version 1. Existing protocol-1 engines and models without internal commands keep
 their prior wire shape. A descriptor with `recipeOnly` requires the capability and
 fails initialization if it is missing. Old runtimes cannot execute new internal
 recipes, so consumers requiring this extension must pin a matched runtime and
-engine candidate. The immutable public rc.1 artifacts do not implement it.
+engine release. The immutable public rc.1 artifacts do not implement it.
 
 ## Public Node API
+
+Managed installation/activation is a separate version-1 contract implemented in
+the portable tools manager. See [Operation Ninja-Update](ninja-update.md) for its
+registration, launcher, isolated hook, browser identity and recovery boundaries.
+It does not change the JSON Lines protocol or move application rules into Node.
 
 `createDriverSession({page,context,enginePath,adapter,identity?,resources?})` attaches without navigation. `adapter` supplies `model`, `handlers` (map of command IDs to functions), `observe()`, optional `evidence(command,before,after)`, optional `settle()`, optional `close()`, and optional `effectStatus()` returning a safe application effect report. Each handler receives `(params,executionContext)`.
 

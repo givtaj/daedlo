@@ -1,11 +1,99 @@
-# Daedlo alpha delivery — 21 October 2026
+# Daedlo alpha delivery — 23 October 2026
+
+Release: **0.1.4-alpha.3**. Status: **published assisted alpha with signed managed updates**.
+[Install](https://daedlo.com/install.html) · [Managed updates](https://daedlo.com/updates.html) ·
+[Versioned release](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3).
+This is the current product/release decision record. Actual outcomes belong in
+[verification](verification.md); the alpha.2 record below remains historical.
+
+## Current product decision
+
+Keep the assisted **macOS arm64 + Codex** onboarding scope. Ninja-Update adds a
+one-time managed registration, then **Check for updates → Install update → Ready →
+Restart Daedlo** and **Revert update**. The agent reuses the accepted model, states,
+flows, adapter, configuration, locks, instructions and custom skills. A candidate
+builds and passes the registered disposable checks in a separate installation.
+It does not rewrite the authored integration or application data.
+
+The first registration and manager bootstrap remain assisted; alpha.2 cannot
+upgrade its tools into a managed updater by itself. Active/paused runs, unsaved or
+unknown drafts, stale source, failed compatibility and incomplete cleanup block
+replacement. Revert selects the prior installation and its captured source;
+it does not overwrite current authoring files or undo business writes. Keep the
+accepted browser cache: the executable identity is checked, while linked browser
+frameworks are not sealed. See [Operation Ninja-Update](operations/ninja-update.md).
+
+## Alpha.3 release gates
+
+| Gate | Actual evidence | Decision |
+| --- | --- | --- |
+| Source and distribution | Clean package source `558366b6`; public MIT/Apache notices; 37 installed portable-tools files | PASS |
+| Source checks | 212 release tests and required quality checks; push CI [39936785918](https://github.com/givtaj/browser-driver/actions/runs/39936785918) passed on Node 22/24 | PASS |
+| Exact installed runtime | Eight browser/API groups, 10 CLI cases, 25 finalization cases and nine browser-control cases | PASS against the frozen alpha.3 kit |
+| Representative application before publication | Eight checkpoints with exact installed tools: alpha.2 baseline, controlled candidate rejection, alpha.3 upgrade, rollback, source/data preservation, final reports, relaunch and owned cleanup | PASS; pinned synthetic Architecture Studio fixture |
+| Frozen website | 49/49 tests; seven pages, three retained archives; 30-file manifest; 255 scanned public/nested archive items | PASS; no selected private-path, key/token or evaluation-draft signatures found |
+| Public delivery | GitHub prerelease with exactly three assets; 27 served assets byte-identical on each of both website origins; nine private paths return 404 on each origin; CSP, nosniff and cache policies checked | PASS |
+| Fresh published installer | All three HTTPS/GitHub assets match frozen bytes; exact START_HERE block passed with a fresh npm cache; ancestor workspace/repository manifests unchanged; all 37 installed tools files and public trust pin match | PASS |
+| Published customer update | Actual production HTTPS feed/assets and freshly downloaded tools; eight checkpoints: authenticated alpha.2 baseline, controlled rejection after real checks, normal alpha.3 discovery/upgrade, rollback, unchanged source/data/tools, four final reports, relaunch and cleanup | PASS; visible Updated/Reverted control and viewer inspection passed |
+| WBF and ordinary Roots adoption | No WBF fixture or everyday Roots promotion performed | NOT RUN / outside this release's acceptance claim |
+
+GitHub publication completed at `2026-10-23T10:20:58Z`. The initial Cloudflare version
+`7a4d7da7-6f12-45c9-9f73-52ad898c3c52` served 100% of the existing Daedlo Worker;
+deployment `ad90348b-91d6-4711-b1d2-bb979cf15e4d` was created at
+`2026-10-23T10:20:50.900528Z`. Hosting recovery and live receipts belong in
+[website hosting](website-hosting.md). The static site does not host an application
+database. The rc.1 demo and alpha.2 downloads retain their original bytes.
+
+## Exact package and update-feed identity
+
+The ZIP is `daedlo-0.1.4-alpha.3.zip` (**206,234 bytes**), SHA-256
+`f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190`, built once from
+`558366b6b4de9a158a9ad49bb7b45d3080d5497e`. Later publication/status documentation
+does not change this package identity. The frozen website manifest SHA-256 is
+`073ddd3adf5f98338a6eae3e6fe54b5c173eb5dc93b14f35933abe890802d99f`.
+
+The initial production [preview catalog](https://daedlo.com/updates/preview.json) had
+generation **1**, publisher `daedlo`, and key `daedlo-release-2026-10`. Its raw-file
+SHA-256 is `09fcadcbbf1a7bcdb6300d8489faf4949477997550e0a4993ab553c40e22e80e`.
+The [reviewed public trust metadata](update-trust/production.json) and bundled PEM
+provide the pin; a key and checksum from the same unverified page are insufficient.
+Both immutable alpha.2 and alpha.3 releases remain in the signed catalog.
+
+The initial catalog expires at **2026-10-30T10:16:16Z**. The owner selected daily
+GitHub Actions renewal with a strictly increasing generation and at most seven
+days' validity. [Verification](verification.md) records implementation and actual
+activation status. Expiry blocks new discovery/downloads while the
+installed session and existing local rollback remain available, subject to their
+normal integrity and safe-boundary checks. The signing key is retained locally and in a GitHub repository secret;
+an independently recoverable off-device backup has **not been verified**. Do not bypass expiry or silently
+replace the publisher pin to recover.
+
+The published customer run completed at `2026-10-23T10:26:35.780Z` with a pinned
+Architecture Studio synthetic fixture. It preserved 119 application-source files,
+18 accepted integration files and 23 registered files. Both driver shutdown and
+relaunch preserved the attached application; final owned application/browser/server
+cleanup then completed. The baseline was explicitly selected from the authenticated
+alpha.2 entry for the test; subsequent discovery used the normal production
+provider. No injected fetch transport or production application data was used.
+
+## Next product milestone
+
+The scoped alpha.3 delivery is complete. Next, onboard one external builder's
+agreed useful flow and negative case. Measure setup time,
+agent interventions and repeat-run success. WBF needs its own agreed disposable
+fixture and flows before claiming WBF preservation or upgrade acceptance.
+Independent human onboarding, external customer adoption, Linux/Windows customer
+onboarding and Claude Code acceptance remain unproven. No invitation or customer
+message is implied by these release operations.
+
+## Historical alpha.2 delivery — 21 October 2026
 
 Release: **0.1.4-alpha.2**. Status: **published assisted alpha**.
 [Install](https://daedlo.com/install) · [Versioned release](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
-This is the current product/release decision record. Actual test outcomes belong
+This retained record describes alpha.2 at its publication. Actual test outcomes belong
 in [verification](verification.md); historical records keep their original scope.
 
-## Product decision
+### Product decision
 
 Bring one existing feature. Your coding agent connects it to a repeatable browser
 flow; you watch the browser and inspect evidence of what happened.
@@ -22,7 +110,7 @@ Paid subscriptions, hosted browser execution, Linux/Windows onboarding, Claude
 Code onboarding, universal framework support and everyday Roots adoption are
 separate expansion work. Linux CI remains required technical verification.
 
-## Where the product stands
+### Where the product stands
 
 | Track | Observed state | Alpha consequence |
 | --- | --- | --- |
@@ -41,7 +129,7 @@ remain unchanged.
 The integration owner controls version fields, lockfiles, entrypoints and release
 assembly. Existing application pins and live services remain untouched.
 
-## Release gates
+### Release gates
 
 | Gate | Required evidence | Current decision |
 | --- | --- | --- |
@@ -58,7 +146,7 @@ or historical result is not a passing gate. Keep failed runs and later correctio
 as separate evidence. Do not invite customers or send messages as part of these
 technical checks.
 
-## Alpha onboarding acceptance
+### Alpha onboarding acceptance
 
 1. Obtain the versioned kit and independently verify its digest. Run the actual
    supplied installation instructions in a fresh directory.
@@ -76,7 +164,7 @@ Measure time to the first verified flow, interventions needed, repeat-run succes
 and whether another agent can use the handoff. No customer adoption, revenue or
 self-service onboarding result is claimed before those observations exist.
 
-## Release identity and next product milestone
+### Release identity and next product milestone
 
 The tested ZIP is `daedlo-0.1.4-alpha.2.zip` (160,545 bytes), SHA-256
 `b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1`.

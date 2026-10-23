@@ -17,7 +17,20 @@ import { sha256 } from "./manifest.mjs";
 import { releaseLicense } from "./licensing.mjs";
 
 const execute = promisify(execFile);
-const libraries = ["consumer-cli", "commands", "manifest", "store", "remote"];
+const libraries = [
+  "consumer-cli",
+  "commands",
+  "manifest",
+  "store",
+  "remote",
+  "ninja",
+  "ninja-catalog",
+  "ninja-installation",
+  "ninja-manager",
+  "ninja-supervisor",
+  "ninja-child",
+  "ninja-server",
+];
 const documents = [
   "contracts",
   "agent-onboarding",
@@ -25,6 +38,7 @@ const documents = [
   "releases",
   "update-client",
   "presentation",
+  "ninja-update",
 ];
 const skillPrefix = "skills/browser-driver/";
 const requiredSkill = [
@@ -157,13 +171,25 @@ export async function buildToolsArchive({
     if (!entry) throw Error(`Required tools source is missing: ${source}.`);
     entries.set(destination, {
       bytes: entry.bytes,
-      mode: destination === "lib/consumer-cli.mjs" ? 0o755 : 0o644,
+      mode: ["lib/consumer-cli.mjs", "lib/ninja.mjs"].includes(destination)
+        ? 0o755
+        : 0o644,
     });
   };
   for (const name of libraries)
     copy(`scripts/release/${name}.mjs`, `lib/${name}.mjs`);
+  copy("scripts/release/ninja-ui.html", "lib/ninja-ui.html");
   for (const name of documents) copy(`docs/${name}.md`);
+  copy("docs/update-trust/production.json");
+  copy("docs/update-trust/daedlo-release-2026-10.pem");
   copy("docs/update-client.md", "README.md");
+  // This guide is also the package-root README; keep its local guide link valid.
+  entries.get("README.md").bytes = Buffer.from(
+    entries
+      .get("README.md")
+      .bytes.toString("utf8")
+      .replaceAll("](ninja-update.md)", "](docs/ninja-update.md)"),
+  );
   for (const file of licensing.files) copy(file);
   for (const file of requiredSkill)
     if (!sourceFiles.has(skillPrefix + file))
@@ -179,7 +205,10 @@ export async function buildToolsArchive({
     license: licensing.license,
     type: "module",
     engines: { node: ">=22" },
-    bin: { "browser-driver-release": "lib/consumer-cli.mjs" },
+    bin: {
+      "browser-driver-release": "lib/consumer-cli.mjs",
+      "ninja-update": "lib/ninja.mjs",
+    },
     files: [
       "lib",
       "docs",

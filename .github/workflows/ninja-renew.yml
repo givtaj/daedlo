@@ -1,0 +1,151 @@
+name: Renew production Ninja Update catalog
+
+on:
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: production-ninja-renew
+  cancel-in-progress: false
+
+jobs:
+  renew:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CI: "true"
+      WRANGLER_SEND_METRICS: "false"
+      WRANGLER_LOG_SANITIZE: "true"
+    steps:
+      - name: Check out trusted default-branch source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install locked source dependencies and pinned deployment tool
+        run: |
+          npm ci
+          npm install --prefix "$RUNNER_TEMP/daedlo-wrangler" --workspaces=false --no-audit --no-fund --save-exact wrangler@4.147.0
+          node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; assert.equal(JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/daedlo-wrangler/node_modules/wrangler/package.json")).version, "4.147.0");'
+      - name: Check renewal and publication safety before credential scope
+        run: |
+          node --test tests/release-ninja-catalog.test.mjs tests/release-ninja-publisher.test.mjs tests/release-ninja-renew.test.mjs tests/release-ninja-checkpoint.test.mjs website/tests/updates.test.mjs website/tests/stage-release.test.mjs
+          node_modules/.bin/prettier --check .github/workflows/ninja-renew.yml scripts/release/ninja-checkpoint.mjs scripts/release/ninja-renew.mjs tests/release-ninja-checkpoint.test.mjs tests/release-ninja-renew.test.mjs
+      - name: Restore authenticated renewal high-water checkpoint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          NINJA_DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: node scripts/release/ninja-checkpoint.mjs --output "$RUNNER_TEMP/daedlo-checkpoint"
+      - name: Prepare verified public renewal with temporary signing key
+        env:
+          DAEDLO_UPDATE_SIGNING_KEY: ${{ secrets.DAEDLO_UPDATE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key_directory="$RUNNER_TEMP/daedlo-renewal-private"
+          key_file="$key_directory/signing-key.pem"
+          mkdir -m 700 -- "$key_directory"
+          trap 'rm -f -- "$key_file"; rmdir -- "$key_directory"' EXIT
+          test -n "$DAEDLO_UPDATE_SIGNING_KEY"
+          printf '%s\n' "$DAEDLO_UPDATE_SIGNING_KEY" > "$key_file"
+          unset DAEDLO_UPDATE_SIGNING_KEY
+          checkpoint=()
+          if test -f "$RUNNER_TEMP/daedlo-checkpoint/catalog.json"; then
+            checkpoint=(--checkpoint "$RUNNER_TEMP/daedlo-checkpoint/catalog.json")
+          fi
+          node scripts/release/ninja-renew.mjs prepare --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+      - name: Validate the exact staged public website
+        env:
+          DAEDLO_WEBSITE_ROOT: ${{ runner.temp }}/daedlo-renewal/site
+        run: |
+          node --test website/tests/*.test.mjs
+          node website/tests/acceptance.mjs --website-root "$RUNNER_TEMP/daedlo-renewal/site"
+          node website/scripts/manifest.mjs --website-root "$RUNNER_TEMP/daedlo-renewal/site"
+          "$RUNNER_TEMP/daedlo-wrangler/node_modules/.bin/wrangler" deploy --dry-run --config "$RUNNER_TEMP/daedlo-renewal/site/wrangler.jsonc" --name daedlo
+          node scripts/release/ninja-renew.mjs verify --output "$RUNNER_TEMP/daedlo-renewal"
+      # Persist BEFORE any Cloudflare mutation. A failed/unknown deployment leaves
+      # this high-water mark intact and requires explicit operator recovery.
+      - name: Persist signed renewal checkpoint
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ninja-renewal-checkpoint-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/daedlo-renewal/checkpoint/catalog.json
+            ${{ runner.temp }}/daedlo-renewal/checkpoint/receipt.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload only the frozen existing-worker version
+        id: upload
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/daedlo-renewal/version-upload.jsonl
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test ! -e "$WRANGLER_OUTPUT_FILE_PATH"
+          "$RUNNER_TEMP/daedlo-wrangler/node_modules/.bin/wrangler" versions upload --config "$RUNNER_TEMP/daedlo-renewal/site/wrangler.jsonc" --name daedlo --message "Scheduled signed catalog renewal"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const records = fs.readFileSync(process.env.WRANGLER_OUTPUT_FILE_PATH, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+          assert.ok(!records.some(record => record.type === 'command-failed'));
+          const uploads = records.filter(record => record.type === 'version-upload');
+          assert.equal(uploads.length, 1);
+          assert.equal(uploads[0].worker_name, 'daedlo');
+          assert.match(uploads[0].version_id, /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `version-id=${uploads[0].version_id}\n`);
+          NODE
+      - name: Recheck the live baseline and activate the exact uploaded version
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          NINJA_VERSION_ID: ${{ steps.upload.outputs.version-id }}
+        run: |
+          node scripts/release/ninja-renew.mjs verify --output "$RUNNER_TEMP/daedlo-renewal"
+          "$RUNNER_TEMP/daedlo-wrangler/node_modules/.bin/wrangler" versions deploy "$NINJA_VERSION_ID@100" --config "$RUNNER_TEMP/daedlo-renewal/site/wrangler.jsonc" --name daedlo --yes --message "Scheduled signed catalog renewal"
+      - name: Verify the active deployment identity
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          NINJA_VERSION_ID: ${{ steps.upload.outputs.version-id }}
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs/promises';
+          import assert from 'node:assert/strict';
+          assert.match(process.env.CLOUDFLARE_ACCOUNT_ID, /^[a-f0-9]{32}$/i);
+          const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/workers/scripts/daedlo/deployments`, {headers: {Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`}, redirect: 'error', signal: AbortSignal.timeout(30000)});
+          assert.equal(response.status, 200, 'Active deployment request failed');
+          const chunks = []; let size = 0;
+          for await (const chunk of response.body) { size += chunk.length; assert.ok(size <= 1048576, 'Deployment response exceeded bound'); chunks.push(chunk); }
+          const body = JSON.parse(Buffer.concat(chunks));
+          assert.equal(body.success, true, 'Deployment response was unsuccessful');
+          const active = body.result?.deployments?.[0];
+          assert.ok(active, 'No active deployment');
+          assert.equal(active.versions.length, 1);
+          assert.equal(active.versions[0].version_id, process.env.NINJA_VERSION_ID);
+          assert.equal(active.versions[0].percentage, 100);
+          const receipt = {schemaVersion: 1, worker: 'daedlo', versionId: process.env.NINJA_VERSION_ID, deploymentId: active.id, percentage: 100, verifiedAt: new Date().toISOString()};
+          await fs.writeFile(process.env.RUNNER_TEMP + '/daedlo-renewal/active-deployment.json', JSON.stringify(receipt) + '\n', {flag: 'wx'});
+          console.log(JSON.stringify(receipt));
+          NODE
+      - name: Verify the live feed, exact public assets and security policies
+        run: node scripts/release/ninja-renew.mjs live --output "$RUNNER_TEMP/daedlo-renewal"
+      - name: Remove any remaining temporary signing key
+        if: always()
+        run: |
+          rm -f -- "$RUNNER_TEMP/daedlo-renewal-private/signing-key.pem"
+          if test -d "$RUNNER_TEMP/daedlo-renewal-private"; then
+            rmdir -- "$RUNNER_TEMP/daedlo-renewal-private"
+          fi

@@ -1,14 +1,22 @@
-# Daedlo 0.1.4-alpha.2 portable release tools
+# Daedlo 0.1.4-alpha.3 portable release tools
 
 The `@browser-driver/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding
-guides and complete `browser-driver` agent skill. It does not install a customer
-runtime, compile an application model, change application dependencies or restart
-services.
+guides and complete `browser-driver` agent skill. Its legacy archive commands do
+not install a customer runtime or activate a project.
 
-Obtain the exact kit named by the selected release receipt. During preparation
-this alpha candidate is local; the [installation page](https://daedlo.com/install.html)
-may still serve the earlier preview.
+The separate [Operation Ninja-Update manager](ninja-update.md) adds project
+registration, isolated installation/build/checks, a local Install/Restart/Revert
+screen, and whole-installation rollback. Alpha.3 includes the pinned production
+public key and preview-feed configuration in `docs/update-trust/production.json`.
+Customer registration and explicit publisher trust are one-time bootstrap steps. The existing public alpha.2 cannot bootstrap it automatically. In particular,
+the legacy GitHub downloader expects a four-file top-level bundle, whereas the
+public alpha.2 release publishes a kit ZIP plus metadata and checksums. Use the
+public kit instructions for alpha.2; do not treat release discovery as proof that
+the legacy downloader supports that asset format.
+
+Obtain the exact kit named by the selected release receipt at the
+[installation page](https://daedlo.com/install).
 Follow the surrounding kit's `START_HERE.md` for the selected archive's trusted
 digests and exact installation commands, and `AGENT_START.md` for the first-flow
 handoff. Those files are kit-level guides, not files inside this installed tools
@@ -70,7 +78,8 @@ portable client.
 To obtain another public version, return to the
 [installation page](https://daedlo.com/install.html), download its kit and follow
 its receipt before using local verification. The client currently has no website
-release discovery or website download operation.
+release discovery or website download operation through these legacy commands.
+Ninja-Update uses its configured authenticated public-kit catalog instead.
 
 `check` and `download` use the installed `gh` CLI and its existing authentication
 for the repository explicitly supplied through `--repo`. They support GitHub

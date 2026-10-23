@@ -4,7 +4,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const website = resolve(
+  process.env.DAEDLO_WEBSITE_ROOT ??
+    resolve(dirname(fileURLToPath(import.meta.url)), ".."),
+);
 // Frozen public facts transcribed from the 11 October 2026 acceptance and
 // integrity audit. Keep tests independent of ignored, local-only run artifacts.
 const accepted = {
@@ -28,10 +31,12 @@ const accepted = {
   ],
 };
 const read = async (path) =>
-  readFile(resolve(root, path), "utf8").catch((error) => {
-    if (error.code === "ENOENT") return "";
-    throw error;
-  });
+  readFile(resolve(website, path.replace(/^website\//, "")), "utf8").catch(
+    (error) => {
+      if (error.code === "ENOENT") return "";
+      throw error;
+    },
+  );
 
 test("real demo presents two recorded captures with accessible context and installation CTA", async () => {
   const html = await read("website/public/demo.html");
