@@ -617,6 +617,21 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
     await fs.readFile(join(repo, "website/public/onboarding.js")),
     "The new copy script must be staged and verified as exact public source bytes",
   );
+  const teachingAssets = ["teaching.html", "teaching.css"];
+  const teachingIdentities = [];
+  for (const name of teachingAssets) {
+    const source = await fs.readFile(join(repo, "website/public", name));
+    assert.deepEqual(
+      served.get(origin + "/" + name),
+      source,
+      `${name} must be staged as exact public source bytes`,
+    );
+    teachingIdentities.push({
+      path: name,
+      bytes: source.length,
+      sha256: sha256(source),
+    });
+  }
   let mode = "good";
   const fetchImpl = async (url, options) => {
     if (url === origin + "/index.html") {
@@ -641,21 +656,49 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
       return new Response("secret", { status: 200 });
     return new Response(body ?? "", { status: body ? 200 : 404, headers });
   };
+  const live = await verifyLiveNinjaRenewal(
+    { output: f.options.output },
+    { ...f.dependencies, fetchImpl },
+  );
   assert.deepEqual(
     Object.fromEntries(
-      Object.entries(
-        await verifyLiveNinjaRenewal(
-          { output: f.options.output },
-          { ...f.dependencies, fetchImpl },
-        ),
-      ).filter(([k]) =>
+      Object.entries(live).filter(([k]) =>
         ["status", "servedAssets", "privateBoundaries", "generation"].includes(
           k,
         ),
       ),
     ),
-    { status: "PASS", generation: 2, servedAssets: 28, privateBoundaries: 9 },
+    { status: "PASS", generation: 2, servedAssets: 30, privateBoundaries: 9 },
   );
+  assert.deepEqual(
+    teachingAssets.map((name) =>
+      live.assets.find((asset) => asset.path === name),
+    ),
+    teachingIdentities,
+    "Live verification must report each teaching asset's exact source identity",
+  );
+  for (const name of teachingAssets) {
+    const url = origin + "/" + name;
+    const original = served.get(url);
+    assert.ok(original.length > 0);
+    const altered = Buffer.from(original);
+    altered[0] ^= 1;
+    assert.equal(altered.length, original.length);
+    assert.notDeepEqual(altered, original);
+    served.set(url, altered);
+    try {
+      await assert.rejects(
+        verifyLiveNinjaRenewal(
+          { output: f.options.output },
+          { ...f.dependencies, fetchImpl },
+        ),
+        { message: "Live public asset differs from prepared manifest" },
+        `${name} must reject same-length live tampering`,
+      );
+    } finally {
+      served.set(url, original);
+    }
+  }
   mode = "cache";
   await assert.rejects(
     verifyLiveNinjaRenewal(

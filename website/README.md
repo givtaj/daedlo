@@ -6,6 +6,9 @@ The supported alpha path is macOS arm64 with Codex and one existing application
 flow. The dated verification in the current release metadata records its exact
 source, package checks, customer acceptance and limitations.
 
+The planned teaching-mode page describes a proposed Roots Journal lesson.
+Teaching mode is not implemented or included in the current release.
+
 Only `public/` is deployable. Scripts, tests, this README and hosting configuration
 stay outside the asset root. There is no framework, third-party font, analytics,
 account, data submission or live browser connection. The two curated screenshots

@@ -22,6 +22,8 @@ export const PUBLIC_FILES = new Set([
   "updates.html",
   "demo.html",
   "demo.css",
+  "teaching.html",
+  "teaching.css",
   "demo-evidence.json",
   "demo-verified-save.png",
   "demo-restored-fields.png",
