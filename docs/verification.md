@@ -1,6 +1,6 @@
 # Verification record
 
-## Unified website onboarding — local acceptance, 2026-10-23
+## Unified website onboarding — published and verified, 2026-10-23
 
 The canonical `/install` journey now puts one complete Codex prompt before manual
 references. It covers verified installation, the opened project (including WBF),
@@ -26,6 +26,25 @@ capture artifact; the final run adds native clipboard readback and resets scroll
 before screenshots. Publication is separately verified by the existing production
 renewal workflow, which carries the new allowlisted asset through its frozen source
 manifest, live-byte checks and increasing signed catalog checkpoint.
+
+[PR #5](https://github.com/givtaj/browser-driver/pull/5) merged as
+`50633f39644e4d4dfea6f54542e2f563c5cd1036` after branch and PR CI passed on Node
+22 and 24, including source/browser and packaged-consumer acceptance. Production
+[run 39959873260](https://github.com/givtaj/browser-driver/actions/runs/39959873260)
+restored generation 3 with `bootstrap:false`, then signed, checkpointed and
+published **generation 4**, expiring `2026-10-30T13:17:14.785Z`.
+It verified active Worker version `e633db1f-60e1-42b8-a8a2-93a08ace014d`, deployment
+`c03d8a03-518d-4dd0-b69b-ded69503f141`, serving 100% at
+`2026-10-23T13:17:29.708Z`. Every workflow step passed, including temporary key
+cleanup. The key and all three immutable release downloads remain unchanged.
+
+Independent canonical-site readback passed for **28 exact served files and nine
+private-path 404 boundaries**. The live `/install` page and copy success feedback
+were inspected in the app browser. `publication.log`, `checkpoint-generation-4/`,
+`live-expected/` and `live-apex.json` under the same evidence directory retain this
+publication proof. Site publication does not change repository visibility or
+licensing: the development repository is private; the public kit includes source
+under the existing MIT AND Apache-2.0 component terms.
 
 ## Automatic catalog renewal — activated and verified, 2026-10-23
 
