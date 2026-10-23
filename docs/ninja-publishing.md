@@ -95,6 +95,17 @@ checkpoint. If that initial run fails before persistence, investigate and prepar
 a reviewed recovery; rerunning it or starting another run cannot silently reset
 bootstrap. Never delete history or reset counters to regain that exception.
 
+The recorded initial failure on 23 October 2026 is run `39946067474`, attempt 1,
+from `e5e47d97c8226ff0f3a3f390e8c95926e7c44039`. It failed during public HTTP
+preparation, with no artifact and every publication step skipped. A reviewed,
+hardcoded recovery permits only fresh manual run 2, attempt 1, after independently
+matching that exact run, attempt, job and all step outcomes, a complete two-run
+history and zero artifacts. It still requires the original signed generation-1
+payload. This exception is not a general retry switch and cannot be used by a
+later run or attempt. The separate manual `ninja-feed-probe.yml` workflow reads
+only fixed public URLs, without secrets, and records bounded response metadata
+without bodies; it does not publish or create renewal checkpoints.
+
 If persistence completed, first inspect the signed checkpoint, live feed and
 active Cloudflare version. When the live feed already
 matches that checkpoint, a fresh dispatch can advance normally. When the checkpoint

@@ -511,6 +511,73 @@ test("predeploy rejects expired prepared catalog and signed same-generation equi
     /changed|baseline/i,
   );
 });
+test("HTTP failure identifies the fixed feed path, status and exact Cloudflare challenge marker", async (t) => {
+  const f = await fixture(t);
+  let requested = 0;
+  f.dependencies.fetchImpl = async (url, options) => {
+    requested++;
+    assert.equal(url, feed);
+    assert.equal(options.redirect, "error");
+    assert.deepEqual(options.headers, { "Cache-Control": "no-cache" });
+    const response = new Response("private body must never enter diagnostics", {
+      status: 403,
+      statusText: "private status text",
+      headers: {
+        "cf-mitigated": "challenge",
+        "set-cookie": "private-cookie=value",
+        "x-private": "private-header-value",
+      },
+    });
+    Object.defineProperty(response, "body", {
+      get() {
+        assert.fail("status failure must not read the response body");
+      },
+    });
+    return response;
+  };
+  await assert.rejects(prep(f), {
+    message:
+      "Unexpected renewal HTTP status: /updates/preview.json status=403 expected=200 cf-mitigated=challenge",
+  });
+  assert.equal(requested, 1);
+  await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+});
+test("HTTP asset failure reports only a reviewed fixed path and excludes unknown mitigation values", async (t) => {
+  const f = await fixture(t);
+  const original = f.dependencies.fetchImpl;
+  f.dependencies.fetchImpl = async (url, options) => {
+    if (url === feed) return original(url, options);
+    assert.equal(url, origin + "/downloads/0.1.2-rc.1/daedlo-0.1.2-rc.1.zip");
+    return new Response("private body", {
+      status: 503,
+      headers: {
+        "cf-mitigated": "untrusted-private-value",
+        "x-private": "secret",
+      },
+    });
+  };
+  await assert.rejects(prep(f), {
+    message:
+      "Unexpected renewal HTTP status: /downloads/0.1.2-rc.1/daedlo-0.1.2-rc.1.zip status=503 expected=200",
+  });
+});
+test("HTTP diagnostic never emits a queried or unreviewed request path", async (t) => {
+  const f = await fixture(t);
+  const pin = f.policy.assets["0.1.2-rc.1"]["daedlo-0.1.2-rc.1.zip"];
+  f.policy.assets["0.1.2-rc.1"] = {
+    "unreviewed-secret.zip?token=private-query": pin,
+  };
+  const original = f.dependencies.fetchImpl;
+  f.dependencies.fetchImpl = async (url, options) => {
+    if (url === feed) return original(url, options);
+    assert.match(url, /unreviewed-secret\.zip\?token=private-query$/);
+    return new Response("private body", { status: 502 });
+  };
+  await assert.rejects(prep(f), {
+    message:
+      "Unexpected renewal HTTP status: [unreviewed-path] status=502 expected=200",
+  });
+});
 test("transport rejects redirect, wrong HTTPS Date and oversized catalog before staging", async (t) => {
   for (const kind of ["redirect", "date", "size"]) {
     const f = await fixture(t);

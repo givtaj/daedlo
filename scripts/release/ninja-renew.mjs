@@ -119,6 +119,47 @@ const PRIVATE_PATHS = [
   "/scripts/release/ninja-publisher.mjs",
   "/package.json",
 ];
+// Diagnostics may name only reviewed request paths, never response text, arbitrary
+// headers, status text, query strings or values supplied through test policy seams.
+const HTTP_DIAGNOSTIC_PATHS = new Set([
+  "/",
+  ...[...PUBLIC_FILES].flatMap((name) =>
+    name.endsWith(".html")
+      ? ["/" + name, "/" + name.slice(0, -5)]
+      : ["/" + name],
+  ),
+  "/updates/preview.json",
+  `/updates/keys/${KEY}.pem`,
+  ...VERSIONS.flatMap((version) =>
+    [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"].map(
+      (name) => `/downloads/${version}/${name}`,
+    ),
+  ),
+  ...PRIVATE_PATHS,
+]);
+function httpStatusFailure(url, response, expected) {
+  const parsed = new URL(url);
+  const path =
+    parsed.origin === ORIGIN &&
+    !parsed.username &&
+    !parsed.password &&
+    !parsed.search &&
+    !parsed.hash &&
+    HTTP_DIAGNOSTIC_PATHS.has(parsed.pathname)
+      ? parsed.pathname
+      : "[unreviewed-path]";
+  const status =
+    Number.isInteger(response.status) &&
+    response.status >= 100 &&
+    response.status <= 599
+      ? response.status
+      : "unknown";
+  const mitigation =
+    response.headers.get("cf-mitigated") === "challenge"
+      ? " cf-mitigated=challenge"
+      : "";
+  return `Unexpected renewal HTTP status: ${path} status=${status} expected=${expected}${mitigation}`;
+}
 function fail(message) {
   throw Error(message);
 }
@@ -221,7 +262,8 @@ async function fetchBytes(
       fail("Unexpected HTML canonical redirect");
     return fetchBytes(canonical, s, { maximum, status, date });
   }
-  if (response.status !== status) fail("Unexpected renewal HTTP status");
+  if (response.status !== status)
+    fail(httpStatusFailure(url, response, status));
   if (date) {
     const observed = Date.parse(response.headers.get("date") ?? "");
     if (!Number.isFinite(observed) || Math.abs(observed - s.now) > 5 * 60000)
