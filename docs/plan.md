@@ -326,3 +326,21 @@ local passes do not clear pending preservation, publication, CI or normal-sessio
 gates. The user explicitly deferred
 VoiceOver spoken-output acceptance on October 19; it remains DEFERRED / NOT RUN
 and is not a current migration blocker.
+
+## Requested teaching-mode plan — 2026-10-23
+
+The [teaching-mode plan](teaching-mode.md) defines Show me, Guide me and Let me try,
+starting with a reduced teaching variant of the actual Roots Journal
+`draft-retained` workflow. Original September 2026 evidence confirms draft
+retention, not learner training or a saved experience.
+
+- [x] Inspect original recorded Roots UI, pinned recipe, assertions and receipts.
+- [x] Specify lesson objective, source evidence, learner steps, architecture,
+      milestones and acceptance criteria.
+- [ ] Implement capability-negotiated lesson observations and the learner panel.
+- [ ] Verify the reduced Roots lesson against isolated, pinned artifacts.
+- [ ] Run an exploratory novice pilot and record its actual results.
+
+The website introduction labels teaching mode as planned and separate from the
+preview download. Website check/deployment results belong in
+[verification](verification.md); they do not complete the runtime milestones.

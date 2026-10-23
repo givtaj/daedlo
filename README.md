@@ -88,3 +88,11 @@ run `npm ci`, `npm run check`, `npm test`, `npm run test:rust`,
 `npm run test:controls`, `npm run test:cli`, and `npm run test:viewer`.
 Installed-package acceptance is a separate release gate; source checks do not
 establish customer acceptance, complete Roots replacement or remote CI success.
+
+## Teaching mode — planned
+
+The [teaching-mode plan](docs/teaching-mode.md) proposes explained demonstrations,
+guided practice and independent attempts, beginning with Roots Journal draft
+retention. Teaching mode is not included in the current release. The plan links
+the historical workflow evidence, new learner-observation requirements and
+isolated acceptance gates.

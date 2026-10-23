@@ -1,5 +1,51 @@
 # Verification record
 
+## Teaching-mode plan and website candidate — 2026-10-23
+
+**LOCAL PASS / PUBLICATION PENDING:** [teaching-mode plan](teaching-mode.md)
+and a static website introduction. No teaching runtime was implemented; Roots
+learner acceptance, reduced-lesson replay and novice pilot are **NOT RUN**.
+Original September Roots UI, logs and pinned recipes were inspected as historical
+workflow evidence, distinct from new teaching acceptance. Live Roots was untouched.
+
+- Three substantive website content assertions failed before implementation.
+  The candidate then passed **61/61 website tests**, static acceptance for
+  **8 pages and 3 curated archives**, and **22/22 renewal tests**.
+- The candidate uses pinned release source `01641786fa756c85540d4e3b3fcf470f7a5a85b9`.
+  Both scoped website/renewal patches also pass application checks against
+  `ca2412a5bf24b29d7e402aeba109b8f59a299ee9`; only verification prose changed
+  between those sources. No runtime, dependency, publisher or trust code changed.
+- Desktop and 390px browser review covered the homepage teaching link/section,
+  teaching page, lesson anchor via keyboard and current-release installation link.
+  No horizontal overflow or console warnings/errors were observed. Responsive
+  overrides were reset. This is browser/UI review, not screen-reader acceptance.
+- The public inventory grows from **28 to 30 served assets** by adding
+  `teaching.html` and `teaching.css`. All nine immutable release files, installer,
+  onboarding script, update page, trust key and staged feed remain byte-identical
+  to the captured candidate baseline; existing demo assets remain unchanged.
+- Candidate feed bytes are an older local staging input, **not publication input**.
+  The release owner must preserve/advance the live generation-5 checkpoint
+  (`c7ea7b0d2a1697a987dc947cdfc96c90c8dbbfb6b2542ca591d341c7b4494b2f`)
+  and use the current renewal pipeline. Teaching publication is coordinated with
+  that owner; the dirty/stale main website must not be deployed wholesale.
+
+The authoring checkout retains its candidate evidence under
+`artifacts/teaching-mode-20261023/`. The release worktree independently repeated
+the three failing assertions against the current production baseline, then passed
+**61/61 website tests**, acceptance for **8 pages / 3 archives / 30 served assets**,
+and **22/22 renewal tests**. The renewal checks also compare exact teaching HTML
+and CSS bytes and reject same-length tampering of either live asset.
+
+Release-owner Chromium review at 1280px and 390px passed homepage navigation,
+the planned disclosure, keyboard lesson anchor, current-release/licence link and
+overflow checks, with no console errors or warnings. Desktop/mobile screenshots
+were inspected; the owned browser and preview server were closed. The staged site
+uses the verified generation-5 baseline: all 29 files outside the six reviewed
+static additions/edits remain byte-identical. Independent evidence is under
+`artifacts/teaching-publication/`; renewal coverage is retained under
+`artifacts/teaching-mode-20261023/renewal-teaching-byte-checks.log`. No private Roots
+traces were copied into the site. Production publication remains pending.
+
 ## Apache-2.0 next-release preparation — 2026-10-23
 
 Source prepares **0.1.4-alpha.4**, not a published release. The public engine,

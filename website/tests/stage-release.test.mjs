@@ -289,7 +289,7 @@ test("website acceptance checks real download links and refuses a stale installa
   await stageRelease({ releaseDirectory: kit, websiteRoot: site });
   const result = await checkWebsite({ websiteRoot: site });
   assert.equal(result.archives, 1);
-  assert.equal(result.pages, 7);
+  assert.equal(result.pages, 8);
   const path = join(site, "public/install.html");
   await writeFile(
     path,
