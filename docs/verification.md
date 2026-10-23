@@ -1,5 +1,84 @@
 # Verification record
 
+## Published Ninja-Update alpha.3 — 2026-10-23
+
+**Published** at [Daedlo](https://daedlo.com/install), with the
+[signed production feed](https://daedlo.com/updates/preview.json) and
+[versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3).
+The earlier local alpha.3 candidate below is historical evidence with different
+bytes. This release was built from clean source
+`558366b6b4de9a158a9ad49bb7b45d3080d5497e`, tree SHA-256
+`5974624f8a85af01ff2404779f53d9117d8bab5183ce152cd45dd1fc3c8f15f1`.
+Its ZIP is **206,234 bytes**, SHA-256
+`f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190`;
+bundle manifest `f2d977da2756997671c63f052dc7c387496aba7fb578d046042fd9204f31de6a`;
+tools `56b6c5f1663dc633870a58ba1c3e6322f03b2182ab64947b61fe2a58ab70adf3`.
+Later delivery documentation does not change the signed or packaged bytes.
+
+| Executed gate | Actual result |
+| --- | --- |
+| Source and release checks | PASS: syntax/types/format, 212 release checks with no skips; Node 22/24 source, browser and exact-package CI on frozen source, run [39936785918](https://github.com/givtaj/browser-driver/actions/runs/39936785918). |
+| Exact installed package | PASS: eight browser/API groups, 10 CLI, 25 finalization and nine browser-control cases; owned processes/directories cleaned. |
+| Exact downloaded installer | PASS: fresh HTTPS downloads of all three files match the frozen kit; the downloaded START_HERE block installed offline with a fresh npm cache in an isolated nested workspace. All 37 installed tools files and bundled production trust match their inventory; ancestor/repository manifests unchanged. |
+| GitHub asset read-back | PASS: exactly three published assets, correct frozen source target, each byte-identical to both the frozen kit and fresh Daedlo download. |
+| Final kit before publication | PASS: eight Architecture Studio upgrade/rollback/integrity checkpoints using the final installed tools and a local signed catalog; 21 main browser runs, three intended saves, four closed reports and cleanup. Independent visual inspection was not repeated in this prepublication run. |
+| Published feed application acceptance | PASS: all eight checkpoints with actual HTTPS discovery/downloads, independently pinned production key and newly downloaded installed tools. Independent live Updated/Reverted inspection passed; final integrity, durable reports, relaunch and owned cleanup passed. |
+| Website | PASS: 49 tests, seven pages and three archives; frozen manifest preserved; actual installation/update pages inspected. Both live origins serve all 27 files byte-identical, with nine private paths returning 404 each, security headers and correct mutable/immutable cache policies. |
+
+Published run `customer-published/run-ESmQK9/` authenticated the production catalog
+and downloaded both releases without an injected fetch transport. The unchanged
+accepted integration passed on public alpha.2. A deliberately rejecting hook,
+after its real isolated checks, left alpha.2 and the data intact. The accepted
+alpha.3 then installed and activated; rollback selected the complete retained
+alpha.2 installation. Exact data and the model descriptor were unchanged at both
+switch boundaries, before repeating the accepted flow. Invalid input produced no
+write; each intended save agreed across response, independent API and disk reads,
+then restored the fields on reload. The state model, flows, adapter, configuration,
+locks and instructions stayed unchanged, as did 119 pinned application source
+files, 18 accepted integration files, all 23 registered inputs and 37 installed
+tools files. Existing model checks passed (13 Rust and seven Node). Four final
+session reports recorded owned closure; driver relaunch passed while the attached
+application survived. Independent background IAB inspection confirmed selected and
+running versions and the actual controlled application after both switches. The
+test finished at `2026-10-23T10:26:35.780Z`; private evidence and retained isolated
+installations remain available for audit.
+
+The production signer verifies exact public kits before signing, rejects unsafe key
+files and preserves prior authenticated entries during renewal. Meaningful failing
+assertions were recorded before implementation; 20 focused publisher cases passed,
+including the exact retained alpha.2 kit (19 are in the standard release suite).
+Public-trust packaging tests first failed on missing files, then passed. Website
+regressions covered raw-file versus signed-payload digests and independent trust
+wording; published-mode configuration checks reject partial or altered trust.
+
+The feed is generation **1**, issued `2026-10-23T10:16:16.000Z`, expires
+**2026-10-30T10:16:16.000Z**, and authenticates alpha.2 and alpha.3. Raw envelope
+SHA-256: `09fcadcbbf1a7bcdb6300d8489faf4949477997550e0a4993ab553c40e22e80e`;
+signed-payload checkpoint: `bde773d01a3cb0bb33330b74b17dd7e5068e33fb650a55d558d446a10f5bbad0`.
+Ed25519 key `daedlo-release-2026-10` is independently pinned in
+`docs/update-trust/production.json`. The private key remains local, owner-only,
+outside Git/packages/site; an off-device backup is **NOT VERIFIED**.
+Renewal is manual and must advance the generation; no schedule or cloud signing
+secret was configured. Expiry blocks new update checks/downloads, not accepted
+local use or verified local rollback. See [publisher operations](ninja-publishing.md).
+
+Operational evidence retains the initial canonical-timestamp configuration refusal,
+the local-preview checker failing its production-only CSP expectation, and live
+read-back initially refusing Cloudflare's 307 HTML canonical redirects. The final
+checker follows only the observed exact same-origin HTML canonical paths; catalog,
+key and release requests still reject redirects. Wrangler retried two transient
+asset-upload failures before successful deployment. No product browser assertion
+was weakened and no private data entered the public tree.
+
+Evidence remains in ignored `artifacts/ninja-production/`: final package receipts,
+`exact-installed/`, `published-installer/`, `customer-prepublication/`,
+`customer-published/`, website checks and both live read-backs. Supported acceptance
+is macOS arm64 with existing toolchains/caches and a pinned Architecture Studio
+synthetic fixture. WBF, clean OS setup, Linux/Windows customer onboarding and Claude
+Code onboarding are **NOT RUN**. Runtime rollback does not undo application writes.
+Browser identity checks do not seal linked frameworks. No everyday Roots checkout,
+dependency pins or services were changed.
+
 ## Operation Ninja-Update local implementation — 2026-10-23
 
 **Local alpha.3 candidate, not published.** The external manager now implements
@@ -62,8 +141,9 @@ as failed runs; neither is rewritten as success. The passing source run is
 candidate receipts remain in ignored
 `artifacts/ninja-update/` and `artifacts/ninja-update-20261023/`.
 
-The catalog tests use an ephemeral explicitly trusted signing key, including the
-exact published alpha.2 ZIP. A production update feed/signing key is unconfigured.
+At this earlier local checkpoint, the catalog tests used an ephemeral explicitly
+trusted signing key, including the exact published alpha.2 ZIP, and the production
+update feed/signing key was unconfigured. See the subsequent publication above.
 Browser receipts bind executable SHA-256 and observed version; they do not seal
 the external browser distribution/frameworks. WBF was not accessed or accepted.
 Publication, customer onboarding and cross-platform acceptance remain separate.

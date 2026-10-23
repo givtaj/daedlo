@@ -31,7 +31,7 @@ The public `ApplicationModel` trait exposes associated `Facts`, `State`, `Comman
 
 ## Canonical recipe context extension
 
-The next candidate retains protocol 1 and advertises
+The published alpha.2 and alpha.3 runtime/engine pair retains protocol 1 and advertises
 `hello.capabilities.recipeContext:1`. Its `command` and `verify` operations accept
 optional `recipeContext:{recipe:string,step:number,session:string}`; `step` is the
 zero-based canonical recipe index and `session` is the original run session. The
@@ -69,7 +69,7 @@ version 1. Existing protocol-1 engines and models without internal commands keep
 their prior wire shape. A descriptor with `recipeOnly` requires the capability and
 fails initialization if it is missing. Old runtimes cannot execute new internal
 recipes, so consumers requiring this extension must pin a matched runtime and
-engine candidate. The immutable public rc.1 artifacts do not implement it.
+engine release. The immutable public rc.1 artifacts do not implement it.
 
 ## Public Node API
 

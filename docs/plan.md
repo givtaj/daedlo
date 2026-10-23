@@ -1,14 +1,21 @@
 # Implementation plan
 
-Current release work: [Daedlo alpha delivery — 21 October 2026](alpha-release.md).
+Current release: [Daedlo alpha delivery — 23 October 2026](alpha-release.md),
+published assisted `0.1.4-alpha.3`.
 That record owns the bounded alpha scope and gates. The milestones below retain
 their historical scope and do not by themselves establish a current release.
 
-Current candidate work: [Operation Ninja-Update](operations/ninja-update.md)
-(23 October 2026). The alpha.3 implementation adds project-preserving installation,
-compatibility validation, activation and rollback. See the [managed update guide](ninja-update.md)
+Current delivery: [Operation Ninja-Update](operations/ninja-update.md)
+(23 October 2026). Published alpha.3 adds project-preserving installation,
+compatibility validation, activation and rollback with an authenticated preview
+feed. Exact installed prepublication and separate production HTTPS customer
+upgrade/rollback acceptance both passed eight checkpoints, with unchanged source,
+data and tools, final reports, relaunch and owned cleanup. The scoped alpha.3
+delivery is complete. See the [managed update guide](ninja-update.md)
 and actual [verification record](verification.md) for acceptance scope.
-The public alpha.2 has no Install update button or managed consumer upgrade.
+Alpha.2 cannot bootstrap the managed updater itself; one-time setup is assisted.
+WBF remains untouched and unaccepted. Catalog renewal is manual, before the
+current expiry of 30 October 2026 at 10:16:16 UTC; no monitoring is configured.
 
 ## Goal and approved constraints
 

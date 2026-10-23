@@ -1,8 +1,53 @@
 # Operation Ninja-Update
 
 Date: 23 October 2026. Owner: Daedlo product/integration owner.
-Status: **implemented locally; source and exact installed-package upgrade/rollback acceptance passed; not released**.
+Status: **published in assisted alpha.3; exact installed and production-feed upgrade/rollback acceptance passed**.
 Source baseline reviewed: released main `a0dfa27296014cf455a90938d0a641f1c7f9bdfe`.
+
+## Delivery status — 23 October 2026
+
+[Alpha.3](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3)
+and the [signed preview feed](https://daedlo.com/updates/preview.json) are published.
+The package source is `558366b6b4de9a158a9ad49bb7b45d3080d5497e`; the 206,234-byte ZIP
+has SHA-256 `f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190`.
+Source quality/release checks and Node 22/24 push CI passed. Exact installed checks
+passed eight browser/API groups, 10 CLI, 25 finalization and nine browser-control
+cases. The final portable tools have 37 installed files. A fresh published installer
+passed with all three HTTPS/GitHub assets matching the frozen bytes, a fresh npm
+cache, unchanged ancestor workspace/repository manifests and the exact installed
+public trust pin.
+
+NINJA-01 through NINJA-04 are implemented and verified. NINJA-05 passed eight
+prepublication checkpoints with the exact installed tools against pinned synthetic
+Architecture Studio: baseline, intentional acceptance rejection after real checks,
+upgrade, rollback, preserved source/data, final reports, relaunch and owned cleanup.
+The separate production HTTPS feed/assets run also passed all eight checkpoints
+at `2026-10-23T10:26:35.780Z`, using the freshly downloaded installed tools and no
+injected fetch transport. It explicitly pinned authenticated alpha.2 for baseline
+setup, then used normal alpha.3 discovery. Visible Updated/Reverted controls and
+viewers passed inspection. All 119 pinned application-source files, 18 accepted
+integration files, 23 registered files and installed tools remained unchanged;
+four final reports recorded closed owned resources and the surviving attached
+application. Relaunch and final owned cleanup passed. This is representative
+synthetic application acceptance, not independent human onboarding.
+NINJA-06's publication portion is complete; **WBF onboarding is NOT RUN**, and WBF
+and everyday Roots resources remain untouched.
+
+The frozen site passed 49 tests and seven-page/three-archive acceptance. Live
+readback matched 27 served assets on each of both origins; nine private paths
+returned 404 per origin. Cloudflare version `7a4d7da7-6f12-45c9-9f73-52ad898c3c52`
+is active at 100%. Publication does not turn the original design requirements
+below into acceptance for an unregistered customer application.
+
+Production catalog generation 1 expires at **2026-10-30T10:16:16Z**. The public
+publisher key and pin ship in [trust metadata](../update-trust/production.json).
+Manual renewal must increase the generation; no scheduled renewal or monitoring
+is configured. Expiry blocks new checks/downloads, while the accepted installation
+and local rollback remain available subject to integrity and safe-boundary checks.
+The private signing key is local; an off-device backup has not been verified.
+See [alpha delivery](../alpha-release.md), [verification](../verification.md) and
+[the published bootstrap guide](https://daedlo.com/updates.html) for release evidence
+and explicit user setup.
 
 ## Outcome
 
@@ -18,7 +63,7 @@ upgrade can be called verified.
 
 The product contract is: **updating Daedlo preserves your authored project and
 data; a replacement becomes active only after compatibility and the project's
-registered acceptance checks pass.** This is a managed candidate contract, not an alpha.2
+registered acceptance checks pass.** This is the managed alpha.3 contract, not an alpha.2
 feature or a guarantee that every future release is compatible. Incompatible
 updates keep the current installation usable and report the migration needed.
 
@@ -186,13 +231,12 @@ the candidate instead of replacing its running files.
 
 ## Delivery sequence and acceptance
 
-The rows below retain the acceptance requirements. Shared NINJA-01 through
-NINJA-04 code is now implemented locally; the [verification record](../verification.md)
-owns actual test results. NINJA-05 passed against Architecture Studio with both
-source modules and the exact installed alpha.3 tools: upgrade, rejected candidate,
-rollback, unchanged project/source/data, reports, relaunch and cleanup. The tested
-package is frozen from clean source `4948b81bf5d57de71888aeca0293a24288a0373b`.
-NINJA-06 remains an external onboarding/release gate. See the
+The rows below retain the acceptance requirements. The delivery status above and
+[verification record](../verification.md) own current results. Earlier local
+source and installed-package acceptance at `4948b81bf5d57de71888aeca0293a24288a0373b`
+remains historical; the published package is the separately frozen `558366b6`
+identity. NINJA-06 still requires WBF-specific onboarding despite public release.
+See the
 [managed client guide](../ninja-update.md) for supported interfaces and bootstrap.
 
 | Work item | Deliverable | Completion evidence |
@@ -214,5 +258,6 @@ previous releases while referenced by active sessions or rollback selections.
 
 The first managed-updater installation is assisted: alpha.2 has no update button
 that can bootstrap itself. After that registration, compatible future releases
-can use the requested Install update experience. Work on this plan does not
-install anything into WBF, promote Roots, publish a release or enable monitoring.
+can use the requested Install update experience. The later authorized alpha.3
+publication is recorded above. It installed nothing into WBF, did not promote
+Roots and did not enable monitoring.

@@ -8,20 +8,23 @@ Rust model and guarded Node/Playwright actions. Watch the controlled browser,
 choose valid commands, pause or stop execution, and inspect evidence of the
 application outcome. Authored flows run without an AI agent or model API key.
 
-**0.1.4-alpha.2 is released: assisted macOS arm64 onboarding with Codex.**
+**0.1.4-alpha.3 is released: assisted macOS arm64 onboarding with Codex.**
 [Download the verified kit](https://daedlo.com/install) or read the
-[versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
-The exact installed kit, real-application flow, source CI and public delivery
-passed their scoped checks on 21 October 2026. The [verification record](docs/verification.md)
+[versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3).
+The exact installed kit, isolated application, source CI and public delivery
+passed their scoped checks on 23 October 2026. The [verification record](docs/verification.md)
 owns measured results and limits; [alpha delivery](docs/alpha-release.md) owns the
 product scope and next acceptance milestone. Everyday Roots dependencies remain
 unchanged.
 
-The local **0.1.4-alpha.3 candidate** adds [Operation Ninja-Update](docs/ninja-update.md):
+This release adds [Operation Ninja-Update](docs/ninja-update.md):
 prepare a separate installation, validate the existing project, restart at a safe
 boundary and revert the complete installation if needed. It requires one-time
-managed registration and a trusted catalog. This candidate has not been published;
-the [verification record](docs/verification.md) distinguishes its tests from alpha.2.
+managed registration and a pinned publisher key. The [signed preview feed](https://daedlo.com/updates/preview.json)
+and [setup guide](https://daedlo.com/updates) are live. Catalog generation 1 expires
+on 30 October 2026 at 10:16:16 UTC and requires manual renewal; expiry blocks new
+update checks/downloads while accepted local use and rollback remain available.
+WBF still needs its own project registration and disposable acceptance.
 
 ## The first alpha journey
 
