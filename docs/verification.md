@@ -1,16 +1,50 @@
 # Verification record
 
-## Automatic catalog renewal — implementation in progress, 2026-10-23
+## Automatic catalog renewal — activated and verified, 2026-10-23
 
-The owner selected daily GitHub Actions renewal. The same production signing key
-has been stored in `DAEDLO_UPDATE_SIGNING_KEY`, with the Cloudflare account ID as a
-repository variable. Following explicit approval, the token scoped to
-**Individual Workers → daedlo → Editor** was created and stored as
-`CLOUDFLARE_API_TOKEN` at `2026-10-23T11:18:25Z`. A read-only request authenticated
-it against the existing Daedlo deployment. The workflow is active on `main`
-after PR #2 merged as `e5e47d97c8226ff0f3a3f390e8c95926e7c44039`; its reviewed
-head `7e2e8ff` passed all four Node 22/24 push and PR CI jobs. **The first automatic
-publication has NOT succeeded.** Generation 1 remains live.
+Daily **04:23 UTC** renewal is active on `main`. Two manually dispatched runs
+passed the complete workflow; **the first unattended scheduled run has not yet
+been observed**. The same production key is stored in `DAEDLO_UPDATE_SIGNING_KEY`.
+After explicit approval, the token scoped to **Individual Workers → daedlo → Editor**
+was stored in `CLOUDFLARE_API_TOKEN`; the account ID is a repository variable.
+The key, immutable release archives and customer installation interfaces are unchanged.
+
+Recovery [PR #3](https://github.com/givtaj/browser-driver/pull/3) merged as
+`a99878c8c00bdd084e3db41d95c248acbfd89317`. Main-branch CI
+[39947163715](https://github.com/givtaj/browser-driver/actions/runs/39947163715)
+passed on Node 22 and 24; source quality and the 165-case focused suite passed.
+
+| Renewal | Actual result |
+| --- | --- |
+| [Run 2, 39948319111](https://github.com/givtaj/browser-driver/actions/runs/39948319111) | PASS at `2026-10-23T11:46:19Z`: exact reviewed initial-failure recovery, generation 2 signed and checkpointed before publication, complete staged-site checks, activation and live verification. |
+| [Run 3, 39948603151](https://github.com/givtaj/browser-driver/actions/runs/39948603151) | PASS: restored run 2's authenticated generation-2 checkpoint with `bootstrap:false`, then signed, checkpointed, published and verified generation 3. All workflow steps passed. |
+
+Generation **3** was issued at `2026-10-23T11:48:13.935Z` and expires at
+`2026-10-30T11:48:13.935Z`. Raw catalog SHA-256:
+`24995adfb74804a8c45308de9961176c1c95b3b0df29d9c04845badb75ea0a94`;
+signed-payload checkpoint:
+`d9268507939c0b90fa114f6f7b07ec68b125201ca9e97d67cecd6b4af7c0da74`.
+The workflow verified Worker version `4fc429c3-8128-4bfd-a9c4-70fed5378299`,
+deployment `c1d8b720-a19a-458e-b979-da3c05a538b3`, serving **100%** at
+`2026-10-23T11:48:26.988Z`. It verified the exact apex assets, signed feed,
+cache/security headers and private-path boundaries. Both durable public
+checkpoints and masked logs are retained under `artifacts/ninja-renewal/`,
+including `checkpoint-run-2/`, `checkpoint-run-3/` and `renewal-run-3.log`.
+Independent root readback at `2026-10-23T11:51:34.986Z` confirmed the same active
+version, deployment and exact generation-3 bytes (`active-generation-3.json`).
+The live update page displayed the matching expiry and renewal guidance. The
+owned temporary local deployment-token file and directory were then removed;
+the protected production signing key and authorized GitHub secrets remain.
+
+The unchanged published alpha.3 provider independently consumed generations 2
+and 3 over actual HTTPS. Each check downloaded and verified all six immutable
+alpha.2/alpha.3 assets and both complete kits. The generation-3 check preserved
+the authenticated generation-2 floor; all assets matched across renewals, all
+37 installed tools files and the PEM/SPKI pins remained unchanged, and owned
+download cleanup passed. Receipts are `consumer-generation-2.json`,
+`consumer-generation-3.json` and `consumer-generation-3-checkpoint.json` under
+the same evidence directory. This checks published consumer compatibility;
+the unchanged application upgrade/rollback acceptance remains recorded below.
 
 Initial dispatch [39946067474](https://github.com/givtaj/browser-driver/actions/runs/39946067474)
 passed all 113 pre-secret checks and initial checkpoint restoration, then failed
@@ -21,8 +55,51 @@ path/status diagnostics, a separate read-only runner probe and a single reviewed
 exception bound to the exact failed run and original generation-1 floor. No
 renewal retry is authorized by an unknown response or missing history.
 
-The workflow, signer orchestration and signed-checkpoint restoration passed
-independent review. The exact pre-secret workflow command passed **113 tests**
+The initial read-only runner probe
+[39947177085](https://github.com/givtaj/browser-driver/actions/runs/39947177085)
+completed all **44 GETs**: every response was **403** with `cf-mitigated: challenge`,
+on both apex and provider origins and with both tested user-agent variants.
+There were **zero successful HTTP responses**; a completed diagnostic job is not
+a delivery pass. Its bounded metadata log is retained as
+`artifacts/ninja-renewal/feed-probe-live.log`.
+
+The release owner's Cloudflare dashboard inspection of the owned
+`/updates/preview.json` probe identified **Interactive Challenge** from
+**Access rules: Country**, matching the existing US rule applied to all websites
+in the account. Rules also challenge CA, NL, VN, TR, CN and RU. Automated clients
+cannot complete that interactive challenge. Prior published-package acceptance
+below remains evidence for its exact bytes and tested environment, not proof of
+current worldwide delivery.
+
+After action-time user approval, a **US Allow rule scoped only to daedlo.com**
+was created. [Probe 39948105153](https://github.com/givtaj/browser-driver/actions/runs/39948105153)
+then returned **22/22 HTTP 200 on the apex**, while **22/22 provider-host requests
+still returned 403**. The account-wide US challenge and other rules are unchanged.
+Country Allow bypasses custom and rate-limiting rules for matching Daedlo traffic,
+including future rules; the exception is broader than the feed path alone.
+
+The user's priority is **Spain and the US**. Baseline public regional probes
+verified generation 1 in **6/6** requests from DE, FR and ES (two each); **2/2 NL**
+requests received challenges. The user explicitly declined an NL exception; its
+form was cancelled and no NL rule changed. CA, VN, TR, CN and RU remain
+configuration-based reach risks, not executed regional checks. Final generation-3
+checks from two Spain and two US locations passed **4/4 feed GETs**, each matching
+the exact catalog hash and Ed25519 signature, plus **4/4 ZIP HEADs** returning
+HTTP 200, `application/zip`, immutable caching and no challenge. The retained
+assessment is `eu-probes/priority-generation-3-assessment.json` under the evidence
+directory. The original diagnostic failure for an extra, absent `Content-Length`
+header is preserved; HEAD proves reach and response metadata, while the separate
+consumer checks above verify complete ZIP bodies. These are sampled regional
+results, not countrywide or worldwide guarantees; the provider hostname is not
+the canonical download endpoint.
+
+Manual run 2 consumed the one-off recovery exception successfully before the
+daily schedule could consume its run number. Run 3 used the normal durable
+checkpoint path. Later failures must follow authenticated checkpoint recovery;
+the initial exception cannot be reused or broadened by deleting history.
+
+Before the initial dispatch, the workflow, signer orchestration and signed-checkpoint
+restoration passed independent review. Its pre-secret command passed **113 tests**
 with no skips, including 19 renewal and 15 checkpoint cases. Genuine failing
 assertions preceded the initial implementation and review fixes for canonical
 HTML redirects, checkpoint receipt changes, missing newer artifacts, deleted run
@@ -53,8 +130,11 @@ These changes preserve immutable alpha.3 assets and its frozen source tag;
 the original published upgrade/rollback acceptance below remains valid for those
 exact bytes. The [publisher runbook](ninja-publishing.md) describes daily 04:23 UTC
 operation, secret custody, durable public checkpoints and recovery that refuses
-a lower generation. Actual test and live execution results will replace this
-in-progress status after verification.
+a lower generation. Workflow publication and checkpoint continuation are verified;
+the first unattended cron execution remains a separate unobserved event.
+The final seven-document activation record passed independent evidence review,
+syntax and diff checks, and all eight portable-tools checks, including the exact
+offline consumer installation; the log is `artifacts/ninja-renewal/final-docs-portable-tools.log`.
 
 ## Published Ninja-Update alpha.3 — 2026-10-23
 

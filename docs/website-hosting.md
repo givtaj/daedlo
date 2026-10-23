@@ -36,15 +36,26 @@ installation and update pages were inspected before deployment and the live
 update page was inspected after deployment. Historical rc.1 and alpha.2 downloads
 and the recorded demo retain their original bytes and claims.
 
-Production feed: `https://daedlo.com/updates/preview.json`, generation **1**, raw
+Initial production feed: `https://daedlo.com/updates/preview.json`, generation **1**, raw
 file SHA-256 `09fcadcbbf1a7bcdb6300d8489faf4949477997550e0a4993ab553c40e22e80e`.
-It expires **2026-10-30T10:16:16.000Z**. The Ed25519 public key and independent
-pins are in `docs/update-trust/`; the private key is retained in the release owner's
+Its original expiry was **2026-10-30T10:16:16.000Z**; later renewals supersede it.
+The Ed25519 public key and independent pins are in `docs/update-trust/`; the private key is retained in the release owner's
 protected local directory and, following authorization, a GitHub repository
 secret. No independently recoverable off-device backup is verified.
 [Automatic renewal](ninja-publishing.md) requires a higher generation and unchanged
-release entries. Its activation status is recorded in [verification](verification.md).
-It does not perform background application installation.
+release entries. Daily renewal at 04:23 UTC is active and two successful manual
+workflow dispatches published generations 2 and 3. [Verification](verification.md) records the
+latest deployment and exact feed identity. It does not perform background
+application installation.
+
+The canonical customer/update origin is `https://daedlo.com`. An approved
+Daedlo-only US country Allow rule resolved the account-wide country challenge
+for US clients and GitHub runners. Country Allow also bypasses any future custom
+rules and rate limits for US traffic across this zone; managed WAF remains
+applicable. See [Cloudflare country-rule behavior](https://developers.cloudflare.com/waf/tools/ip-access-rules/). The diagnostic `workers.dev` host remains challenged from US runners.
+Spain and the US are the priority regions. The Netherlands challenge remains
+unchanged by the owner's decision; sampled regional results and their limits
+are recorded in verification.
 
 The previous website version predates the feed. A static rollback would remove
 update discovery; it is not a way to roll a catalog generation backwards. Accepted
