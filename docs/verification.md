@@ -1,5 +1,51 @@
 # Verification record
 
+## Operation Ninja-Update local implementation — 2026-10-23
+
+**Local alpha.3 candidate, not published.** The external manager now implements
+signed public-kit discovery, project registration, isolated runtime/dependency
+installation and unchanged-model builds, acceptance/health gates, a local
+Install/Restart/Revert screen, atomic activation, failed-boot recovery and
+historical whole-installation rollback. See [the client contract](ninja-update.md).
+The public alpha.2 release and ordinary Roots dependencies are unchanged.
+
+Source validation: 129 runtime, 23 Rust and **193 release checks PASS**, including
+the managed updater's integrity, lifecycle, concurrency, HTTP security and real
+OS-process crash cases. Syntax/types/format checks PASS. Two independent Chromium
+update-screen tests PASS; their controller fixture is distinct from the following
+real application proof.
+
+Architecture Studio source-manager acceptance: **seven checkpoint groups PASS**.
+Pinned application `d8cb9396609b722418015cdd3367b3ef659aeb69` (119 source files),
+18 existing integration files and all 23 registered inputs remain unchanged.
+The exact published alpha.2 kit was installed, a deliberately rejected alpha.3
+acceptance hook left alpha.2 running/data intact, then the compatible local alpha.3
+activated and reverted to the complete alpha.2 slot. Both switches preserved exact
+application data and the state/command/recipe descriptor. The same invalid-input,
+save/read-back/reload flow passed on each version: zero writes for invalid input,
+one PUT for each intended save, with independent API/disk agreement. Existing
+model tests (13 Rust, seven Node) passed in the isolated builds. Four final session
+reports show owned-resource closure; an explicit driver relaunch preserved the
+attached application. Root inspection confirmed the actual updated control and
+application viewer; rollback screenshots and all cleanup receipts were retained.
+The exact packaged-tools repeat is still pending in this source commit.
+
+Genuine regression failures retained separately include missing implementation
+assertions, accepting overridden fetched catalog bytes, failure to reject a final
+dirty draft, missing closed-resource status in the durable shutdown report,
+modified browser dependency/receipt/source paths, and absent acceptance evidence.
+Setup/import/fixture-lifecycle errors are not counted as browser scenario failures.
+The first fixture lifecycle failure and two stale-view refusals remain recorded
+as failed runs; neither is rewritten as success. The passing source run is
+`artifacts/ninja-update/customer/run-qYHzFV/`. Private logs and frozen unpublished candidate receipts remain in ignored
+`artifacts/ninja-update/` and `artifacts/ninja-update-20261023/`.
+
+The catalog tests use an ephemeral explicitly trusted signing key, including the
+exact published alpha.2 ZIP. A production update feed/signing key is unconfigured.
+Browser receipts bind executable SHA-256 and observed version; they do not seal
+the external browser distribution/frameworks. WBF was not accessed or accepted.
+Publication, customer onboarding and cross-platform acceptance remain separate.
+
 ## Operation Ninja-Update design review — 2026-10-23
 
 Recorded the [upgrade design and delivery plan](operations/ninja-update.md) after

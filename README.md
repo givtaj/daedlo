@@ -17,6 +17,12 @@ owns measured results and limits; [alpha delivery](docs/alpha-release.md) owns t
 product scope and next acceptance milestone. Everyday Roots dependencies remain
 unchanged.
 
+The local **0.1.4-alpha.3 candidate** adds [Operation Ninja-Update](docs/ninja-update.md):
+prepare a separate installation, validate the existing project, restart at a safe
+boundary and revert the complete installation if needed. It requires one-time
+managed registration and a trusted catalog. This candidate has not been published;
+the [verification record](docs/verification.md) distinguishes its tests from alpha.2.
+
 ## The first alpha journey
 
 Start with one agreed, existing feature and a relevant negative case. An agent

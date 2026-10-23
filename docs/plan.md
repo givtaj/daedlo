@@ -4,10 +4,11 @@ Current release work: [Daedlo alpha delivery — 21 October 2026](alpha-release.
 That record owns the bounded alpha scope and gates. The milestones below retain
 their historical scope and do not by themselves establish a current release.
 
-Next requested product work: [Operation Ninja-Update](operations/ninja-update.md)
-(23 October 2026). Its recorded design adds project-preserving installation,
-compatibility validation, activation and rollback. Implementation and acceptance
-are planned; alpha.2 has no Install update button or managed consumer upgrade.
+Current candidate work: [Operation Ninja-Update](operations/ninja-update.md)
+(23 October 2026). The alpha.3 implementation adds project-preserving installation,
+compatibility validation, activation and rollback. See the [managed update guide](ninja-update.md)
+and actual [verification record](verification.md) for acceptance scope.
+The public alpha.2 has no Install update button or managed consumer upgrade.
 
 ## Goal and approved constraints
 

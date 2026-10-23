@@ -1,15 +1,15 @@
-# Daedlo 0.1.4-alpha.2 portable release tools
+# Daedlo 0.1.4-alpha.3 candidate portable release tools
 
 The `@browser-driver/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding
-guides and complete `browser-driver` agent skill. It does not install a customer
-runtime, compile an application model, change application dependencies or restart
-services.
+guides and complete `browser-driver` agent skill. Its legacy archive commands do
+not install a customer runtime or activate a project.
 
-The source repository's `docs/operations/ninja-update.md` records proposed
-Operation Ninja-Update: project-preserving installation and activation beyond
-this archive tooling. That maintainer plan is not included in this package. It is a
-design and delivery plan, not a capability of this alpha client. In particular,
+The separate [Operation Ninja-Update manager](ninja-update.md) adds project
+registration, isolated installation/build/checks, a local Install/Restart/Revert
+screen, and whole-installation rollback. This is an unpublished alpha.3 candidate;
+publisher feed/key provisioning and customer registration are explicit bootstrap
+steps. The existing public alpha.2 cannot bootstrap it automatically. In particular,
 the legacy GitHub downloader expects a four-file top-level bundle, whereas the
 public alpha.2 release publishes a kit ZIP plus metadata and checksums. Use the
 public kit instructions for alpha.2; do not treat release discovery as proof that
@@ -79,7 +79,8 @@ portable client.
 To obtain another public version, return to the
 [installation page](https://daedlo.com/install.html), download its kit and follow
 its receipt before using local verification. The client currently has no website
-release discovery or website download operation.
+release discovery or website download operation through these legacy commands.
+Ninja-Update uses its configured authenticated public-kit catalog instead.
 
 `check` and `download` use the installed `gh` CLI and its existing authentication
 for the repository explicitly supplied through `--repo`. They support GitHub

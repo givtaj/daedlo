@@ -1,7 +1,7 @@
 # Operation Ninja-Update
 
 Date: 23 October 2026. Owner: Daedlo product/integration owner.
-Status: **design and delivery plan recorded; updater not implemented or released**.
+Status: **implemented locally; source upgrade/rollback acceptance passed; packaged acceptance pending; not released**.
 Source baseline reviewed: released main `a0dfa27296014cf455a90938d0a641f1c7f9bdfe`.
 
 ## Outcome
@@ -16,13 +16,13 @@ design does not require access to WBF data to implement the shared mechanism.
 Its acceptance will need an agreed WBF fixture and existing flows before a WBF
 upgrade can be called verified.
 
-The product promise is: **updating Daedlo preserves your authored project and
+The product contract is: **updating Daedlo preserves your authored project and
 data; a replacement becomes active only after compatibility and the project's
-registered acceptance checks pass.** This is a target contract, not an alpha.2
+registered acceptance checks pass.** This is a managed candidate contract, not an alpha.2
 feature or a guarantee that every future release is compatible. Incompatible
 updates keep the current installation usable and report the migration needed.
 
-## What exists today
+## Baseline at the design review
 
 | Boundary | Current implementation | Missing for Ninja-Update |
 | --- | --- | --- |
@@ -186,7 +186,12 @@ the candidate instead of replacing its running files.
 
 ## Delivery sequence and acceptance
 
-All implementation rows are **planned**, not passed or shipped.
+The rows below retain the acceptance requirements. Shared NINJA-01 through
+NINJA-04 code is now implemented locally; the [verification record](../verification.md)
+owns actual test results. NINJA-05 source acceptance passed against Architecture Studio;
+an exact packaged-tools repeat remains in progress.
+NINJA-06 remains an external onboarding/release gate. See the
+[managed client guide](../ninja-update.md) for supported interfaces and bootstrap.
 
 | Work item | Deliverable | Completion evidence |
 | --- | --- | --- |
