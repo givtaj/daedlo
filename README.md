@@ -9,7 +9,7 @@ choose valid commands, pause or stop execution, and inspect evidence of the
 application outcome. Authored flows run without an AI agent or model API key.
 
 **0.1.4-alpha.3 is released: assisted macOS arm64 onboarding with Codex.**
-[Download the verified kit](https://daedlo.com/install) or read the
+[Start with one Codex prompt](https://daedlo.com/install) or read the
 [versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3).
 The exact installed kit, isolated application, source CI and public delivery
 passed their scoped checks on 23 October 2026. The [verification record](docs/verification.md)
@@ -37,15 +37,14 @@ application's dependencies, data and working tools. The application keeps its ow
 language; its integration supplies a native Rust model, a JavaScript adapter,
 fixture instructions and assertions for the outcome that matters.
 
-1. Acquire the selected kit and verify its recorded archive and package digests.
-2. Open the application in Codex and explicitly read the kit's `AGENT_START.md`
-   and complete browser-driver skill. Automatic skill discovery is optional.
-3. Install the exact runtime and matching crate, build the customer engine, and
-   launch its project module with a fresh report path.
-4. Run the agreed flow and negative case in the visible viewer. For a save,
-   independently read back the intended data; a click alone is not proof.
-5. Preserve the assertions and report, shut down owned resources, then relaunch
-   and repeat the authored flow from its documented prerequisites.
+1. Open the application repository in Codex (the WBF repository for WBF).
+2. Copy the single prompt from [Get started](https://daedlo.com/install#agent).
+   The agent verifies and installs the kit, reads its complete skill, connects the
+   first flow and prepares the project's managed-update registration.
+3. Inspect the visible flow, independent outcome/persistence evidence, negative
+   case and repeat run. Keep the project-specific launch/update commands and the
+   separate PASS/FAIL/BLOCKED/NOT RUN handoff. Compatible published versions and
+   a verified previous installation are required for an upgrade/rollback drill.
 
 The [onboarding guide](docs/agent-onboarding.md) describes this handoff. The kit's
 `START_HERE.md` and `AGENT_START.md` contain version-specific installation steps.

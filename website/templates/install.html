@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Daedlo assisted alpha for macOS arm64 with Codex. Connect one existing application flow with the verified runtime and agent instructions."
+      content="One Codex prompt to install Daedlo, connect your project, verify a first flow and set up Ninja-Update. Assisted alpha for macOS arm64."
     />
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="canonical" href="https://daedlo.com/install.html" />
     <link rel="icon" href="/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
-    <title>Download &amp; install — Daedlo {{VERSION}}</title>
+    <title>Get started — Daedlo {{VERSION}}</title>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -29,37 +29,130 @@
     </header>
     <main class="guide-main install-main wrap" id="main">
       <p class="eyebrow">Assisted alpha / {{VERSION}}</p>
-      <h1>Put Daedlo<br />to work<span class="orange">.</span></h1>
+      <h1>
+        One prompt.<br />Your first verified flow<span class="orange">.</span>
+      </h1>
       <p class="guide-intro">
-        Assisted alpha for macOS arm64 with Codex. Bring one existing flow,
-        connect its behavior, and inspect evidence of what happened.
+        Assisted alpha for macOS arm64 with Codex. Your agent installs Daedlo,
+        connects your project, verifies one real flow and sets up Ninja-Update.
       </p>
-      <section class="download-card" aria-labelledby="download-title">
-        <div class="download-card-heading">
-          <span class="download-symbol" aria-hidden="true">↓</span>
+      <ol class="onboarding-steps" aria-label="Get started in three steps">
+        <li>
+          <span class="section-number">01 / OPEN YOUR PROJECT</span>
+          <p>
+            Open your application repository in Codex. For WBF, open the WBF
+            repository.
+          </p>
+        </li>
+        <li>
+          <span class="section-number">02 / PASTE ONE PROMPT</span>
+          <p>
+            Copy the prompt below into that chat. Codex handles installation and
+            the project integration.
+          </p>
+        </li>
+        <li>
+          <span class="section-number">03 / CHECK THE EVIDENCE</span>
+          <p>
+            Watch your first flow, review its result and keep the local launch
+            and update commands.
+          </p>
+        </li>
+      </ol>
+      <section class="onboarding-card" id="agent" aria-labelledby="agent-title">
+        <div class="prompt-heading">
           <div>
-            <p class="eyebrow">The complete alpha kit</p>
-            <h2 id="download-title">Daedlo {{VERSION}}</h2>
+            <p class="eyebrow">YOUR CODEX HANDOFF</p>
+            <h2 id="agent-title">From install to managed updates.</h2>
           </div>
+          <button
+            class="button primary"
+            id="copy-onboarding-prompt"
+            type="button"
+            hidden
+          >
+            Copy Codex prompt
+          </button>
         </div>
-        <p>
-          Runtime, Rust engine, portable tools, agent instructions, setup guide,
-          and licence notices in one ZIP.
+        <p class="prompt-intro">
+          No paths to fill in. Paste it with your project open. Codex may need
+          your choice of flow or access to a test environment.
         </p>
-        <a
-          class="button primary download-button"
-          href="/downloads/{{VERSION}}/daedlo-{{VERSION}}.zip"
-          download
-          >Download alpha kit (.zip) <span aria-hidden="true">↓</span></a
+        <p
+          id="copy-status"
+          class="copy-status"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <noscript
+          ><p>
+            Select the prompt below and copy it manually. JavaScript is only
+            needed for the copy button.
+          </p></noscript
         >
-        <p class="download-size">{{ZIP_BYTES}} bytes · Version {{VERSION}}</p>
-        <div class="download-support">
-          <a href="/downloads/{{VERSION}}/SHA256SUMS" download
-            >Download SHA256SUMS</a
-          ><a href="/downloads/{{VERSION}}/release.json"
-            >Release &amp; verification metadata</a
-          ><a href="#manual">Manual setup</a>
-        </div>
+        <pre
+          id="onboarding-prompt"
+          tabindex="0"
+          aria-label="Complete Codex onboarding prompt"
+        >
+Set up Daedlo end to end for the application repository open in this Codex chat: install the verified release, connect one existing flow, verify it, and configure Operation Ninja-Update. Do the integration work and leave a working handoff.
+
+1. Inspect this repository's instructions, accepted models, flows and existing tooling. Preserve unrelated dirty work, dependencies, services, live browser sessions and application data. Reuse agreed behavior; inspect the actual UI before describing it. Ask only for unresolved intended behavior, test-environment access or permission for effects. Use disposable test data; onboarding does not authorize new application features or production writes. Already onboarded? Verify and reuse the accepted integration instead of replacing it.
+
+2. Use a durable fresh directory outside the application and any npm workspace. Download https://daedlo.com/downloads/{{VERSION}}/daedlo-{{VERSION}}.zip over HTTPS. Verify its SHA-256 is {{ZIP_SHA256}} before extraction or execution; stop on mismatch. Read the extracted START_HERE.md and AGENT_START.md. Verify the tools archive against {{TOOLS_SHA256}}, install it using the exact START_HERE.md block, and verify the bundle against {{MANIFEST_SHA256}}. For every scoped npm install use both --prefix and --workspaces=false, and verify ancestor manifests and locks remain unchanged. Preflight the documented Node, Rust, Python and matching Playwright/Chromium requirements; preserve working toolchains.
+
+3. Read the installed tools' skills/browser-driver/SKILL.md and its references, docs/agent-onboarding.md, docs/contracts.md and docs/ninja-update.md. Install the complete bundled skill for Codex without overwriting local customizations; explicitly read it if discovery is unavailable. Build a separate QA integration through the public Rust model and JavaScript adapter interfaces. Rust owns states, guards, outcomes and recipes; do not duplicate the transition graph in JavaScript. Design new integration files for the managed-launch contract from the outset. Review unsupported existing contracts instead of silently rewriting accepted behavior.
+
+4. Verify one agreed existing flow in a visible local viewer using a separate controlled browser. Inspect the UI and distinguish execution from the application outcome. For a save, independently read back persisted data and verify reload. Test a relevant negative case, including independent no-write evidence where applicable. Preserve reports, close only owned resources, relaunch and repeat. Keep credentials, customer data and private traces out of shared records.
+
+5. Register the accepted integration for Ninja-Update following docs/ninja-update.md. Inventory the exact model, states, flows, adapter, transitive source, configuration, dependency locks, instructions and custom skills. Keep tools, the managed store, authored project and application data separate. Add a reviewed createManagedLaunch entrypoint using the injected runtime and engine, real draftState evidence, and acceptance/health hooks that actually verify this flow with disposable data. These hooks are trusted code, not an OS sandbox: exclude production endpoints and credentials. Active/paused runs and unsaved or unknown drafts must block restart; startup only connects and observes, never replays flows.
+
+6. Pin publisher daedlo and key daedlo-release-2026-10 from the verified tools' docs/update-trust/production.json and bundled public PEM. Configure https://daedlo.com/updates/preview.json on channel preview; never replace the key from an unverified feed or bypass signature, expiry or compatibility checks. Prepare and validate the current release as the initial managed installation, then verify managed startup and the local update screen. Keep its private loopback token local. Rehearse upgrade, rejected-candidate preservation and rollback only when compatible published versions and a verified previous installation exist; otherwise record those drills as NOT RUN with the missing prerequisite. Revert selects the previous verified installation; it does not undo business writes or promise browser login/draft preservation. Keep the accepted browser cache and previous installation available.
+
+7. Leave project-specific launch and update commands, pinned versions, model/application identities, acceptance evidence, cleanup results and reusable project instructions. Report installation, first-flow acceptance, Ninja-Update registration and upgrade/rollback rehearsal separately as PASS, FAIL, BLOCKED or NOT RUN. Do not call this project ready based only on a download, example fixture or a receipt without actual checks.</pre
+        >
+        <p class="install-note">
+          Already have Daedlo? The same prompt reuses your accepted integration
+          and completes the missing setup.
+        </p>
+      </section>
+      <section class="guide-block" id="run" aria-labelledby="run-title">
+        <h2 id="run-title">What you should have at the end</h2>
+        <ul class="onboarding-outcomes">
+          <li>
+            <strong>A verified install.</strong> The release and its checksums
+            recorded outside your application dependencies.
+          </li>
+          <li>
+            <strong>Your first repeatable flow.</strong> A visible run, a real
+            outcome, a relevant negative case and saved evidence.
+          </li>
+          <li>
+            <strong>Updates ready to use.</strong> A local update screen with
+            signed releases and checks for your project.
+          </li>
+          <li>
+            <strong>A clear handoff.</strong> Launch commands, exact versions
+            and an honest record of anything blocked or not run.
+          </li>
+        </ul>
+        <p>
+          Your agent does the application-specific Rust model and JavaScript
+          adapter work. Your project states, flows, adapter and data remain
+          yours. A verified download alone does not establish WBF acceptance.
+        </p>
+        <p>
+          Future updates use
+          <strong>Check for updates → Install update → Restart Daedlo</strong>.
+          Revert selects a previous verified installation when one exists; it
+          does not undo application writes.
+          <a href="/updates.html">How updates and rollback work →</a>
+        </p>
+        <p class="install-note">
+          The default controlled browser is headless Chromium streamed into the
+          visible local viewer. Authored checks run without an AI agent or model
+          API key; assisted setup uses your own Codex access.
+        </p>
       </section>
       <section class="requirements" aria-label="Before you begin">
         <div>
@@ -77,137 +170,92 @@
           <p>Assisted macOS arm64 + Codex.<br />Linux / Windows unverified.</p>
         </div>
       </section>
-      <div class="guide-callout release-verification">
-        <p>
-          <strong>The recorded demo uses an earlier preview.</strong> Public
-          0.1.2-rc.1 was tested on 11 October 2026 with fresh dependency caches
-          for npm, Cargo and Chromium. The Architecture Studio edit, save and
-          reload recording retains that version and date.
-        </p>
-        <p>
-          We used existing Node.js 22.20.0, npm 10.9.3 and Rust 1.96.0
-          toolchains. This was not a clean OS installation. Linux / Windows
-          remain unverified.
-          <a href="/demo.html">See the real recorded demo and its evidence →</a>
-        </p>
-      </div>
-      <section class="guide-block" aria-labelledby="alpha-changes-title">
-        <h2 id="alpha-changes-title">What changed in this alpha</h2>
-        <ul>
-          <li>
-            Ninja-Update verifies and tests new versions separately, then lets
-            you restart or revert while preserving your authored integration and
-            application data.
-          </li>
-          <li>Cleared text stays empty when you submit a viewer command.</li>
-          <li>
-            Pause and Stop remain effective while final evidence is collected.
-          </li>
-          <li>
-            Visible typing and cursor movement make guarded actions easier to
-            follow.
-          </li>
-          <li>
-            CLI shutdown preserves the final report and retries failed owned
-            cleanup.
-          </li>
-        </ul>
-        <p>
-          Stopping cannot undo a request already sent. Execution, application
-          outcome and persistence evidence remain separate.
-        </p>
-        <p>
-          <strong>Previous alpha.2 release checks on 21 October 2026.</strong>
-          Source CI passed on Node.js 22 and 24 on Ubuntu. That exact alpha.2
-          kit passed macOS arm64 acceptance: eight browser/API groups, 10 CLI
-          cases, 25 finalization cases and nine browser-control cases, including
-          owned cleanup.
-        </p>
-        <p>
-          The Architecture Studio flow passed seven acceptance checkpoints, plus
-          13 Rust and seven Node tests. An empty required name was refused
-          without a write. A save agreed across the response, independent API
-          and disk reads, and the editor restored its fields after reload. CLI
-          shutdown retained the report; relaunching the CLI and controlled
-          browser repeated the save. Owned processes closed and ports were
-          released. The application server was not restarted.
-        </p>
-        <p>
-          Read the
-          <a href="/downloads/{{VERSION}}/release.json"
-            >dated verification record</a
-          >
-          for the exact source, package, customer handoff and remaining limits.
-          Ubuntu CI provides technical coverage; Linux customer onboarding
-          remains unverified.
-        </p>
-      </section>
-      <div class="guide-callout">
-        <p>
-          <strong>Already have an accepted integration?</strong>
-          <a href="/updates.html">Set up signed managed updates</a> once with
-          your agent. Then install, validate and revert from the local update
-          screen. Your model, states, flows, adapter and project data stay in
-          place.
-        </p>
-      </div>
-      <nav class="install-steps" aria-label="Installation steps">
-        <a href="#verify">01 / Verify download</a>
-        <a href="#tools">02 / Install tools</a>
-        <a href="#agent">03 / Connect your app</a>
-        <a href="#run">04 / Run your flow</a>
-      </nav>
-      <section class="guide-block" id="verify" aria-labelledby="verify-title">
-        <h2 id="verify-title">1. Download and verify</h2>
-        <p>
-          Save the ZIP and its
-          <a href="/downloads/{{VERSION}}/SHA256SUMS" download
-            >SHA256SUMS file</a
-          >
-          in the same new folder. Before extracting or running the kit, compare
-          the archive’s SHA-256 with the value below. The checksum file covers
-          the ZIP only.
-        </p>
-        <div class="checksum-box">
-          <span class="section-number">EXPECTED ZIP SHA-256</span
-          ><code>{{ZIP_SHA256}}</code>
-        </div>
-        <p>
-          From that folder, check the checksum and then extract the archive:
-        </p>
-        <pre
-          class="install-code"
-          tabindex="0"
-          aria-label="Verify the downloaded archive, then extract it"
-        ><code>shasum -a 256 -c SHA256SUMS &amp;&amp; \
-  unzip daedlo-{{VERSION}}.zip</code></pre>
+      <details class="onboarding-details" id="manual">
+        <summary>Manual download and installation</summary>
         <p class="install-note">
-          Continue only when the check reports OK. This checks download
-          integrity against the published digest; it does not verify your
-          application’s behavior. Use a local SHA-256 tool if your system does
-          not provide <code>shasum</code>.
+          These are reference instructions for the same kit. The Codex prompt
+          above handles them for assisted setup.
         </p>
-      </section>
-      <section class="guide-block" id="tools" aria-labelledby="tools-title">
-        <h2 id="tools-title">2. Verify and install the tools</h2>
-        <p>In your terminal, enter the newly extracted folder:</p>
-        <pre
-          class="install-code"
-          tabindex="0"
-          aria-label="Enter the extracted kit"
-        ><code>cd daedlo-{{VERSION}}</code></pre>
-        <p>
-          Run this complete block. It is the same block verified from the kit’s
-          <code>START_HERE.md</code>: check the tools archive before running it,
-          install the portable tools, then verify the runtime and engine bundle.
-        </p>
-        <details class="install-details" open>
-          <summary>macOS tools installation commands</summary>
+        <section class="download-card" aria-labelledby="download-title">
+          <div class="download-card-heading">
+            <span class="download-symbol" aria-hidden="true">↓</span>
+            <div>
+              <p class="eyebrow">The complete alpha kit</p>
+              <h2 id="download-title">Daedlo {{VERSION}}</h2>
+            </div>
+          </div>
+          <p>
+            Runtime, Rust engine, portable tools, agent instructions, setup
+            guide, and licence notices in one ZIP.
+          </p>
+          <a
+            class="button primary download-button"
+            href="/downloads/{{VERSION}}/daedlo-{{VERSION}}.zip"
+            download
+            >Download alpha kit (.zip) <span aria-hidden="true">↓</span></a
+          >
+          <p class="download-size">{{ZIP_BYTES}} bytes · Version {{VERSION}}</p>
+          <div class="download-support">
+            <a href="/downloads/{{VERSION}}/SHA256SUMS" download
+              >Download SHA256SUMS</a
+            ><a href="/downloads/{{VERSION}}/release.json"
+              >Release &amp; verification metadata</a
+            ><a href="#manual">Manual setup</a>
+          </div>
+        </section>
+        <section class="guide-block" id="verify" aria-labelledby="verify-title">
+          <h2 id="verify-title">1. Download and verify</h2>
+          <p>
+            Save the ZIP and its
+            <a href="/downloads/{{VERSION}}/SHA256SUMS" download
+              >SHA256SUMS file</a
+            >
+            in the same new folder. Before extracting or running the kit,
+            compare the archive’s SHA-256 with the value below. The checksum
+            file covers the ZIP only.
+          </p>
+          <div class="checksum-box">
+            <span class="section-number">EXPECTED ZIP SHA-256</span
+            ><code>{{ZIP_SHA256}}</code>
+          </div>
+          <p>
+            From that folder, check the checksum and then extract the archive:
+          </p>
           <pre
             class="install-code"
             tabindex="0"
-            aria-label="Verify and install the portable tools"
-          ><code id="tools-install-code">(
+            aria-label="Verify the downloaded archive, then extract it"
+          ><code>shasum -a 256 -c SHA256SUMS &amp;&amp; \
+  unzip daedlo-{{VERSION}}.zip</code></pre>
+          <p class="install-note">
+            Continue only when the check reports OK. This checks download
+            integrity against the published digest; it does not verify your
+            application’s behavior. Use a local SHA-256 tool if your system does
+            not provide <code>shasum</code>.
+          </p>
+        </section>
+        <section class="guide-block" id="tools" aria-labelledby="tools-title">
+          <h2 id="tools-title">2. Verify and install the tools</h2>
+          <p>In your terminal, enter the newly extracted folder:</p>
+          <pre
+            class="install-code"
+            tabindex="0"
+            aria-label="Enter the extracted kit"
+          ><code>cd daedlo-{{VERSION}}</code></pre>
+          <p>
+            Run this complete block. It is the same block verified from the
+            kit’s
+            <code>START_HERE.md</code>: check the tools archive before running
+            it, install the portable tools, then verify the runtime and engine
+            bundle.
+          </p>
+          <details class="install-details">
+            <summary>macOS tools installation commands</summary>
+            <pre
+              class="install-code"
+              tabindex="0"
+              aria-label="Verify and install the portable tools"
+            ><code id="tools-install-code">(
   set -eu
   driver_kit="$(pwd -P)"
   node --input-type=module - "$driver_kit/tools/browser-driver-tools-{{VERSION}}.tgz" &lt;&lt;'NODE'
@@ -225,115 +273,131 @@ NODE
   node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs \
     verify --bundle "$driver_kit/bundle" --sha256 '{{MANIFEST_SHA256}}'
 )</code></pre>
-        </details>
-        <p class="install-note">
-          <strong>What success looks like:</strong>
-          “Tools archive digest verified.” followed by the bundle report for
-          <code>{{VERSION}}</code> with
-          <code>trustedDigestProvided: true</code>. Stop on any error. If
-          <code>installed-tools</code> already exists, inspect that installation
-          or start with a new extraction; do not overwrite it.
-        </p>
-        <p>
-          Only this portable-tools install is offline. The runtime, Rust
-          dependencies and matching Chromium need their normal downloads. Your
-          agent completes those steps while building your application’s separate
-          integration.
-        </p>
-      </section>
-      <section class="guide-block" id="agent" aria-labelledby="agent-title">
-        <h2 id="agent-title">3. Connect one flow with your agent</h2>
-        <p>
-          In Codex, open your application project and point the agent to
-          <code>AGENT_START.md</code> inside the extracted
-          <code>daedlo-{{VERSION}}</code> folder. Give it the actual path and
-          one existing flow you want to verify.
-        </p>
-        <div class="agent-prompt">
-          <span class="section-number"
-            >A STARTING REQUEST / REPLACE THE KIT PATH</span
-          >
-          <blockquote>
-            Read /absolute/path/to/daedlo-{{VERSION}}/AGENT_START.md. Verify the
-            release and set up a separate QA integration in this project. Reuse
-            our accepted behavior and help me choose one existing flow. Preserve
-            our application, dependencies, data, and working tooling. Install
-            the bundled skill, connect the Rust state model and JavaScript
-            adapter, then run the flow in a visible viewer and show me its
-            evidence. Verify a real outcome and, for a save, independently read
-            back the persisted data. Verify a relevant negative case. Preserve
-            the evidence, close owned resources, then relaunch and repeat the
-            flow. Record the exact versions and any unverified steps.
-          </blockquote>
+          </details>
+          <p class="install-note">
+            <strong>What success looks like:</strong>
+            “Tools archive digest verified.” followed by the bundle report for
+            <code>{{VERSION}}</code> with
+            <code>trustedDigestProvided: true</code>. Stop on any error. If
+            <code>installed-tools</code> already exists, inspect that
+            installation or start with a new extraction; do not overwrite it.
+          </p>
+          <p>
+            Only this portable-tools install is offline. The runtime, Rust
+            dependencies and matching Chromium need their normal downloads. Your
+            agent completes those steps while building your application’s
+            separate integration.
+          </p>
+        </section>
+        <section class="guide-block" id="kit" aria-labelledby="kit-title">
+          <h2 id="kit-title">Inside the kit</h2>
+          <p>
+            Open the bundled <code>START_HERE.md</code> in the extracted
+            <code>daedlo-{{VERSION}}</code> folder. It is the version-specific
+            installation guide. Keep the kit’s archives and receipts together so
+            the selected runtime and engine remain reproducible.
+          </p>
+          <dl class="kit-contents">
+            <div>
+              <dt>START_HERE.md</dt>
+              <dd>Setup and verification instructions for this kit.</dd>
+            </div>
+            <div>
+              <dt>AGENT_START.md</dt>
+              <dd>The agent-led installation and first-flow handoff.</dd>
+            </div>
+            <div>
+              <dt>bundle/</dt>
+              <dd>
+                Runtime tarball, engine crate, manifest.json, and SHA256SUMS.
+              </dd>
+            </div>
+            <div>
+              <dt>tools/</dt>
+              <dd>
+                Portable tools archive, TOOLS_SHA256SUMS, and
+                TOOLS_VERIFICATION.json.
+              </dd>
+            </div>
+            <div>
+              <dt>licenses/</dt>
+              <dd>
+                Included licence texts. Read the kit’s accompanying notices too.
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </details>
+      <details class="onboarding-details">
+        <summary>Release checks and alpha history</summary>
+        <div class="guide-callout release-verification">
+          <p>
+            <strong>The recorded demo uses an earlier preview.</strong> Public
+            0.1.2-rc.1 was tested on 11 October 2026 with fresh dependency
+            caches for npm, Cargo and Chromium. The Architecture Studio edit,
+            save and reload recording retains that version and date.
+          </p>
+          <p>
+            We used existing Node.js 22.20.0, npm 10.9.3 and Rust 1.96.0
+            toolchains. This was not a clean OS installation. Linux / Windows
+            remain unverified.
+            <a href="/demo.html"
+              >See the real recorded demo and its evidence →</a
+            >
+          </p>
         </div>
-        <p>
-          The agent follows the kit’s installation instructions, checks
-          dependencies, and helps connect your application. Explicitly read the
-          bundled skill if automatic discovery is unavailable. The alpha
-          requires an application-specific Rust model and JavaScript adapter;
-          downloading the kit does not discover those for you.
-        </p>
-      </section>
-      <section class="guide-block" id="run" aria-labelledby="run-title">
-        <h2 id="run-title">4. See your own flow run</h2>
-        <p>
-          Your agent builds the integration’s model and adapter, installs the
-          pinned runtime and Chromium, and leaves a project-specific launch
-          command. Agree on the states, actions, and outcomes that matter.
-          Launch the local viewer, follow the controlled browser, and inspect
-          both the application outcome and the evidence behind it. The default
-          controlled browser is headless Chromium streamed into the visible
-          local viewer.
-        </p>
-        <p>
-          Authored checks run without an AI agent or model API key. Assisted
-          setup uses your own Codex access. Customer application dependencies
-          and any fixture services are separate from the kit.
-        </p>
-        <p>
-          <a href="/demo.html">See what a verified first flow looks like</a>, or
-          <a href="/guide.html">read the integration guide</a> for the model,
-          adapter, execution controls, and evidence boundaries.
-        </p>
-      </section>
-      <section class="guide-block" id="manual" aria-labelledby="manual-title">
-        <h2 id="manual-title">Prefer to set it up yourself?</h2>
-        <p>
-          Open the bundled <code>START_HERE.md</code> in the extracted
-          <code>daedlo-{{VERSION}}</code> folder. It is the version-specific
-          installation guide. Keep the kit’s archives and receipts together so
-          the selected runtime and engine remain reproducible.
-        </p>
-        <dl class="kit-contents">
-          <div>
-            <dt>START_HERE.md</dt>
-            <dd>Setup and verification instructions for this kit.</dd>
-          </div>
-          <div>
-            <dt>AGENT_START.md</dt>
-            <dd>The agent-led installation and first-flow handoff.</dd>
-          </div>
-          <div>
-            <dt>bundle/</dt>
-            <dd>
-              Runtime tarball, engine crate, manifest.json, and SHA256SUMS.
-            </dd>
-          </div>
-          <div>
-            <dt>tools/</dt>
-            <dd>
-              Portable tools archive, TOOLS_SHA256SUMS, and
-              TOOLS_VERIFICATION.json.
-            </dd>
-          </div>
-          <div>
-            <dt>licenses/</dt>
-            <dd>
-              Included licence texts. Read the kit’s accompanying notices too.
-            </dd>
-          </div>
-        </dl>
-      </section>
+        <section class="guide-block" aria-labelledby="alpha-changes-title">
+          <h2 id="alpha-changes-title">What changed in this alpha</h2>
+          <ul>
+            <li>
+              Ninja-Update verifies and tests new versions separately, then lets
+              you restart or revert while preserving your authored integration
+              and application data.
+            </li>
+            <li>Cleared text stays empty when you submit a viewer command.</li>
+            <li>
+              Pause and Stop remain effective while final evidence is collected.
+            </li>
+            <li>
+              Visible typing and cursor movement make guarded actions easier to
+              follow.
+            </li>
+            <li>
+              CLI shutdown preserves the final report and retries failed owned
+              cleanup.
+            </li>
+          </ul>
+          <p>
+            Stopping cannot undo a request already sent. Execution, application
+            outcome and persistence evidence remain separate.
+          </p>
+          <p>
+            <strong>Previous alpha.2 release checks on 21 October 2026.</strong>
+            Source CI passed on Node.js 22 and 24 on Ubuntu. That exact alpha.2
+            kit passed macOS arm64 acceptance: eight browser/API groups, 10 CLI
+            cases, 25 finalization cases and nine browser-control cases,
+            including owned cleanup.
+          </p>
+          <p>
+            The Architecture Studio flow passed seven acceptance checkpoints,
+            plus 13 Rust and seven Node tests. An empty required name was
+            refused without a write. A save agreed across the response,
+            independent API and disk reads, and the editor restored its fields
+            after reload. CLI shutdown retained the report; relaunching the CLI
+            and controlled browser repeated the save. Owned processes closed and
+            ports were released. The application server was not restarted.
+          </p>
+          <p>
+            Read the
+            <a href="/downloads/{{VERSION}}/release.json"
+              >dated verification record</a
+            >
+            for the exact source, package, customer handoff and remaining
+            limits. Ubuntu CI provides technical coverage; Linux customer
+            onboarding remains unverified.
+          </p>
+        </section>
+      </details>
       <section class="guide-block" aria-labelledby="license-title">
         <h2 id="license-title">
           Public component licences, with their history intact.
@@ -380,5 +444,6 @@ NODE
         ><a href="/privacy.html">Privacy &amp; contact</a>
       </nav>
     </footer>
+    <script src="/onboarding.js" defer></script>
   </body>
 </html>

@@ -28,6 +28,7 @@ export const PUBLIC_FILES = new Set([
   "404.html",
   "styles.css",
   "workflow.js",
+  "onboarding.js",
   "mark.svg",
   "robots.txt",
   "sitemap.xml",
