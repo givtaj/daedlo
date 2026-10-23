@@ -1,6 +1,9 @@
-# Install Daedlo 0.1.4-alpha.3
+# Install Daedlo 0.1.4-alpha.4
 
-This alpha release pairs the Daedlo runtime, Rust engine source,
+This guide describes the unpublished next-release candidate. The website still
+distributes alpha.3 under its original terms; use its own kit instructions.
+
+This alpha candidate pairs the Daedlo runtime, Rust engine source,
 portable release tools and complete agent skill. Existing `browser-driver`
 package names, commands and protocol identifiers remain unchanged.
 
@@ -30,10 +33,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `browser-driver-runtime-0.1.4-alpha.3.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
-| `browser-driver-engine-0.1.4-alpha.3.crate` | Rust library source for the customer's application model                                                                |
+| `browser-driver-runtime-0.1.4-alpha.4.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
+| `browser-driver-engine-0.1.4-alpha.4.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `browser-driver-tools-0.1.4-alpha.3.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
+| `browser-driver-tools-0.1.4-alpha.4.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -95,7 +98,8 @@ Claude Code, automatic skill discovery and complete onboarding across unfamiliar
 frameworks are unverified. A selected integration's pass is not universal application coverage.
 
 Read the supplied `LICENSE`, `THIRD_PARTY_NOTICES.md`, and preserved MIT and
-Apache-2.0 texts. The `MIT AND Apache-2.0` declaration describes the applicable
-component notices; it does not offer a choice to discard either component's terms.
+Apache-2.0 texts. From alpha.4, the public core uses Apache-2.0 while required
+legacy MIT and third-party notices remain included. Alpha.3 and earlier releases
+retain their original terms and previously granted permissions.
 This public preview carries no time-limited evaluation agreement. Customer code,
 models, adapters, data and authored flows remain separate from the driver.

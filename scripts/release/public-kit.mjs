@@ -11,6 +11,9 @@ const notices = [
   "licenses/Apache-2.0.txt",
   "licenses/MIT-legacy.txt",
 ];
+// Historical public kits retain their original combined declaration. New core
+// releases use Apache-2.0 while keeping the same legacy notice inventory.
+const publicLicenses = new Set(["MIT AND Apache-2.0", "Apache-2.0"]);
 const templateNames = ["START_HERE.md", "AGENT_START.md"];
 const digestPattern = /^[a-f0-9]{64}$/;
 const archiveLimit = 64 * 1024 * 1024;
@@ -162,8 +165,11 @@ function packageIdentity(files, name, version) {
   const pkg = json(bytes, "package");
   if (pkg.name !== name || pkg.version !== version)
     throw Error("Public package identity does not match the selected version.");
-  if (pkg.license !== "MIT AND Apache-2.0")
-    throw Error("Public package license must be MIT AND Apache-2.0.");
+  if (!publicLicenses.has(pkg.license))
+    throw Error(
+      "Public package license must be Apache-2.0 or MIT AND Apache-2.0.",
+    );
+  return pkg.license;
 }
 
 // Cargo emits these explicit strings in the normalized Cargo.toml in a .crate.
@@ -202,8 +208,12 @@ function engineIdentity(files, version) {
     throw Error(
       "Engine package identity/version must match the selected release.",
     );
-  if (fields.get("license") !== "MIT AND Apache-2.0")
-    throw Error("Engine package license must be MIT AND Apache-2.0.");
+  const license = fields.get("license");
+  if (!publicLicenses.has(license))
+    throw Error(
+      "Engine package license must be Apache-2.0 or MIT AND Apache-2.0.",
+    );
+  return license;
 }
 
 function verifyTools(files, source, version, expectedToolsSha256) {
@@ -278,8 +288,10 @@ function verifyTools(files, source, version, expectedToolsSha256) {
     expectedSource,
     "Tools SOURCE receipt does not match external verification.",
   );
-  packageIdentity(payload, "@browser-driver/release-tools", version);
-  return payload;
+  return {
+    payload,
+    license: packageIdentity(payload, "@browser-driver/release-tools", version),
+  };
 }
 
 function zip(entries) {
@@ -379,7 +391,7 @@ export async function buildPublicKit({
     "TOOLS_SHA256SUMS",
     "TOOLS_VERIFICATION.json",
   ]);
-  const toolPayload = verifyTools(
+  const { payload: toolPayload, license: toolsLicense } = verifyTools(
     toolsFiles,
     source,
     version,
@@ -402,8 +414,16 @@ export async function buildPublicKit({
   archiveNotices(runtimePayload, canonical, "Runtime");
   archiveNotices(enginePayload, canonical, "Engine");
   archiveNotices(toolPayload, canonical, "Tools");
-  packageIdentity(runtimePayload, "@browser-driver/runtime", version);
-  engineIdentity(enginePayload, version);
+  const runtimeLicense = packageIdentity(
+    runtimePayload,
+    "@browser-driver/runtime",
+    version,
+  );
+  const engineLicense = engineIdentity(enginePayload, version);
+  if (runtimeLicense !== engineLicense || runtimeLicense !== toolsLicense)
+    throw Error(
+      "Public runtime, engine and tools license declarations must agree.",
+    );
   const contents = new Map(canonical);
   const substitutions = {
     VERSION: version,

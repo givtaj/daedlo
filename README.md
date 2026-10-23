@@ -29,6 +29,15 @@ and limits. Expiry blocks new update checks/downloads while accepted local use
 and rollback remain available.
 WBF still needs its own project registration and disposable acceptance.
 
+## Next release licensing
+
+The source now prepares **0.1.4-alpha.4**, which is not published. Its public core
+uses **Apache-2.0**, with the complete legacy MIT grant and third-party notices
+preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `licenses/`.
+Published alpha.3 downloads retain their original `MIT AND Apache-2.0` terms.
+Customer application code, models, flows, adapters and data remain separate.
+The license transition does not change the model, adapter or updater contracts.
+
 ## The first alpha journey
 
 Start with one agreed, existing feature and a relevant negative case. An agent

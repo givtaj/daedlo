@@ -77,6 +77,87 @@ function changeRuntime(sources, change) {
   sources.set("packages/runtime/package.json", JSON.stringify(runtime));
 }
 
+function apacheFixture() {
+  const sources = fixture();
+  changeRuntime(sources, (runtime) => {
+    runtime.license = "Apache-2.0";
+  });
+  sources.set("Cargo.toml", '[workspace.package]\nlicense = "Apache-2.0"\n');
+  sources.set(
+    "skills/browser-driver/SKILL.md",
+    "---\nname: browser-driver\nlicense: Apache-2.0\n---\n",
+  );
+  canonical(sources, "LICENSE", apache);
+  return sources;
+}
+
+test("Apache public core retains all four complete notices", () => {
+  assert.deepEqual(releaseLicense(files(apacheFixture())), {
+    license: "Apache-2.0",
+    files: publicNotices,
+  });
+});
+
+test("Apache public core rejects missing or changed notices at every boundary", () => {
+  for (const boundary of ["", ...components]) {
+    for (const notice of publicNotices) {
+      const path = boundary ? `${boundary}/${notice}` : notice;
+      const missing = apacheFixture();
+      missing.delete(path);
+      assert.throws(
+        () => releaseLicense(files(missing)),
+        /Required license source is missing/,
+      );
+      if (boundary) {
+        const changed = apacheFixture();
+        changed.set(path, `${changed.get(path)}\n`);
+        assert.throws(
+          () => releaseLicense(files(changed)),
+          /Package license source differs/,
+        );
+      }
+    }
+  }
+});
+
+test("Apache public core refuses truncated Apache or MIT texts even when every copy matches", () => {
+  for (const [path, text] of [
+    ["LICENSE", "Apache License, Version 2.0\n"],
+    ["licenses/Apache-2.0.txt", "Apache License, Version 2.0\n"],
+    [
+      "licenses/MIT-legacy.txt",
+      "MIT License\nCopyright (c) 2026 Aidin Givtaj\n",
+    ],
+  ]) {
+    const sources = apacheFixture();
+    canonical(sources, path, text);
+    assert.throws(
+      () => releaseLicense(files(sources)),
+      /Apache public core must preserve complete/,
+    );
+  }
+});
+
+test("Apache public core refuses mixed declarations and evaluation terms", () => {
+  for (const path of ["Cargo.toml", "skills/browser-driver/SKILL.md"]) {
+    const sources = apacheFixture();
+    sources.set(
+      path,
+      sources.get(path).replace("Apache-2.0", "MIT AND Apache-2.0"),
+    );
+    assert.throws(
+      () => releaseLicense(files(sources)),
+      /Public package license declarations must agree/,
+    );
+  }
+  const sources = apacheFixture();
+  sources.set("EVALUATION-LICENSE.md", "DRAFT — NOT OPERATIVE\n");
+  assert.throws(
+    () => releaseLicense(files(sources)),
+    /Public packages cannot include evaluation terms/,
+  );
+});
+
 test("public mixed-notice packages retain all four notices without evaluation terms", () => {
   const sources = fixture();
   let result;

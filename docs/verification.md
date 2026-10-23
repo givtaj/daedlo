@@ -1,5 +1,27 @@
 # Verification record
 
+## Apache-2.0 next-release preparation — 2026-10-23
+
+Source prepares **0.1.4-alpha.4**, not a published release. The public engine,
+runtime, portable tools and skill declare Apache-2.0; the full legacy MIT grant,
+upstream Apache text and third-party provenance remain included. Existing
+alpha.3 and earlier downloads, customer projects and signed feed entries are
+unchanged. No customer model, flow, adapter or data migration is involved.
+
+| Check | Actual result |
+| --- | --- |
+| Licensing regressions | Genuine FAIL first: 5 failures including the old mixed declaration and rejection of a complete Apache package; then 15/15 PASS. Missing, divergent and truncated notices and mixed declarations are rejected. |
+| Public-kit regressions | Genuine FAIL first: 19 failures; then 29/29 PASS. Both historical mixed and new Apache declarations preserve all four canonical notice files; runtime, engine and tools must agree. |
+| Rust workspace | PASS, 23 tests with locked alpha.4 manifests. Public model/adapter interfaces and runtime behavior are unchanged. |
+| Website | Genuine FAIL first: 0/3 new licence tests; then all 58 website tests PASS. Desktop 1280px and narrow 390px headless Chromium licence-section checks and visual review PASS. |
+| Historical preservation | PASS: nine immutable download files, exact Codex prompt and installer unchanged. Apache and legacy MIT text files retain their original bytes. |
+| Shared-worktree source check | Syntax and types PASS; full formatting check FAIL on the pre-existing, unrelated untracked `tests/release-ninja-acceptance-cleanup.test.mjs`. It remains untouched and excluded from this change. |
+| Clean package build / CI / site publication | NOT RUN at this checkpoint; recorded separately when verified. |
+
+Evidence remains under ignored `artifacts/apache-license/`. The isolated website
+browser and preview server were closed. This is a licence/package migration;
+alpha.4 customer acceptance and release publication remain separate gates.
+
 ## Unified website onboarding — published and verified, 2026-10-23
 
 The canonical `/install` journey now puts one complete Codex prompt before manual

@@ -58,7 +58,16 @@ with zipfile.ZipFile(sys.argv[1]) as z:
   );
 }
 
-async function fixture(t) {
+async function fixture(t, { license = "MIT AND Apache-2.0" } = {}) {
+  const canonicalNotices =
+    license === "Apache-2.0"
+      ? {
+          ...notices,
+          LICENSE: notices["licenses/Apache-2.0.txt"],
+          "THIRD_PARTY_NOTICES.md":
+            "Daedlo Apache-2.0 additions; retained legacy MIT grant and Roots adaptation provenance.\n",
+        }
+      : notices;
   const directory = await fs.realpath(
     await fs.mkdtemp(join(os.tmpdir(), "daedlo-kit-test-")),
   );
@@ -67,7 +76,7 @@ async function fixture(t) {
   const bundle = join(directory, "bundle");
   const tools = join(directory, "tools");
   for (const path of [repoRoot, bundle, tools]) await fs.mkdir(path);
-  for (const [file, content] of Object.entries(notices)) {
+  for (const [file, content] of Object.entries(canonicalNotices)) {
     await fs.mkdir(dirname(join(repoRoot, file)), { recursive: true });
     await fs.writeFile(join(repoRoot, file), content);
   }
@@ -83,27 +92,28 @@ async function fixture(t) {
     bundle,
     tools,
     output: join(directory, "public"),
+    canonicalNotices,
     source: { commit: "a".repeat(40), dirty: true, treeSha256: "b".repeat(64) },
     runtimeFiles: {
-      ...notices,
+      ...canonicalNotices,
       "package.json": JSON.stringify({
         name: "@browser-driver/runtime",
         version,
-        license: "MIT AND Apache-2.0",
+        license,
       }),
       "src/index.mjs": "export const fixture = true;\n",
     },
     engineFiles: {
-      ...notices,
-      "Cargo.toml": `[package]\nname = "browser-driver-engine"\nversion = "${version}"\nlicense = "MIT AND Apache-2.0"\n`,
+      ...canonicalNotices,
+      "Cargo.toml": `[package]\nname = "browser-driver-engine"\nversion = "${version}"\nlicense = "${license}"\n`,
       "src/lib.rs": "pub fn fixture() {}\n",
     },
     toolsFiles: {
-      ...notices,
+      ...canonicalNotices,
       "package.json": JSON.stringify({
         name: "@browser-driver/release-tools",
         version,
-        license: "MIT AND Apache-2.0",
+        license,
         private: true,
         type: "module",
       }),
@@ -190,79 +200,80 @@ async function refreshTools(f, source = f.source) {
   );
 }
 
-test("public kit preserves exact verified bytes, rendered instructions and only allowed files", async (t) => {
-  const f = await fixture(t);
-  const result = await buildPublicKit(f);
-  assert.equal(
-    result.version,
-    version,
-    "The public download must identify the verified package version",
-  );
-  const archiveFile = `daedlo-${version}.zip`;
-  assert.deepEqual(
-    (await fs.readdir(f.output)).sort(),
-    ["SHA256SUMS", archiveFile, "release.json"].sort(),
-  );
-  const release = JSON.parse(
-    await fs.readFile(join(f.output, "release.json"), "utf8"),
-  );
-  const archive = await fs.readFile(join(f.output, archiveFile));
-  assert.equal(release.schemaVersion, 1);
-  assert.equal(release.version, version);
-  assert.deepEqual(release.archive, {
-    file: archiveFile,
-    bytes: archive.length,
-    sha256: hash(archive),
-  });
-  assert.deepEqual(
-    release.source,
-    f.source,
-    "Candidate provenance must retain its dirty flag",
-  );
-  assert.equal(
-    await fs.readFile(join(f.output, "SHA256SUMS"), "utf8"),
-    `${hash(archive)}  ${archiveFile}\n`,
-  );
-  const contents = unzip(join(f.output, archiveFile));
-  const expected = new Map();
-  for (const [file, bytes] of Object.entries(notices))
-    expected.set(file, Buffer.from(bytes));
-  for (const [file, text] of Object.entries(templates))
-    expected.set(
-      file,
-      Buffer.from(
-        text
-          .replaceAll("{{VERSION}}", version)
-          .replaceAll("{{MANIFEST_SHA256}}", f.expectedManifestSha256)
-          .replaceAll("{{TOOLS_SHA256}}", f.expectedToolsSha256),
-      ),
+for (const license of ["MIT AND Apache-2.0", "Apache-2.0"])
+  test(`public kit preserves exact verified bytes, rendered instructions and only allowed files (${license})`, async (t) => {
+    const f = await fixture(t, { license });
+    const result = await buildPublicKit(f);
+    assert.equal(
+      result.version,
+      version,
+      "The public download must identify the verified package version",
     );
-  for (const [prefix, dir] of [
-    ["bundle", f.bundle],
-    ["tools", f.tools],
-  ])
-    for (const file of await fs.readdir(dir))
-      expected.set(`${prefix}/${file}`, await fs.readFile(join(dir, file)));
-  assert.deepEqual(
-    contents.map(({ name }) => name),
-    [...expected.keys()].sort().map((file) => `daedlo-${version}/${file}`),
-  );
-  for (const item of contents) {
-    assert.deepEqual(item.date, [1980, 1, 1, 0, 0, 0]);
-    assert.equal(item.mode & 0o777, 0o644);
+    const archiveFile = `daedlo-${version}.zip`;
     assert.deepEqual(
-      Buffer.from(item.bytes, "base64"),
-      expected.get(item.name.slice(`daedlo-${version}/`.length)),
+      (await fs.readdir(f.output)).sort(),
+      ["SHA256SUMS", archiveFile, "release.json"].sort(),
     );
-  }
-  const second = join(f.directory, "second");
-  await buildPublicKit({ ...f, output: second });
-  assert.deepEqual(
-    await fs.readFile(join(second, archiveFile)),
-    archive,
-    "Same inputs must produce identical ZIP bytes",
-  );
-});
+    const release = JSON.parse(
+      await fs.readFile(join(f.output, "release.json"), "utf8"),
+    );
+    const archive = await fs.readFile(join(f.output, archiveFile));
+    assert.equal(release.schemaVersion, 1);
+    assert.equal(release.version, version);
+    assert.deepEqual(release.archive, {
+      file: archiveFile,
+      bytes: archive.length,
+      sha256: hash(archive),
+    });
+    assert.deepEqual(
+      release.source,
+      f.source,
+      "Candidate provenance must retain its dirty flag",
+    );
+    assert.equal(
+      await fs.readFile(join(f.output, "SHA256SUMS"), "utf8"),
+      `${hash(archive)}  ${archiveFile}\n`,
+    );
+    const contents = unzip(join(f.output, archiveFile));
+    const expected = new Map();
+    for (const [file, bytes] of Object.entries(f.canonicalNotices))
+      expected.set(file, Buffer.from(bytes));
+    for (const [file, text] of Object.entries(templates))
+      expected.set(
+        file,
+        Buffer.from(
+          text
+            .replaceAll("{{VERSION}}", version)
+            .replaceAll("{{MANIFEST_SHA256}}", f.expectedManifestSha256)
+            .replaceAll("{{TOOLS_SHA256}}", f.expectedToolsSha256),
+        ),
+      );
+    for (const [prefix, dir] of [
+      ["bundle", f.bundle],
+      ["tools", f.tools],
+    ])
+      for (const file of await fs.readdir(dir))
+        expected.set(`${prefix}/${file}`, await fs.readFile(join(dir, file)));
+    assert.deepEqual(
+      contents.map(({ name }) => name),
+      [...expected.keys()].sort().map((file) => `daedlo-${version}/${file}`),
+    );
+    for (const item of contents) {
+      assert.deepEqual(item.date, [1980, 1, 1, 0, 0, 0]);
+      assert.equal(item.mode & 0o777, 0o644);
+      assert.deepEqual(
+        Buffer.from(item.bytes, "base64"),
+        expected.get(item.name.slice(`daedlo-${version}/`.length)),
+      );
+    }
+    const second = join(f.directory, "second");
+    await buildPublicKit({ ...f, output: second });
+    assert.deepEqual(
+      await fs.readFile(join(second, archiveFile)),
+      archive,
+      "Same inputs must produce identical ZIP bytes",
+    );
+  });
 
 test("public kit rejects a trusted hash mismatch before creating output", async (t) => {
   for (const field of ["expectedManifestSha256", "expectedToolsSha256"]) {
@@ -421,3 +432,48 @@ test("public kit requires the selected public license and effective engine versi
     assert.equal(existsSync(f.output), false);
   }
 });
+
+for (const license of ["MIT AND Apache-2.0", "Apache-2.0"]) {
+  for (const component of ["runtime", "engine", "tools"]) {
+    test(`public kit rejects a mixed ${component} declaration in a ${license} release before creating output`, async (t) => {
+      const f = await fixture(t, { license });
+      const other =
+        license === "Apache-2.0" ? "MIT AND Apache-2.0" : "Apache-2.0";
+      if (component === "engine") {
+        f.engineFiles["Cargo.toml"] = f.engineFiles["Cargo.toml"].replace(
+          `license = "${license}"`,
+          `license = "${other}"`,
+        );
+      } else {
+        const files = component === "runtime" ? f.runtimeFiles : f.toolsFiles;
+        files["package.json"] = JSON.stringify({
+          ...JSON.parse(files["package.json"]),
+          license: other,
+        });
+      }
+      if (component === "tools") await refreshTools(f);
+      else await refreshBundle(f);
+      await assert.rejects(
+        buildPublicKit(f),
+        /license declarations must agree/i,
+      );
+      assert.equal(existsSync(f.output), false);
+    });
+  }
+}
+
+for (const component of ["runtime", "engine", "tools"]) {
+  for (const notice of Object.keys(notices)) {
+    test(`Apache-2.0 public kit still requires exact ${component} notice ${notice}`, async (t) => {
+      const f = await fixture(t, { license: "Apache-2.0" });
+      delete f[`${component}Files`][notice];
+      if (component === "tools") await refreshTools(f);
+      else await refreshBundle(f);
+      await assert.rejects(
+        buildPublicKit(f),
+        /license\/notice does not match the canonical public notice/i,
+      );
+      assert.equal(existsSync(f.output), false);
+    });
+  }
+}

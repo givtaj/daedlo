@@ -1,4 +1,8 @@
-# Daedlo 0.1.4-alpha.3 portable release tools
+# Daedlo 0.1.4-alpha.4 portable release tools
+
+This is the unpublished next-release candidate. Its public core uses Apache-2.0
+with required legacy MIT and third-party notices retained. The website continues
+to distribute alpha.3 under its original terms until a new release is published.
 
 The `@browser-driver/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding

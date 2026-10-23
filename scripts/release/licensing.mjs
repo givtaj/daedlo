@@ -1,4 +1,13 @@
 // Maintainer-only validation: package boundaries must retain their own notices.
+import { createHash } from "node:crypto";
+
+// Reviewed, unmodified upstream Apache text and the original Browser Driver MIT grant.
+const preservedLicenseDigests = {
+  "licenses/Apache-2.0.txt":
+    "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+  "licenses/MIT-legacy.txt":
+    "940e838e3a280f3304236ed74b5a630535e1bc663034041116ae6556b2dc7248",
+};
 export const noticeFiles = [
   "LICENSE",
   "EVALUATION-LICENSE.md",
@@ -16,13 +25,17 @@ export function releaseLicense(files) {
   };
   const runtime = JSON.parse(read("packages/runtime/package.json"));
   if (
-    !["MIT", "MIT AND Apache-2.0", "SEE LICENSE IN LICENSE"].includes(
-      runtime.license,
-    )
+    ![
+      "MIT",
+      "MIT AND Apache-2.0",
+      "Apache-2.0",
+      "SEE LICENSE IN LICENSE",
+    ].includes(runtime.license)
   )
     throw Error("Unsupported or missing release license declaration.");
   if (runtime.license === "MIT") return { license: "MIT", files: ["LICENSE"] };
-  const publicPreview = runtime.license === "MIT AND Apache-2.0";
+  const apacheCore = runtime.license === "Apache-2.0";
+  const publicPreview = apacheCore || runtime.license === "MIT AND Apache-2.0";
   const required = publicPreview
     ? noticeFiles.filter((path) => path !== "EVALUATION-LICENSE.md")
     : noticeFiles;
@@ -38,7 +51,18 @@ export function releaseLicense(files) {
   }
   if (publicPreview) {
     const license = read("LICENSE");
-    if (
+    if (apacheCore) {
+      if (
+        license !== read("licenses/Apache-2.0.txt") ||
+        Object.entries(preservedLicenseDigests).some(
+          ([path, digest]) =>
+            createHash("sha256").update(read(path)).digest("hex") !== digest,
+        )
+      )
+        throw Error(
+          "Apache public core must preserve complete Apache and legacy MIT texts.",
+        );
+    } else if (
       !/MIT License/.test(license) ||
       !/Apache-2\.0/.test(license) ||
       /DRAFT|NOT OPERATIVE/.test(license)
@@ -55,13 +79,15 @@ export function releaseLicense(files) {
       if (sources.has(`${boundary}EVALUATION-LICENSE.md`))
         throw Error("Public packages cannot include evaluation terms.");
     if (
-      !/^license = "MIT AND Apache-2.0"$/m.test(read("Cargo.toml")) ||
+      !read("Cargo.toml")
+        .split(/\r?\n/)
+        .includes(`license = "${runtime.license}"`) ||
       !/^license\.workspace = true$/m.test(
         read("crates/browser-driver-engine/Cargo.toml"),
       ) ||
-      !/^license: MIT AND Apache-2.0$/m.test(
-        read("skills/browser-driver/SKILL.md"),
-      )
+      !read("skills/browser-driver/SKILL.md")
+        .split(/\r?\n/)
+        .includes(`license: ${runtime.license}`)
     )
       throw Error("Public package license declarations must agree.");
     for (const path of ["LICENSE", "THIRD_PARTY_NOTICES.md", "licenses"])
