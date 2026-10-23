@@ -1,7 +1,7 @@
 ---
 name: browser-driver
 description: Install and onboard Daedlo (browser-driver) in a web application, coauthor its Rust UX model and guarded browser flows, or maintain an existing integration. Use for Daedlo or browser-driver setup and agreed QA flow work across application languages; onboarding alone does not authorize building application features or replacing an accepted driver.
-license: MIT AND Apache-2.0
+license: Apache-2.0
 ---
 
 # Daedlo (browser-driver)
@@ -9,8 +9,9 @@ license: MIT AND Apache-2.0
 Daedlo is the product name; this skill keeps its existing `browser-driver` name,
 installation paths and commands so current integrations continue to work.
 
-This instruction copy accompanies the Daedlo 0.1.4-alpha.3 release.
-Read its LICENSE and THIRD_PARTY_NOTICES.md for MIT and Apache-2.0 notices.
+This instruction copy accompanies the Daedlo 0.1.4-alpha.4 candidate.
+Its public core uses Apache-2.0. Read LICENSE and THIRD_PARTY_NOTICES.md, including
+the retained legacy MIT and third-party notices. Customer projects remain separate.
 
 
 Help the user reach one useful, repeatable browser flow with inspectable evidence.

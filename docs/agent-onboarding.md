@@ -9,7 +9,7 @@ run without an AI agent or model API key.
 The product name is Daedlo; the existing browser-driver package names, commands
 and skill paths below remain the supported technical identifiers.
 
-The current target is **0.1.4-alpha.3**, an assisted alpha for **macOS arm64 with
+The next-release source target is **0.1.4-alpha.4** (unpublished), an assisted alpha for **macOS arm64 with
 Codex**, covering one agreed existing application flow and a relevant negative
 case. Exact package and representative-flow results belong to the selected release
 receipt; this guide does not establish acceptance for a new customer. Earlier public-preview and Roots
@@ -111,7 +111,7 @@ MCP server or registry installer. It is not included in the current runtime tarb
 ## Dependency preflight
 
 Read the selected candidate's manifests before installing. The requirements below
-describe the `0.1.4-alpha.3` release; use its exact-package verification receipt. Use the selected kit and independently supplied verification receipt.
+describe the `0.1.4-alpha.4` candidate; require its own exact-package verification receipt before promotion. Use the selected kit and independently supplied verification receipt.
 The existing public `0.1.2-rc.1` download is a different package identity. Follow
 the selected manifests rather than silently upgrading a working consumer.
 

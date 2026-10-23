@@ -92,7 +92,8 @@ unfamiliar frameworks and end-to-end discovery in both agent hosts have not been
 verified. A selected integration's pass is not universal application coverage.
 
 Read the supplied `LICENSE`, `THIRD_PARTY_NOTICES.md`, and preserved MIT and
-Apache-2.0 texts. The `MIT AND Apache-2.0` declaration describes the applicable
-component notices; it does not offer a choice to discard either component's terms.
+Apache-2.0 texts. From alpha.4, the public core uses Apache-2.0 while required
+legacy MIT and third-party notices remain included. Alpha.3 and earlier releases
+retain their original terms and previously granted permissions.
 This public preview carries no time-limited evaluation agreement. Customer code,
 models, adapters, data and authored flows remain separate from the driver.

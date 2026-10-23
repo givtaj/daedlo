@@ -1,8 +1,24 @@
 # Daedlo origins and third-party notices
 
-This public preview preserves the licenses and origins of its component material.
-New Daedlo additions use MIT; Roots-derived material retains Apache-2.0. Read
-`LICENSE` and the complete license texts in `licenses/`.
+## Public core from 0.1.4-alpha.4
+
+Copyright (c) 2026 Aidin Givtaj.
+
+Daedlo's public core is licensed under the Apache License, Version 2.0, from
+0.1.4-alpha.4. This covers the shared Rust engine, Node runtime/viewer, portable
+release tools and distributed agent skill. Read the complete text in `LICENSE`
+and `licenses/Apache-2.0.txt`.
+
+The Apache-2.0 package declaration is the primary license for this distribution;
+it does not remove required notices or previously granted permissions. Preserved
+MIT material remains accompanied by its original grant in `licenses/MIT-legacy.txt`.
+Third-party dependencies retain their own licenses. Customer application code,
+models, flows, adapters and data remain separate and are not relicensed by Daedlo.
+
+Published 0.1.4-alpha.3 and earlier artifacts keep their original bytes and terms.
+In alpha.3, new Daedlo additions were MIT and Roots-derived portions Apache-2.0,
+with the combined declaration `MIT AND Apache-2.0`. This transition does not
+withdraw those permissions or relabel an earlier release.
 
 ## Roots-derived work
 
@@ -29,9 +45,9 @@ models and its historical evidence are not included in the portable runtime/tool
 kit.
 
 Apache-2.0 upstream portions retain their applicable license, patent terms,
-attribution requirements and permissions. The MIT grant for new additions does
-not supersede these obligations. Attribution is not endorsement and does
-not grant rights to a third party's trademarks.
+attribution requirements and permissions. The retained MIT grant does not
+supersede these obligations. Attribution is not endorsement and does not grant
+rights to a third party's trademarks.
 
 ## Earlier Browser Driver MIT material
 
@@ -40,7 +56,8 @@ The Browser Driver source and release `0.1.1-rc.5` at commit
 `Copyright (c) 2026 Aidin Givtaj`. That complete original notice and license are
 retained verbatim in `licenses/MIT-legacy.txt`. Preserve those notices and the
 applicable permissions for earlier legitimately received MIT material, including
-retained material in this preview. This distribution includes the Roots Apache
+retained material in this distribution and the MIT additions published through
+0.1.4-alpha.3. This distribution includes the Roots Apache
 license and origin/change notices alongside the preserved MIT notice.
 
 ## Dependencies installed separately
@@ -82,4 +99,5 @@ is not shipped in the portable kit; its own upstream terms still apply when used
   accompanying earlier Browser Driver material.
 
 Dependency license inventory recorded on 2026-10-06; release packaging prepared
-on 2026-10-09. Checksums establish exact bytes, not endorsement or ownership.
+on 2026-10-09. Apache-2.0 public-core transition prepared for 0.1.4-alpha.4 on
+2026-10-23. Checksums establish exact bytes, not endorsement or ownership.
