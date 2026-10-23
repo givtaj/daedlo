@@ -126,4 +126,4 @@ jobs:
             --output "$archive"
           printf '%s  %s\n' '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb' "$archive" | sha256sum --check --strict
           tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" git . --log-opts=--all --redact=100 --no-banner
+          "$RUNNER_TEMP/gitleaks" git . --log-opts="--all --full-history -m" --redact=100 --no-banner

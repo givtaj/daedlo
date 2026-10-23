@@ -38,8 +38,10 @@ from ten old blob versions, 53 commits and eight merges preserved, all 21 ref ti
 trees identical, and no exact identifier remaining in reachable candidate objects.
 All 53 commit IDs and four release-tag targets change; nine commit signatures are
 removed. A complete local Git bundle was restored and verified. This is a
-**local-only dry run**, not an applied rewrite or off-host backup. New commits
-require a refreshed candidate. GitHub's read-only PR refs/caches and Support
+**local-only dry run**, not an applied rewrite or off-host backup. Pinned Gitleaks 8.30.1 also passed both complete 53-commit mirrors, including
+merge history, with 100% redaction and one exact checksum exception each; the
+candidate used a separately remapped ignore file. New commits require a refreshed
+candidate. GitHub's read-only PR refs/caches and Support
 eligibility remain unresolved; no Support request or remote force-push occurred.
 See [public launch controls](public-launch.md) for the concrete remaining gates.
 
