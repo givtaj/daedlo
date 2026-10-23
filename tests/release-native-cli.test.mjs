@@ -449,7 +449,7 @@ test("alpha4 exposes startup before a blocked launcher finishes and retains name
   const f = await fixture(t);
   const parsed = await f.deps.readConfig();
   parsed.config.frontend = {
-    name: "GM Staff Portal",
+    name: "Settings portal",
     targetOrigin: "http://127.0.0.1:45001",
   };
   parsed.config.registration.model = { id: "gm", version: "1" };
@@ -485,7 +485,7 @@ test("alpha4 exposes startup before a blocked launcher finishes and retains name
     );
     assert.equal(progress.status, "starting");
     assert.equal(progress.viewerUrl, null);
-    assert.equal(progress.frontend.name, "GM Staff Portal");
+    assert.equal(progress.frontend.name, "Settings portal");
     const current = await nativeCommand("status", f.configPath, f.deps);
     assert.equal(
       current.result.frontend.targetOrigin,

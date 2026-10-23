@@ -268,7 +268,7 @@ export async function createManagedLaunch({runtime,resources,settings,installati
       "target_attachment",
       "ready",
     ]);
-    const second = await fixture("staff", "GM Staff Portal", app2.url);
+    const second = await fixture("staff", "Settings portal", app2.url);
     const secondHandle = await nativeCommand(
       "start",
       second.configPath,
@@ -291,7 +291,7 @@ export async function createManagedLaunch({runtime,resources,settings,installati
     const status2 = await (
       await fetch(new URL("/status", secondHandle.result.viewerUrl))
     ).json();
-    assert.equal(status2.frontend.name, "GM Staff Portal");
+    assert.equal(status2.frontend.name, "Settings portal");
     assert.equal(status2.frontend.matchesTarget, true);
     assert.equal(status2.frontend.matchesModel, true);
     await page2.screenshot({
@@ -352,7 +352,7 @@ export async function createManagedLaunch({runtime,resources,settings,installati
     );
     const invalid = await fixture(
       "invalid-model",
-      "Invalid GM model",
+      "Invalid settings model",
       app1.url,
       { invalidEngine: join(targetDir, "debug/native-invalid-model") },
     );

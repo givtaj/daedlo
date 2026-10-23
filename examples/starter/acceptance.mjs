@@ -274,7 +274,7 @@ try {
           ownedBrowserClosed: browser ? !browser.isConnected() : null,
         },
         limitations: [
-          "Synthetic fixture only; WBF acceptance not run.",
+          "Synthetic fixture only; customer acceptance not run.",
           "Missing browser terminal events remain unresolved. Settle or explicitly cancel old document work before navigation.",
           "HTTP response alone does not establish persistence.",
         ],

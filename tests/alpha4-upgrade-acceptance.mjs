@@ -359,6 +359,24 @@ async function managedFlow(label, { durable = true } = {}) {
       origin: application.url,
       label,
     });
+    // A direct HTTP run finishes before the viewer's next status poll. Wait
+    // for this exact completed save, so the retained image is UI evidence of
+    // the asserted outcome rather than a frame from an earlier command.
+    await view.waitForFunction(
+      ({ runId, outcome }) =>
+        document.querySelector("#run-id")?.textContent === `Run ${runId}` &&
+        document.querySelector("#execution-state")?.textContent ===
+          "Completed" &&
+        document.querySelector(
+          '[data-state="notebook.saved"][aria-current="true"]',
+        ) !== null &&
+        document.querySelector("#outcome-label")?.textContent === outcome &&
+        document
+          .querySelector("#effect-label")
+          ?.textContent.includes("Application effect: Saved"),
+      { runId: flow.saved.runId, outcome: flow.saved.outcome.label },
+      { timeout: 15000 },
+    );
     await view.screenshot({
       path: join(output, label + "-viewer.png"),
       fullPage: true,

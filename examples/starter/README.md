@@ -37,7 +37,7 @@ Acceptance covers the real Rust hello, strict Select metadata, a successful save
 empty-note validation without a write, stale draft protection, uncertain effects,
 and request accounting through redirects, aborts, navigation and detached frames.
 Server barriers control pending requests; tests never clear work or sleep to make
-settlement pass. The browser fixture is independent of Roots and WBF.
+settlement pass. The browser fixture is independent of customer applications.
 
 Implementation and measured acceptance follow below. A proposal is not a test result.
 
