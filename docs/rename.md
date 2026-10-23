@@ -127,6 +127,10 @@ blocked on the following release work:
   installation instructions, imports, both CLI names, browser acceptance,
   signing/checkpoint continuity and recovery. Source tests are only part of this
   gate.
+- Update and test website command rendering for the selected package family.
+  Current website templates intentionally target the immutable alpha.3 package
+  names; changing only a version number would produce incorrect renamed-kit
+  installation commands.
 - Obtain the separately required release/publication authorization. Repository
   visibility, package publication, website deployment and customer dependency
   promotion are distinct actions.
