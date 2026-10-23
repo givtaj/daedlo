@@ -1,14 +1,73 @@
 # Verification record
 
+## Private launch controls and primary-folder rename — 2026-10-23
+
+The same GitHub repository is now `givtaj/daedlo`, stable ID `1391092739`, and
+remains **PRIVATE**. [PR #8](https://github.com/givtaj/daedlo/pull/8) merged as
+`63ac0466b8535545e6e3e5e249217543bb2025f7`; its Node 22/24 merge CI
+[run 40007554660](https://github.com/givtaj/daedlo/actions/runs/40007554660) passed.
+The Git remote points at the renamed repository. This is the same repository,
+with its existing release assets and history.
+
+GitHub Actions now allows GitHub-owned actions only, requires full commit-SHA
+pins and excludes third-party/wildcard exceptions. Both settings writes and their
+readback passed. Read-only workflow tokens, no PR approval by workflows, disabled
+private-fork execution/token/secret sharing and dependency alerts were verified.
+Main branch protection and rulesets remain **BLOCKED_BY_PLAN** (HTTP 403). The
+owner chose a [pending main ruleset](../.github/main-ruleset.json) for the later
+approved public switch and explicitly declined a paid-plan change. The ruleset
+has not been applied. Public-fork contributor approval is unavailable while
+private (HTTP 422); no enablement is claimed.
+
+The new metadata guard rejects tracked private conversation links and customer
+folders without echoing matched text or reading customer contents. A separate
+read-only repository audit verifies the fixed repository identity and reports
+unsupported protections as blocked. Its explicit safe-apply mode permits only
+the two reviewed Actions settings. Regression failures were recorded before both
+implementations. Review found a nested-customer-path gap; two additional
+regressions failed before the fix and then passed. The final metadata suite
+passed **20/20** and repository-control suite **15/15** checks. `npm run check`
+passed. The new GitHub CI job has not yet run at this local checkpoint. Gitleaks 8.30.1 scanned the local
+checkout's 47 reachable commits with its one exact reviewed checksum exception
+and reported no remaining findings. This scan is distinct from the full remote
+mirror and from the metadata-history rewrite below.
+
+The isolated historical cleanup candidate at the `63ac0466` snapshot passes full
+object, topology and tip-tree verification: two private chat identifiers removed
+from ten old blob versions, 53 commits and eight merges preserved, all 21 ref tip
+trees identical, and no exact identifier remaining in reachable candidate objects.
+All 53 commit IDs and four release-tag targets change; nine commit signatures are
+removed. A complete local Git bundle was restored and verified. This is a
+**local-only dry run**, not an applied rewrite or off-host backup. New commits
+require a refreshed candidate. GitHub's read-only PR refs/caches and Support
+eligibility remain unresolved; no Support request or remote force-push occurred.
+See [public launch controls](public-launch.md) for the concrete remaining gates.
+
+The primary directory moved in place from `browser-driver` to `daedlo`, with
+an old-path compatibility symlink. All five
+worktree HEADs, branches and status entries, the primary diff/index, directory
+inodes and customer-file metadata were identical afterward. Linked worktrees now
+resolve the new common Git directory. No task was stopped; native setup remains
+at `42c4956a95f264282602db2e23ed3db8c88269a5`. The native-setup chat was informed
+under the owner's existing coordination permission. No private customer content
+was opened. Existing Codex chats may retain the former working directory; the
+old symlink is rejected by this chat's existing sandbox root, so it needs the
+supported project/chat path refresh before ordinary sandboxed commands resume.
+The owner reported updating the Codex project UI; the project-list API still
+returned the old name/path at the last check, so that app metadata is unverified.
+
+No public visibility, package, feed, website or customer dependency promotion
+occurred. Private evidence stays under ignored `artifacts/public-launch-guardrails/`
+and primary `artifacts/public-launch-history/2026-10-23-dryrun/`. Public access
+still requires the owner's explicit confirmation after remaining gates are resolved.
+
 ## Daedlo naming and community preparation — private source, 2026-10-23
 
 The rename and contributor cleanup were implemented in an isolated branch from
 `7d7ebb933bf28952b46991ae9f1ff41393ed1620`. Clean implementation commit
 `85c1bcac841545e1ad4f1c6783b4e1bb3d8cbce5` was used for the local immutable build;
-this verification entry is a later documentation change. The same repository is
-to be renamed, preserving its history and stable GitHub repository ID
-`1391092739`. Repository visibility remains **PRIVATE**. Remote integration and
-rename results are not established by these local checks.
+this verification entry is a later documentation change. These local checks preceded the same-repository rename and integration reported
+in the entry above. Repository visibility remains **PRIVATE**.
 
 The source uses the Daedlo runtime, Rust crate, tools, CLI and skill names. Legacy
 CLI aliases and stored protocol/report/manifest/receipt identities remain intact.
