@@ -33,12 +33,12 @@ or acceptance status.
    the independently supplied candidate or website release receipt; do not replace an expected
    digest with one calculated from an unexplained download.
 3. Read these files from
-   `installed-tools/node_modules/@browser-driver/release-tools` inside the kit:
-   `skills/browser-driver/SKILL.md`, its `references/onboarding.md` and
+   `installed-tools/node_modules/{{TOOLS_NAME}}` inside the kit:
+   `skills/{{SKILL_NAME}}/SKILL.md`, its `references/onboarding.md` and
    `references/model-and-flows.md`, `docs/contracts.md` and
    `docs/agent-onboarding.md`. The runtime's public types and the crate's
    `ApplicationModel` trait govern code. A private source checkout is unnecessary.
-4. Install the complete skill into `.agents/skills/browser-driver` in the project
+4. Install the complete skill into `.agents/skills/{{SKILL_NAME}}` in the project
    for Codex. Inspect existing instructions first. If that directory exists,
    compare the copies and preserve customizations instead of overwriting them.
    Include every supporting file and notice. Record whether Codex discovers the
@@ -62,7 +62,7 @@ Chromium and Cargo dependencies need network access or existing caches.
 
 Resolve `driver_integration` to that absolute integration path and
 `runtime_tarball` to the kit's exact
-`bundle/browser-driver-runtime-{{VERSION}}.tgz`. Create/reuse the integration's
+`bundle/{{PACKAGE_PREFIX}}-runtime-{{VERSION}}.tgz`. Create/reuse the integration's
 private ESM `package.json` before installing:
 
 ```sh
@@ -71,16 +71,16 @@ npm --prefix "$driver_integration" install --save-exact --ignore-scripts \
 node "$driver_integration/node_modules/playwright/cli.js" install chromium
 ```
 
-Verify ordinary `@browser-driver/runtime` imports resolve inside this integration.
+Verify ordinary `{{RUNTIME_NAME}}` imports resolve inside this integration.
 Retain the runtime tarball at the lockfile's referenced path for future `npm ci`.
-Before extracting `bundle/browser-driver-engine-{{VERSION}}.crate`, inspect its
+Before extracting `bundle/{{ENGINE_NAME}}-{{VERSION}}.crate`, inspect its
 entries: only regular files/directories under
-`browser-driver-engine-{{VERSION}}/`; reject traversal, absolute paths, symbolic
+`{{ENGINE_NAME}}-{{VERSION}}/`; reject traversal, absolute paths, symbolic
 links and hard links. Extract the verified bytes into fresh owned vendor output.
 From `engine/Cargo.toml`, with that vendor directory beside `engine`, use:
 
 ```toml
-browser-driver-engine = { path = "../vendor/browser-driver-engine-{{VERSION}}", version = "={{VERSION}}" }
+{{ENGINE_NAME}} = { path = "../vendor/{{ENGINE_NAME}}-{{VERSION}}", version = "={{VERSION}}" }
 ```
 
 Keep the customer model, adapter, project module, flows and acceptance checks
@@ -105,7 +105,7 @@ cargo +1.96.0 build --locked \
   --manifest-path "$driver_integration/engine/Cargo.toml" \
   --target-dir "$driver_integration/target"
 mkdir -p "$driver_integration/reports"
-"$driver_integration/node_modules/.bin/browser-driver" \
+"$driver_integration/node_modules/.bin/{{SKILL_NAME}}" \
   --project "$driver_integration/project.mjs" \
   --report "$driver_integration/reports/first-session.json"
 ```

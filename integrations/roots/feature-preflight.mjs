@@ -25,13 +25,16 @@ function measuredFile(root, path, expected, label) {
 
 function installedRuntimeReceipt(candidate, expectedArchive) {
   const lock = json(join(candidate, 'package-lock.json'));
-  const reference = lock.packages?.['node_modules/@browser-driver/runtime']?.resolved;
+  const names = ['@daedlo/runtime', '@browser-driver/runtime'].filter(name => lock.packages?.[`node_modules/${name}`]);
+  if (names.length !== 1) throw Error('Candidate must contain exactly one supported runtime package');
+  const runtimeName = names[0];
+  const reference = lock.packages[`node_modules/${runtimeName}`].resolved;
   if (typeof reference !== 'string' || !reference.startsWith('file:')) throw Error('Runtime must resolve to an explicit local package archive');
   const archive = resolve(candidate, reference.slice(5));
   if (hash(fs.readFileSync(archive)) !== expectedArchive) throw Error('Runtime archive does not match its recorded receipt');
   const entries = execFileSync('tar', ['-tf', archive], { encoding: 'utf8', maxBuffer: 1024 * 1024 })
     .split('\n').filter(path => path && !path.endsWith('/'));
-  const directory = join(candidate, 'node_modules/@browser-driver/runtime'), expected = [];
+  const directory = join(candidate, 'node_modules', runtimeName), expected = [];
   for (const entry of entries) {
     if (!entry.startsWith('package/')) throw Error('Unsupported runtime archive layout');
     const path = entry.slice('package/'.length);

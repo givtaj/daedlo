@@ -58,7 +58,10 @@ with zipfile.ZipFile(sys.argv[1]) as z:
   );
 }
 
-async function fixture(t, { license = "MIT AND Apache-2.0" } = {}) {
+async function fixture(
+  t,
+  { license = "MIT AND Apache-2.0", packagePrefix = "browser-driver" } = {},
+) {
   const canonicalNotices =
     license === "Apache-2.0"
       ? {
@@ -88,6 +91,7 @@ async function fixture(t, { license = "MIT AND Apache-2.0" } = {}) {
   }
   const f = {
     directory,
+    packagePrefix,
     repoRoot,
     bundle,
     tools,
@@ -97,7 +101,7 @@ async function fixture(t, { license = "MIT AND Apache-2.0" } = {}) {
     runtimeFiles: {
       ...canonicalNotices,
       "package.json": JSON.stringify({
-        name: "@browser-driver/runtime",
+        name: `@${packagePrefix}/runtime`,
         version,
         license,
       }),
@@ -105,20 +109,20 @@ async function fixture(t, { license = "MIT AND Apache-2.0" } = {}) {
     },
     engineFiles: {
       ...canonicalNotices,
-      "Cargo.toml": `[package]\nname = "browser-driver-engine"\nversion = "${version}"\nlicense = "${license}"\n`,
+      "Cargo.toml": `[package]\nname = "${packagePrefix}-engine"\nversion = "${version}"\nlicense = "${license}"\n`,
       "src/lib.rs": "pub fn fixture() {}\n",
     },
     toolsFiles: {
       ...canonicalNotices,
       "package.json": JSON.stringify({
-        name: "@browser-driver/release-tools",
+        name: `@${packagePrefix}/release-tools`,
         version,
         license,
         private: true,
         type: "module",
       }),
       "lib/consumer-cli.mjs": "console.log('fixture');\n",
-      "skills/browser-driver/SKILL.md": "# Fixture skill\n",
+      [`skills/${packagePrefix}/SKILL.md`]: "# Fixture skill\n",
     },
   };
   await refreshBundle(f);
@@ -129,13 +133,19 @@ async function fixture(t, { license = "MIT AND Apache-2.0" } = {}) {
 async function refreshBundle(f, runtimeLink) {
   const artifacts = {};
   for (const [kind, files, prefix, suffix, name] of [
-    ["runtime", f.runtimeFiles, "package", "tgz", "@browser-driver/runtime"],
+    [
+      "runtime",
+      f.runtimeFiles,
+      "package",
+      "tgz",
+      `@${f.packagePrefix}/runtime`,
+    ],
     [
       "engine",
       f.engineFiles,
-      `browser-driver-engine-${version}`,
+      `${f.packagePrefix}-engine-${version}`,
       "crate",
-      "browser-driver-engine",
+      `${f.packagePrefix}-engine`,
     ],
   ]) {
     const bytes = tar(
@@ -143,7 +153,7 @@ async function refreshBundle(f, runtimeLink) {
       prefix,
       kind === "runtime" ? runtimeLink : undefined,
     );
-    const file = `browser-driver-${kind}-${version}.${suffix}`;
+    const file = `${f.packagePrefix}-${kind}-${version}.${suffix}`;
     artifacts[kind] = {
       file,
       name,
@@ -175,7 +185,7 @@ async function refreshTools(f, source = f.source) {
   const sourceReceipt = {
     schemaVersion: 1,
     kind: "browser-driver-release-tools",
-    name: "@browser-driver/release-tools",
+    name: `@${f.packagePrefix}/release-tools`,
     version,
     source,
     files: payload,
@@ -184,7 +194,7 @@ async function refreshTools(f, source = f.source) {
     { ...f.toolsFiles, "SOURCE.json": JSON.stringify(sourceReceipt) + "\n" },
     "package",
   );
-  const file = `browser-driver-tools-${version}.tgz`;
+  const file = `${f.packagePrefix}-tools-${version}.tgz`;
   f.expectedToolsSha256 = hash(bytes);
   f.toolsReceipt = {
     ...sourceReceipt,
@@ -477,3 +487,33 @@ for (const component of ["runtime", "engine", "tools"]) {
     });
   }
 }
+
+test("Daedlo kit preserves coherent renamed artifacts and renders matching installer identities", async (t) => {
+  const f = await fixture(t, {
+    license: "Apache-2.0",
+    packagePrefix: "daedlo",
+  });
+  await fs.writeFile(
+    join(f.repoRoot, "docs/public-downloads/AGENT_START.md"),
+    "{{PACKAGE_PREFIX}} {{RUNTIME_NAME}} {{ENGINE_NAME}} {{TOOLS_NAME}} {{SKILL_NAME}}\n",
+  );
+  await buildPublicKit(f);
+  const entries = unzip(join(f.output, `daedlo-${version}.zip`));
+  const instruction = entries.find((entry) =>
+    entry.name.endsWith("/AGENT_START.md"),
+  );
+  assert.equal(
+    Buffer.from(instruction.bytes, "base64").toString(),
+    "daedlo @daedlo/runtime daedlo-engine @daedlo/release-tools daedlo\n",
+  );
+  assert.ok(
+    entries.some((entry) =>
+      entry.name.endsWith(`/bundle/daedlo-runtime-${version}.tgz`),
+    ),
+  );
+  assert.ok(
+    entries.some((entry) =>
+      entry.name.endsWith(`/tools/daedlo-tools-${version}.tgz`),
+    ),
+  );
+});

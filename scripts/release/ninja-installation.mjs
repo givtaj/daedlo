@@ -1,3 +1,9 @@
+import {
+  packageNames,
+  releaseFamilies,
+  releaseNames,
+  runtimeNames,
+} from "./names.mjs";
 import fs from "node:fs/promises";
 import { constants } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
@@ -14,6 +20,18 @@ import {
 import { isDeepStrictEqual } from "node:util";
 import { verifyBundle } from "./manifest.mjs";
 
+const runtimePackages = releaseFamilies.map(
+  (prefix) => packageNames(prefix).runtime,
+);
+const enginePackages = releaseFamilies.map(
+  (prefix) => packageNames(prefix).engine,
+);
+const isRuntimeLock = (name) =>
+  runtimePackages.some(
+    (runtime) =>
+      name === `node_modules/${runtime}` ||
+      name.startsWith(`node_modules/${runtime}/`),
+  );
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const digest = /^[a-f0-9]{64}$/;
 const canonical = (value) =>
@@ -379,7 +397,7 @@ async function preflightSource(registration, contents) {
     ...pkg.optionalDependencies,
   };
   for (const [name, spec] of Object.entries(dependencies)) {
-    if (name === "@browser-driver/runtime") continue;
+    if (runtimePackages.includes(name)) continue;
     if (
       typeof spec !== "string" ||
       /^(?:workspace:|link:|git|https?:|\/|~\/)/.test(spec)
@@ -405,7 +423,7 @@ async function preflightSource(registration, contents) {
       );
     if (!/\.(?:mjs|js|cjs)$/.test(file)) continue;
     const source = content.toString("utf8");
-    if (source.includes("@browser-driver/runtime"))
+    if (runtimePackages.some((name) => source.includes(name)))
       fail(
         "Managed source must use the injected selected runtime; direct runtime bypass is unsupported",
       );
@@ -545,7 +563,7 @@ async function sealedInventory(path) {
     sha256: hash(JSON.stringify({ sections, metadata })),
   };
 }
-function overlayCargo(source, cratePath, version, registration) {
+function overlayCargo(source, cratePath, version, registration, engineName) {
   if (
     /^\s*\[(?:workspace\.|patch|replace)|\bworkspace\s*=\s*true|\bgit\s*=/m.test(
       source,
@@ -557,16 +575,22 @@ function overlayCargo(source, cratePath, version, registration) {
   const lines = source.split(/\r?\n/).map((line) => {
     const heading = line.match(/^\s*\[\[?([^\]]+)\]\]?\s*(?:#.*)?$/);
     if (heading) section = heading[1];
-    if (/^\s*browser-driver-engine\s*=/.test(line)) {
+    if (/^\s*(?:browser-driver-engine|daedlo-engine)\s*=/.test(line)) {
       if (
         section !== "dependencies" ||
-        !/^\s*browser-driver-engine\s*=\s*(?:\{[^{}\n]+\}|"[^"\n]+")\s*(?:#.*)?$/.test(
+        !/^\s*(?:browser-driver-engine|daedlo-engine)\s*=\s*(?:\{[^{}\n]+\}|"[^"\n]+")\s*(?:#.*)?$/.test(
           line,
         )
       )
         fail("Unsupported engine dependency declaration");
       count++;
-      return `browser-driver-engine = { path = ${JSON.stringify(cratePath)}, version = "=${version}" }`;
+      const dependency = line.match(/^\s*([a-z-]+)\s*=/)[1];
+      const selected = engineName ?? dependency;
+      const alias =
+        dependency === selected
+          ? ""
+          : `package = ${JSON.stringify(selected)}, `;
+      return `${dependency} = { ${alias}path = ${JSON.stringify(cratePath)}, version = "=${version}" }`;
     }
     if (/dependencies/.test(section) && /\bpath\s*=/.test(line))
       fail(
@@ -842,6 +866,7 @@ export async function prepareInstallation({
   )
     fail("Verified candidate source/version identity mismatch");
   const version = verified.manifest.version,
+    names = releaseNames(verified.manifest.artifacts),
     archives = {};
   for (const [kind, artifact] of Object.entries(verified.manifest.artifacts)) {
     archives[kind] = await bytes(join(verifiedKit.bundlePath, artifact.file));
@@ -853,6 +878,7 @@ export async function prepareInstallation({
     join(path, "dependencies", "engine"),
     version,
     registration,
+    names.engine,
   );
   await assertSource(registration, source);
   await fs.mkdir(path, { mode: 0o700 });
@@ -893,7 +919,7 @@ export async function prepareInstallation({
       }
     for (const [kind, prefix] of [
       ["runtime", "package"],
-      ["engine", `browser-driver-engine-${version}`],
+      ["engine", `${names.engine}-${version}`],
     ])
       await extractArchive(
         archives[kind],
@@ -906,7 +932,7 @@ export async function prepareInstallation({
       await bytes(join(path, "dependencies/runtime/package.json")),
     );
     if (
-      runtimePackage.name !== "@browser-driver/runtime" ||
+      runtimePackage.name !== names.runtime ||
       runtimePackage.version !== version ||
       runtimePackage.type !== "module"
     )
@@ -926,12 +952,18 @@ export async function prepareInstallation({
       verified.manifest.artifacts.runtime.file,
     );
     await put(runtimeTarball, archives.runtime);
-    const generatedPackage = {
-      ...pkg,
-      dependencies: {
-        ...pkg.dependencies,
-        "@browser-driver/runtime": `file:${runtimeTarball}`,
-      },
+    const generatedPackage = structuredClone(pkg);
+    for (const group of [
+      "dependencies",
+      "devDependencies",
+      "optionalDependencies",
+    ])
+      if (generatedPackage[group])
+        for (const runtime of runtimePackages)
+          delete generatedPackage[group][runtime];
+    generatedPackage.dependencies = {
+      ...generatedPackage.dependencies,
+      [names.runtime]: `file:${runtimeTarball}`,
     };
     await fs.writeFile(
       join(path, "project/package.json"),
@@ -958,11 +990,7 @@ export async function prepareInstallation({
       await bytes(join(path, "project/package-lock.json")),
     );
     for (const [name, record] of Object.entries(lock.packages))
-      if (
-        name &&
-        name !== "node_modules/@browser-driver/runtime" &&
-        !name.startsWith("node_modules/@browser-driver/runtime/")
-      ) {
+      if (name && !isRuntimeLock(name)) {
         const actual = installedLock.packages?.[name];
         if (
           !actual ||
@@ -973,9 +1001,7 @@ export async function prepareInstallation({
           fail("Existing adapter dependency lock changed; migration required");
       }
     same(
-      await inventory(
-        join(path, "project/node_modules/@browser-driver/runtime"),
-      ),
+      await inventory(join(path, "project/node_modules", names.runtime)),
       await inventory(join(path, "dependencies/runtime")),
       "Installed runtime differs from exact candidate archive",
     );
@@ -999,11 +1025,12 @@ export async function prepareInstallation({
         log: join(path, "logs/cargo-metadata.log"),
       }),
     );
-    const engines = metadata.packages.filter(
-      (p) => p.name === "browser-driver-engine",
+    const engines = metadata.packages.filter((p) =>
+      enginePackages.includes(p.name),
     );
     if (
       engines.length !== 1 ||
+      engines[0].name !== names.engine ||
       engines[0].version !== version ||
       engines[0].manifest_path !== join(path, "dependencies/engine/Cargo.toml")
     )
@@ -1033,7 +1060,7 @@ export async function prepareInstallation({
       candidatePackages = lockedPackages(candidateLock);
     for (const original of originalPackages)
       if (
-        original.name !== "browser-driver-engine" &&
+        !enginePackages.includes(original.name) &&
         !candidatePackages.some((candidate) =>
           isDeepStrictEqual(candidate, original),
         )
@@ -1083,9 +1110,11 @@ export async function prepareInstallation({
       path,
       sourcePath: join(path, "project"),
       snapshotPath: join(path, "snapshot"),
+      runtimePackage: names.runtime,
       runtimePath: join(
         path,
-        "project/node_modules/@browser-driver/runtime",
+        "project/node_modules",
+        names.runtime,
         runtimeEntry,
       ),
       enginePath,
@@ -1167,9 +1196,16 @@ export async function verifyInstallation(
     fail("Installation inventory digest mismatch");
   const release = json(await bytes(join(path, "release.json")));
   same(release, receipt.release, "Installation release identity changed");
+  const selectedRuntime = runtimePackages.find((name) =>
+    receipt.runtimePath?.startsWith(
+      join(path, "project/node_modules", name) + sep,
+    ),
+  );
+  if (!selectedRuntime) fail("Invalid installed runtime path");
+  const names = runtimeNames(selectedRuntime);
   const pkg = json(
     await bytes(
-      join(path, "project/node_modules/@browser-driver/runtime/package.json"),
+      join(path, "project/node_modules", names.runtime, "package.json"),
     ),
   );
   const entry =
@@ -1185,7 +1221,8 @@ export async function verifyInstallation(
     snapshotPath: join(path, "snapshot"),
     runtimePath: join(
       path,
-      "project/node_modules/@browser-driver/runtime",
+      "project/node_modules",
+      names.runtime,
       localPath(entry.slice(2)),
     ),
     enginePath: join(
@@ -1201,7 +1238,8 @@ export async function verifyInstallation(
   if (
     receipt.version !== release.version ||
     pkg.version !== receipt.version ||
-    pkg.name !== "@browser-driver/runtime" ||
+    pkg.name !== names.runtime ||
+    (receipt.runtimePackage ?? "@browser-driver/runtime") !== pkg.name ||
     receipt.projectId !== registration.projectId
   )
     fail("Installation identity changed");

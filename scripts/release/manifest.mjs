@@ -1,3 +1,4 @@
+import { releaseNames } from "./names.mjs";
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import { constants } from "node:fs";
@@ -74,16 +75,17 @@ function validateManifest(manifest) {
   if (manifest.compatibility.rustVersion.includes("-"))
     throw Error("Rust minimum version must be stable");
   keys(manifest.artifacts, ["runtime", "engine"], "artifact");
+  const names = releaseNames(manifest.artifacts);
   for (const [id, name, extension] of [
-    ["runtime", "@browser-driver/runtime", "tgz"],
-    ["engine", "browser-driver-engine", "crate"],
+    ["runtime", names.runtime, "tgz"],
+    ["engine", names.engine, "crate"],
   ]) {
     const artifact = manifest.artifacts[id];
     keys(artifact, ["file", "name", "version", "sha256", "bytes"], "artifact");
     if (artifact.name !== name || artifact.version !== manifest.version)
       throw Error("Artifact name/version mismatch");
     if (
-      artifact.file !== `browser-driver-${id}-${manifest.version}.${extension}`
+      artifact.file !== `${names.prefix}-${id}-${manifest.version}.${extension}`
     )
       throw Error("Invalid artifact file path");
     if (

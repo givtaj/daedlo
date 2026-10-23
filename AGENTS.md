@@ -1,12 +1,14 @@
-# Working on browser-driver
+# Working on Daedlo
 
-Read README.md, docs/plan.md, docs/contracts.md and docs/development-workflow.md.
+Read README.md, CONTRIBUTING.md, docs/plan.md, docs/contracts.md and
+docs/development-workflow.md. Shared-core contributions use the independent
+notebook fixture and do not require private Roots source or an AI agent.
 Keep product status in docs/verification.md accurate; update it from actual tests,
 not intentions. This repository is being built from an approved Roots-derived
 design. Existing user agreement covers the documented acceptance scenarios.
 
 For customer onboarding or authoring feature flows, read
-`skills/browser-driver/SKILL.md` and `docs/agent-onboarding.md`. Reuse accepted
+`skills/daedlo/SKILL.md` and `docs/agent-onboarding.md`. Reuse accepted
 models and recorded product decisions; the agent performs the integration work.
 The instructions are distributed from this repository for Codex and Claude Code.
 

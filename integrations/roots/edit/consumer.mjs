@@ -1,4 +1,4 @@
-import { createDriverSession, createViewer } from '@browser-driver/runtime';
+import { createDriverSession, createViewer } from '@daedlo/runtime';
 import { createRootsEditAdapter } from './adapter.mjs';
 
 export async function attachRootsEdit({ page, context, enginePath, identity, viewer = true, ...customer }) {

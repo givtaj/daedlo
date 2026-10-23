@@ -1,8 +1,9 @@
 # Install Daedlo {{VERSION}}
 
 This public developer preview pairs the Daedlo runtime, Rust engine source,
-portable release tools and complete agent skill. Existing `browser-driver`
-package names, commands and protocol identifiers remain unchanged.
+portable release tools and complete agent skill. Package names, commands and
+skill paths match this selected kit. Older kits retain their original names;
+protocol identifiers remain compatible.
 
 Start at the [public installation page](https://daedlo.com/install.html). Download
 the versioned kit and follow its `START_HERE.md` instructions. That guide supplies
@@ -28,10 +29,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `browser-driver-runtime-{{VERSION}}.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
-| `browser-driver-engine-{{VERSION}}.crate` | Rust library source for the customer's application model                                                                |
+| `{{PACKAGE_PREFIX}}-runtime-{{VERSION}}.tgz`  | The `{{RUNTIME_NAME}}` Node package, local viewer and `{{SKILL_NAME}}` CLI                                       |
+| `{{ENGINE_NAME}}-{{VERSION}}.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `browser-driver-tools-{{VERSION}}.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
+| `{{PACKAGE_PREFIX}}-tools-{{VERSION}}.tgz`    | The offline-installable `{{TOOLS_NAME}}` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -48,20 +49,20 @@ dependencies are installed separately; they are not included in the download.
 Docker is needed only when the chosen application fixture requires it.
 
 The agent installs the exact package pair in a separate QA integration, copies
-the complete `skills/browser-driver` folder to the chosen project skill location,
-and helps connect one agreed feature. Codex uses `.agents/skills/browser-driver`;
-Claude Code uses `.claude/skills/browser-driver`. Preserve existing instructions
+the complete `skills/{{SKILL_NAME}}` folder to the chosen project skill location,
+and helps connect one agreed feature. Codex uses `.agents/skills/{{SKILL_NAME}}`;
+Claude Code uses `.claude/skills/{{SKILL_NAME}}`. Preserve existing instructions
 and customizations.
 
 The application supplies a Rust `ApplicationModel`, JavaScript adapter, trusted
 `project.mjs`, fixture and assertions. There is no prebuilt customer model or
 automatic discovery of all application behavior. Read `docs/agent-onboarding.md`
-and `skills/browser-driver/references/onboarding.md` from the installed tools
+and `skills/{{SKILL_NAME}}/references/onboarding.md` from the installed tools
 package root. The runtime's `src/index.d.ts` and engine's `src/lib.rs` define the
 actual public interfaces.
 
 After those pieces exist, launch the integration with its installed
-`browser-driver --project ./project.mjs` command from the integration directory.
+`{{SKILL_NAME}} --project ./project.mjs` command from the integration directory.
 The default creates an owned headless Chromium with a visible local viewer; use
 `--headed` for a native browser window. Opening the viewer does not sign in or run
 authored application commands. Verify the agreed flow and a relevant failure path,

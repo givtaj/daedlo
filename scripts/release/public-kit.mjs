@@ -1,3 +1,4 @@
+import { releaseNames } from "./names.mjs";
 import { execFileSync } from "node:child_process";
 import { constants } from "node:fs";
 import fs from "node:fs/promises";
@@ -174,7 +175,7 @@ function packageIdentity(files, name, version) {
 
 // Cargo emits these explicit strings in the normalized Cargo.toml in a .crate.
 // Refuse unsupported/inherited forms instead of guessing workspace values.
-function engineIdentity(files, version) {
+function engineIdentity(files, version, names) {
   const bytes = files.get("Cargo.toml")?.bytes;
   if (!bytes) throw Error("Engine archive is missing Cargo.toml.");
   const fields = new Map();
@@ -202,7 +203,7 @@ function engineIdentity(files, version) {
   }
   if (
     packageSections !== 1 ||
-    fields.get("name") !== "browser-driver-engine" ||
+    fields.get("name") !== names.engine ||
     fields.get("version") !== version
   )
     throw Error(
@@ -216,8 +217,8 @@ function engineIdentity(files, version) {
   return license;
 }
 
-function verifyTools(files, source, version, expectedToolsSha256) {
-  const archiveFile = `browser-driver-tools-${version}.tgz`;
+function verifyTools(files, source, version, expectedToolsSha256, names) {
+  const archiveFile = `${names.prefix}-tools-${version}.tgz`;
   const bytes = files.get(archiveFile);
   if (sha256(bytes) !== expectedToolsSha256)
     throw Error(
@@ -228,7 +229,7 @@ function verifyTools(files, source, version, expectedToolsSha256) {
   if (
     receipt.schemaVersion !== 1 ||
     receipt.kind !== "browser-driver-release-tools" ||
-    receipt.name !== "@browser-driver/release-tools" ||
+    receipt.name !== names.tools ||
     receipt.version !== version
   )
     throw Error("Tools receipt identity does not match the public kit.");
@@ -290,7 +291,7 @@ function verifyTools(files, source, version, expectedToolsSha256) {
   );
   return {
     payload,
-    license: packageIdentity(payload, "@browser-driver/release-tools", version),
+    license: packageIdentity(payload, names.tools, version),
   };
 }
 
@@ -364,6 +365,7 @@ export async function buildPublicKit({
   const verified = await verifyBundle(bundle, { expectedManifestSha256 });
   const { manifest } = verified;
   const { version, source, artifacts } = manifest;
+  const names = releaseNames(artifacts);
   if (/(?:^|[-.])eval(?:uation)?(?:[.-]|$)/i.test(version))
     throw Error("Evaluation versions cannot become public download kits.");
   const bundleFiles = await exactDirectory(bundle, [
@@ -385,7 +387,7 @@ export async function buildPublicKit({
     `${artifacts.runtime.sha256}  ${artifacts.runtime.file}\n${artifacts.engine.sha256}  ${artifacts.engine.file}\n${expectedManifestSha256}  manifest.json\n`
   )
     throw Error("Bundle checksum inventory changed during public packaging.");
-  const toolsFile = `browser-driver-tools-${version}.tgz`;
+  const toolsFile = `${names.prefix}-tools-${version}.tgz`;
   const toolsFiles = await exactDirectory(tools, [
     toolsFile,
     "TOOLS_SHA256SUMS",
@@ -396,6 +398,7 @@ export async function buildPublicKit({
     source,
     version,
     expectedToolsSha256,
+    names,
   );
   const canonical = new Map();
   for (const file of notices) {
@@ -409,17 +412,17 @@ export async function buildPublicKit({
   );
   const enginePayload = readArchive(
     bundleFiles.get(artifacts.engine.file),
-    `browser-driver-engine-${version}`,
+    `${names.engine}-${version}`,
   );
   archiveNotices(runtimePayload, canonical, "Runtime");
   archiveNotices(enginePayload, canonical, "Engine");
   archiveNotices(toolPayload, canonical, "Tools");
   const runtimeLicense = packageIdentity(
     runtimePayload,
-    "@browser-driver/runtime",
+    names.runtime,
     version,
   );
-  const engineLicense = engineIdentity(enginePayload, version);
+  const engineLicense = engineIdentity(enginePayload, version, names);
   if (runtimeLicense !== engineLicense || runtimeLicense !== toolsLicense)
     throw Error(
       "Public runtime, engine and tools license declarations must agree.",
@@ -427,6 +430,11 @@ export async function buildPublicKit({
   const contents = new Map(canonical);
   const substitutions = {
     VERSION: version,
+    PACKAGE_PREFIX: names.prefix,
+    RUNTIME_NAME: names.runtime,
+    ENGINE_NAME: names.engine,
+    TOOLS_NAME: names.tools,
+    SKILL_NAME: names.skill,
     MANIFEST_SHA256: expectedManifestSha256,
     TOOLS_SHA256: expectedToolsSha256,
   };

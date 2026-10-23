@@ -33,18 +33,22 @@ async function temporary(t) {
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   return root;
 }
-function bundle(version = "0.2.0", change = () => {}) {
+function bundle(
+  version = "0.2.0",
+  change = () => {},
+  prefix = "browser-driver",
+) {
   const files = new Map();
   const artifacts = {};
   for (const [kind, name, extension] of [
-    ["runtime", "@browser-driver/runtime", "tgz"],
-    ["engine", "browser-driver-engine", "crate"],
+    ["runtime", `@${prefix}/runtime`, "tgz"],
+    ["engine", `${prefix}-engine`, "crate"],
   ]) {
     const bytes = Buffer.concat([
       Buffer.from([0, 255, 128]),
       Buffer.from(`${kind} exact immutable bytes`),
     ]);
-    const file = `browser-driver-${kind}-${version}.${extension}`;
+    const file = `${prefix}-${kind}-${version}.${extension}`;
     files.set(file, bytes);
     artifacts[kind] = {
       file,
@@ -689,5 +693,47 @@ test("default gh transport uses only generated GitHub GET endpoints and preserve
       join(root, "download", f.manifest.artifacts.runtime.file),
     ),
     f.files.get(f.manifest.artifacts.runtime.file),
+  );
+});
+
+test("remote downloads accept a complete Daedlo family and reject mixed release assets", async (t) => {
+  const root = await temporary(t),
+    fixture = bundle("0.2.0", () => {}, "daedlo"),
+    transport = transportFor(fixture);
+  const output = join(root, "download");
+  await downloadRelease({
+    repo,
+    version: "0.2.0",
+    output,
+    expectedManifestSha256: fixture.digest,
+    environment,
+    transport,
+  });
+  assert.equal(
+    (await verifyBundle(output)).manifest.artifacts.runtime.name,
+    "@daedlo/runtime",
+  );
+  const mixed = transportFor(fixture);
+  mixed.metadata.assets.push({
+    id: 999,
+    name: "browser-driver-engine-0.2.0.crate",
+    size: 10,
+    state: "uploaded",
+    digest: null,
+  });
+  await assert.rejects(
+    downloadRelease({
+      repo,
+      version: "0.2.0",
+      output: join(root, "mixed"),
+      expectedManifestSha256: fixture.digest,
+      environment,
+      transport: mixed,
+    }),
+    /mixed.*name families/i,
+  );
+  assert.equal(
+    mixed.calls.some(([kind]) => kind === "asset"),
+    false,
   );
 });

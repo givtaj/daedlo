@@ -1,12 +1,17 @@
 > Optional maintainer context: the Roots source and integration mentioned below
 > are not included in the public kit or required to onboard your application.
 
-# Parallel development and Roots feedback
+# Contributor development and Roots feedback
+
+For source setup, the independent fixture and required checks, start with
+[CONTRIBUTING.md in the source repository](https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md). Shared-core contributions do not require
+private Roots source, Docker or an AI agent. The customer-specific workflow below
+applies only when working on that integration with access to its pinned source.
 
 ## Stable usage and candidate development
 
 Roots keeps using its last accepted driver. Before the first external candidate is
-accepted, that is its existing embedded implementation. Browser-driver develops in
+accepted, that is its existing embedded implementation. Daedlo develops in
 this repository and produces immutable candidate packages and Rust source/build
 identities. Normal Roots work does not depend on a changing checkout here.
 
@@ -34,12 +39,12 @@ version. Reject incompatibility before application effects.
 
 | Owner | Files and decisions |
 | --- | --- |
-| browser-driver | Shared Rust framework, runtime, protocol, viewer, core regressions |
+| Daedlo | Shared Rust framework, runtime, protocol, viewer, core regressions |
 | Roots feature development | App behavior, nested enums/model, selectors/actions, assertions and feature scenarios |
 | One integration owner | Roots dependency pins/lockfiles, compatibility entry point migration and acceptance record |
 
-The intended dependency direction is **Roots -> browser-driver**. Roots owns its
-application integration; browser-driver's independent tests do not require Roots
+The intended dependency direction is **Roots -> Daedlo**. Roots owns its
+application integration; Daedlo's independent tests do not require Roots
 source. Candidate consumer preparation here stages integration files into an
 isolated snapshot, not the user's everyday checkout.
 
@@ -69,7 +74,7 @@ deliberately.
 candidate -> isolated Roots rerun -> accepted pin update.**
 
 Application bugs stay in Roots. Adapter/model bugs stay with the customer
-integration. Shared protocol/runtime/viewer bugs get regressions in browser-driver.
+integration. Shared protocol/runtime/viewer bugs get regressions in Daedlo.
 Use a real reproducible defect to exercise the loop when one is available; never
 invent failure or require an indefinite feedback period.
 

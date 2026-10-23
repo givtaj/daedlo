@@ -1,7 +1,7 @@
 # Isolated Roots Journal edit consumer
 
-This opt-in consumer connects the public `@browser-driver/runtime` and
-`browser-driver-engine::ApplicationModel` to the frozen Roots Journal edit source
+This opt-in consumer connects the public `@daedlo/runtime` and
+`daedlo_engine::ApplicationModel` to the frozen Roots Journal edit source
 reviewed on 2026-10-04. It does not change everyday Roots dependencies or import
 its embedded execution runtime. Source capture, packaged acceptance and cleanup
 are recorded by the enclosing integration runner.

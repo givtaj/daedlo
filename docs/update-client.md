@@ -4,9 +4,9 @@ This is the unpublished next-release candidate. Its public core uses Apache-2.0
 with required legacy MIT and third-party notices retained. The website continues
 to distribute alpha.3 under its original terms until a new release is published.
 
-The `@browser-driver/release-tools` package verifies and selects exact driver
+The `@daedlo/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding
-guides and complete `browser-driver` agent skill. Its legacy archive commands do
+guides and complete `daedlo` agent skill. Its legacy archive commands do
 not install a customer runtime or activate a project.
 
 The separate [Operation Ninja-Update manager](ninja-update.md) adds project
@@ -38,13 +38,13 @@ creates local npm metadata, a lockfile and the executable link in that directory
 From that tools installation directory, inspect the actual CLI:
 
 ```sh
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs --help
+node node_modules/@daedlo/release-tools/lib/consumer-cli.mjs --help
 ```
 
-The installed package root is `node_modules/@browser-driver/release-tools`. Its
+The installed package root is `node_modules/@daedlo/release-tools`. Its
 `SOURCE.json` records the source identity and shipped-file hashes. Read
 `docs/contracts.md`, `docs/agent-onboarding.md`, `docs/releases.md` and
-`skills/browser-driver/SKILL.md` there. A copied skill's location does not identify
+`skills/daedlo/SKILL.md` there. A copied skill's location does not identify
 the tools package root. Runtime types and the Rust trait are in their separately
 installed packages.
 

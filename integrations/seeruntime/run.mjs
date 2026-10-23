@@ -1,3 +1,4 @@
+import { releaseNames } from "../../scripts/release/names.mjs";
 import assert from "node:assert/strict";
 import { readFile, writeFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -16,7 +17,8 @@ if (
   throw Error("Usage: run.mjs CONSUMER SOURCE OUTPUT retain|close");
 const consumer = resolve(consumerArg),
   output = resolve(outputArg);
-const runtimeRoot = join(consumer, "node_modules/@browser-driver/runtime");
+const receipt = JSON.parse(await readFile(join(consumer, "receipt.json")));
+const runtimeRoot = join(consumer, "node_modules", releaseNames(receipt.artifacts).runtime);
 const { createDriverSession, createViewer, createResourceScope } = await import(
   pathToFileURL(join(runtimeRoot, "src/index.mjs"))
 );
@@ -24,7 +26,6 @@ const { chromium } = await import(
   pathToFileURL(join(consumer, "node_modules/playwright/index.mjs"))
 );
 const resources = createResourceScope();
-const receipt = JSON.parse(await readFile(join(consumer, "receipt.json")));
 const sourceReceipt = JSON.parse(
   await readFile(join(resolve(sourceArg), "..", "source-identity.json")),
 );

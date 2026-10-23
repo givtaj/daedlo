@@ -1,8 +1,8 @@
 # Daedlo {{VERSION}} portable release tools
 
-The `@browser-driver/release-tools` package verifies and selects exact driver
+The `{{TOOLS_NAME}}` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding
-guides and complete `browser-driver` agent skill. Its legacy archive commands do
+guides and complete `{{SKILL_NAME}}` agent skill. Its legacy archive commands do
 not install or activate a customer project. Alpha.3 adds the separate Ninja-Update
 manager for registered project installation, validation, restart and whole-slot
 rollback. Read `docs/ninja-update.md` and the bundled `docs/update-trust` public
@@ -26,13 +26,13 @@ creates local npm metadata, a lockfile and the executable link in that directory
 From that tools installation directory, inspect the actual CLI:
 
 ```sh
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs --help
+node node_modules/{{TOOLS_NAME}}/lib/consumer-cli.mjs --help
 ```
 
-The installed package root is `node_modules/@browser-driver/release-tools`. Its
+The installed package root is `node_modules/{{TOOLS_NAME}}`. Its
 `SOURCE.json` records the source identity and shipped-file hashes. Read
 `docs/contracts.md`, `docs/agent-onboarding.md`, `docs/releases.md` and
-`skills/browser-driver/SKILL.md` there. A copied skill's location does not identify
+`skills/{{SKILL_NAME}}/SKILL.md` there. A copied skill's location does not identify
 the tools package root. Runtime types and the Rust trait are in their separately
 installed packages.
 

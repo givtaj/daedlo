@@ -48,7 +48,7 @@ changes or downloads remain subject to the environment's normal permissions; do
 not silently replace the system toolchain.
 
 Use an explicit trusted bundle or an explicitly selected source revision. Do not
-assume `@browser-driver/runtime` or the crate has been published to a registry.
+assume `@daedlo/runtime` or the crate has been published to a registry.
 A bundle contains the runtime `.tgz`, engine library `.crate`, `manifest.json`
 and `SHA256SUMS`; it does not contain a prebuilt customer engine or the release CLI.
 
@@ -56,7 +56,7 @@ From the selected tools installation, run its verifier with the bundle path and
 independently trusted manifest digest:
 
 ```sh
-node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs verify --bundle /absolute/bundle --sha256 TRUSTED_DIGEST
+node node_modules/@daedlo/release-tools/lib/consumer-cli.mjs verify --bundle /absolute/bundle --sha256 TRUSTED_DIGEST
 ```
 
 The digest must come from the selected trusted release/CI receipt or the user's
@@ -80,14 +80,14 @@ Verify the installed package version and public import resolve inside that
 integration. Preserve the artifact path and generated lockfile for later `npm ci`.
 For other package managers, use their equivalent exact-artifact installation.
 Before extracting the verified crate into fresh owned output, inspect its entries:
-require regular files/directories under the expected `browser-driver-engine-VERSION/`
+require regular files/directories under the expected `daedlo-engine-VERSION/`
 root and reject absolute paths, traversal, symbolic links and hard links. An
 optional source checkout contains a worked example in `tests/release-acceptance.mjs`;
 it is not a portable-tools prerequisite. Keep extracted crates under a stable integration vendor location;
 do not overwrite an existing accepted copy. The customer Cargo dependency is:
 
 ```toml
-browser-driver-engine = { path = "../vendor/browser-driver-engine-VERSION", version = "=VERSION" }
+daedlo-engine = { path = "../vendor/daedlo-engine-VERSION", version = "=VERSION" }
 ```
 
 Replace `VERSION` with the verified version and resolve the relative path from the
@@ -113,7 +113,7 @@ Consult the selected package's `README.md` and `src/index.d.ts`, and the crate's
 `ApplicationModel` trait, before generating code. The current interfaces are:
 
 ```js
-// A trusted project module for the installed browser-driver CLI.
+// A trusted project module for the installed daedlo CLI.
 export async function createProject({ resources }) {
   // Resolve existing configuration or start/register an owned fixture here.
   return { url, enginePath, createAdapter: ({ page, context }) => adapter, identity };
@@ -127,7 +127,7 @@ integration. `identity` contains safe public metadata only. Adapter shape:
 match the Rust descriptor, and every declared command needs a handler.
 
 Launch the integration's local binary explicitly, for example
-`"$driver_integration/node_modules/.bin/browser-driver" --project "$driver_integration/project.mjs" --headed`.
+`"$driver_integration/node_modules/.bin/daedlo" --project "$driver_integration/project.mjs" --headed`.
 This creates a **new owned browser/context**. The CLI navigates to `url` but performs no
 automatic sign-in or authored commands. Authenticate deliberately using approved
 synthetic accounts or the user's interactive login. Do not print credentials or
@@ -136,7 +136,7 @@ invent a generic `--signin`/session-restoration flag.
 To preserve an existing controlled Playwright page/context, use the public API:
 
 ```js
-import { createDriverSession, createViewer } from '@browser-driver/runtime';
+import { createDriverSession, createViewer } from '@daedlo/runtime';
 const session = await createDriverSession({ page, context, enginePath, adapter });
 const viewer = await createViewer({ page, context, session });
 ```

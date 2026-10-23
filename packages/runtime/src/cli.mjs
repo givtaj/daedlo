@@ -9,7 +9,7 @@ import {
   createViewer,
 } from "./index.mjs";
 
-const usage = `browser-driver --project PATH [--port NUMBER] [--headed] [--report PATH]
+const usage = `daedlo --project PATH [--port NUMBER] [--headed] [--report PATH]
 
 Start a trusted project's local Daedlo integration.
 The project module exports createProject({resources}) and returns:

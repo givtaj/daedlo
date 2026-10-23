@@ -230,7 +230,7 @@ export async function runReleaseAcceptance({
       "crate",
       engineTarball,
       engineArchive,
-      `browser-driver-engine-${manifest.artifacts.engine.version}`,
+      `${manifest.artifacts.engine.name}-${manifest.artifacts.engine.version}`,
       manifest.artifacts.engine,
     );
     const requireFromRepo = createRequire(join(repoRoot, "package.json"));
@@ -269,6 +269,9 @@ export async function runReleaseAcceptance({
     );
     run("npm-install", "npm", [
       "install",
+      "--prefix",
+      work,
+      "--workspaces=false",
       "--offline",
       "--ignore-scripts",
       "--no-audit",
@@ -278,7 +281,11 @@ export async function runReleaseAcceptance({
       runtimeTarball,
       ...dependencyTarballs,
     ]);
-    const installed = join(work, "node_modules/@browser-driver/runtime");
+    const installed = join(
+      work,
+      "node_modules",
+      manifest.artifacts.runtime.name,
+    );
     result.installedRuntime = verifyInstalledRuntime(
       packageExpected,
       installed,
@@ -286,10 +293,21 @@ export async function runReleaseAcceptance({
     const pkg = JSON.parse(fs.readFileSync(join(installed, "package.json")));
     assert.equal(pkg.name, manifest.artifacts.runtime.name);
     assert.equal(pkg.version, manifest.artifacts.runtime.version);
+    if (pkg.name === "@daedlo/runtime") {
+      for (const alias of ["daedlo", "browser-driver"]) {
+        assert.equal(pkg.bin[alias], "./src/cli.mjs");
+        const help = run(
+          `installed-${alias}-help`,
+          join(work, "node_modules/.bin", alias),
+          ["--help"],
+        );
+        assert.match(help, /daedlo --project PATH/);
+      }
+    }
     const entry = run("public-package-resolution", process.execPath, [
       "--input-type=module",
       "-e",
-      'console.log(import.meta.resolve("@browser-driver/runtime"));',
+      `console.log(import.meta.resolve(${JSON.stringify(manifest.artifacts.runtime.name)}));`,
     ]).trim();
     assert.ok(
       entry.startsWith(pathToFileURL(installed + "/").href),
@@ -308,7 +326,7 @@ export async function runReleaseAcceptance({
       join(repoRoot, "Cargo.lock"),
       join(engineProject, "Cargo.lock"),
     );
-    const cargo = `[package]\nname = "notebook-engine"\nversion = ${JSON.stringify(manifest.artifacts.engine.version)}\nedition = "2021"\nrust-version = ${JSON.stringify(manifest.compatibility.rustVersion)}\nlicense = "MIT"\npublish = false\n\n[workspace]\n\n[dependencies]\nbrowser-driver-engine = { path = ${JSON.stringify(crateRoot)}, version = ${JSON.stringify("=" + manifest.artifacts.engine.version)} }\nserde = { version = "1", features = ["derive"] }\nserde_json = "1"\n`;
+    const cargo = `[package]\nname = "notebook-engine"\nversion = ${JSON.stringify(manifest.artifacts.engine.version)}\nedition = "2021"\nrust-version = ${JSON.stringify(manifest.compatibility.rustVersion)}\nlicense = "MIT"\npublish = false\n\n[workspace]\n\n[dependencies]\ndaedlo-engine = { package = ${JSON.stringify(manifest.artifacts.engine.name)}, path = ${JSON.stringify(crateRoot)}, version = ${JSON.stringify("=" + manifest.artifacts.engine.version)} }\nserde = { version = "1", features = ["derive"] }\nserde_json = "1"\n`;
     fs.writeFileSync(join(engineProject, "Cargo.toml"), cargo);
     const target = join(temporary, "engine-target");
     run(
@@ -352,7 +370,7 @@ export async function runReleaseAcceptance({
       [join(work, "tests/acceptance.mjs")],
       {
         env: {
-          BROWSER_DRIVER_ACCEPTANCE_RUNTIME: "@browser-driver/runtime",
+          BROWSER_DRIVER_ACCEPTANCE_RUNTIME: manifest.artifacts.runtime.name,
           BROWSER_DRIVER_ACCEPTANCE_ENGINE: enginePath,
           BROWSER_DRIVER_ACCEPTANCE_OUTPUT: browserOutput,
         },

@@ -1,5 +1,5 @@
 // Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
-//! Typed customer models behind the browser-driver JSON Lines protocol.
+//! Typed customer models behind the Daedlo JSON Lines protocol.
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;

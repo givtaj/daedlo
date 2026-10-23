@@ -9,7 +9,7 @@ This customer integration targets Roots commit
 `d4008e39aeaa137bb54ff48ca2d11748083a971a`. It does not modify the everyday Roots
 checkout, runtime, services, browser sessions, dependencies or data.
 
-`consumer.mjs` imports the public `@browser-driver/runtime` package. The customer
+`consumer.mjs` imports the public `@daedlo/runtime` package. The customer
 adapter retains its pinned Roots observations/request classification and provides
 15 guarded command handlers. It does not import the legacy execution runtime.
 The Rust customer engine implements `ApplicationModel` using typed facts,
@@ -26,10 +26,16 @@ work. This integration adds stronger API evidence before reporting save success.
 
 ## Reproduce with candidate artifacts
 
+This optional customer suite needs private Roots source. The recorded rc2 result
+used `@browser-driver/runtime@0.1.0` and `browser-driver-engine` artifacts; those
+historical identities are preserved in [RESULTS.md](RESULTS.md). Current source
+imports the renamed packages. Use a matched current candidate for new runs, or
+check out the historical integration revision to reproduce an old receipt.
+
 Prerequisites: Rust pinned by Roots, Node 24+, Docker, installed Roots frontend
 and Playwright dependencies whose lockfiles match the pinned revision, Chromium.
 Set `ROOTS_SOURCE` if the reference checkout is elsewhere. Commands run from the
-browser-driver repository. Use a fresh ignored `ROOTS_CONSUMER_ARTIFACTS` directory
+Daedlo repository. Use a fresh ignored `ROOTS_CONSUMER_ARTIFACTS` directory
 for an independent run; all scripts respect this variable.
 
 1. `node integrations/roots/prepare.mjs` creates a pinned Git archive, copies the
@@ -39,10 +45,10 @@ for an independent run; all scripts respect this variable.
    owned disposable PostgreSQL fixture plus API/frontend processes, writes public
    fixture metadata, and remains alive until SIGINT/SIGTERM. It never reads the
    normal Roots `.env`.
-3. `node integrations/roots/build-engine.mjs /absolute/browser-driver-engine-0.1.0.crate`
+3. `node integrations/roots/build-engine.mjs /absolute/daedlo-engine-0.1.4-alpha.4.crate`
    extracts the immutable Rust package and builds the customer binary against its
    public library. This binary has a separate target directory.
-4. `node integrations/roots/stage.mjs /absolute/browser-driver-runtime-0.1.0.tgz`
+4. `node integrations/roots/stage.mjs /absolute/daedlo-runtime-0.1.4-alpha.4.tgz`
    installs the exact packed runtime inside the snapshot, stages customer files,
    and replaces only the snapshot's `QA/live-driver.mjs` and
    `QA/start-live-driver.mjs` with thin public entries.

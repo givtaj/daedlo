@@ -15,7 +15,7 @@ fs.mkdirSync(join(engine, 'src'), { recursive: true });
 const source = fileURLToPath(new URL('./engine/', import.meta.url));
 fs.copyFileSync(join(source, 'src/main.rs'), join(engine, 'src/main.rs'));
 const manifest = fs.readFileSync(join(source, 'Cargo.toml'), 'utf8')
-  .replace('../../../crates/browser-driver-engine', join(packageRoot, `browser-driver-engine-${frameworkVersion}`))
+  .replace('../../../crates/daedlo-engine', join(packageRoot, `daedlo-engine-${frameworkVersion}`))
   .replace('../../../artifacts/roots/snapshot/tools/qa-driver', join(output, 'snapshot/tools/qa-driver'));
 fs.writeFileSync(join(engine, 'Cargo.toml'), manifest);
 execFileSync('cargo', ['build','--offline','--manifest-path',join(engine,'Cargo.toml')], { env: { ...process.env, CARGO_TARGET_DIR: join(output,'engine-target') }, stdio: 'inherit' });

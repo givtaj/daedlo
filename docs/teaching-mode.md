@@ -116,7 +116,7 @@ evidence about this attempt only, not durable retention or mastery of Roots.
 ## Architecture and ownership
 
 Preserve the shared [execution contract](contracts.md) and
-[customer authoring boundary](../skills/browser-driver/references/model-and-flows.md).
+[customer authoring boundary](../skills/daedlo/references/model-and-flows.md).
 Rust owns application interpretation and lesson checkpoint judgments; Node reads
 facts, manages attempt lifecycle and renders guidance. Roots selectors, form
 fields, view meanings, task criteria and fixture setup stay in the Roots

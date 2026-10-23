@@ -1,5 +1,96 @@
 # Verification record
 
+## Daedlo naming and community preparation — private source, 2026-10-23
+
+The rename and contributor cleanup were implemented in an isolated branch from
+`7d7ebb933bf28952b46991ae9f1ff41393ed1620`. Clean implementation commit
+`85c1bcac841545e1ad4f1c6783b4e1bb3d8cbce5` was used for the local immutable build;
+this verification entry is a later documentation change. The same repository is
+to be renamed, preserving its history and stable GitHub repository ID
+`1391092739`. Repository visibility remains **PRIVATE**. Remote integration and
+rename results are not established by these local checks.
+
+The source uses the Daedlo runtime, Rust crate, tools, CLI and skill names. Legacy
+CLI aliases and stored protocol/report/manifest/receipt identities remain intact.
+Contributor, security, conduct, support, roadmap and licensing guidance, issue/PR
+templates and code ownership were added. Apache-2.0 applies to the current source;
+legacy MIT and third-party notices were preserved byte for byte. See
+[licensing scope](licensing.md) and [migration limits](rename.md).
+
+### Observed local checks
+
+On macOS arm64, Node 22.20.0 and Rust 1.96.0:
+
+- Syntax, strict declarations, Prettier, Rust formatting and Clippy with warnings
+  denied passed; the locked Rust build and **23 Rust tests** passed.
+- **129/129 runtime**, **340/340 release**, **11/11 Roots archive** tests and the
+  published customer-config check passed. Release tests include legacy/new
+  package-family validation, installation receipts, rollback, signing and
+  repository-ID-bound checkpoint continuity. Naming and repository-authentication
+  regressions were observed failing before their implementation.
+- Source Chromium acceptance passed **8 browser/API groups**, **4 motion**,
+  **9 control**, **10 CLI**, **2 viewer** and **2 manager UI** checks.
+- Exact installed candidate acceptance passed the same **8 browser/API groups**,
+  **10 CLI**, **25 finalization** and **9 browser-control** checks, with owned
+  cleanup passing. All **22 runtime files** matched the archive bytes. Both the
+  `daedlo` and `browser-driver` executables passed installed help checks. The
+  consumer's engine compiled against the exact renamed crate.
+- Runtime, crate, portable tools and complete kit were built from the same clean
+  source. Source tree digest:
+  `35aa7e3e00da08b05adc728b4fe71fcb569ef822ea58f732785176cbaa2d4f84`.
+  Bundle manifest: `cf899d5ee0233b2b6c29eef506a2b4e13b132773a7456fb12a70c9f47db10d3f`.
+  Tools: `145780cdcca1302f081590b99559ea720b73496a74e06a6f0d69137e94a6dc17`.
+  Kit: `75178e7391f9912775cd39c79290755ebebd1078d6c0c56a5a7d0f666d1063b2`.
+  These are **local unpublished alpha.4 candidate bytes**, not public downloads.
+- Real published alpha.2/alpha.3 kits were authenticated against the signed
+  generation-6 feed and frozen digests. Current tools passed archive-store
+  alpha.2 → alpha.3 → alpha.2 rollback. Exact alpha.3 runtime imports, legacy CLI,
+  all 22 installed file bytes, offline portable tools and a real legacy crate
+  compile/protocol handshake passed. Original names and `MIT AND Apache-2.0`
+  declarations were unchanged. This was not a customer application migration.
+- The staged current website passed **61/61 tests**, static acceptance for
+  **8 pages / 3 archives / 32 public entries**, using all nine unchanged published
+  release files and the authenticated generation-6 feed. An initial unstaged run
+  had three missing-generated-input failures; staging the required release inputs
+  resolved them. The local archive's Daedlo labels were visually inspected.
+- Real GitHub checkpoint readback for completed run 6 (`40003075368`) restored
+  predecessor generation 5 from run `40000221353`, with `bootstrap:false` and the
+  same repository ID. No workflow was dispatched and no feed was written.
+
+### Public-access audit and remaining gates
+
+The redacted history audit used Gitleaks 8.30.1 over origin branches and tags:
+43 commits scanned. One generic-key finding was manually verified as the public
+Roots API executable SHA-256 in a historical binary receipt. The exact fingerprint
+is documented in `.gitleaksignore`; the reviewed history and staged-change scans
+passed with no remaining findings. The locked npm audit reported zero advisories.
+Pattern screening covered the then-available 54 Actions logs, 70 workflow
+artifacts, 23 release assets and six PR bodies; no credential pattern matched.
+All nine committed Roots screenshots were inspected and showed synthetic fixture
+content. These checks establish their stated scope, not absence of every possible
+secret. Historical private-chat identifiers remain in old Git blobs; they are not
+access credentials, and history was not rewritten.
+
+Dependency vulnerability alerts were enabled and read back. Private-repository
+branch protection/rulesets are unavailable under the current GitHub plan; configure
+appropriate protections when the account/repository supports them. No plan or
+visibility change was made to bypass this limitation. Public visibility requires
+an explicit owner decision after reviewing the retained history and repository
+settings; refresh exposure checks if repository content changes first.
+
+The published alpha.3 manager cannot consume a renamed kit. The independently
+verified new-tools bootstrap, customer upgrade/rollback, capability signalling and
+website command rendering remain **NOT RUN / REQUIRED before alpha.4 publication**
+as detailed in the migration guide. No new package, feed, website, customer
+installation or everyday Roots dependency was promoted by this work. The native
+setup task's separate commit/worktree, the dirty primary checkout and checkout
+folder paths were preserved.
+
+Local evidence is retained under `artifacts/community-readiness/`,
+`artifacts/daedlo-rename-final/`, `artifacts/rename-legacy-alpha3-validation/` and
+`artifacts/rename-website-validation/`; private logs and downloaded artifacts are
+ignored and excluded from Git.
+
 ## Teaching-mode plan and website — published, 2026-10-23
 
 **PUBLISHED / VERIFIED:** [teaching-mode plan](teaching-mode.md)
@@ -585,7 +676,7 @@ below remain unchanged.
 ## Durable recovery checkpoint — 2026-10-21
 
 The isolated Roots recovery source is committed locally as `a52a5ee7ba1abfe91f73b71d6ba6fce62a79695e`
-in `/Users/aidin/code/roots-driver-preservation/2026-10-21-recovery/roots`.
+in the owner’s isolated Roots recovery checkout (local path omitted).
 Independent review verified 49 reconstructed source files, 27 reviewed A05/A08
 inputs and 161 application files. Later authentication pilot changes are excluded.
 48 final source hashes match historical tool output; one provenance test has

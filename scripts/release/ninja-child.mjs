@@ -179,7 +179,7 @@ async function perform(m) {
         s.descriptor?.id !== installation.model.id ||
         s.descriptor?.version !== installation.model.version ||
         s.identity?.runtime !==
-          `@browser-driver/runtime@${installation.version}`
+          `${installation.runtimePackage ?? "@browser-driver/runtime"}@${installation.version}`
       )
         error(
           "boot_failed",

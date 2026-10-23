@@ -4,8 +4,15 @@ This guide describes the unpublished next-release candidate. The website still
 distributes alpha.3 under its original terms; use its own kit instructions.
 
 This alpha candidate pairs the Daedlo runtime, Rust engine source,
-portable release tools and complete agent skill. Existing `browser-driver`
-package names, commands and protocol identifiers remain unchanged.
+portable release tools and complete agent skill under the Daedlo technical names.
+Published alpha.3 and earlier kits retain their original `browser-driver` package
+names and commands. Wire/report identifiers remain compatible; follow the selected
+kit's instructions when working with an older release. The
+[naming migration guide](https://github.com/givtaj/daedlo/blob/main/docs/rename.md)
+records compatibility limits and release gates: an immutable alpha.3 manager
+cannot install a renamed kit without a separately verified new-tools bootstrap.
+The bootstrap, renamed upgrade, legacy rollback and capability/feed rollout must
+pass before alpha.4 publication; they are not established by this source change.
 
 Use the selected release receipt to obtain the exact versioned kit and follow
 its `START_HERE.md` instructions at the
@@ -33,10 +40,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `browser-driver-runtime-0.1.4-alpha.4.tgz`  | The `@browser-driver/runtime` Node package, local viewer and `browser-driver` CLI                                       |
-| `browser-driver-engine-0.1.4-alpha.4.crate` | Rust library source for the customer's application model                                                                |
+| `daedlo-runtime-0.1.4-alpha.4.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
+| `daedlo-engine-0.1.4-alpha.4.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `browser-driver-tools-0.1.4-alpha.4.tgz`    | The offline-installable `@browser-driver/release-tools` package, contracts, onboarding documentation and complete skill |
+| `daedlo-tools-0.1.4-alpha.4.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -53,20 +60,20 @@ dependencies are installed separately; they are not included in the download.
 Docker is needed only when the chosen application fixture requires it.
 
 The agent installs the exact package pair in a separate QA integration, copies
-the complete `skills/browser-driver` folder to the chosen project skill location,
-and helps connect one agreed feature. Codex uses `.agents/skills/browser-driver`;
-Claude Code uses `.claude/skills/browser-driver`. Preserve existing instructions
+the complete `skills/daedlo` folder to the chosen project skill location,
+and helps connect one agreed feature. Codex uses `.agents/skills/daedlo`;
+Claude Code uses `.claude/skills/daedlo`. Preserve existing instructions
 and customizations.
 
 The application supplies a Rust `ApplicationModel`, JavaScript adapter, trusted
 `project.mjs`, fixture and assertions. There is no prebuilt customer model or
 automatic discovery of all application behavior. Read `docs/agent-onboarding.md`
-and `skills/browser-driver/references/onboarding.md` from the installed tools
+and `skills/daedlo/references/onboarding.md` from the installed tools
 package root. The runtime's `src/index.d.ts` and engine's `src/lib.rs` define the
 actual public interfaces.
 
 After those pieces exist, launch the integration with its installed
-`browser-driver --project ./project.mjs` command from the integration directory.
+`daedlo --project ./project.mjs` command from the integration directory.
 The default creates an owned headless Chromium with a visible local viewer; use
 `--headed` for a native browser window. Opening the viewer does not sign in or run
 authored application commands. Verify the agreed flow and a relevant failure path,

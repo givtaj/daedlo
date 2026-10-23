@@ -11,7 +11,7 @@ const repository = fileURLToPath(new URL("../", import.meta.url));
 const version = "0.0.0-installer-fixture";
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
-async function fixture(t, nested) {
+async function fixture(t, nested, packagePrefix) {
   const root = await fs.realpath(
     await fs.mkdtemp(join(tmpdir(), "daedlo-installer-test-")),
   );
@@ -87,7 +87,7 @@ async function fixture(t, nested) {
   await fs.writeFile(
     join(source, "package.json"),
     JSON.stringify({
-      name: "@browser-driver/release-tools",
+      name: `@${packagePrefix}/release-tools`,
       version,
       private: true,
       type: "module",
@@ -122,7 +122,7 @@ console.log('Fixture CLI verified exact local bundle arguments and digest.');
     ),
   );
   assert.equal(packed.length, 1);
-  const archive = join(tools, `browser-driver-tools-${version}.tgz`);
+  const archive = join(tools, `${packagePrefix}-tools-${version}.tgz`);
   await fs.rename(join(tools, packed[0].filename), archive);
   const template = await fs.readFile(
     join(repository, "docs/public-downloads/START_HERE.md"),
@@ -131,6 +131,11 @@ console.log('Fixture CLI verified exact local bundle arguments and digest.');
   const blocks = [...template.matchAll(/^```sh\n([\s\S]*?)^```$/gm)];
   assert.equal(blocks.length, 1, "Execute the exact shipped installer block");
   const script = blocks[0][1]
+    .replaceAll("{{PACKAGE_PREFIX}}", packagePrefix)
+    .replaceAll("{{TOOLS_NAME}}", `@${packagePrefix}/release-tools`)
+    .replaceAll("{{SKILL_NAME}}", packagePrefix)
+    .replaceAll("{{RUNTIME_NAME}}", `@${packagePrefix}/runtime`)
+    .replaceAll("{{ENGINE_NAME}}", `${packagePrefix}-engine`)
     .replaceAll("{{VERSION}}", version)
     .replaceAll("{{TOOLS_SHA256}}", hash(await fs.readFile(archive)))
     .replaceAll("{{MANIFEST_SHA256}}", manifestDigest);
@@ -146,59 +151,60 @@ console.log('Fixture CLI verified exact local bundle arguments and digest.');
   };
 }
 
-for (const nested of [false, true]) {
-  test(`exact shipped installer stays local ${nested ? "inside an unrelated npm workspace" : "outside npm workspaces"}`, async (t) => {
-    const f = await fixture(t, nested);
-    const run = spawnSync("/bin/sh", ["-s"], {
-      cwd: f.kit,
-      input: f.script,
-      env: f.environment,
-      encoding: "utf8",
-      timeout: 30000,
-    });
-    const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
-    for (const [path, before] of f.preserved)
+for (const packagePrefix of ["daedlo", "browser-driver"])
+  for (const nested of [false, true]) {
+    test(`exact shipped ${packagePrefix} installer stays local ${nested ? "inside an unrelated npm workspace" : "outside npm workspaces"}`, async (t) => {
+      const f = await fixture(t, nested, packagePrefix);
+      const run = spawnSync("/bin/sh", ["-s"], {
+        cwd: f.kit,
+        input: f.script,
+        env: f.environment,
+        encoding: "utf8",
+        timeout: 30000,
+      });
+      const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+      for (const [path, before] of f.preserved)
+        assert.equal(
+          (await fs.readFile(path)).toString(),
+          before.toString(),
+          `Installer must preserve ancestor file bytes: ${path}\n${output}`,
+        );
+      assert.ifError(run.error);
+      assert.equal(run.signal, null, output);
+      assert.equal(run.status, 0, output);
+      const installed = join(f.kit, "installed-tools");
+      const packageRoot = join(
+        installed,
+        `node_modules/@${packagePrefix}/release-tools`,
+      );
+      assert.equal((await fs.lstat(packageRoot)).isDirectory(), true);
+      const pkg = JSON.parse(
+        await fs.readFile(join(packageRoot, "package.json"), "utf8"),
+      );
+      assert.equal(pkg.name, `@${packagePrefix}/release-tools`);
+      assert.equal(pkg.version, version);
+      const invocation = JSON.parse(
+        await fs.readFile(join(installed, "cli-invocation.json"), "utf8"),
+      );
+      assert.equal(invocation.status, "PASS");
+      assert.equal(invocation.cwd, installed);
       assert.equal(
-        (await fs.readFile(path)).toString(),
-        before.toString(),
-        `Installer must preserve ancestor file bytes: ${path}\n${output}`,
+        invocation.module,
+        pathToFileURL(join(packageRoot, "lib/consumer-cli.mjs")).href,
       );
-    assert.ifError(run.error);
-    assert.equal(run.signal, null, output);
-    assert.equal(run.status, 0, output);
-    const installed = join(f.kit, "installed-tools");
-    const packageRoot = join(
-      installed,
-      "node_modules/@browser-driver/release-tools",
-    );
-    assert.equal((await fs.lstat(packageRoot)).isDirectory(), true);
-    const pkg = JSON.parse(
-      await fs.readFile(join(packageRoot, "package.json"), "utf8"),
-    );
-    assert.equal(pkg.name, "@browser-driver/release-tools");
-    assert.equal(pkg.version, version);
-    const invocation = JSON.parse(
-      await fs.readFile(join(installed, "cli-invocation.json"), "utf8"),
-    );
-    assert.equal(invocation.status, "PASS");
-    assert.equal(invocation.cwd, installed);
-    assert.equal(
-      invocation.module,
-      pathToFileURL(join(packageRoot, "lib/consumer-cli.mjs")).href,
-    );
-    assert.deepEqual(invocation.args, [
-      "verify",
-      "--bundle",
-      join(f.kit, "bundle"),
-      "--sha256",
-      f.manifestDigest,
-    ]);
-    if (nested)
-      await assert.rejects(
-        fs.access(
-          join(f.ancestor, "node_modules/@browser-driver/release-tools"),
-        ),
-        { code: "ENOENT" },
-      );
-  });
-}
+      assert.deepEqual(invocation.args, [
+        "verify",
+        "--bundle",
+        join(f.kit, "bundle"),
+        "--sha256",
+        f.manifestDigest,
+      ]);
+      if (nested)
+        await assert.rejects(
+          fs.access(
+            join(f.ancestor, `node_modules/@${packagePrefix}/release-tools`),
+          ),
+          { code: "ENOENT" },
+        );
+    });
+  }

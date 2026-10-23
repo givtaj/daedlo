@@ -37,12 +37,26 @@ not rewrite an ordinary factory or infer what a customer save means.
 
 Install the verified tools archive into an explicit tools directory outside the
 customer project, following the kit's `START_HERE.md`. The tools package has no
-npm dependencies or install scripts. From that tools directory:
+npm dependencies or install scripts. For renamed tools (alpha.4 and later), run
+from that tools directory:
 
 ```sh
-node node_modules/@browser-driver/release-tools/lib/ninja.mjs --help
-node node_modules/@browser-driver/release-tools/lib/ninja.mjs serve --config /absolute/path/ninja-local.json
+node node_modules/@daedlo/release-tools/lib/ninja.mjs --help
+node node_modules/@daedlo/release-tools/lib/ninja.mjs serve --config /absolute/path/ninja-local.json
 ```
+
+For a published alpha.3 installation, the package directory remains
+`node_modules/@browser-driver/release-tools`; use that kit's original commands.
+Do not rename an installed package directory by hand. The immutable alpha.3
+manager cannot read a future renamed Daedlo kit. The first renamed update needs
+verified new tools installed separately, a safe stop of the old manager, and the
+same existing configuration, store and publisher pin. Verify that the new manager
+can launch the accepted legacy installation before attempting an update.
+
+The [naming migration guide](https://github.com/givtaj/daedlo/blob/main/docs/rename.md)
+defines this sequence and the required customer upgrade/legacy-rollback drill.
+That drill and compatible capability signalling/feed rollout are outstanding
+alpha.4 publication gates; the naming change alone does not establish them.
 
 The command prints a loopback update-screen URL containing a private local token.
 Keep that URL local. The manager stays outside the runtime it replaces. Its

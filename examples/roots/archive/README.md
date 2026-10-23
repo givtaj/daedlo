@@ -1,6 +1,6 @@
 # The Roots evidence archive
 
-These are real Roots QA receipts that shaped browser-driver: visible UX findings,
+These are real Roots QA receipts that shaped Daedlo: visible UX findings,
 learned Journal flows, guarded live controls, timed regression, and the Strains
 feature. The archive contains no invented runs. It does not establish that every
 Roots capability has been migrated into the independent product.
@@ -9,7 +9,7 @@ The static workbench reads [manifest.json](manifest.json). Original evidence sta
 in the Roots repository, referenced by repository-relative path and SHA-256. The original-source copies are six visually reviewed screenshots of synthetic
 fixtures, unchanged from the originals. A seventh, fresh manual walkthrough adds
 two exact live-frame images and four sanitized receipts under `receipts/`, created
-in this browser-driver repository. Their source paths are explicitly labeled. No
+in this Daedlo repository. Their source paths are explicitly labeled. No
 raw logs, credentials, account files, cookies, private records or traces are copied.
 
 | Receipt                             | Captured source                                                               | What it establishes                                                                                                                                                                                                                             |
@@ -21,7 +21,8 @@ raw logs, credentials, account files, cookies, private records or traces are cop
 | Strains, September 27               | Hashed candidate based on `d4008e3`, later committed `9c9e938`                | Eleven product scenarios passed, eighteen Rust leaves were separately observed, zero uncaught errors; earlier focus and cursor-readiness failures are retained.                                                                                 |
 | Consolidation, September 27         | Application `dd9cee67`; relocated controller/runtime uncommitted              | Passing baseline and final 10 live groups/10 recipes plus 11 Strains scenarios/18 leaves; stable source/four binaries, 290 Rust/74 frontend/13 Node checks, Docker and owned cleanup. Initial setup failure retained; no commit/push/remote CI. |
 
-The [canonical Roots report](../../../../roots/docs/verification/auth-release-2026-09-26/REPORT.md)
+The canonical Roots report (`docs/verification/auth-release-2026-09-26/REPORT.md`
+in the private Roots source)
 owns verification and release status for that project. The 2026-09-27
 consolidation receipt records completed local verification with its source then
 uncommitted and its publication limits at capture. Its before/after durations are single
@@ -31,14 +32,15 @@ findings are historical observations, not assertions that current Roots still
 has those defects. A fresh manual drive belongs in a separate receipt with its
 own source identity and observed time.
 
-Useful original records:
+Original source references (private Roots repository; not files required from
+a sibling checkout or prerequisites for using this archive):
 
-- [Initial UX review](../../../../roots/QA/ux-review-2026-09-26.md)
-- [Learned driver commands and assertions](../../../../roots/QA/driver-commands.md)
-- [Live-control evidence explanation](../../../../roots/QA/evidence/live-controls-2026-09-27/README.md)
-- [Timed regression provenance](../../../../roots/QA/evidence/live-regression-timing-2026-09-27/verification.json)
-- [Strains acceptance and evidence limits](../../../../roots/QA/strains-acceptance.md)
-- [Consolidation final verification](../../../../roots/QA/evidence/driver-consolidation-2026-09-27/verification.json)
+- Initial UX review — `QA/ux-review-2026-09-26.md`
+- Learned driver commands and assertions — `QA/driver-commands.md`
+- Live-control evidence explanation — `QA/evidence/live-controls-2026-09-27/README.md`
+- Timed regression provenance — `QA/evidence/live-regression-timing-2026-09-27/verification.json`
+- Strains acceptance and evidence limits — `QA/strains-acceptance.md`
+- Consolidation final verification — `QA/evidence/driver-consolidation-2026-09-27/verification.json`
 
 ## Manifest contract
 

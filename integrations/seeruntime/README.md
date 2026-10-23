@@ -1,7 +1,7 @@
 # SeeRuntime customer trial
 
 This integration observes existing SeeRuntime playback through the public
-browser-driver runtime and Rust `ApplicationModel`. It does not instrument a real
+Daedlo runtime and Rust `ApplicationModel`. It does not instrument a real
 Node process or change SeeRuntime's teaching model.
 
 The trial uses a committed source archive at
@@ -68,6 +68,11 @@ that file-inventory proof.
 
 ## Repeat the isolated trial
 
+This optional customer workflow requires access to the pinned SeeRuntime source.
+It is not needed for shared-core contributions. Historical results below retain
+the package names and versions actually tested; use matching source and artifacts
+to reproduce those receipts.
+
 Use an absolute fresh `consumer` directory, an independently verified `bundle`
 and its trusted `manifest_digest`. The chosen release-tools `verify` command
 must pass with the actual Node/Rust environment first. Preparation does not run
@@ -75,7 +80,7 @@ the application's package manager, change its dependencies or copy live secrets.
 
 ```sh
 node integrations/seeruntime/prepare.mjs "$bundle" "$consumer" "$manifest_digest"
-npm --prefix "$consumer" install --ignore-scripts --no-audit --no-fund
+npm --prefix "$consumer" install --workspaces=false --ignore-scripts --no-audit --no-fund
 CARGO_TARGET_DIR="$consumer/target" cargo test --manifest-path "$consumer/engine/Cargo.toml"
 CARGO_TARGET_DIR="$consumer/target" cargo build --manifest-path "$consumer/engine/Cargo.toml"
 ```

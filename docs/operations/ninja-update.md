@@ -6,7 +6,7 @@ Source baseline reviewed: released main `a0dfa27296014cf455a90938d0a641f1c7f9bdf
 
 ## Delivery status — 23 October 2026
 
-[Alpha.3](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3)
+[Alpha.3](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.3)
 and the [signed preview feed](https://daedlo.com/updates/preview.json) are published.
 The package source is `558366b6b4de9a158a9ad49bb7b45d3080d5497e`; the 206,234-byte ZIP
 has SHA-256 `f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190`.
@@ -92,7 +92,7 @@ Sources: [release commands](../../scripts/release/commands.mjs),
 [archive store](../../scripts/release/store.mjs),
 [GitHub provider](../../scripts/release/remote.mjs),
 [manifest](../../scripts/release/manifest.mjs),
-[model trait](../../crates/browser-driver-engine/src/lib.rs),
+[model trait](../../crates/daedlo-engine/src/lib.rs),
 [public adapter types](../../packages/runtime/src/index.d.ts),
 [CLI](../../packages/runtime/src/cli.mjs), and
 [current update guide](../update-client.md).

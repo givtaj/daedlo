@@ -43,8 +43,8 @@ export function releaseLicense(files) {
     const canonical = read(path);
     for (const component of [
       "packages/runtime",
-      "crates/browser-driver-engine",
-      "skills/browser-driver",
+      "crates/daedlo-engine",
+      "skills/daedlo",
     ])
       if (read(`${component}/${path}`) !== canonical)
         throw Error(`Package license source differs: ${component}/${path}.`);
@@ -73,8 +73,8 @@ export function releaseLicense(files) {
     for (const boundary of [
       "",
       "packages/runtime/",
-      "crates/browser-driver-engine/",
-      "skills/browser-driver/",
+      "crates/daedlo-engine/",
+      "skills/daedlo/",
     ])
       if (sources.has(`${boundary}EVALUATION-LICENSE.md`))
         throw Error("Public packages cannot include evaluation terms.");
@@ -83,9 +83,9 @@ export function releaseLicense(files) {
         .split(/\r?\n/)
         .includes(`license = "${runtime.license}"`) ||
       !/^license\.workspace = true$/m.test(
-        read("crates/browser-driver-engine/Cargo.toml"),
+        read("crates/daedlo-engine/Cargo.toml"),
       ) ||
-      !read("skills/browser-driver/SKILL.md")
+      !read("skills/daedlo/SKILL.md")
         .split(/\r?\n/)
         .includes(`license: ${runtime.license}`)
     )
@@ -109,11 +109,11 @@ export function releaseLicense(files) {
   if (
     !/^license-file = "LICENSE"$/m.test(read("Cargo.toml")) ||
     !/^license-file.workspace = true$/m.test(
-      read("crates/browser-driver-engine/Cargo.toml"),
+      read("crates/daedlo-engine/Cargo.toml"),
     )
   )
     throw Error("Engine must refer to its included license file.");
-  if (!/^license: See LICENSE/m.test(read("skills/browser-driver/SKILL.md")))
+  if (!/^license: See LICENSE/m.test(read("skills/daedlo/SKILL.md")))
     throw Error("Skill must refer to its included license file.");
   for (const path of [
     "LICENSE",

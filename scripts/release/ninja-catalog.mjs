@@ -1,3 +1,4 @@
+import { releaseNames } from "./names.mjs";
 /** Authenticated public-kit provider, independent of archive selection and activation.
  * No package code, customer factory, install script or application command is run.
  * The caller configures publisher/trust roots, persists checkpoint after verified
@@ -629,7 +630,8 @@ function validateKit(entry, files) {
   fields(m.tools, ["file", "bytes", "sha256"]);
   integer(m.tools.bytes, 64 * 1024 * 1024);
   digest(m.tools.sha256);
-  const toolsFile = `browser-driver-tools-${entry.version}.tgz`;
+  const names = releaseNames(m.bundle.artifacts);
+  const toolsFile = `${names.prefix}-tools-${entry.version}.tgz`;
   if (m.tools.file !== `tools/${toolsFile}`)
     fail("Invalid tools archive identity");
   if (
@@ -645,8 +647,8 @@ function validateKit(entry, files) {
     "AGENT_START.md",
     "bundle/manifest.json",
     "bundle/SHA256SUMS",
-    `bundle/browser-driver-runtime-${entry.version}.tgz`,
-    `bundle/browser-driver-engine-${entry.version}.crate`,
+    `bundle/${names.prefix}-runtime-${entry.version}.tgz`,
+    `bundle/${names.engine}-${entry.version}.crate`,
     `tools/${toolsFile}`,
     "tools/TOOLS_VERIFICATION.json",
     "tools/TOOLS_SHA256SUMS",
@@ -692,7 +694,7 @@ function validateKit(entry, files) {
   if (
     toolsReceipt.schemaVersion !== 1 ||
     toolsReceipt.kind !== "browser-driver-release-tools" ||
-    toolsReceipt.name !== "@browser-driver/release-tools" ||
+    toolsReceipt.name !== names.tools ||
     toolsReceipt.version !== m.version
   )
     fail("Tools receipt identity mismatch");

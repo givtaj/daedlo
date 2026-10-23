@@ -91,7 +91,7 @@ jobs:
       - name: Retain the verified candidate bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: browser-driver-${{ steps.bundle.outputs.version }}-node${{ matrix.node }}-${{ github.sha }}
+          name: daedlo-${{ steps.bundle.outputs.version }}-node${{ matrix.node }}-${{ github.sha }}
           path: |
             artifacts/ci-bundle/*
             artifacts/ci-public-kit/*

@@ -1,4 +1,4 @@
-import { createDriverSession, createViewer } from '@browser-driver/runtime';
+import { createDriverSession, createViewer } from '@daedlo/runtime';
 import { createRootsAdapter } from './adapter.mjs';
 
 export async function attachRoots({ page, context, snapshotRoot, enginePath, account, identity, viewer = true }) {

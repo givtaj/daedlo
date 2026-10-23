@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 import { chromium } from 'playwright';
-import { createResourceScope } from '@browser-driver/runtime';
+import { createResourceScope } from '@daedlo/runtime';
 
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function eventually(check, label, milliseconds = 20000) {

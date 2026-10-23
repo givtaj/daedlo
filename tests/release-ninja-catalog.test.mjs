@@ -120,7 +120,7 @@ sys.stdout.buffer.write(out.getvalue())`,
     },
   );
 }
-function kit(change = () => {}) {
+function kit(change = () => {}, packagePrefix = "browser-driver") {
   const source = {
     commit: "a".repeat(40),
     dirty: false,
@@ -132,7 +132,7 @@ function kit(change = () => {}) {
   const artifact = (kind, name, extension, bytes) => ({
     name,
     version,
-    file: `browser-driver-${kind}-${version}.${extension}`,
+    file: `${packagePrefix}-${kind}-${version}.${extension}`,
     bytes: bytes.length,
     sha256: sha256(bytes),
   });
@@ -140,17 +140,17 @@ function kit(change = () => {}) {
     version,
     source,
     artifacts: {
-      runtime: artifact("runtime", "@browser-driver/runtime", "tgz", runtime),
-      engine: artifact("engine", "browser-driver-engine", "crate", engine),
+      runtime: artifact("runtime", `@${packagePrefix}/runtime`, "tgz", runtime),
+      engine: artifact("engine", `${packagePrefix}-engine`, "crate", engine),
     },
   });
   const manifestBytes = Buffer.from(JSON.stringify(manifest) + "\n");
-  const toolsFile = `browser-driver-tools-${version}.tgz`;
+  const toolsFile = `${packagePrefix}-tools-${version}.tgz`;
   const toolsReceipt = Buffer.from(
     JSON.stringify({
       schemaVersion: 1,
       kind: "browser-driver-release-tools",
-      name: "@browser-driver/release-tools",
+      name: `@${packagePrefix}/release-tools`,
       version,
       source,
       archive: { file: toolsFile, bytes: tools.length, sha256: sha256(tools) },
@@ -684,4 +684,13 @@ test("publication failure cleans owned staging and reports a replaced reservatio
     "candidate",
     "original-reservation",
   ]);
+});
+
+test("signed Ninja catalog verifies a complete renamed Daedlo kit without changing signature/schema rules", async (t) => {
+  const files = kit(() => {}, "daedlo");
+  const result = await download(t, files);
+  const verified = await verifyBundle(result.bundlePath);
+  assert.equal(verified.manifest.kind, "browser-driver-release");
+  assert.equal(verified.manifest.artifacts.runtime.name, "@daedlo/runtime");
+  assert.equal(result.metadata.tools.file, `tools/daedlo-tools-${version}.tgz`);
 });

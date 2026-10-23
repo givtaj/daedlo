@@ -1,5 +1,5 @@
 {
-  "name": "@browser-driver/runtime",
+  "name": "@daedlo/runtime",
   "version": "0.1.4-alpha.4",
   "description": "Visible browser control with a typed Rust application model",
   "license": "Apache-2.0",
@@ -14,6 +14,7 @@
     }
   },
   "bin": {
+    "daedlo": "./src/cli.mjs",
     "browser-driver": "./src/cli.mjs"
   },
   "files": [

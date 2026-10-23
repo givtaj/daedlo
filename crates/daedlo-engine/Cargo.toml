@@ -1,10 +1,10 @@
 [package]
-name = "browser-driver-engine"
+name = "daedlo-engine"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
-description = "Typed application models and a guarded JSON Lines browser-driver protocol"
+description = "Typed application models and a guarded JSON Lines Daedlo protocol"
 
 [dependencies]
 serde.workspace = true

@@ -2,7 +2,7 @@
 
 ## Product purpose
 
-Browser-driver is a local workspace for supervised browser automation and QA.
+Daedlo is a local workspace for supervised browser automation and QA.
 The user can see the exact controlled application, understand its observed state,
 choose a semantic command or authored scenario, intervene in execution and inspect
 the actual outcome. Coding agents can use the same explicit public API.
@@ -22,7 +22,7 @@ authenticated cloud service and crash-resumable runs are outside the initial sco
 
 The supplied diagram is included unchanged:
 
-![Browser-driver control and image streams](assets/architecture.png)
+![Daedlo control and image streams](assets/architecture.png)
 
 An editable version of the same architecture:
 
@@ -43,7 +43,7 @@ backend, including when that backend also happens to be Rust.
 
 ## Two kinds of state
 
-**Driver execution state** belongs to browser-driver: idle/running/paused/stopped,
+**Driver execution state** belongs to Daedlo: idle/running/paused/stopped,
 execution failure, one active run and interruption behavior. Connection health is
 also observed independently. Core execution controls apply to every integration.
 

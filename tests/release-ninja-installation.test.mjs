@@ -36,7 +36,7 @@ async function write(file, bytes) {
   await fs.mkdir(dirname(file), { recursive: true });
   await fs.writeFile(file, bytes);
 }
-async function fixture(t) {
+async function fixture(t, packagePrefix = "browser-driver") {
   const root = await fs.realpath(
     await fs.mkdtemp(join(tmpdir(), "ninja-install-test-")),
   );
@@ -105,7 +105,7 @@ async function fixture(t) {
   await write(
     join(runtimeRoot, "package.json"),
     JSON.stringify({
-      name: "@browser-driver/runtime",
+      name: `@${packagePrefix}/runtime`,
       version: "1.0.0",
       type: "module",
       exports: "./index.mjs",
@@ -116,10 +116,10 @@ async function fixture(t) {
     join(runtimeRoot, "index.mjs"),
     'export const version="1.0.0";\nexport function createDriverSession(){}\n',
   );
-  const crateRoot = join(root, "crate", "browser-driver-engine-1.0.0");
+  const crateRoot = join(root, "crate", `${packagePrefix}-engine-1.0.0`);
   await write(
     join(crateRoot, "Cargo.toml"),
-    '[package]\nname="browser-driver-engine"\nversion="1.0.0"\nedition="2021"\n[lib]\npath="src/lib.rs"\n',
+    `[package]\nname="${packagePrefix}-engine"\nversion="1.0.0"\nedition="2021"\n[lib]\npath="src/lib.rs"\n`,
   );
   const hello = JSON.stringify({
     protocol: 1,
@@ -134,16 +134,16 @@ async function fixture(t) {
   );
   const artifacts = {};
   for (const [kind, folder, prefix, extension, name] of [
-    ["runtime", "runtime", "package", "tgz", "@browser-driver/runtime"],
+    ["runtime", "runtime", "package", "tgz", `@${packagePrefix}/runtime`],
     [
       "engine",
       "crate",
-      "browser-driver-engine-1.0.0",
+      `${packagePrefix}-engine-1.0.0`,
       "crate",
-      "browser-driver-engine",
+      `${packagePrefix}-engine`,
     ],
   ]) {
-    const file = `browser-driver-${kind}-1.0.0.${extension}`;
+    const file = `${packagePrefix}-${kind}-1.0.0.${extension}`;
     execFileSync(
       "tar",
       ["-czf", join(bundlePath, file), "-C", join(root, folder), prefix],
@@ -729,4 +729,43 @@ test("persisted hook receipts retain every accepted check invariant", async (t) 
   await fs.writeFile(file, JSON.stringify(receipt));
   await verifyInstallation(receipt.path);
   await preserved(f);
+});
+
+test("Daedlo installation compiles an unchanged historical Rust import and verifies its selected runtime", async (t) => {
+  const f = await fixture(t, "daedlo");
+  const receipt = await f.prepare();
+  assert.match(receipt.runtimePath, /node_modules\/@daedlo\/runtime\//);
+  assert.match(
+    await fs.readFile(join(receipt.sourcePath, "engine/Cargo.toml"), "utf8"),
+    /browser-driver-engine = \{ package = "daedlo-engine"/,
+  );
+  assert.equal(
+    (await verifyInstallation(f.destination)).inventorySha256,
+    receipt.inventorySha256,
+  );
+  await preserved(f);
+});
+
+test("historical installation receipts infer only the legacy package identity", async (t) => {
+  for (const prefix of ["browser-driver", "daedlo"]) {
+    const f = await fixture(t, prefix);
+    const receipt = await f.prepare();
+    delete receipt.runtimePackage;
+    await fs.writeFile(
+      join(f.destination, "installation.json"),
+      JSON.stringify(receipt),
+    );
+    if (prefix === "browser-driver") {
+      assert.equal(
+        (await verifyInstallation(f.destination)).runtimePackage,
+        undefined,
+      );
+    } else {
+      await assert.rejects(
+        verifyInstallation(f.destination),
+        /identity changed/,
+      );
+    }
+    await preserved(f);
+  }
 });
