@@ -4,6 +4,11 @@ Current release work: [Daedlo alpha delivery — 21 October 2026](alpha-release.
 That record owns the bounded alpha scope and gates. The milestones below retain
 their historical scope and do not by themselves establish a current release.
 
+Next requested product work: [Operation Ninja-Update](operations/ninja-update.md)
+(23 October 2026). Its recorded design adds project-preserving installation,
+compatibility validation, activation and rollback. Implementation and acceptance
+are planned; alpha.2 has no Install update button or managed consumer upgrade.
+
 ## Goal and approved constraints
 
 Build the dedicated browser-driver product described in this conversation, with

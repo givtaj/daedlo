@@ -1,5 +1,21 @@
 # Verification record
 
+## Operation Ninja-Update design review — 2026-10-23
+
+Recorded the [upgrade design and delivery plan](operations/ninja-update.md) after
+reviewing released source `a0dfa27296014cf455a90938d0a641f1c7f9bdfe`.
+This is a source/documentation review, not an implementation or acceptance run.
+Current archive-store update/rollback does not install dependencies, rebuild a
+customer engine or activate a launcher. The legacy GitHub bundle downloader also
+expects a different asset inventory from the public alpha.2 kit.
+
+The proposed managed updater preserves customer model/adapter source and data,
+rebuilds derived artifacts separately, validates the selected combination, and
+retains the previous complete installation. Compatibility preflight cannot reuse
+ordinary CLI startup against production: the customer factory and navigation
+precede model validation. NINJA-01 through NINJA-06 remain planned. No WBF system
+was accessed, no upgrade UI was added, and no new release or promotion occurred.
+
 ## Public assisted alpha 0.1.4-alpha.2 — 2026-10-21
 
 **Released** at [daedlo.com/install](https://daedlo.com/install) and the

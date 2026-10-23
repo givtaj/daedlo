@@ -6,6 +6,15 @@ guides and complete `browser-driver` agent skill. It does not install a customer
 runtime, compile an application model, change application dependencies or restart
 services.
 
+The source repository's `docs/operations/ninja-update.md` records proposed
+Operation Ninja-Update: project-preserving installation and activation beyond
+this archive tooling. That maintainer plan is not included in this package. It is a
+design and delivery plan, not a capability of this alpha client. In particular,
+the legacy GitHub downloader expects a four-file top-level bundle, whereas the
+public alpha.2 release publishes a kit ZIP plus metadata and checksums. Use the
+public kit instructions for alpha.2; do not treat release discovery as proof that
+the legacy downloader supports that asset format.
+
 Obtain the exact kit named by the selected release receipt. During preparation
 this alpha candidate is local; the [installation page](https://daedlo.com/install.html)
 may still serve the earlier preview.
