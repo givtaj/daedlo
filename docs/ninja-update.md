@@ -7,8 +7,9 @@ catalog and one-time project registration are prerequisites; no public update
 feed or publisher key is enabled by default.
 
 The update screen offers **Check for updates → Install update → Ready → Restart
-Daedlo** and **Revert update**. Installation never edits the authored project or
-application database. A candidate becomes ready only after an isolated build,
+Daedlo** and **Revert update**. The manager does not write to the authored project or
+application database. Registered build and validation hooks are trusted code and
+must respect that ownership boundary; they are not OS-sandboxed. A candidate becomes ready only after an isolated build,
 model handshake and registered acceptance/health checks pass. Changed source,
 incompatible interfaces, changed states/commands/recipes, active runs and unsaved
 or unknown browser drafts block replacement.
@@ -75,7 +76,8 @@ disjoint from the source, initially empty or already owned by this project.
 or production endpoints in disposable validation hooks. Missing keys/feed/checks
 fail closed. `offline` defaults to true; a populated approved npm cache and Cargo
 cache are needed. Explicit `offline:false` permits dependency acquisition while
-scripts remain disabled. Node 22, the manifest's Rust toolchain, Python 3 for safe
+npm lifecycle scripts remain disabled. Rust builds/tests and registered hooks
+execute trusted code. Node 22, the manifest's Rust toolchain, Python 3 for safe
 archive extraction, and the accepted Playwright browser are prerequisites.
 
 ## Managed integration contract, version 1

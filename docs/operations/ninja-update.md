@@ -1,7 +1,7 @@
 # Operation Ninja-Update
 
 Date: 23 October 2026. Owner: Daedlo product/integration owner.
-Status: **implemented locally; source upgrade/rollback acceptance passed; packaged acceptance pending; not released**.
+Status: **implemented locally; source and exact installed-package upgrade/rollback acceptance passed; not released**.
 Source baseline reviewed: released main `a0dfa27296014cf455a90938d0a641f1c7f9bdfe`.
 
 ## Outcome
@@ -188,8 +188,10 @@ the candidate instead of replacing its running files.
 
 The rows below retain the acceptance requirements. Shared NINJA-01 through
 NINJA-04 code is now implemented locally; the [verification record](../verification.md)
-owns actual test results. NINJA-05 source acceptance passed against Architecture Studio;
-an exact packaged-tools repeat remains in progress.
+owns actual test results. NINJA-05 passed against Architecture Studio with both
+source modules and the exact installed alpha.3 tools: upgrade, rejected candidate,
+rollback, unchanged project/source/data, reports, relaunch and cleanup. The tested
+package is frozen from clean source `4948b81bf5d57de71888aeca0293a24288a0373b`.
 NINJA-06 remains an external onboarding/release gate. See the
 [managed client guide](../ninja-update.md) for supported interfaces and bootstrap.
 

@@ -28,7 +28,28 @@ model tests (13 Rust, seven Node) passed in the isolated builds. Four final sess
 reports show owned-resource closure; an explicit driver relaunch preserved the
 attached application. Root inspection confirmed the actual updated control and
 application viewer; rollback screenshots and all cleanup receipts were retained.
-The exact packaged-tools repeat is still pending in this source commit.
+
+Exact installed-package acceptance: **eight checkpoint groups PASS**, repeating
+the complete alpha.2 → rejected candidate → alpha.3 → alpha.2 sequence through
+the installed tools' real control page, provider, isolated build and supervisor.
+Both Updated and Reverted control/application views passed independent live
+inspection. The same source, descriptor, exact data, save/no-write, four final
+reports, driver relaunch and attached-service assertions passed. All 35 installed
+tools files match their frozen inventory before/after. Owned processes and ports
+were closed; evidence and isolated installation directories were retained.
+Receipt: `artifacts/ninja-update/customer-packaged/run-aIWtrN/result.json`.
+
+The tested unpublished alpha.3 kit was built from clean source
+`4948b81bf5d57de71888aeca0293a24288a0373b`, source-tree SHA-256
+`7a06b78300e3159cfb1fcb82482d648d870e66be38ce26d809ec0e4af1a2a8d1`.
+ZIP SHA-256 `628a49cebeac853e66f3755e78e134d4a3e76987e9c9ec382c34003e8be1882b`;
+bundle manifest `090c88b081df2788afb7f739952cfa1bb30651cb91500a9e7af3c33b492964e1`;
+tools archive `f6e6f4031f4faea0ab5c9923f0b5ea889236c21ba26a99832505191c013f7397`.
+The tools were installed outside Git with a fresh offline npm cache. Subsequent
+documentation records this evidence and clarifies that only npm lifecycle scripts
+are disabled: Rust builds/tests and registered hooks execute trusted code, whose
+isolation contract is not an OS sandbox. That documentation follow-up does not
+change the frozen, tested executable bytes or constitute publication.
 
 Genuine regression failures retained separately include missing implementation
 assertions, accepting overridden fetched catalog bytes, failure to reject a final
@@ -37,7 +58,8 @@ modified browser dependency/receipt/source paths, and absent acceptance evidence
 Setup/import/fixture-lifecycle errors are not counted as browser scenario failures.
 The first fixture lifecycle failure and two stale-view refusals remain recorded
 as failed runs; neither is rewritten as success. The passing source run is
-`artifacts/ninja-update/customer/run-qYHzFV/`. Private logs and frozen unpublished candidate receipts remain in ignored
+`artifacts/ninja-update/customer/run-qYHzFV/`. Private logs and frozen unpublished
+candidate receipts remain in ignored
 `artifacts/ninja-update/` and `artifacts/ninja-update-20261023/`.
 
 The catalog tests use an ephemeral explicitly trusted signing key, including the
