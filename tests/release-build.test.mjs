@@ -16,7 +16,7 @@ async function fixture(t, releaseVersion = version) {
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const repoRoot = join(directory, "source");
   await fs.mkdir(join(repoRoot, "packages/runtime/src"), { recursive: true });
-  await fs.mkdir(join(repoRoot, "crates/browser-driver-engine/src"), {
+  await fs.mkdir(join(repoRoot, "crates/daedlo-engine/src"), {
     recursive: true,
   });
   const notice = await fs.readFile(
@@ -27,9 +27,9 @@ async function fixture(t, releaseVersion = version) {
     "README.md": "Public release fixture.\n",
     LICENSE: notice,
     "packages/runtime/LICENSE": notice,
-    "crates/browser-driver-engine/LICENSE": notice,
+    "crates/daedlo-engine/LICENSE": notice,
     "packages/runtime/package.json": JSON.stringify({
-      name: "@browser-driver/runtime",
+      name: "@daedlo/runtime",
       version: releaseVersion,
       license: "MIT",
       type: "module",
@@ -37,10 +37,10 @@ async function fixture(t, releaseVersion = version) {
       scripts: { prepack: 'node -e "process.exit(72)"' },
     }),
     "packages/runtime/src/index.mjs": "export const fixture = true;\n",
-    "Cargo.toml": `[workspace]\nmembers = ["crates/browser-driver-engine"]\nresolver = "2"\n\n[workspace.package]\nversion = "${releaseVersion}"\nedition = "2021"\n`,
-    "crates/browser-driver-engine/Cargo.toml":
-      '[package]\nname = "browser-driver-engine"\nversion.workspace = true\nedition.workspace = true\nlicense = "MIT"\ndescription = "Release contract fixture"\n',
-    "crates/browser-driver-engine/src/lib.rs": "pub const PROTOCOL: u32 = 1;\n",
+    "Cargo.toml": `[workspace]\nmembers = ["crates/daedlo-engine"]\nresolver = "2"\n\n[workspace.package]\nversion = "${releaseVersion}"\nedition = "2021"\n`,
+    "crates/daedlo-engine/Cargo.toml":
+      '[package]\nname = "daedlo-engine"\nversion.workspace = true\nedition.workspace = true\nlicense = "MIT"\ndescription = "Release contract fixture"\n',
+    "crates/daedlo-engine/src/lib.rs": "pub const PROTOCOL: u32 = 1;\n",
     "rust-toolchain.toml": '[toolchain]\nchannel = "1.96.0"\n',
   };
   for (const [path, bytes] of Object.entries(files)) {
@@ -93,8 +93,8 @@ test("actual npm and verified Cargo bundles reproduce all bytes", async (t) => {
   assert.match(first.manifest.source.treeSha256, /^[a-f0-9]{64}$/);
   assert.deepEqual((await fs.readdir(f.output)).sort(), [
     "SHA256SUMS",
-    `browser-driver-engine-${version}.crate`,
-    `browser-driver-runtime-${version}.tgz`,
+    `daedlo-engine-${version}.crate`,
+    `daedlo-runtime-${version}.tgz`,
     "manifest.json",
   ]);
   const second = await buildBundle({
@@ -135,11 +135,11 @@ test("valid prerelease identifiers with repeated hyphens build ordinary packages
   assert.equal(result.manifest.version, releaseVersion);
   assert.equal(
     result.manifest.artifacts.runtime.file,
-    `browser-driver-runtime-${releaseVersion}.tgz`,
+    `daedlo-runtime-${releaseVersion}.tgz`,
   );
   assert.equal(
     result.manifest.artifacts.engine.file,
-    `browser-driver-engine-${releaseVersion}.crate`,
+    `daedlo-engine-${releaseVersion}.crate`,
   );
 });
 
@@ -220,7 +220,7 @@ test("changes during packaging refuse the bundle and clean only owned output", a
 test("Cargo package verification rejects invalid Rust and leaves no partial bundle", async (t) => {
   const f = await fixture(t);
   await fs.writeFile(
-    join(f.repoRoot, "crates/browser-driver-engine/src/lib.rs"),
+    join(f.repoRoot, "crates/daedlo-engine/src/lib.rs"),
     "this cannot compile\n",
   );
   await assert.rejects(

@@ -4,7 +4,7 @@ import { verifyBundle } from "./manifest.mjs";
 import { updateRelease, rollbackRelease, releaseStatus } from "./store.mjs";
 import { checkForUpdates, downloadRelease } from "./remote.mjs";
 
-const usage = `Browser-driver release tools (no publication or customer edits)
+const usage = `Daedlo release tools (no publication or customer edits)
   check --repo OWNER/REPO --current VERSION [--channel stable|preview]
   download --repo OWNER/REPO --version VERSION --out DIR --sha256 DIGEST
   verify --bundle DIR [--sha256 DIGEST]
@@ -41,7 +41,7 @@ function parse(args, maintainer) {
     !definition ||
     (!maintainer && ["version", "build", "build-tools"].includes(command))
   )
-    throw Error("Unknown command. Usage: browser-driver-release --help");
+    throw Error("Unknown command. Usage: daedlo-release --help");
   const options = {};
   for (let i = 0; i < tail.length; i++) {
     const name = tail[i].slice(2);

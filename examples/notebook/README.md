@@ -17,7 +17,7 @@ contains no notebook-specific labels, selectors or field assumptions.
 Saving retains the same operation identity when a response is lost. The server
 deduplicates that operation, and the browser acceptance verifies one matching
 record after retry. This is an explicit example backend contract, not a generic
-exactly-once guarantee from browser-driver. Data disappears when the example server
+exactly-once guarantee from Daedlo. Data disappears when the example server
 stops; persistence-after-process-restart is not claimed.
 
 An existing unsaved draft blocks the authored recipe. Explicitly discard it before

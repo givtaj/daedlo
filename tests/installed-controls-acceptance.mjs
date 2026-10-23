@@ -66,7 +66,12 @@ export async function runInstalledControls({
           2,
           `${name}: exactly one public runtime import substitution`,
         );
-        text = text.replace(sourceImport, '"@browser-driver/runtime"');
+        text = text.replace(
+          sourceImport,
+          JSON.stringify(
+            JSON.parse(fs.readFileSync(join(installed, "package.json"))).name,
+          ),
+        );
       }
       const destination = join(work, "tests", name);
       fs.writeFileSync(destination, text, { flag: "wx" });

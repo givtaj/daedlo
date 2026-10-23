@@ -58,7 +58,7 @@ path uses this block. It checks the tools archive before executing its code, cre
 (
   set -eu
   driver_kit="$(pwd -P)"
-  node --input-type=module - "$driver_kit/tools/browser-driver-tools-{{VERSION}}.tgz" <<'NODE'
+  node --input-type=module - "$driver_kit/tools/{{PACKAGE_PREFIX}}-tools-{{VERSION}}.tgz" <<'NODE'
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 const digest = createHash('sha256').update(readFileSync(process.argv[2])).digest('hex');
@@ -69,8 +69,8 @@ NODE
   cd "$driver_kit/installed-tools"
   npm install --prefix "$driver_kit/installed-tools" --workspaces=false \
     --offline --ignore-scripts --no-audit --no-fund \
-    "$driver_kit/tools/browser-driver-tools-{{VERSION}}.tgz"
-  node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs \
+    "$driver_kit/tools/{{PACKAGE_PREFIX}}-tools-{{VERSION}}.tgz"
+  node node_modules/{{TOOLS_NAME}}/lib/consumer-cli.mjs \
     verify --bundle "$driver_kit/bundle" --sha256 '{{MANIFEST_SHA256}}'
 )
 ```
@@ -92,13 +92,13 @@ own implementation language. The integration supplies a native Rust model, a
 guarded JavaScript adapter, a project module and evidence for one useful flow.
 
 The tools directory contains the complete skill at
-`node_modules/@browser-driver/release-tools/skills/browser-driver`. Copy the whole
+`node_modules/{{TOOLS_NAME}}/skills/{{SKILL_NAME}}`. Copy the whole
 folder, including its references, assets and notices, only into an unused project
 skill location. Preserve any existing customization. Explicitly read `SKILL.md`
 and its linked references if automatic discovery is unavailable; copying or
 reading the skill does not verify discovery.
 
-After integration, the `browser-driver` CLI opens a new controlled browser and
+After integration, the `{{SKILL_NAME}}` CLI opens a new controlled browser and
 prints a local viewer URL. The default is headless Chromium with a visible viewer;
 `--headed` opens a native browser window. Startup does not sign in or run authored
 commands automatically. Authored flows execute without a model API key or Daedlo
@@ -131,7 +131,7 @@ or a specific remaining blocker is reported without claiming completion.
 ## Future updates
 
 Alpha.3 includes Operation Ninja-Update. Read
-`installed-tools/node_modules/@browser-driver/release-tools/docs/ninja-update.md`.
+`installed-tools/node_modules/{{TOOLS_NAME}}/docs/ninja-update.md`.
 The tools include the pinned production public key and preview feed metadata in
 `docs/update-trust/production.json`. An agent registers the accepted model, flows,
 adapter, dependency locks, isolated validation hooks and managed launcher once.

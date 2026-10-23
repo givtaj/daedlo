@@ -1,3 +1,4 @@
+import { packageNames, releaseFamilies } from "./names.mjs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
@@ -274,11 +275,21 @@ function requiredAssets(release, version) {
     byName.set(asset.name, asset);
     ids.add(asset.id);
   }
+  const families = releaseFamilies.filter((prefix) =>
+    ["runtime", "engine"].some((id) =>
+      byName.has(
+        `${prefix}-${id}-${version}.${id === "runtime" ? "tgz" : "crate"}`,
+      ),
+    ),
+  );
+  if (families.length !== 1)
+    throw Error("Missing or mixed release artifact name families");
+  const names = packageNames(families[0]);
   return [
     ["manifest.json", 64 * 1024],
     ["SHA256SUMS", 4096],
-    [`browser-driver-runtime-${version}.tgz`, packageLimit],
-    [`browser-driver-engine-${version}.crate`, packageLimit],
+    [`${names.prefix}-runtime-${version}.tgz`, packageLimit],
+    [`${names.prefix}-engine-${version}.crate`, packageLimit],
   ].map(([name, limit]) => {
     const asset = byName.get(name);
     if (!asset) throw Error("Required release file is missing");

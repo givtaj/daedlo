@@ -1,4 +1,4 @@
-# Daedlo engine — `browser-driver-engine`
+# Daedlo engine — `daedlo-engine`
 
 **Daedlo 0.1.4-alpha.4 candidate for assisted macOS arm64 onboarding.**
 Read LICENSE and THIRD_PARTY_NOTICES.md: Apache-2.0 for the public core, with
@@ -9,7 +9,7 @@ their original terms; customer models, adapters, flows and data remain separate.
 Native Rust decision engine for Daedlo. The crate name stays compatible with
 existing integrations. A customer implements
 `ApplicationModel` with typed facts, states, commands and outcomes, then calls
-`browser_driver_engine::serve(model)` in its executable. Node communicates with
+`daedlo_engine::serve(model)` in its executable. Node communicates with
 that executable through JSON Lines on stdin/stdout. This crate does not launch
 a browser, run application effects or assign application state after clicks.
 

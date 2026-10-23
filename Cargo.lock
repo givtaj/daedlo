@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "browser-driver-engine"
+name = "daedlo-engine"
 version = "0.1.4-alpha.4"
 dependencies = [
  "serde",
@@ -87,7 +87,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 name = "notebook-engine"
 version = "0.1.4-alpha.4"
 dependencies = [
- "browser-driver-engine",
+ "daedlo-engine",
  "serde",
  "serde_json",
 ]

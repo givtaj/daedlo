@@ -60,8 +60,8 @@ successful renewal. GitHub can delay scheduled jobs, so each catalog allows at
 most seven days. Clients never ignore expiry.
 
 On 23 October 2026, manually dispatched runs
-[39948319111](https://github.com/givtaj/browser-driver/actions/runs/39948319111)
-and [39948603151](https://github.com/givtaj/browser-driver/actions/runs/39948603151)
+[39948319111](https://github.com/givtaj/daedlo/actions/runs/39948319111)
+and [39948603151](https://github.com/givtaj/daedlo/actions/runs/39948603151)
 completed all renewal gates. The latter restored the former's authenticated
 generation-2 checkpoint with `bootstrap:false` and published generation 3, expiring
 `2026-10-30T11:48:13.935Z`. The original alpha.3 consumer verified both renewals
@@ -122,13 +122,13 @@ successfully; run 3 restored its durable checkpoint normally. The exception is
 now historical and cannot be reused. Never delete history, reset counters or
 broaden it silently to recover a later failure.
 
-As of 23 October 2026, [probe 39947177085](https://github.com/givtaj/browser-driver/actions/runs/39947177085)
+As of 23 October 2026, [probe 39947177085](https://github.com/givtaj/daedlo/actions/runs/39947177085)
 received **44/44 HTTP 403 challenges**, covering both public origins and both
 user-agent variants, with no successful HTTP response. Dashboard inspection of
 the owned feed request identified the existing account-wide US country access
 rule. See [verification](verification.md) for the evidence and scope. The user subsequently
 approved a US Allow rule restricted to daedlo.com. Follow-up
-[probe 39948105153](https://github.com/givtaj/browser-driver/actions/runs/39948105153)
+[probe 39948105153](https://github.com/givtaj/daedlo/actions/runs/39948105153)
 returned 22/22 HTTP 200 on the apex and 22/22 HTTP 403 on the provider hostname;
 the account-wide rule is unchanged. Country Allow also bypasses custom and
 rate-limiting rules for matching Daedlo traffic, including future rules.

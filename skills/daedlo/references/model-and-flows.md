@@ -25,7 +25,7 @@ is a setup limitation, not a failed product scenario.
 ## Keep Rust authoritative
 
 The current implementation uses a customer executable calling
-`browser_driver_engine::serve(model)`. Implement `ApplicationModel` with associated
+`daedlo_engine::serve(model)`. Implement `ApplicationModel` with associated
 `Facts`, `State`, `Command`, `Outcome`; provide `descriptor`, `state`, `state_id`,
 `decode_command`, `authorize`, `verify` and `outcome_report`. Use `display`,
 `command_available` and `authorize_recipe` where needed. The descriptor supplies
@@ -34,7 +34,7 @@ steps. The descriptor alone is not an executable state machine.
 
 Prefer minimal nested Rust enums expressing the agreed application branches.
 Reuse canonical application enums where practical without importing application
-semantics into shared browser-driver core. Keep wire IDs explicit instead of
+semantics into shared daedlo core. Keep wire IDs explicit instead of
 formatting Rust debug output. Decode observations/parameters strictly; use
 `#[serde(deny_unknown_fields)]`, required facts and constrained enum values.
 

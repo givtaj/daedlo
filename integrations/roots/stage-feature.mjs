@@ -17,7 +17,7 @@ for (const path of files) fs.copyFileSync(join(root, 'integrations/roots', path)
 fs.mkdirSync(join(target, 'crate'));
 execFileSync('tar', ['-xf', crate, '-C', join(target, 'crate')]);
 const manifest = fs.readFileSync(join(root, 'integrations/roots/edit/engine/Cargo.toml'), 'utf8')
-  .replace('../../../../crates/browser-driver-engine', join(target, `crate/browser-driver-engine-${frameworkVersion}`))
+  .replace('../../../../crates/daedlo-engine', join(target, `crate/daedlo-engine-${frameworkVersion}`))
   .replace('../../../../artifacts/roots-edit-20261004/capture/snapshot/tools/browser-driver/engine', join(snapshot, 'tools/browser-driver/engine'));
 fs.writeFileSync(join(target, 'edit/engine/Cargo.toml'), manifest);
 fs.copyFileSync(join(root, 'integrations/roots/edit/engine/Cargo.lock'), join(target, 'edit/engine/Cargo.lock'));

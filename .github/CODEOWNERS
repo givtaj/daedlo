@@ -1,0 +1,15 @@
+# Review routing; enforcement also requires repository rules.
+* @givtaj
+
+# Keep release, trust, dependency and licensing changes with the integration owner.
+/.github/ @givtaj
+/scripts/release/ @givtaj
+/docs/update-trust/ @givtaj
+/package.json @givtaj
+/package-lock.json @givtaj
+/Cargo.toml @givtaj
+/Cargo.lock @givtaj
+/packages/runtime/package.json @givtaj
+/LICENSE @givtaj
+/THIRD_PARTY_NOTICES.md @givtaj
+/licenses/ @givtaj

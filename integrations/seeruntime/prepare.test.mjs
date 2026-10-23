@@ -49,7 +49,7 @@ for (const kind of ["regular", "symlink", "wrong-prefix"]) {
         ["runtime", runtimeFile],
       ]) {
         const bytes = await readFile(join(bundle, file));
-        artifacts[key] = { file, sha256: hash(bytes), bytes: bytes.length };
+        artifacts[key] = { name: key === "runtime" ? "@browser-driver/runtime" : "browser-driver-engine", file, sha256: hash(bytes), bytes: bytes.length };
       }
       const manifest = JSON.stringify({ version, artifacts });
       await writeFile(join(bundle, "manifest.json"), manifest);

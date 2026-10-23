@@ -6,8 +6,9 @@ evidence. The agent reads the application and does the integration work; the tea
 defines the intended behavior and what counts as success. Authored flows can then
 run without an AI agent or model API key.
 
-The product name is Daedlo; the existing browser-driver package names, commands
-and skill paths below remain the supported technical identifiers.
+Current source uses the Daedlo package names, commands and skill paths below.
+Published alpha.3 and earlier kits retain their original `browser-driver` names;
+follow the instructions bundled with the selected version.
 
 The next-release source target is **0.1.4-alpha.4** (unpublished), an assisted alpha for **macOS arm64 with
 Codex**, covering one agreed existing application flow and a relevant negative
@@ -37,14 +38,14 @@ example omits the workspace flag. Design new QA integrations for the managed
 contract from the outset; review unsupported existing contracts without changing
 accepted behavior silently. A successful website copy is not customer acceptance.
 
-The portable [browser-driver skill](../skills/browser-driver/SKILL.md) contains the
+The portable [Daedlo skill](../skills/daedlo/SKILL.md) contains the
 workflow and its supporting references. Start with the verified portable tools
-package or a reviewed browser-driver source checkout at an explicit revision.
+package or a reviewed Daedlo source checkout at an explicit revision.
 Explicitly read that skill and its references even if automatic discovery is
 unavailable. For a packaged alpha kit, start with its `AGENT_START.md`; for an
 identified tools package or checkout, use this request:
 
-> Read `skills/browser-driver/SKILL.md` in the chosen browser-driver tools package or checkout. Onboard this
+> Read `skills/daedlo/SKILL.md` in the chosen Daedlo tools package or checkout. Onboard this
 > web app using the existing Rust engine and Node runtime. Inspect our current
 > setup, then help us agree the nested Rust enum, transition diagram and acceptance
 > for one useful flow. Reuse any agreement already recorded. Install the exact
@@ -70,8 +71,8 @@ Claude Code onboarding.
 
 | Host        | Project skill directory          | Explicit invocation                                   |
 | ----------- | -------------------------------- | ----------------------------------------------------- |
-| Codex       | `.agents/skills/browser-driver/` | Select the skill, or use `$browser-driver` in CLI/IDE |
-| Claude Code | `.claude/skills/browser-driver/` | `/browser-driver`                                     |
+| Codex       | `.agents/skills/daedlo/` | Select the skill, or use `$daedlo` in CLI/IDE |
+| Claude Code | `.claude/skills/daedlo/` | `/daedlo`                                     |
 
 From the customer repository root, the agent can copy the reviewed folder into a
 fresh destination. Set `driver_source` to the installed tools package root (the
@@ -79,13 +80,13 @@ directory containing its `SOURCE.json`) or reviewed checkout, and choose one hos
 `skill_parent`; these are placeholders, not an unattended installer:
 
 ```sh
-driver_source=/absolute/path/to/browser-driver
+driver_source=/absolute/path/to/daedlo
 skill_parent=.agents/skills
 # For Claude Code instead: skill_parent=.claude/skills
-test -f "$driver_source/skills/browser-driver/SKILL.md" &&
+test -f "$driver_source/skills/daedlo/SKILL.md" &&
   mkdir -p "$skill_parent" &&
-  test ! -e "$skill_parent/browser-driver" &&
-  cp -R "$driver_source/skills/browser-driver" "$skill_parent/browser-driver"
+  test ! -e "$skill_parent/daedlo" &&
+  cp -R "$driver_source/skills/daedlo" "$skill_parent/daedlo"
 ```
 
 Copy supporting references and assets too. If the destination exists, compare it
@@ -140,11 +141,11 @@ setup blocker, not permission to restart services used by other projects.
 
 ## Install the runtime and create the customer integration
 
-The agent follows the skill's [installation reference](../skills/browser-driver/references/onboarding.md)
+The agent follows the skill's [installation reference](../skills/daedlo/references/onboarding.md)
 and the selected tools package or checkout's [release guide](releases.md). The current supported
 distribution path is an explicit candidate bundle or reviewed source checkout.
 Registry publication is not established by these instructions: do not assume that
-`npm install @browser-driver/runtime` or `cargo add browser-driver-engine` selects
+`npm install @daedlo/runtime` or `cargo add daedlo-engine` selects
 our verified candidate.
 
 Verify an acquired bundle against its independently supplied manifest digest,
@@ -161,7 +162,7 @@ The customer integration owns:
   application's authorization or production state machine.
 - A JavaScript adapter that observes facts, collects evidence and performs effects
   through the runtime's guarded primitives. Keep behavioral decisions in Rust.
-- A project module for `browser-driver --project PATH`, plus explicit startup,
+- A project module for `daedlo --project PATH`, plus explicit startup,
   authentication, readiness, fixture and cleanup instructions.
 - A flow catalogue connecting story, state/transition, guard, recipe, assertion and
   evidence. Keep planned, implemented and actually verified coverage distinct.

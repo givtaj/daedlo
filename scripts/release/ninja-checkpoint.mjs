@@ -6,7 +6,11 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { sha256 } from "./manifest.mjs";
 import { verifyNinjaCatalog } from "./ninja-catalog.mjs";
-const REPOSITORY = "givtaj/browser-driver";
+const REPOSITORY = "givtaj/daedlo";
+// The name changed; the repository and its renewal history did not. Pin its
+// immutable identity so an old-name replacement or a fork is never trusted.
+const REPOSITORY_ID = 1391092739;
+const REPOSITORY_NAMES = new Set([REPOSITORY, "givtaj/browser-driver"]);
 const WORKFLOW = ".github/workflows/ninja-renew.yml";
 const ARTIFACT = /^ninja-renewal-checkpoint-([1-9][0-9]*)$/;
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -65,6 +69,12 @@ const fail = (message) => {
 function positive(n) {
   return Number.isSafeInteger(n) && n > 0;
 }
+function trustedRepository(repository) {
+  return (
+    repository?.id === REPOSITORY_ID &&
+    REPOSITORY_NAMES.has(repository.full_name)
+  );
+}
 function matches(record, expected) {
   return Object.entries(expected).every(
     ([key, value]) => record?.[key] === value,
@@ -104,9 +114,9 @@ function reviewedBootstrapRecovery(
       status: "in_progress",
       conclusion: null,
     }) ||
-    history[0].run.head_repository?.full_name !== REPOSITORY ||
+    !trustedRepository(history[0].run.head_repository) ||
     !matches(history[1].run, FAILED_BOOTSTRAP) ||
-    history[1].run.head_repository?.full_name !== REPOSITORY ||
+    !trustedRepository(history[1].run.head_repository) ||
     history.some(
       (entry) =>
         entry.artifacts?.total_count !== 0 ||
@@ -118,7 +128,7 @@ function reviewedBootstrapRecovery(
   if (
     evidence.length !== 1 ||
     !matches(evidence[0].record, FAILED_BOOTSTRAP) ||
-    evidence[0].record.head_repository?.full_name !== REPOSITORY ||
+    !trustedRepository(evidence[0].record.head_repository) ||
     evidence[0].jobs.total_count !== 1 ||
     evidence[0].jobs.jobs.length !== 1
   )
@@ -240,7 +250,7 @@ export async function restoreCheckpoint({
   trust,
 } = {}) {
   if (
-    repository !== REPOSITORY ||
+    !REPOSITORY_NAMES.has(repository) ||
     !positive(runId) ||
     !positive(runAttempt) ||
     typeof branch !== "string" ||
@@ -273,7 +283,7 @@ export async function restoreCheckpoint({
       trustedKeys: [{ id: "daedlo-release-2026-10", publicKey: pem }],
     };
   }
-  const base = `https://api.github.com/repos/${REPOSITORY}`;
+  const base = `https://api.github.com/repos/${repository}`;
   async function request(path) {
     const response = await fetchImpl(base + path, {
       headers: {
@@ -335,6 +345,12 @@ export async function restoreCheckpoint({
       fail("Checkpoint artifact digest mismatch");
     return unpack(bytes);
   }
+  const repositoryRecord = await request("");
+  if (
+    !trustedRepository(repositoryRecord) ||
+    repositoryRecord.full_name !== repository
+  )
+    fail("Checkpoint repository identity mismatch");
   const workflow = await request("/actions/workflows/ninja-renew.yml");
   if (!positive(workflow.id) || workflow.path !== WORKFLOW)
     fail("Checkpoint workflow identity mismatch");
@@ -347,7 +363,7 @@ export async function restoreCheckpoint({
       run.run_attempt > 20 ||
       run.workflow_id !== workflow.id ||
       run.path !== WORKFLOW ||
-      run.head_repository?.full_name !== REPOSITORY ||
+      !trustedRepository(run.head_repository) ||
       !["schedule", "workflow_dispatch"].includes(run.event)
     )
       fail("Untrusted checkpoint workflow origin or event");
@@ -444,7 +460,10 @@ export async function restoreCheckpoint({
             1 ||
           artifact.attempt > run.run_attempt ||
           artifact.workflow_run?.id !== run.id ||
-          artifact.workflow_run?.head_branch !== branch
+          artifact.workflow_run?.head_branch !== branch ||
+          artifact.workflow_run?.repository_id !== REPOSITORY_ID ||
+          (artifact.workflow_run?.head_repository_id !== undefined &&
+            artifact.workflow_run.head_repository_id !== REPOSITORY_ID)
         )
           fail("Checkpoint artifact workflow origin mismatch");
         if (artifact.expired)

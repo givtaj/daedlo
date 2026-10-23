@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/browser-driver-engine", "examples/notebook-engine"]
+members = ["crates/daedlo-engine", "examples/notebook-engine"]
 resolver = "2"
 
 [workspace.package]

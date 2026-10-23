@@ -21,7 +21,7 @@ current feed identity, Spain/US delivery evidence and remaining access limits.
 
 ## Goal and approved constraints
 
-Build the dedicated browser-driver product described in this conversation, with
+Build the dedicated Daedlo product described in this conversation, with
 configurable customer states/branches and Roots as its first customer. Keep Roots
 development operational throughout. The user approved implementation and asked for
 this plan, documentation and the supplied architecture diagram.
@@ -92,7 +92,7 @@ This fixture unblocks core development; it does not replace Roots acceptance.
       normal Roots resources; record the active-normal-stack testing limit.
 - [x] Clean only candidate-owned resources; report remaining cleanup failures.
 
-Gate: no duplicated shared runtime or private browser-driver imports; document
+Gate: no duplicated shared runtime or private Daedlo imports; document
 known baseline defects and any unsupported cases honestly.
 
 ### 7. Review and handoff
@@ -212,7 +212,7 @@ verification receipt. The existing CI matrix and checks remain unchanged.
 Release checks: scoped local regressions, clean committed-source packaging,
 installed-package browser acceptance, existing CI on that commit, skill content
 verification, then explicit tag/release publication and downloaded-asset checks.
-The [release page](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.2)
+The [release page](https://github.com/givtaj/daedlo/releases/tag/v0.1.1-rc.2)
 and its `VERIFICATION.md` asset own the final publication receipt; the source tree
 is frozen before those identities can be generated.
 
@@ -288,9 +288,9 @@ are separate actions. The Stoplight captions and fixture remain customer-owned.
 ## Resume installed Roots migration — 2026-10-19
 
 The user requested resuming the migration and bringing the preserved shared fixes
-into browser-driver while keeping the current Roots driver operational until all
+into Daedlo while keeping the current Roots driver operational until all
 acceptance checks pass. Work occurs in isolated checkouts; the ordinary dirty
-browser-driver and Roots checkouts retain their existing source and entrypoints.
+Daedlo and Roots checkouts retain their existing source and entrypoints.
 
 - [x] Verify and recover the preserved `c8135fe` source bundle and roots.6 archive.
 - [x] Integrate its public-preview ancestry and shared corrections on the local

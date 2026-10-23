@@ -1,7 +1,7 @@
-# Daedlo runtime — `@browser-driver/runtime`
+# Daedlo runtime — `@daedlo/runtime`
 
-The public product name is Daedlo. The package import and `browser-driver` command
-remain unchanged for existing integrations.
+The package import is `@daedlo/runtime`; `daedlo` is the primary command.
+The `browser-driver` command remains a compatibility alias.
 
 **Daedlo 0.1.4-alpha.4 candidate for assisted macOS arm64 onboarding.**
 Read LICENSE and THIRD_PARTY_NOTICES.md: Apache-2.0 for the public core, with
@@ -15,7 +15,7 @@ Node 22+ and Playwright Chromium are required. The application supplies its own
 compiled engine executable and trusted browser adapter.
 
 ```js
-import {createDriverSession, createViewer} from '@browser-driver/runtime';
+import {createDriverSession, createViewer} from '@daedlo/runtime';
 
 const session = await createDriverSession({page, context, enginePath, adapter});
 const viewer = await createViewer({page, context, session});
@@ -75,7 +75,7 @@ runtime preserves execution/outcome/effect evidence, sets `ok:false` and
 `cleanupFailed:true`, and adds a safe `cleanupError` with code
 `cleanup_incomplete`. The adapter's raw error is never included in public reports.
 
-`browser-driver --project ./project.mjs` launches a new owned browser. The trusted
+`daedlo --project ./project.mjs` launches a new owned browser. The trusted
 project module exports `createProject({resources})`, returning either
 `{url,enginePath,createAdapter({page,context}),identity?,presentations?}` or
 `{url,createSession({page,context,resources,signal,ownSession})}`. These routes are

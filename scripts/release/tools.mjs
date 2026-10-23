@@ -21,6 +21,7 @@ const libraries = [
   "consumer-cli",
   "commands",
   "manifest",
+  "names",
   "store",
   "remote",
   "ninja",
@@ -40,7 +41,7 @@ const documents = [
   "presentation",
   "ninja-update",
 ];
-const skillPrefix = "skills/browser-driver/";
+const skillPrefix = "skills/daedlo/";
 const requiredSkill = [
   "SKILL.md",
   "LICENSE",
@@ -197,7 +198,7 @@ export async function buildToolsArchive({
   for (const file of sourceFiles.keys())
     if (file.startsWith(skillPrefix)) copy(file);
   const pkg = {
-    name: "@browser-driver/release-tools",
+    name: "@daedlo/release-tools",
     version,
     description:
       "Verify and select Daedlo release bundles in an isolated archive store",
@@ -206,6 +207,7 @@ export async function buildToolsArchive({
     type: "module",
     engines: { node: ">=22" },
     bin: {
+      "daedlo-release": "lib/consumer-cli.mjs",
       "browser-driver-release": "lib/consumer-cli.mjs",
       "ninja-update": "lib/ninja.mjs",
     },
@@ -250,7 +252,7 @@ export async function buildToolsArchive({
   let temporary, temporaryIdentity, result, failure;
   try {
     temporary = await fs.realpath(
-      await fs.mkdtemp(join(os.tmpdir(), "browser-driver-tools-")),
+      await fs.mkdtemp(join(os.tmpdir(), "daedlo-tools-")),
     );
     temporaryIdentity = await fs.lstat(temporary);
     const staging = join(temporary, "package");
@@ -289,7 +291,7 @@ export async function buildToolsArchive({
     if (
       !Array.isArray(packed) ||
       packed.length !== 1 ||
-      packed[0].filename !== `browser-driver-release-tools-${version}.tgz` ||
+      packed[0].filename !== `daedlo-release-tools-${version}.tgz` ||
       packed[0].name !== pkg.name ||
       packed[0].version !== version ||
       !Array.isArray(packed[0].files)
@@ -310,7 +312,7 @@ export async function buildToolsArchive({
       throw Error(
         "Source changed during tools packaging; no archive was retained.",
       );
-    const archiveFile = `browser-driver-tools-${version}.tgz`;
+    const archiveFile = `daedlo-tools-${version}.tgz`;
     const archivePath = join(output, archiveFile);
     const bytes = await fs.readFile(join(temporary, packed[0].filename));
     const digest = sha256(bytes);

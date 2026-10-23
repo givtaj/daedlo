@@ -585,7 +585,7 @@ below remain unchanged.
 ## Durable recovery checkpoint — 2026-10-21
 
 The isolated Roots recovery source is committed locally as `a52a5ee7ba1abfe91f73b71d6ba6fce62a79695e`
-in `/Users/aidin/code/roots-driver-preservation/2026-10-21-recovery/roots`.
+in the owner’s isolated Roots recovery checkout (local path omitted).
 Independent review verified 49 reconstructed source files, 27 reviewed A05/A08
 inputs and 161 application files. Later authentication pilot changes are excluded.
 48 final source hashes match historical tool output; one provenance test has

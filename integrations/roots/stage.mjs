@@ -11,7 +11,7 @@ const target = join(snapshot, 'browser-driver-consumer');
 fs.mkdirSync(target, { recursive: true });
 const source = fileURLToPath(new URL('./', import.meta.url));
 for (const file of ['consumer.mjs','adapter.mjs','evidence.mjs','write-effects.mjs','start.mjs']) fs.copyFileSync(join(source, file), join(target, file));
-fs.writeFileSync(join(target, 'package.json'), JSON.stringify({ name: 'roots-browser-driver-candidate', private: true, type: 'module', dependencies: { '@browser-driver/runtime': `file:${resolve(archive)}` } }, null, 2));
+fs.writeFileSync(join(target, 'package.json'), JSON.stringify({ name: 'roots-browser-driver-candidate', private: true, type: 'module', dependencies: { '@daedlo/runtime': `file:${resolve(archive)}` } }, null, 2));
 const cache = join(output, 'npm-cache');
 const dependencies = join(output, 'dependency-packages');
 fs.mkdirSync(dependencies, { recursive: true });
@@ -26,7 +26,7 @@ const packs = ['playwright-core', 'playwright'].map(name => {
 execFileSync('npm', ['install',resolve(archive),...packs,'--offline','--ignore-scripts','--no-audit','--no-fund','--cache',cache], { cwd: target, stdio: 'inherit' });
 fs.writeFileSync(join(snapshot, 'QA/live-driver.mjs'), "export { attachRoots } from '../browser-driver-consumer/consumer.mjs';\n");
 fs.writeFileSync(join(snapshot, 'QA/start-live-driver.mjs'), "import { start } from '../browser-driver-consumer/start.mjs';\nawait start();\n");
-const runtime = JSON.parse(fs.readFileSync(join(target, 'node_modules/@browser-driver/runtime/package.json')));
+const runtime = JSON.parse(fs.readFileSync(join(target, 'node_modules/@daedlo/runtime/package.json')));
 const metadata = { name: runtime.name, version: runtime.version, artifact: resolve(archive), sha256: createHash('sha256').update(fs.readFileSync(archive)).digest('hex'), stagedEntrypoint: 'QA/live-driver.mjs', stagedFiles: ['QA/start-live-driver.mjs','QA/live-driver.mjs','browser-driver-consumer/start.mjs','browser-driver-consumer/consumer.mjs','browser-driver-consumer/adapter.mjs','browser-driver-consumer/evidence.mjs','browser-driver-consumer/write-effects.mjs','browser-driver-consumer/package.json','browser-driver-consumer/package-lock.json'], ordinaryRootsUnchanged: true };
 metadata.stagedHashes = Object.fromEntries(metadata.stagedFiles.map(file => [file, createHash('sha256').update(fs.readFileSync(join(snapshot, file))).digest('hex')]));
 fs.writeFileSync(join(output, 'package.json'), JSON.stringify(metadata, null, 2));

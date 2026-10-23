@@ -12,22 +12,22 @@ async function fixture(t) {
     await fs.mkdtemp(join(os.tmpdir(), "driver-version-test-")),
   );
   t.after(() => fs.rm(root, { recursive: true, force: true }));
-  const frameworkLock = `[[package]]\nname = "browser-driver-engine"\nversion = "${current}"\ndependencies = ["serde"]\n\n`;
+  const frameworkLock = `[[package]]\nname = "daedlo-engine"\nversion = "${current}"\ndependencies = ["serde"]\n\n`;
   const files = {
-    "packages/runtime/package.json": `{ "name": "@browser-driver/runtime", "version" : "${current}", "unchanged": "${current}", "dependencies": { "playwright": "1.62.1" } }\n`,
-    "package-lock.json": `{\n  "lockfileVersion": 3, "packages": {\n    "node_modules/playwright": {"version":"1.62.1"},\n    "packages/runtime": { "name": "@browser-driver/runtime", "version": "${current}" }\n  }, "unchanged":"${current}"\n}\n`,
-    "Cargo.toml": `[workspace]\nmembers = ["crates/browser-driver-engine", "examples/notebook-engine"]\n\n[workspace.package]\nversion = "${current}" # Preserve this comment.\nedition = "2021"\n\n[workspace.dependencies]\nserde = "1"\n`,
-    "Cargo.lock": `# Preserve generated metadata.\nversion = 4\n\n${frameworkLock}[[package]]\nname = "notebook-engine"\nversion = "${current}"\ndependencies = ["browser-driver-engine"]\n\n[[package]]\nname = "unchanged-library"\nversion = "${current}"\n`,
-    "examples/notebook-engine/Cargo.toml": `[package]\nname = "notebook-engine"\nversion.workspace = true\n\n[dependencies]\nbrowser-driver-engine = { path = "../../crates/browser-driver-engine", version = "=${current}" } # Preserve\n`,
+    "packages/runtime/package.json": `{ "name": "@daedlo/runtime", "version" : "${current}", "unchanged": "${current}", "dependencies": { "playwright": "1.62.1" } }\n`,
+    "package-lock.json": `{\n  "lockfileVersion": 3, "packages": {\n    "node_modules/playwright": {"version":"1.62.1"},\n    "packages/runtime": { "name": "@daedlo/runtime", "version": "${current}" }\n  }, "unchanged":"${current}"\n}\n`,
+    "Cargo.toml": `[workspace]\nmembers = ["crates/daedlo-engine", "examples/notebook-engine"]\n\n[workspace.package]\nversion = "${current}" # Preserve this comment.\nedition = "2021"\n\n[workspace.dependencies]\nserde = "1"\n`,
+    "Cargo.lock": `# Preserve generated metadata.\nversion = 4\n\n${frameworkLock}[[package]]\nname = "notebook-engine"\nversion = "${current}"\ndependencies = ["daedlo-engine"]\n\n[[package]]\nname = "unchanged-library"\nversion = "${current}"\n`,
+    "examples/notebook-engine/Cargo.toml": `[package]\nname = "notebook-engine"\nversion.workspace = true\n\n[dependencies]\ndaedlo-engine = { path = "../../crates/daedlo-engine", version = "=${current}" } # Preserve\n`,
   };
   for (const [directory, name] of [
     ["integrations/roots/engine", "roots-browser-driver-consumer"],
     ["integrations/roots/edit/engine", "roots-edit-browser-driver-consumer"],
   ]) {
     files[`${directory}/Cargo.toml`] =
-      `[package]\nname = "${name}"\nversion = "0.1.0"\n\n[workspace]\n\n[dependencies]\nbrowser-driver-engine = { path = "preserve/framework/path", version = "=${current}" }\nroots-qa-driver = { path = "preserve/customer/path", version = "=0.1.0" }\n`;
+      `[package]\nname = "${name}"\nversion = "0.1.0"\n\n[workspace]\n\n[dependencies]\ndaedlo-engine = { path = "preserve/framework/path", version = "=${current}" }\nroots-qa-driver = { path = "preserve/customer/path", version = "=0.1.0" }\n`;
     files[`${directory}/Cargo.lock`] =
-      `version = 4\n\n${frameworkLock}[[package]]\nname = "${name}"\nversion = "0.1.0"\ndependencies = ["browser-driver-engine", "roots-qa-driver"]\n\n[[package]]\nname = "roots-qa-driver"\nversion = "0.1.0"\n`;
+      `version = 4\n\n${frameworkLock}[[package]]\nname = "${name}"\nversion = "0.1.0"\ndependencies = ["daedlo-engine", "roots-qa-driver"]\n\n[[package]]\nname = "roots-qa-driver"\nversion = "0.1.0"\n`;
   }
   for (const [path, content] of Object.entries(files)) {
     await fs.mkdir(dirname(join(root, path)), { recursive: true });

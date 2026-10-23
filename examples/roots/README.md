@@ -1,13 +1,13 @@
 # Actual Roots work
 
-This is the primary browser-driver example. It uses the real Roots application,
+This is the primary Daedlo product example. It uses the real Roots application,
 its original QA driver and evidence recorded while developing the project. The
 archive contains actual results and screenshots, including failed attempts and
 their corrections. It has no invented activity, sample metrics or fake live feed.
 
 ## Open the workbench
 
-From the browser-driver repository, with Node 22+:
+From the Daedlo repository, with Node 22+:
 
 ```bash
 npm run demo
@@ -24,6 +24,10 @@ remains unavailable; archive screenshots do not stand in for it. Closing the
 workbench server does not stop the separately owned live fixture.
 
 ## Start the real Roots driver safely
+
+This optional maintainer workflow requires private Roots source and installed
+customer dependencies. It is not part of contributor setup. Use the independent
+[notebook fixture](../notebook/README.md) to develop the shared core.
 
 Use Node 24+, the Roots Rust toolchain, Docker, installed Roots frontend and QA
 runtime dependencies, and the installed Playwright Chromium. The preparation
@@ -95,7 +99,8 @@ process running when continuing an interactive exploration.
   findings at their recorded source, not automatic claims about the current UI.
 
 See [the archive provenance](archive/README.md) and
-[the original Roots command record](../../../roots/QA/driver-commands.md).
+the original Roots command record (`QA/driver-commands.md` in the private Roots
+source at the recorded revision).
 No original Roots release checklist is duplicated or updated by this example.
 
 ## Original Roots and the extracted candidate
@@ -103,7 +108,8 @@ No original Roots release checklist is duplicated or updated by this example.
 The live reference runs Roots' original driver, with its existing customer
 commands and recipes. It shows what the dedicated product is being built to
 support. It does **not** claim that all those capabilities have already migrated
-to `@browser-driver/runtime`.
+to the independent runtime. Historical receipts name `@browser-driver/runtime`;
+current source uses `@daedlo/runtime`.
 
 The separately tested [standalone consumer](../../integrations/roots/README.md)
 uses the public package on the earlier `d4008e3` baseline, with 15 commands and one

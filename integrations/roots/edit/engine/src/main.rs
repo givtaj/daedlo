@@ -1,4 +1,4 @@
-use browser_driver_engine::{
+use daedlo_engine::{
     ApplicationModel, DisplayFact, DriverError, ModelDescriptor, Observation, OutcomeKind,
     OutcomeReport, Result,
 };
@@ -673,7 +673,7 @@ impl ApplicationModel for RootsEdit {
     }
 }
 fn main() -> std::io::Result<()> {
-    browser_driver_engine::serve(RootsEdit)
+    daedlo_engine::serve(RootsEdit)
 }
 
 #[cfg(test)]

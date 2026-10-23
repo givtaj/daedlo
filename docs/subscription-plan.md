@@ -1,12 +1,16 @@
-# Subscription portal — separate later phase
+# Historical subscription proposal — deferred
 
-Updated 2026-10-06 following the product owner's scope decision.
+This preserves the **2026-10-06** discussion for context. It is not a current
+paid offer or a restriction on the Apache-2.0 local core. The later decision to
+prepare Daedlo for open-source contribution does not define a new commercial
+boundary. Any hosted service, pricing or paid feature scope needs a new explicit
+product decision. See [licensing scope](licensing.md).
 
-The current release is the local Rust/Node browser-driver, its live viewer,
+The discussed release was the local Rust/Node Daedlo workbench, its live viewer,
 agent instructions and safe package-update workflow. Self-service onboarding,
 accounts and payment are not prerequisites for that release or customer trials.
 
-## Recorded decisions for the later portal
+## Decisions recorded at that time
 
 - Hosting: Cloudflare.
 - Authentication: WorkOS with Google login.
@@ -25,5 +29,5 @@ active workspace dependencies and the release package. It is incomplete and has
 not been verified against real providers or through its browser flows. No hosted
 service, live login, subscription charge or customer invitation was deployed.
 
-Resume that prototype only within the agreed later portal scope. Existing customer
+Resume that prototype only after a new scope decision. Existing customer
 integrations retain their accepted driver and local data throughout.

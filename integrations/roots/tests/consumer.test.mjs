@@ -7,7 +7,7 @@ test('Roots consumer has public-package entrypoint and independently mapped hand
   const entry = new URL('consumer.mjs', root);
   assert.ok(fs.existsSync(entry), 'Roots has no external browser-driver consumer entrypoint');
   const source = fs.readFileSync(entry, 'utf8');
-  assert.match(source, /from ['"]@browser-driver\/runtime['"]/);
+  assert.match(source, /from ['"]@daedlo\/runtime['"]/);
   assert.doesNotMatch(source, /live-qa\/src\/execution|live-qa\/src\/engine-client/);
   const adapter = fs.readFileSync(new URL('adapter.mjs', root), 'utf8');
   assert.match(adapter, /handlers/);

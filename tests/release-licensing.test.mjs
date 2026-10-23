@@ -18,13 +18,10 @@ test("next release declares Apache-2.0 consistently without reusing alpha.3", as
   assert.equal(lock.version, runtime.version);
   assert.match(await read("Cargo.toml"), /^license = "Apache-2\.0"$/m);
   assert.match(
-    await read("crates/browser-driver-engine/Cargo.toml"),
+    await read("crates/daedlo-engine/Cargo.toml"),
     /^license\.workspace = true$/m,
   );
-  assert.match(
-    await read("skills/browser-driver/SKILL.md"),
-    /^license: Apache-2\.0$/m,
-  );
+  assert.match(await read("skills/daedlo/SKILL.md"), /^license: Apache-2\.0$/m);
   const license = await read("LICENSE");
   assert.equal(license, await read("licenses/Apache-2.0.txt"));
   assert.match(license, /Grant of Patent License/);
@@ -41,8 +38,8 @@ test("next release declares Apache-2.0 consistently without reusing alpha.3", as
 test("every public component carries matching notices and excludes evaluation terms", async () => {
   const components = [
     "packages/runtime",
-    "crates/browser-driver-engine",
-    "skills/browser-driver",
+    "crates/daedlo-engine",
+    "skills/daedlo",
   ];
   const notices = [
     "LICENSE",

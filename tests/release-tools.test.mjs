@@ -14,6 +14,7 @@ const libraries = [
   "consumer-cli",
   "commands",
   "manifest",
+  "names",
   "store",
   "remote",
   "ninja",
@@ -57,13 +58,13 @@ async function fixture(t) {
     LICENSE: "MIT License\n",
     "docs/update-client.md": "# Portable update client\n",
     "packages/runtime/package.json": JSON.stringify({
-      name: "@browser-driver/runtime",
+      name: "@daedlo/runtime",
       version,
       license: "MIT",
     }),
     "Cargo.toml": `[workspace.package]\nversion = "${version}"\n`,
-    "crates/browser-driver-engine/Cargo.toml":
-      '[package]\nname = "browser-driver-engine"\nversion.workspace = true\n',
+    "crates/daedlo-engine/Cargo.toml":
+      '[package]\nname = "daedlo-engine"\nversion.workspace = true\n',
     "scripts/release/build.mjs":
       'throw Error("Maintainer builder must never ship");\n',
     "scripts/release/version.mjs":
@@ -78,7 +79,7 @@ async function fixture(t) {
   for (const name of documents) files[`docs/${name}.md`] = `# ${name}\n`;
   for (const name of trustFiles) files[name] = `Public trust fixture ${name}\n`;
   for (const name of skillFiles)
-    files[`skills/browser-driver/${name}`] = `Fixture ${name}\n`;
+    files[`skills/daedlo/${name}`] = `Fixture ${name}\n`;
   for (const [path, bytes] of Object.entries(files)) {
     await fs.mkdir(dirname(join(repoRoot, path)), { recursive: true });
     await fs.writeFile(join(repoRoot, path), bytes);
@@ -118,7 +119,7 @@ test("portable tools have a closed consumer inventory and complete agent referen
     ...libraries.map((name) => `lib/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
     ...trustFiles,
-    ...skillFiles.map((name) => `skills/browser-driver/${name}`),
+    ...skillFiles.map((name) => `skills/daedlo/${name}`),
   ].sort();
   assert.deepEqual(
     result.files,
@@ -128,7 +129,7 @@ test("portable tools have a closed consumer inventory and complete agent referen
   assert.deepEqual((await fs.readdir(f.output)).sort(), [
     "TOOLS_SHA256SUMS",
     "TOOLS_VERIFICATION.json",
-    `browser-driver-tools-${version}.tgz`,
+    `daedlo-tools-${version}.tgz`,
   ]);
   const archive = await fs.readFile(result.archivePath);
   assert.equal(hash(archive), result.sha256);
@@ -146,10 +147,11 @@ test("portable tools have a closed consumer inventory and complete agent referen
   const readPacked = (name) =>
     execFileSync("tar", ["-xOf", result.archivePath, "package/" + name]);
   const pkg = JSON.parse(readPacked("package.json"));
-  assert.equal(pkg.name, "@browser-driver/release-tools");
+  assert.equal(pkg.name, "@daedlo/release-tools");
   assert.equal(pkg.version, version);
   assert.equal(pkg.private, true);
   assert.deepEqual(pkg.bin, {
+    "daedlo-release": "lib/consumer-cli.mjs",
     "browser-driver-release": "lib/consumer-cli.mjs",
     "ninja-update": "lib/ninja.mjs",
   });
@@ -167,7 +169,7 @@ test("portable tools have a closed consumer inventory and complete agent referen
   assert.equal(verification.includes(f.directory), false);
   assert.equal(
     await fs.readFile(join(f.output, "TOOLS_SHA256SUMS"), "utf8"),
-    `${result.sha256}  browser-driver-tools-${version}.tgz\n${hash(verification)}  TOOLS_VERIFICATION.json\n`,
+    `${result.sha256}  daedlo-tools-${version}.tgz\n${hash(verification)}  TOOLS_VERIFICATION.json\n`,
   );
   assert.equal(f.git(["status", "--porcelain"]), "");
 });
@@ -195,14 +197,14 @@ test("archives reproduce byte for byte and ignored private files never ship", as
 test("dirty source requires explicit candidate permission and all skill additions are bound", async (t) => {
   const f = await fixture(t);
   await fs.writeFile(
-    join(f.repoRoot, "skills/browser-driver/references/extra.md"),
+    join(f.repoRoot, "skills/daedlo/references/extra.md"),
     "Additional authored reference.\n",
   );
   await assert.rejects(buildToolsArchive(f), /clean|dirty/i);
   assert.equal(existsSync(f.output), false);
   const first = await buildToolsArchive({ ...f, allowDirty: true });
   assert.equal(first.source.dirty, true);
-  assert.ok(first.files.includes("skills/browser-driver/references/extra.md"));
+  assert.ok(first.files.includes("skills/daedlo/references/extra.md"));
   await fs.writeFile(
     join(f.repoRoot, "unrelated.txt"),
     "Different source identity, still excluded.\n",
@@ -296,7 +298,7 @@ test("the exact archive installs offline and runs real consumer commands outside
     "scripts/release/ninja-ui.html",
     ...libraries.map((name) => `scripts/release/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
-    ...skillFiles.map((name) => `skills/browser-driver/${name}`),
+    ...skillFiles.map((name) => `skills/daedlo/${name}`),
   ])
     await fs.copyFile(join(sourceRoot, path), join(f.repoRoot, path));
   f.git(["add", "."]);
@@ -346,10 +348,7 @@ test("the exact archive installs offline and runs real consumer commands outside
     0,
     "The consumer must not be inside a Git checkout",
   );
-  const installed = join(
-    consumer,
-    "node_modules/@browser-driver/release-tools",
-  );
+  const installed = join(consumer, "node_modules/@daedlo/release-tools");
   const executable = join(installed, "lib/consumer-cli.mjs");
   for (const file of result.files) {
     const archived = execFileSync("tar", [
@@ -461,7 +460,7 @@ test("incomplete owned cleanup is reported with a recoverable path", async (t) =
   const f = await fixture(t);
   const remove = fs.rm;
   fs.rm = async (target, options) => {
-    if (String(target).includes("/browser-driver-tools-"))
+    if (String(target).includes("/daedlo-tools-"))
       throw Object.assign(Error("Cleanup unavailable"), { code: "EACCES" });
     return remove(target, options);
   };
@@ -481,7 +480,7 @@ test("incomplete owned cleanup is reported with a recoverable path", async (t) =
   assert.equal((await fs.lstat(retained)).isDirectory(), true);
   assert.equal(existsSync(join(retained, "package/SOURCE.json")), true);
   assert.equal(
-    existsSync(join(f.output, `browser-driver-tools-${version}.tgz`)),
+    existsSync(join(f.output, `daedlo-tools-${version}.tgz`)),
     true,
     "Completed archive is retained when only staging cleanup fails",
   );

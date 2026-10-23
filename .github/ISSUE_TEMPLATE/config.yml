@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Private security report
+    url: mailto:support@daedlo.com?subject=Daedlo%20security%20report
+    about: Report suspected vulnerabilities privately; do not include them in an issue.
+  - name: Installation or access help
+    url: mailto:support@daedlo.com
+    about: Ask for help when the documentation and issue tracker do not resolve your question.

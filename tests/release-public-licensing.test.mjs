@@ -5,8 +5,8 @@ import { releaseLicense } from "../scripts/release/licensing.mjs";
 
 const components = [
   "packages/runtime",
-  "crates/browser-driver-engine",
-  "skills/browser-driver",
+  "crates/daedlo-engine",
+  "skills/daedlo",
 ];
 const publicNotices = [
   "LICENSE",
@@ -34,18 +34,18 @@ function fixture() {
     [
       "packages/runtime/package.json",
       JSON.stringify({
-        name: "@browser-driver/runtime",
+        name: "@daedlo/runtime",
         license: "MIT AND Apache-2.0",
         files: ["src", "README.md", ...packagedNotices],
       }),
     ],
     ["Cargo.toml", '[workspace.package]\nlicense = "MIT AND Apache-2.0"\n'],
     [
-      "crates/browser-driver-engine/Cargo.toml",
-      '[package]\nname = "browser-driver-engine"\nlicense.workspace = true\n',
+      "crates/daedlo-engine/Cargo.toml",
+      '[package]\nname = "daedlo-engine"\nlicense.workspace = true\n',
     ],
     [
-      "skills/browser-driver/SKILL.md",
+      "skills/daedlo/SKILL.md",
       "---\nname: browser-driver\nlicense: MIT AND Apache-2.0\n---\n",
     ],
   ]);
@@ -84,7 +84,7 @@ function apacheFixture() {
   });
   sources.set("Cargo.toml", '[workspace.package]\nlicense = "Apache-2.0"\n');
   sources.set(
-    "skills/browser-driver/SKILL.md",
+    "skills/daedlo/SKILL.md",
     "---\nname: browser-driver\nlicense: Apache-2.0\n---\n",
   );
   canonical(sources, "LICENSE", apache);
@@ -139,7 +139,7 @@ test("Apache public core refuses truncated Apache or MIT texts even when every c
 });
 
 test("Apache public core refuses mixed declarations and evaluation terms", () => {
-  for (const path of ["Cargo.toml", "skills/browser-driver/SKILL.md"]) {
+  for (const path of ["Cargo.toml", "skills/daedlo/SKILL.md"]) {
     const sources = apacheFixture();
     sources.set(
       path,
@@ -254,19 +254,19 @@ test("public Cargo and skill declarations must agree with the selected component
     ["Cargo.toml", '[workspace.package]\nlicense = "MIT"\n'],
     ["Cargo.toml", '[workspace.package]\nlicense-file = "LICENSE"\n'],
     [
-      "crates/browser-driver-engine/Cargo.toml",
+      "crates/daedlo-engine/Cargo.toml",
       "[package]\nlicense-file.workspace = true\n",
     ],
     [
-      "crates/browser-driver-engine/Cargo.toml",
+      "crates/daedlo-engine/Cargo.toml",
       '[package]\nlicense = "MIT AND Apache-2.0"\n',
     ],
     [
-      "skills/browser-driver/SKILL.md",
+      "skills/daedlo/SKILL.md",
       "---\nname: browser-driver\nlicense: See LICENSE\n---\n",
     ],
     [
-      "skills/browser-driver/SKILL.md",
+      "skills/daedlo/SKILL.md",
       "---\nname: browser-driver\nlicense: MIT\n---\n",
     ],
   ]) {
@@ -302,11 +302,11 @@ test("the existing evaluation mode remains explicitly draft with its five notice
   sources.set("docs/evaluation/ALPHA-EVALUATION-LICENSE.md", terms);
   sources.set("Cargo.toml", '[workspace.package]\nlicense-file = "LICENSE"\n');
   sources.set(
-    "crates/browser-driver-engine/Cargo.toml",
+    "crates/daedlo-engine/Cargo.toml",
     "[package]\nlicense-file.workspace = true\n",
   );
   sources.set(
-    "skills/browser-driver/SKILL.md",
+    "skills/daedlo/SKILL.md",
     "---\nname: browser-driver\nlicense: See LICENSE\n---\n",
   );
   assert.deepEqual(releaseLicense(files(sources)), {

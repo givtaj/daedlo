@@ -1,3 +1,4 @@
+import { releaseNames } from "../../scripts/release/names.mjs";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
@@ -18,13 +19,14 @@ const manifestBytes = await readFile(join(bundle, "manifest.json"));
 if (hash(manifestBytes) !== trustedDigest)
   throw Error("Trusted manifest digest mismatch");
 const manifest = JSON.parse(manifestBytes);
+const selected = releaseNames(manifest.artifacts);
 let engineBytes;
 for (const [kind, suffix] of [
   ["runtime", "tgz"],
   ["engine", "crate"],
 ]) {
   const artifact = manifest.artifacts[kind];
-  const expected = `browser-driver-${kind}-${manifest.version}.${suffix}`;
+  const expected = `${selected.prefix}-${kind}-${manifest.version}.${suffix}`;
   if (artifact.file !== expected || !/^[0-9A-Za-z.-]+$/.test(manifest.version))
     throw Error("Invalid release artifact path");
   const bytes = await readFile(join(bundle, artifact.file));
@@ -34,7 +36,7 @@ for (const [kind, suffix] of [
 }
 await mkdir(output);
 await mkdir(join(output, "engine-package"));
-const prefix = `browser-driver-engine-${manifest.version}`;
+const prefix = `${selected.engine}-${manifest.version}`;
 const names = execFileSync("tar", ["-tf", "-"], {
   encoding: "utf8",
   input: engineBytes,
@@ -75,11 +77,11 @@ await copyFile(
 const crate = join(
   output,
   "engine-package",
-  `browser-driver-engine-${manifest.version}`,
+  `${selected.engine}-${manifest.version}`,
 );
 await writeFile(
   join(output, "engine", "Cargo.toml"),
-  `[package]\nname = "seeruntime-browser-driver"\nversion = "0.1.0"\nedition = "2021"\npublish = false\n\n[workspace]\n\n[dependencies]\nbrowser-driver-engine = { path = ${JSON.stringify(crate)}, version = "=${manifest.version}" }\nserde = { version = "1", features = ["derive"] }\nserde_json = "1"\n`,
+  `[package]\nname = "seeruntime-browser-driver"\nversion = "0.1.0"\nedition = "2021"\npublish = false\n\n[workspace]\n\n[dependencies]\ndaedlo-engine = { package = ${JSON.stringify(selected.engine)}, path = ${JSON.stringify(crate)}, version = "=${manifest.version}" }\nserde = { version = "1", features = ["derive"] }\nserde_json = "1"\n`,
 );
 await writeFile(
   join(output, "package.json"),
@@ -89,7 +91,7 @@ await writeFile(
       private: true,
       type: "module",
       dependencies: {
-        "@browser-driver/runtime": `file:${join(bundle, manifest.artifacts.runtime.file)}`,
+        [selected.runtime]: `file:${join(bundle, manifest.artifacts.runtime.file)}`,
       },
     },
     null,

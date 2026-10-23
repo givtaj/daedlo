@@ -1,0 +1,3 @@
+# Reviewed false positive: historical Roots API executable SHA-256 in the
+# public binaries receipt, not an API credential. Keep this exception exact.
+5bb9684c28f16e1d89abb8207b120ae195407f38:examples/roots/archive/receipts/manual-walkthrough-source.json:generic-api-key:18

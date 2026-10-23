@@ -104,7 +104,7 @@ test("CLI help ignores poisoned browser overrides without project or launch", (t
       ["--help"],
     );
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /browser-driver --project/);
+  assert.match(r.stdout, /daedlo --project/);
   assert.match(r.stdout, /PLAYWRIGHT_MODULE/);
   assert.match(r.stdout, /CHROMIUM/);
   assert.deepEqual(r.events, [], "Help must not evaluate a browser module");

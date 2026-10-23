@@ -2,7 +2,7 @@
 
 Release: **0.1.4-alpha.3**. Status: **published assisted alpha with signed managed updates**.
 [Install](https://daedlo.com/install.html) · [Managed updates](https://daedlo.com/updates.html) ·
-[Versioned release](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3).
+[Versioned release](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.3).
 This is the current product/release decision record. Actual outcomes belong in
 [verification](verification.md); the alpha.2 record below remains historical.
 
@@ -28,7 +28,7 @@ frameworks are not sealed. See [Operation Ninja-Update](operations/ninja-update.
 | Gate | Actual evidence | Decision |
 | --- | --- | --- |
 | Source and distribution | Clean package source `558366b6`; public MIT/Apache notices; 37 installed portable-tools files | PASS |
-| Source checks | 212 release tests and required quality checks; push CI [39936785918](https://github.com/givtaj/browser-driver/actions/runs/39936785918) passed on Node 22/24 | PASS |
+| Source checks | 212 release tests and required quality checks; push CI [39936785918](https://github.com/givtaj/daedlo/actions/runs/39936785918) passed on Node 22/24 | PASS |
 | Exact installed runtime | Eight browser/API groups, 10 CLI cases, 25 finalization cases and nine browser-control cases | PASS against the frozen alpha.3 kit |
 | Representative application before publication | Eight checkpoints with exact installed tools: alpha.2 baseline, controlled candidate rejection, alpha.3 upgrade, rollback, source/data preservation, final reports, relaunch and owned cleanup | PASS; pinned synthetic Architecture Studio fixture |
 | Frozen website | 49/49 tests; seven pages, three retained archives; 30-file manifest; 255 scanned public/nested archive items | PASS; no selected private-path, key/token or evaluation-draft signatures found |
@@ -90,7 +90,7 @@ message is implied by these release operations.
 ## Historical alpha.2 delivery — 21 October 2026
 
 Release: **0.1.4-alpha.2**. Status: **published assisted alpha**.
-[Install](https://daedlo.com/install) · [Versioned release](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.2).
+[Install](https://daedlo.com/install) · [Versioned release](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.2).
 This retained record describes alpha.2 at its publication. Actual test outcomes belong
 in [verification](verification.md); historical records keep their original scope.
 

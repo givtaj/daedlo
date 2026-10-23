@@ -8,9 +8,12 @@ Rust model and guarded Node/Playwright actions. Watch the controlled browser,
 choose valid commands, pause or stop execution, and inspect evidence of the
 application outcome. Authored flows run without an AI agent or model API key.
 
+[Contribute](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Get help](SUPPORT.md) ·
+[Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+
 **0.1.4-alpha.3 is released: assisted macOS arm64 onboarding with Codex.**
 [Start with one Codex prompt](https://daedlo.com/install) or read the
-[versioned prerelease](https://github.com/givtaj/browser-driver/releases/tag/v0.1.4-alpha.3).
+[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.3).
 The exact installed kit, isolated application, source CI and public delivery
 passed their scoped checks on 23 October 2026. The [verification record](docs/verification.md)
 owns measured results and limits; [alpha delivery](docs/alpha-release.md) owns the
@@ -31,12 +34,23 @@ WBF still needs its own project registration and disposable acceptance.
 
 ## Next release licensing
 
-The source now prepares **0.1.4-alpha.4**, which is not published. Its public core
-uses **Apache-2.0**, with the complete legacy MIT grant and third-party notices
-preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `licenses/`.
-Published alpha.3 downloads retain their original `MIT AND Apache-2.0` terms.
-Customer application code, models, flows, adapters and data remain separate.
-The license transition does not change the model, adapter or updater contracts.
+The source prepares **0.1.4-alpha.4**, which is not published. Daedlo-owned code,
+documentation, examples and website source use **Apache-2.0**, subject to the
+[licensing scope](docs/licensing.md) and preserved notices. The complete legacy
+MIT grant and third-party notices remain in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and `licenses/`. Published alpha.3
+downloads retain their original `MIT AND Apache-2.0` terms. Customer applications
+and their independently authored integrations remain separate.
+
+Current source uses `@daedlo/runtime`, the `daedlo` CLI, `daedlo-engine`
+(`daedlo_engine` in Rust), `@daedlo/release-tools` and `skills/daedlo`. Older
+published kits keep their original `browser-driver` names and instructions.
+Wire/report identifiers remain compatible. Read the [naming migration guide](docs/rename.md)
+for CLI aliases, package imports and the required new-tools bootstrap before an
+alpha.3 manager can install a renamed release. Source naming does not imply a new
+registry publication or customer dependency promotion. The repository is being
+prepared for community contributions and stays private until the owner approves
+opening access.
 
 ## The first alpha journey
 
@@ -79,15 +93,32 @@ Read [contracts](docs/contracts.md),
 [development and promotion](docs/development-workflow.md), and the
 [implementation plan](docs/plan.md) before changing the shared product or an
 application integration. Applications own their states, semantic actions,
-fixtures and acceptance checks. The browser-driver package, CLI and skill names
-remain the technical identifiers.
+fixtures and acceptance checks.
 
-With the pinned Node/Rust toolchains and matching Playwright Chromium installed,
-run `npm ci`, `npm run check`, `npm test`, `npm run test:rust`,
-`npm run test:release`, `npm run test:e2e`, `npm run test:motion`,
-`npm run test:controls`, `npm run test:cli`, and `npm run test:viewer`.
-Installed-package acceptance is a separate release gate; source checks do not
-establish customer acceptance, complete Roots replacement or remote CI success.
+## Contribute from source
+
+Use Node 22 or 24, npm and the Rust 1.96.0 toolchain pinned in this repository.
+From a source checkout:
+
+```sh
+npm ci
+cargo build --workspace --locked
+npx playwright install chromium
+npm run check
+npm test
+npm run test:rust
+npm run demo:notebook
+```
+
+The independent notebook lets contributors inspect and test the shared product
+without Codex, API keys, Docker or private Roots source. Open its printed local
+viewer URL and close it with Ctrl+C when finished. On Linux, missing browser
+libraries may require `npx playwright install --with-deps chromium`.
+
+[CONTRIBUTING.md](CONTRIBUTING.md) contains the fresh-clone setup, repository map,
+focused checks, full browser/release gates and review workflow. Installed-package
+acceptance is a separate release gate; source checks do not establish customer
+acceptance, complete Roots replacement or remote CI success.
 
 ## Teaching mode — planned
 

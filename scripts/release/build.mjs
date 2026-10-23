@@ -133,7 +133,7 @@ export function releaseVersion(files) {
   const rustVersion = section?.match(
     /^version\s*=\s*"([^"\n]+)"\s*(?:#.*)?$/m,
   )?.[1];
-  if (runtime.name !== "@browser-driver/runtime")
+  if (runtime.name !== "@daedlo/runtime")
     throw new Error(
       "Runtime package name does not match the release contract.",
     );
@@ -153,9 +153,9 @@ export function releaseVersion(files) {
   ) {
     throw new Error("Release version must be a supported semantic version.");
   }
-  const crate = content("crates/browser-driver-engine/Cargo.toml");
+  const crate = content("crates/daedlo-engine/Cargo.toml");
   if (
-    !/^name\s*=\s*"browser-driver-engine"\s*$/m.test(crate) ||
+    !/^name\s*=\s*"daedlo-engine"\s*$/m.test(crate) ||
     !/^version\.workspace\s*=\s*true\s*$/m.test(crate)
   ) {
     throw new Error(
@@ -262,14 +262,14 @@ export async function buildBundle({ repoRoot, output, allowDirty = false }) {
         "--locked",
         "--offline",
         "--manifest-path",
-        join(snapshot, "crates/browser-driver-engine/Cargo.toml"),
+        join(snapshot, "crates/daedlo-engine/Cargo.toml"),
         "--target-dir",
         target,
       ],
       snapshot,
       { ...process.env, CARGO_TARGET_DIR: target, CARGO_INCREMENTAL: "0" },
     );
-    const engineFile = `browser-driver-engine-${version}.crate`;
+    const engineFile = `daedlo-engine-${version}.crate`;
     await fs.copyFile(
       join(target, "package", engineFile),
       join(output, engineFile),
@@ -277,16 +277,11 @@ export async function buildBundle({ repoRoot, output, allowDirty = false }) {
     const artifacts = {
       runtime: await artifact(
         output,
-        `browser-driver-runtime-${version}.tgz`,
-        "@browser-driver/runtime",
+        `daedlo-runtime-${version}.tgz`,
+        "@daedlo/runtime",
         version,
       ),
-      engine: await artifact(
-        output,
-        engineFile,
-        "browser-driver-engine",
-        version,
-      ),
+      engine: await artifact(output, engineFile, "daedlo-engine", version),
     };
     const after = await sourceSnapshot(repoRoot);
     if (JSON.stringify(after.source) !== JSON.stringify(before.source)) {

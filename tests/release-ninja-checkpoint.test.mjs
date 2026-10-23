@@ -10,6 +10,8 @@ import { ninjaCatalogSigningBytes } from "../scripts/release/ninja-catalog.mjs";
 import { restoreCheckpoint } from "../scripts/release/ninja-checkpoint.mjs";
 const now = Date.parse("2026-10-23T12:00:00.000Z");
 const repo = "givtaj/browser-driver";
+const renamedRepo = "givtaj/daedlo";
+const repositoryId = 1391092739;
 function archive(files) {
   return execFileSync(
     "python3",
@@ -60,12 +62,13 @@ async function fixture(t, change = () => {}) {
     workflow_id: 7,
     event: "schedule",
     head_branch: "main",
-    head_repository: { full_name: repo },
+    head_repository: { id: repositoryId, full_name: repo },
     path: ".github/workflows/ninja-renew.yml",
     status: id === 20 ? "in_progress" : "completed",
     conclusion: id === 20 ? null : "failure",
   });
   const state = {
+    repository: { id: repositoryId, full_name: repo },
     current: run(20, 2),
     previous: run(10, 1),
     files: { "catalog.json": catalog, "receipt.json": JSON.stringify(receipt) },
@@ -74,7 +77,12 @@ async function fixture(t, change = () => {}) {
       name: "ninja-renewal-checkpoint-1",
       expired: false,
       size_in_bytes: 1024,
-      workflow_run: { id: 10, head_branch: "main", repository_id: 1 },
+      workflow_run: {
+        id: 10,
+        head_branch: "main",
+        repository_id: repositoryId,
+        head_repository_id: repositoryId,
+      },
     },
     uploaded: true,
   };
@@ -85,12 +93,17 @@ async function fixture(t, change = () => {}) {
   const fetchImpl = async (url, options = {}) => {
     calls.push({ url, headers: options.headers });
     const path = new URL(url).pathname;
-    if (path === `/repos/${repo}/actions/workflows/ninja-renew.yml`)
+    if (path === `/repos/${state.repository.full_name}`)
+      return Response.json(state.repository);
+    if (
+      path ===
+      `/repos/${state.repository.full_name}/actions/workflows/ninja-renew.yml`
+    )
       return Response.json({
         id: 7,
         path: ".github/workflows/ninja-renew.yml",
       });
-    if (path === `/repos/${repo}/actions/runs/20`)
+    if (path === `/repos/${state.repository.full_name}/actions/runs/20`)
       return Response.json(state.current);
     if (path.endsWith("/actions/workflows/7/runs"))
       return Response.json({
@@ -144,7 +157,7 @@ async function fixture(t, change = () => {}) {
     calls,
     catalog,
     options: {
-      repository: repo,
+      repository: state.repository.full_name,
       runId: 20,
       runAttempt: state.current.run_attempt,
       branch: "main",
@@ -172,7 +185,68 @@ test("restores authenticated checkpoint from a failed publication run and writes
     "receipt.json",
   ]);
 });
+for (const historyName of [repo, renamedRepo]) {
+  test(`renamed repository restores authenticated history recorded as ${historyName}`, async (t) => {
+    const f = await fixture(t, (s) => {
+      s.repository.full_name = renamedRepo;
+      s.current.head_repository.full_name = renamedRepo;
+      s.previous.head_repository.full_name = historyName;
+    });
+    const result = await restoreCheckpoint(f.options);
+    assert.equal(result.generation, 2);
+    assert.equal(result.runId, 10);
+    assert.ok(
+      f.calls.every(({ url }) =>
+        url.startsWith(`https://api.github.com/repos/${renamedRepo}`),
+      ),
+    );
+  });
+}
+test("renamed repository rejects a different repository at the approved name before reading history", async (t) => {
+  const f = await fixture(t, (s) => {
+    s.repository.full_name = renamedRepo;
+    s.repository.id++;
+  });
+  await assert.rejects(restoreCheckpoint(f.options), /repository identity/i);
+  assert.equal(f.calls.length, 1);
+  await assert.rejects(fs.stat(f.options.output), { code: "ENOENT" });
+});
 for (const [name, change, pattern] of [
+  [
+    "fork with the old repository name",
+    (s) => {
+      s.previous.head_repository.id++;
+    },
+    /workflow|origin/i,
+  ],
+  [
+    "missing repository identity in historical run",
+    (s) => {
+      delete s.previous.head_repository.id;
+    },
+    /workflow|origin/i,
+  ],
+  [
+    "unapproved repository name with the pinned ID",
+    (s) => {
+      s.previous.head_repository.full_name = "other/daedlo";
+    },
+    /workflow|origin/i,
+  ],
+  [
+    "foreign artifact repository",
+    (s) => {
+      s.artifact.workflow_run.repository_id++;
+    },
+    /artifact|origin/i,
+  ],
+  [
+    "fork artifact head repository",
+    (s) => {
+      s.artifact.workflow_run.head_repository_id++;
+    },
+    /artifact|origin/i,
+  ],
   [
     "wrong workflow origin",
     (s) => {
@@ -237,7 +311,11 @@ test("restores prior attempt high-water checkpoint in the current run", async (t
   const f = await fixture(t, (s) => {
     s.current.run_attempt = 2;
     s.currentArtifact = {
-      workflow_run: { id: 20, head_branch: "main", repository_id: 1 },
+      workflow_run: {
+        id: 20,
+        head_branch: "main",
+        repository_id: repositoryId,
+      },
     };
   });
   const r = await restoreCheckpoint(f.options);
@@ -264,7 +342,11 @@ test("missing newer-attempt checkpoint cannot fall back to an older artifact", a
   const f = await fixture(t, (s) => {
     s.current.run_attempt = 3;
     s.currentArtifact = {
-      workflow_run: { id: 20, head_branch: "main", repository_id: 1 },
+      workflow_run: {
+        id: 20,
+        head_branch: "main",
+        repository_id: repositoryId,
+      },
     };
   });
   await assert.rejects(restoreCheckpoint(f.options), /missing/i);
@@ -275,7 +357,11 @@ test("missing successful-attempt checkpoint refuses incomplete step history", as
   const f = await fixture(t, (s) => {
     s.current.run_attempt = 3;
     s.currentArtifact = {
-      workflow_run: { id: 20, head_branch: "main", repository_id: 1 },
+      workflow_run: {
+        id: 20,
+        head_branch: "main",
+        repository_id: repositoryId,
+      },
     };
     s.uploaded = false;
     s.attemptSuccess = true;
@@ -308,7 +394,11 @@ test("rerunning an older workflow run cannot ignore a newer durable checkpoint",
   const f = await fixture(t, (s) => {
     s.current.run_attempt = 2;
     s.currentArtifact = {
-      workflow_run: { id: 20, head_branch: "main", repository_id: 1 },
+      workflow_run: {
+        id: 20,
+        head_branch: "main",
+        repository_id: repositoryId,
+      },
     };
     s.newer = { ...s.previous, id: 30, run_number: 3 };
   });
@@ -333,7 +423,7 @@ async function bootstrapRecoveryFixture(t, change = () => {}) {
     event: "workflow_dispatch",
     head_branch: "main",
     head_sha: "e5e47d97c8226ff0f3a3f390e8c95926e7c44039",
-    head_repository: { full_name: repo },
+    head_repository: { id: repositoryId, full_name: repo },
     status: "completed",
     conclusion: "failure",
   };
@@ -416,6 +506,11 @@ async function bootstrapRecoveryFixture(t, change = () => {}) {
   change(state);
   const fetchImpl = async (url) => {
     const path = new URL(url).pathname;
+    if (path === `/repos/${repo}` || path === `/repos/${renamedRepo}`)
+      return Response.json({
+        id: repositoryId,
+        full_name: path.slice("/repos/".length),
+      });
     if (path.endsWith("/actions/workflows/ninja-renew.yml"))
       return Response.json(state.workflow);
     if (path.endsWith(`/actions/runs/${current.id}`))
@@ -465,6 +560,19 @@ test("exact reviewed failed initial bootstrap permits only fresh run two without
         "bde773d01a3cb0bb33330b74b17dd7e5068e33fb650a55d558d446a10f5bbad0",
     },
   });
+  await assert.rejects(fs.stat(f.options.output), { code: "ENOENT" });
+});
+
+test("reviewed initial bootstrap evidence remains recognizable when GitHub rewrites its repository name", async (t) => {
+  const f = await bootstrapRecoveryFixture(t, (s) => {
+    s.current.head_repository.full_name = renamedRepo;
+    s.previous.head_repository.full_name = renamedRepo;
+    s.attempt.head_repository.full_name = renamedRepo;
+  });
+  f.options.repository = renamedRepo;
+  const result = await restoreCheckpoint(f.options);
+  assert.equal(result.bootstrap, true);
+  assert.equal(result.recovery.failedRunId, 39946067474);
   await assert.rejects(fs.stat(f.options.output), { code: "ENOENT" });
 });
 

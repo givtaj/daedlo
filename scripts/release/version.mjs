@@ -187,7 +187,7 @@ function dependency(text) {
     ...text
       .slice(section.start, section.end)
       .matchAll(
-        /^[ \t]*browser-driver-engine[ \t]*=[ \t]*\{[^\r\n]*\}[ \t]*(?:#.*)?\r?$/gm,
+        /^[ \t]*daedlo-engine[ \t]*=[ \t]*\{[^\r\n]*\}[ \t]*(?:#.*)?\r?$/gm,
       ),
   ];
   const match = one(matches, "framework dependency");
@@ -217,7 +217,7 @@ function lockedPackage(text, name) {
 }
 function replacements(path, text) {
   if (path === "packages/runtime/package.json") {
-    if (JSON.parse(text).name !== "@browser-driver/runtime")
+    if (JSON.parse(text).name !== "@daedlo/runtime")
       throw Error("Runtime package name mismatch.");
     return [jsonString(text, ["version"])];
   }
@@ -225,7 +225,7 @@ function replacements(path, text) {
     const lock = JSON.parse(text);
     if (
       lock.lockfileVersion !== 3 ||
-      lock.packages?.["packages/runtime"]?.name !== "@browser-driver/runtime"
+      lock.packages?.["packages/runtime"]?.name !== "@daedlo/runtime"
     )
       throw Error("Runtime workspace lock metadata mismatch.");
     return [jsonString(text, ["packages", "packages/runtime", "version"])];
@@ -240,7 +240,7 @@ function replacements(path, text) {
     ];
   if (path.endsWith("Cargo.toml"))
     return [{ ...dependency(text), exact: true }];
-  const tokens = [lockedPackage(text, "browser-driver-engine")];
+  const tokens = [lockedPackage(text, "daedlo-engine")];
   if (path === "Cargo.lock")
     tokens.push(lockedPackage(text, "notebook-engine"));
   return tokens;
