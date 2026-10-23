@@ -87,14 +87,25 @@ local whole-installation rollback continue under their normal integrity checks.
 A failed renewal must be resolved before expiry; a schedule is not a delivery
 SLA. GitHub's workflow notifications use the repository owner's existing settings.
 
-If failure occurs before checkpoint persistence, correct the cause and start a
-fresh default-branch dispatch. If persistence completed, first inspect the signed
-checkpoint, live feed and active Cloudflare version. When the live feed already
+If failure occurs before checkpoint persistence and an earlier authenticated
+checkpoint remains available, correct the cause and start a fresh default-branch
+dispatch. The initial bootstrap is deliberately stricter: only the first run
+and first attempt may use the independently pinned generation 1 without a saved
+checkpoint. If that initial run fails before persistence, investigate and prepare
+a reviewed recovery; rerunning it or starting another run cannot silently reset
+bootstrap. Never delete history or reset counters to regain that exception.
+
+If persistence completed, first inspect the signed checkpoint, live feed and
+active Cloudflare version. When the live feed already
 matches that checkpoint, a fresh dispatch can advance normally. When the checkpoint
 is ahead of live, automatic renewal deliberately stops: recover the exact signed
-catalog from the retained artifact, reconstruct and validate the complete website
-against the pinned immutable files, and complete that publication with the release
-owner's normal deployment procedure. Verify both origins and the active version
+catalog from the retained artifact and, while it remains unexpired, reconstruct
+and validate the complete website against the pinned immutable files, then
+complete that publication with the release owner's normal deployment procedure.
+An expired checkpoint establishes authenticated history only: recovery must sign
+a strictly newer catalog with fresh bounded validity, retain its public checkpoint
+and publish it through the reviewed staging and deployment gates. Never deploy
+expired bytes as a working feed. Verify both origins and the active version
 before dispatching the next renewal. Never discard the checkpoint, lower the
 recorded generation or replay an older website to make the job pass.
 
