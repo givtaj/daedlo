@@ -1,9 +1,9 @@
 # Verification record
 
-## Teaching-mode plan and website candidate — 2026-10-23
+## Teaching-mode plan and website — published, 2026-10-23
 
-**LOCAL PASS / PUBLICATION PENDING:** [teaching-mode plan](teaching-mode.md)
-and a static website introduction. No teaching runtime was implemented; Roots
+**PUBLISHED / VERIFIED:** [teaching-mode plan](teaching-mode.md)
+and a static [website introduction](https://daedlo.com/teaching). No teaching runtime was implemented; Roots
 learner acceptance, reduced-lesson replay and novice pilot are **NOT RUN**.
 Original September Roots UI, logs and pinned recipes were inspected as historical
 workflow evidence, distinct from new teaching acceptance. Live Roots was untouched.
@@ -23,11 +23,11 @@ workflow evidence, distinct from new teaching acceptance. Live Roots was untouch
   `teaching.html` and `teaching.css`. All nine immutable release files, installer,
   onboarding script, update page, trust key and staged feed remain byte-identical
   to the captured candidate baseline; existing demo assets remain unchanged.
-- Candidate feed bytes are an older local staging input, **not publication input**.
-  The release owner must preserve/advance the live generation-5 checkpoint
+- Candidate feed bytes were an older local staging input, **not publication input**.
+  The release owner preserved and advanced the live generation-5 checkpoint
   (`c7ea7b0d2a1697a987dc947cdfc96c90c8dbbfb6b2542ca591d341c7b4494b2f`)
-  and use the current renewal pipeline. Teaching publication is coordinated with
-  that owner; the dirty/stale main website must not be deployed wholesale.
+  through the current renewal pipeline. The isolated release worktree integrated
+  the scoped changes; the dirty/stale main checkout was not deployed wholesale.
 
 The authoring checkout retains its candidate evidence under
 `artifacts/teaching-mode-20261023/`. The release worktree independently repeated
@@ -44,7 +44,37 @@ uses the verified generation-5 baseline: all 29 files outside the six reviewed
 static additions/edits remain byte-identical. Independent evidence is under
 `artifacts/teaching-publication/`; renewal coverage is retained under
 `artifacts/teaching-mode-20261023/renewal-teaching-byte-checks.log`. No private Roots
-traces were copied into the site. Production publication remains pending.
+traces were copied into the site.
+
+[PR #7](https://github.com/givtaj/browser-driver/pull/7), source
+`7196891a2d0dc8997408a1da7e2cace14ac96437`, passed full Node 22/24 CI
+([run 40002238174](https://github.com/givtaj/browser-driver/actions/runs/40002238174))
+and merged as `76408d5f3b4936fca67385107e0d730a8f7e000f`.
+[Production run 40003075368](https://github.com/givtaj/browser-driver/actions/runs/40003075368)
+published that exact merged source. Staged validation, authenticated checkpoint
+restore, deployment identity, live checks and temporary signing-key cleanup all
+passed. The existing Worker is active at 100% on version
+`a2d660fd-e08c-4eae-9b8d-c1207fb59a97`, deployment
+`50d5d28e-4eef-4a9e-8b02-c9bbfcf7edcf`, verified at
+`2026-10-23T18:25:38.792Z`.
+
+Renewal restored generation 5 with `bootstrap:false` and published **generation 6**,
+expiring `2026-10-30T18:25:23.979Z`. Raw catalog SHA-256:
+`8fbfbb0ed4d6009e90cccd522cc2ee99dcabeaf98c2e9a88d6e602a2efdd67a7`.
+An independent canonical-site readback at `2026-10-23T18:26:36.739Z` passed
+**30/30 exact public files** and **9/9 private-path 404 boundaries**, four security
+headers, cache/MIME policies, signature/expiry, unchanged release entries, trust
+key and nine historical files, and final feed stability. No challenge, retry or
+bypass occurred. This is one observation location, not country-wide reach proof.
+Receipts and reconstructed expected bytes are in
+`artifacts/teaching-publication/live-PuyLQq/`; provider/source evidence is in
+`artifacts/teaching-publication/production-receipt.json`.
+
+The prior Worker version is `cc75fed4-c42a-4e2b-8cd3-941d5ce1ec11`; recovery must
+preserve the highest signed catalog generation instead of replaying its older
+feed. Current alpha.3 downloads, onboarding and the Apache next-release notice
+remain intact. This publication adds the plan/page only, with no teaching runtime,
+alpha.4 release, customer installation or data migration.
 
 ## Apache-2.0 next-release preparation — 2026-10-23
 
