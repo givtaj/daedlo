@@ -14,9 +14,10 @@ data and tools, final reports, relaunch and owned cleanup. The scoped alpha.3
 delivery is complete. See the [managed update guide](ninja-update.md)
 and actual [verification record](verification.md) for acceptance scope.
 Alpha.2 cannot bootstrap the managed updater itself; one-time setup is assisted.
-WBF remains untouched and unaccepted. The owner selected daily GitHub Actions
-catalog renewal. Its implementation and activation are tracked in verification;
-the initial catalog expires on 30 October 2026 at 10:16:16 UTC.
+WBF remains untouched and unaccepted. Daily GitHub Actions catalog renewal is
+active at 04:23 UTC. Two successful manual dispatches verified generation 2 followed
+by authenticated checkpoint restoration and generation 3. Verification owns the
+current feed identity, Spain/US delivery evidence and remaining access limits.
 
 ## Goal and approved constraints
 

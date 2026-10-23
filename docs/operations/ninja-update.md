@@ -39,11 +39,13 @@ returned 404 per origin. Cloudflare version `7a4d7da7-6f12-45c9-9f73-52ad898c3c5
 was active at 100% for initial publication. Publication does not turn the original design requirements
 below into acceptance for an unregistered customer application.
 
-Production catalog generation 1 expires at **2026-10-30T10:16:16Z**. The public
-publisher key and pin ship in [trust metadata](../update-trust/production.json).
-The owner selected daily GitHub Actions renewal with increasing generations;
-[verification](../verification.md) records its implementation and activation. Expiry blocks new checks/downloads, while the accepted installation
-and local rollback remain available subject to integrity and safe-boundary checks.
+The public publisher key and pin ship in
+[trust metadata](../update-trust/production.json). Daily GitHub Actions renewal at
+04:23 UTC is active. Successful generation-2 and generation-3 runs verified signed
+checkpoint restoration, unchanged release assets and acceptance by the original
+alpha.3 consumer. [Verification](../verification.md) records the current catalog,
+Spain/US delivery evidence and remaining limits. Expiry blocks new checks/downloads,
+while the accepted installation and local rollback remain available subject to integrity and safe-boundary checks.
 The private signing key is local and stored in a GitHub repository secret; an
 independently recoverable off-device backup has not been verified.
 See [alpha delivery](../alpha-release.md), [verification](../verification.md) and

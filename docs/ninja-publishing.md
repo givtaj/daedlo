@@ -43,7 +43,8 @@ Worker or domain permission is required. See verification for provisioning statu
 4. Run website checks and inspect the installation/update pages. Freeze the exact
    public manifest and configuration; dry-run and deploy that tree to the existing
    Daedlo Worker. Publish the same three-file kit as the versioned GitHub prerelease.
-5. Verify the active deployment and every served asset on the apex/provider origins.
+5. Verify the active deployment and every served asset on the canonical apex origin.
+   Record the provider hostname's response separately under the approved access policy.
    Verify the downloaded catalog with the independently pinned public key. Run the
    published-mode application acceptance using the downloaded tools, real HTTPS
    discovery/downloads, and disposable data. Record upgrade, rejected candidate,
@@ -57,6 +58,15 @@ workflow** on the default branch. Activation and actual execution status are
 recorded in [verification](verification.md); a committed schedule alone is not a
 successful renewal. GitHub can delay scheduled jobs, so each catalog allows at
 most seven days. Clients never ignore expiry.
+
+On 23 October 2026, manually dispatched runs
+[39948319111](https://github.com/givtaj/browser-driver/actions/runs/39948319111)
+and [39948603151](https://github.com/givtaj/browser-driver/actions/runs/39948603151)
+completed all renewal gates. The latter restored the former's authenticated
+generation-2 checkpoint with `bootstrap:false` and published generation 3, expiring
+`2026-10-30T11:48:13.935Z`. The original alpha.3 consumer verified both renewals
+and unchanged downloads. Daily scheduling is enabled; its first unattended run
+has not yet been observed. Exact identities and regional limits are in verification.
 
 The job restores its authenticated high-water checkpoint, downloads and verifies
 all nine immutable files for rc.1, alpha.2 and alpha.3, and signs a new catalog
@@ -106,6 +116,32 @@ later run or attempt. The separate manual `ninja-feed-probe.yml` workflow reads
 only fixed public URLs, without secrets, and records bounded response metadata
 without bodies; it does not publish or create renewal checkpoints.
 
+The daily **04:23 UTC** trigger could have consumed run 2 before manual recovery;
+even a skipped job consumes its run number. Manual run 2 used that exception
+successfully; run 3 restored its durable checkpoint normally. The exception is
+now historical and cannot be reused. Never delete history, reset counters or
+broaden it silently to recover a later failure.
+
+As of 23 October 2026, [probe 39947177085](https://github.com/givtaj/browser-driver/actions/runs/39947177085)
+received **44/44 HTTP 403 challenges**, covering both public origins and both
+user-agent variants, with no successful HTTP response. Dashboard inspection of
+the owned feed request identified the existing account-wide US country access
+rule. See [verification](verification.md) for the evidence and scope. The user subsequently
+approved a US Allow rule restricted to daedlo.com. Follow-up
+[probe 39948105153](https://github.com/givtaj/browser-driver/actions/runs/39948105153)
+returned 22/22 HTTP 200 on the apex and 22/22 HTTP 403 on the provider hostname;
+the account-wide rule is unchanged. Country Allow also bypasses custom and
+rate-limiting rules for matching Daedlo traffic, including future rules.
+The user's priority is Spain and the US. Baseline DE/FR/ES probes passed 6/6;
+NL received 2/2 challenges and the user declined an exception, so no NL rule changed.
+Final generation-3 probes passed four exact, signature-verified feed GETs and
+four ZIP HEAD availability checks across two Spain and two US locations. Full
+archive-body integrity was verified separately by the original consumer. The
+extra-header diagnostic failure is retained and explained in verification;
+regional samples do not establish countrywide availability.
+The provider hostname and remaining country restrictions are explicit reach limits,
+not reasons to bypass signatures, follow redirects or replace the publisher pin.
+
 If persistence completed, first inspect the signed checkpoint, live feed and
 active Cloudflare version. When the live feed already
 matches that checkpoint, a fresh dispatch can advance normally. When the checkpoint
@@ -116,8 +152,9 @@ complete that publication with the release owner's normal deployment procedure.
 An expired checkpoint establishes authenticated history only: recovery must sign
 a strictly newer catalog with fresh bounded validity, retain its public checkpoint
 and publish it through the reviewed staging and deployment gates. Never deploy
-expired bytes as a working feed. Verify both origins and the active version
-before dispatching the next renewal. Never discard the checkpoint, lower the
+expired bytes as a working feed. Verify the canonical apex and active version,
+record the provider-host result separately, then dispatch the next renewal.
+Never discard the checkpoint, lower the
 recorded generation or replay an older website to make the job pass.
 
 Missing/expired artifacts or deleted run history require operator investigation

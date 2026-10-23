@@ -59,11 +59,12 @@ The [reviewed public trust metadata](update-trust/production.json) and bundled P
 provide the pin; a key and checksum from the same unverified page are insufficient.
 Both immutable alpha.2 and alpha.3 releases remain in the signed catalog.
 
-The initial catalog expires at **2026-10-30T10:16:16Z**. The owner selected daily
-GitHub Actions renewal with a strictly increasing generation and at most seven
-days' validity. [Verification](verification.md) records implementation and actual
-activation status. Expiry blocks new discovery/downloads while the
-installed session and existing local rollback remain available, subject to their
+The initial catalog specified expiry at **2026-10-30T10:16:16Z** and has been
+superseded by successful generation-2 and generation-3 renewals. Daily GitHub
+Actions renewal is active at 04:23 UTC, with a strictly increasing generation and
+at most seven days' validity. [Verification](verification.md) records the current
+catalog identity, checkpoint restoration and consumer/regional checks. Expiry
+blocks new discovery/downloads while the installed session and existing local rollback remain available, subject to their
 normal integrity and safe-boundary checks. The signing key is retained locally and in a GitHub repository secret;
 an independently recoverable off-device backup has **not been verified**. Do not bypass expiry or silently
 replace the publisher pin to recover.
