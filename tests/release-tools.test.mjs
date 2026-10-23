@@ -24,6 +24,10 @@ const libraries = [
   "ninja-supervisor",
   "ninja-child",
   "ninja-server",
+  "ninja-evidence",
+  "native",
+  "native-doctor",
+  "native-session",
 ];
 const documents = [
   "contracts",
@@ -33,6 +37,8 @@ const documents = [
   "update-client",
   "presentation",
   "ninja-update",
+  "native-setup",
+  "rename",
 ];
 const trustFiles = [
   "docs/update-trust/production.json",
@@ -44,6 +50,22 @@ const skillFiles = [
   "references/onboarding.md",
   "references/model-and-flows.md",
   "assets/flow-spec.md",
+];
+const starterFiles = [
+  "README.md",
+  "acceptance.mjs",
+  "adapter.mjs",
+  "build-model.mjs",
+  "fixture.mjs",
+  "index.html",
+  "project.mjs",
+  "request-acceptance.mjs",
+  "request-accounting.mjs",
+  "runtime.mjs",
+  "model/Cargo.toml",
+  "model/src/lib.rs",
+  "model/src/main.rs",
+  "model/src/bin/starter-invalid-model.rs",
 ];
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
@@ -61,8 +83,9 @@ async function fixture(t) {
       name: "@daedlo/runtime",
       version,
       license: "MIT",
+      engines: { node: ">=22" },
     }),
-    "Cargo.toml": `[workspace.package]\nversion = "${version}"\n`,
+    "Cargo.toml": `[workspace.package]\nversion = "${version}"\nrust-version = "1.96"\n`,
     "crates/daedlo-engine/Cargo.toml":
       '[package]\nname = "daedlo-engine"\nversion.workspace = true\n',
     "scripts/release/build.mjs":
@@ -70,6 +93,8 @@ async function fixture(t) {
     "scripts/release/version.mjs":
       'throw Error("Maintainer version mutation must never ship");\n',
     "unrelated.txt": "Do not distribute the entire repository.\n",
+    "scripts/release/native-session-ui.html":
+      "<!doctype html><title>Frontend startup</title>\n",
     "scripts/release/ninja-ui.html":
       "<!doctype html><title>Ninja updates</title>\n",
   };
@@ -80,6 +105,9 @@ async function fixture(t) {
   for (const name of trustFiles) files[name] = `Public trust fixture ${name}\n`;
   for (const name of skillFiles)
     files[`skills/daedlo/${name}`] = `Fixture ${name}\n`;
+  for (const name of starterFiles)
+    files[`examples/starter/${name}`] = `Synthetic starter ${name}\n`;
+  files["examples/starter/local-secret.txt"] = "PRIVATE_STARTER_SENTINEL\n";
   for (const [path, bytes] of Object.entries(files)) {
     await fs.mkdir(dirname(join(repoRoot, path)), { recursive: true });
     await fs.writeFile(join(repoRoot, path), bytes);
@@ -116,9 +144,11 @@ test("portable tools have a closed consumer inventory and complete agent referen
     "LICENSE",
     "SOURCE.json",
     "lib/ninja-ui.html",
+    "lib/native-session-ui.html",
     ...libraries.map((name) => `lib/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
     ...trustFiles,
+    ...starterFiles.map((name) => `examples/starter/${name}`),
     ...skillFiles.map((name) => `skills/daedlo/${name}`),
   ].sort();
   assert.deepEqual(
@@ -154,6 +184,11 @@ test("portable tools have a closed consumer inventory and complete agent referen
     "daedlo-release": "lib/consumer-cli.mjs",
     "browser-driver-release": "lib/consumer-cli.mjs",
     "ninja-update": "lib/ninja.mjs",
+    "daedlo-native": "lib/native.mjs",
+  });
+  assert.deepEqual(pkg.daedloCompatibility, {
+    nodeMajor: 22,
+    rustVersion: "1.96",
   });
   assert.equal(pkg.dependencies, undefined);
   assert.equal(pkg.scripts, undefined);
@@ -296,6 +331,8 @@ test("the exact archive installs offline and runs real consumer commands outside
     "LICENSE",
     "docs/update-client.md",
     "scripts/release/ninja-ui.html",
+    "scripts/release/native-session-ui.html",
+    ...starterFiles.map((name) => `examples/starter/${name}`),
     ...libraries.map((name) => `scripts/release/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
     ...skillFiles.map((name) => `skills/daedlo/${name}`),
@@ -383,7 +420,11 @@ test("the exact archive installs offline and runs real consumer commands outside
   );
   assert.deepEqual(
     (await fs.readdir(join(installed, "lib"))).sort(),
-    [...libraries.map((name) => `${name}.mjs`), "ninja-ui.html"].sort(),
+    [
+      ...libraries.map((name) => `${name}.mjs`),
+      "ninja-ui.html",
+      "native-session-ui.html",
+    ].sort(),
   );
   assert.deepEqual(
     Object.keys(

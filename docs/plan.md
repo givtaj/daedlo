@@ -1,5 +1,22 @@
 # Implementation plan
 
+Alpha.4 continuation after the rename integrates the preserved native setup
+implementation and adds four scoped improvements: field-level safe model
+validation diagnostics; visible startup before session readiness; named frontend
+identity and isolated lifecycle; and a small packaged Rust/adapter starter with
+real-browser acceptance. Exact installed package, startup cancellation and the
+alpha.3 tools bootstrap/upgrade/rollback are release gates. Production feed
+capability rollout and website command rendering remain separate publication work.
+The verification record records passes and unfinished gates from actual runs.
+
+Native continuation (unpublished): [native setup](native-setup.md) builds on the
+existing Ninja installation/rollback contracts. Scope: staged read-only preflight,
+resumable initial preparation, authenticated single-runner reconnect, exact Codex
+viewer handoff, immediate private run reports and explicit same-version source
+refresh. No competing updater or Docker requirement. Keep native tools versioned
+outside runtime slots and preserve customized project source. The verification
+record owns actual test/acceptance results and remaining limits.
+
 Current release: [Daedlo alpha delivery — 23 October 2026](alpha-release.md),
 published assisted `0.1.4-alpha.3`.
 That record owns the bounded alpha scope and gates. The milestones below retain

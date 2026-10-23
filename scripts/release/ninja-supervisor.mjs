@@ -5,10 +5,13 @@ import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { ninjaDirectory, ninjaRead, ninjaWrite } from "./ninja-manager.mjs";
 
+import { safeFrontend, safeStartup } from "./native-session.mjs";
+
 /** A stable owner outside the selected runtime. The child drains on IPC disconnect. */
 export async function createNinjaSupervisor({
   root,
   settings = {},
+  frontend,
   timeoutMs = 30000,
 }) {
   root = resolve(root);
@@ -16,7 +19,10 @@ export async function createNinjaSupervisor({
   let child = null,
     installation = null,
     sequence = 0,
-    exited = null;
+    exited = null,
+    launching = false,
+    startup = { phase: "stopped", cleanup: "complete" },
+    frontendStatus = frontend;
   const pending = new Map();
   async function orphan() {
     const r = await ninjaRead(marker, { optional: true });
@@ -53,23 +59,39 @@ export async function createNinjaSupervisor({
       paused: false,
       dirty: false,
       cleanupPending: !!retained,
+      startup,
+      frontend: frontendStatus,
     };
   }
   return {
     async status() {
+      if (launching)
+        return {
+          ready: false,
+          running: null,
+          busy: true,
+          paused: false,
+          dirty: null,
+          cleanupPending: true,
+          startup,
+          frontend: frontendStatus,
+        };
       if (!child || child.exitCode !== null) return idle();
       try {
         const s = await request("status");
         return {
           ...s,
-          running: s.ready
-            ? {
-                id: installation.id,
-                version: installation.version,
-                sourceSha256: installation.sourceSha256,
-                viewerUrl: s.viewerUrl,
-              }
-            : null,
+          startup,
+          frontend: frontendStatus,
+          running:
+            s.ready || s.accepted
+              ? {
+                  id: installation.id,
+                  version: installation.version,
+                  sourceSha256: installation.sourceSha256,
+                  viewerUrl: s.ready ? s.viewerUrl : null,
+                }
+              : null,
         };
       } catch {
         return {
@@ -78,6 +100,8 @@ export async function createNinjaSupervisor({
           paused: false,
           dirty: null,
           cleanupPending: true,
+          startup,
+          frontend: frontendStatus,
         };
       }
     },
@@ -88,6 +112,13 @@ export async function createNinjaSupervisor({
         );
       await ninjaDirectory(root, { create: true });
       installation = receipt;
+      frontendStatus = frontend;
+      launching = true;
+      startup = {
+        phase: "bootstrap",
+        cleanup: "pending",
+        history: ["bootstrap"],
+      };
       const token = randomUUID();
       const env = Object.fromEntries(
         [
@@ -126,6 +157,13 @@ export async function createNinjaSupervisor({
       );
       child.on("error", () => {});
       child.on("message", (m) => {
+        if (m.event === "startup") {
+          try {
+            startup = safeStartup(m.startup);
+            if (m.frontend) frontendStatus = safeFrontend(m.frontend);
+          } catch {}
+          return;
+        }
         const p = pending.get(m.id);
         if (!p) return;
         pending.delete(m.id);
@@ -142,12 +180,21 @@ export async function createNinjaSupervisor({
         status: "starting",
         installationId: receipt.id,
       });
-      await request("start", {
-        installation: receipt,
-        settings,
-        marker,
-        token,
-      });
+      try {
+        await request("start", {
+          installation: receipt,
+          settings,
+          frontend,
+          marker,
+          token,
+        });
+      } finally {
+        launching = false;
+      }
+    },
+    async cancelStartup() {
+      if (launching) return request("cancelStartup");
+      return { requested: false };
     },
     async quiesce() {
       if (child) await request("quiesce");
@@ -162,6 +209,9 @@ export async function createNinjaSupervisor({
     },
     async report() {
       return request("report");
+    },
+    async retryEvidence() {
+      return request("retryEvidence");
     },
     async close({ requireSafe = false } = {}) {
       if (!child) {
@@ -202,6 +252,12 @@ export async function createNinjaSupervisor({
       child = null;
       installation = null;
       exited = null;
+      launching = false;
+      startup = {
+        ...startup,
+        phase: startup.error ? "failed" : "stopped",
+        cleanup: "complete",
+      };
       return cleanup;
     },
   };

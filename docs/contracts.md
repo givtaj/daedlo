@@ -31,6 +31,18 @@ Descriptor: `{id,version,label,states:[{id,label,parent:null|string,support:"sup
 
 The public `ApplicationModel` trait exposes associated `Facts`, `State`, `Command` and `Outcome` types. Models implement descriptor, state derivation/ID, typed command decoding, authorization, verification and outcome reporting. Optional display, command-availability and recipe-authorization hooks support the catalog. The selected engine crate's `src/lib.rs` defines the implemented API. A source checkout additionally includes `examples/notebook-engine`; that example is not required or included in portable tools. Verification receives bounded before/after observations and read-only evidence. A declared state tree is descriptive metadata, not a promise of reachability.
 
+## Actionable descriptor validation
+
+Invalid model descriptors still reject protocol-1 `hello` and subsequent operations
+with `error_code:invalid_model` before any application handler. The error identifies
+a bounded declaration path and static violated rule, for example
+`Invalid model at descriptor.commands[0].params[1].maxLength: maxLength (Rust max_length) is only permitted for text parameters.`
+Declaration indexes are zero-based. Because parameters are a map, `params[n]`
+means the n-th parameter in sorted name order; the error explicitly explains this.
+Paths and rules never include arbitrary descriptor IDs, labels, parameter values
+or raw observations. The same strict rules still reject inconsistent declarations;
+more useful diagnostics do not make an invalid model acceptable.
+
 ## Canonical recipe context extension
 
 The published alpha.2 and alpha.3 runtime/engine pair retains protocol 1 and advertises
@@ -104,6 +116,17 @@ These visuals do not authorize actions or establish application outcomes.
 Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runRecipe(id,revision)`; compatibility `command({id,params,revision,recipe})`; `pause()`, `resume()`, `stop()`, `setSpeed("slow"|"normal"|"fast")`, `report()`, `report({runId})`, `close()`. Snapshot includes `connected,descriptor,state,revision,commands,recipes,display,execution,busy,paused,speed,runId,progress,lastResult,identity`. Result separates `execution` (`completed|rejected|failed|stopped`) from `outcome` and `effect`. It also contains the descriptor command or recipe ID in `command`, a boolean `recipe`, and ISO `startedAt`/`finishedAt` timestamps. Unknown requested IDs are recorded as `command:null`; arbitrary identifiers, parameters and facts are not copied into these result fields. Only an active run receives a `runId`. `ok:true` or `execution:"completed"` alone does not establish a successful application outcome or persistence.
 
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
+
+A viewer may receive `frontend:{name,targetOrigin,model,evidenceLocation,ownership}`.
+This is bounded local display metadata: a static name, canonical HTTP(S) origin
+(or null for an unspecified legacy target), model ID/version, evidence directory,
+and browser/context/application ownership (`owned`, `attached` or `unknown`).
+`/status` returns this identity with the currently observed origin (no URL path,
+query or credentials) and target/model match results. A mismatch disables viewer
+commands and presentations and rejects their HTTP dispatch; it does not authorize
+stopping somebody else's resources or redefine application guards. Session/API
+callers remain trusted. Closing a viewer still preserves its attached session,
+page and context. CLI projects may supply the same optional `frontend` field.
 
 The viewer omits untouched optional fields. An explicitly edited text field
 that is then cleared submits an empty string; clearing an optional numeric or

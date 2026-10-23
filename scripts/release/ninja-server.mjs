@@ -2,6 +2,8 @@ import http from "node:http";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
+import { safeFrontend, safeStartup } from "./native-session.mjs";
+
 const MAX_BODY = 4096;
 const phases = new Set([
   "idle",
@@ -36,6 +38,10 @@ const messages = {
     "Project inputs changed. Prepare and validate the update again.",
   stale_source:
     "Project inputs changed. Prepare and validate the update again.",
+  retained_bundle_missing:
+    "The accepted release bundle is missing. Restore its exact verified bytes before refreshing. No newer release was downloaded.",
+  retained_bundle_invalid:
+    "The retained release bundle could not be verified. Preserve it for inspection and restore its exact verified bytes before refreshing. No newer release was downloaded.",
   stale_generation:
     "This view changed. Review the current status before trying again.",
   validation_failed:
@@ -53,6 +59,8 @@ const messages = {
     "The update action failed. Review the current selection and local manager record.",
   status_unavailable:
     "Manager status is unavailable. The selected and running versions cannot be confirmed.",
+  evidence_incomplete:
+    "Run evidence could not be saved. Repair local storage and retry evidence before continuing.",
   action_unavailable:
     "This action is unavailable in the current project state.",
 };
@@ -127,6 +135,7 @@ function publicStatus(value) {
 /** Stable local update control. The caller retains ownership of the manager. */
 export async function createNinjaServer({
   manager,
+  lifecycle,
   host = "127.0.0.1",
   port = 0,
 } = {}) {
@@ -138,15 +147,30 @@ export async function createNinjaServer({
     if (typeof manager?.[method] !== "function")
       throw new TypeError(`Manager must implement ${method}`);
   }
+  if (lifecycle) {
+    for (const method of [
+      "snapshot",
+      "stop",
+      "refresh",
+      "restart",
+      "retryEvidence",
+    ])
+      if (typeof lifecycle[method] !== "function")
+        throw new TypeError(`Native lifecycle must implement ${method}`);
+  }
   const html = await readFile(
     new URL("ninja-ui.html", import.meta.url),
     "utf8",
   );
+  const sessionHtml = lifecycle
+    ? await readFile(new URL("native-session-ui.html", import.meta.url), "utf8")
+    : null;
   const token = randomBytes(32).toString("hex");
   const authorization = Buffer.from(`Bearer ${token}`);
   let generation = randomBytes(16).toString("hex"),
     fingerprint,
     busy = false,
+    mutationEpoch = 0,
     closing,
     origin;
   const rotate = () => {
@@ -192,6 +216,67 @@ export async function createNinjaServer({
           status.operation?.status === "ready" &&
           status.blockers.length === 0,
         revert: permitted && status.canRollback && status.blockers.length === 0,
+      },
+    };
+  }
+  async function nativeSnapshot() {
+    const epoch = mutationEpoch;
+    if (busy) throw Object.assign(Error(), { code: "operation_busy" });
+    const value = await lifecycle.snapshot();
+    const state = await snapshot();
+    if (busy || epoch !== mutationEpoch)
+      throw Object.assign(Error(), { code: "operation_busy" });
+    if (
+      !state.status.project.id ||
+      state.status.error?.code === "status_unavailable"
+    )
+      throw Object.assign(Error(), { code: "status_unavailable" });
+    if (
+      (value.runningId ?? null) !== (state.status.running?.id ?? null) ||
+      (value.viewerUrl && !value.runningId)
+    )
+      throw Error("Native session changed during observation");
+    const viewer = value.viewerUrl ? new URL(value.viewerUrl) : null;
+    if (
+      viewer &&
+      (viewer.protocol !== "http:" ||
+        viewer.hostname !== "127.0.0.1" ||
+        Number(viewer.port) < 1 ||
+        viewer.username ||
+        viewer.password ||
+        viewer.pathname !== "/" ||
+        viewer.search ||
+        viewer.hash)
+    )
+      throw Error("Invalid owned viewer URL");
+    for (const [key, length] of [
+      ["instance", 32],
+      ["configSha256", 64],
+      ["toolsSha256", 64],
+    ])
+      if (
+        typeof value[key] !== "string" ||
+        !new RegExp(`^[a-f0-9]{${length}}$`).test(value[key])
+      )
+        throw Error("Invalid native session identity");
+    return {
+      ...state,
+      native: {
+        instance: value.instance,
+        configSha256: value.configSha256,
+        toolsSha256: value.toolsSha256,
+        viewerUrl: viewer?.href ?? null,
+        starting: value.starting === true,
+        recovery: value.recovery === true,
+        ...(value.frontend ? { frontend: safeFrontend(value.frontend) } : {}),
+        ...(value.startup ? { startup: safeStartup(value.startup) } : {}),
+        evidence: value.evidence
+          ? {
+              pending: value.evidence.pending,
+              failed: value.evidence.failed,
+              lastRunId: value.evidence.lastRunId ?? null,
+            }
+          : null,
       },
     };
   }
@@ -253,6 +338,11 @@ export async function createNinjaServer({
       req.resume();
       return;
     }
+    if (req.method === "GET" && lifecycle && req.url === "/session") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(sessionHtml.replaceAll("{{NONCE}}", nonce));
+      return;
+    }
     if (req.method === "GET" && req.url === "/") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       res.end(html.replaceAll("{{NONCE}}", nonce));
@@ -261,7 +351,10 @@ export async function createNinjaServer({
     if (
       !(
         (req.method === "GET" && req.url === "/status") ||
-        (req.method === "POST" && req.url === "/action")
+        (req.method === "POST" && req.url === "/action") ||
+        (lifecycle &&
+          ["GET", "POST"].includes(req.method) &&
+          req.url === "/native")
       )
     ) {
       json(res, 404, { ok: false, error: "Unknown route" });
@@ -281,7 +374,18 @@ export async function createNinjaServer({
       return;
     }
     if (req.method === "GET") {
-      json(res, 200, await snapshot());
+      try {
+        json(
+          res,
+          200,
+          req.url === "/native" ? await nativeSnapshot() : await snapshot(),
+        );
+      } catch (error) {
+        json(res, 503, {
+          ok: false,
+          requestError: safeError(error, "status_unavailable"),
+        });
+      }
       return;
     }
     if (req.headers.origin !== origin) {
@@ -292,6 +396,71 @@ export async function createNinjaServer({
     try {
       const input = await body(req, res);
       if (!input) return;
+      if (req.url === "/native") {
+        if (
+          !["stop", "refresh", "restart", "retry-evidence"].includes(
+            input.action,
+          ) ||
+          Object.keys(input).sort().join(",") !== "action,generation" ||
+          !/^[a-f0-9]{32}$/.test(input.generation)
+        ) {
+          json(res, 400, { ok: false, error: "Invalid native action" });
+          return;
+        }
+        if (busy) {
+          json(res, 409, {
+            ok: false,
+            requestError: safeError({ code: "operation_busy" }),
+          });
+          return;
+        }
+        busy = true;
+        mutationEpoch++;
+        let failure;
+        try {
+          if (input.generation !== (await snapshot()).generation)
+            throw Object.assign(Error(), { code: "stale_generation" });
+          rotate();
+          const method =
+            input.action === "retry-evidence" ? "retryEvidence" : input.action;
+          const result = await lifecycle[method]();
+          if (result?.ok === false) throw result.error ?? result;
+        } catch (error) {
+          failure = safeError(error);
+        } finally {
+          busy = false;
+          mutationEpoch++;
+          rotate();
+        }
+        if (!failure && input.action === "stop" && lifecycle.afterStop)
+          res.once("finish", () => {
+            void Promise.resolve()
+              .then(() => lifecycle.afterStop())
+              .catch(() => {
+                process.stderr.write(
+                  "Native control cleanup failed; retained ownership requires recovery.\n",
+                );
+              });
+          });
+        let observed;
+        try {
+          observed = await nativeSnapshot();
+        } catch (error) {
+          json(res, 503, {
+            ok: false,
+            requestError: safeError(error, "status_unavailable"),
+            actionCompleted: failure ? null : true,
+            doNotReplay: true,
+            ...(failure ? { actionError: failure } : {}),
+          });
+          return;
+        }
+        json(res, failure ? 409 : 200, {
+          ...observed,
+          ...(failure ? { ok: false, requestError: failure } : {}),
+        });
+        return;
+      }
       const restart = ["restart", "revert"].includes(input.action);
       const keys = [
         "action",
@@ -319,6 +488,7 @@ export async function createNinjaServer({
       }
       // Own the mutation gate before awaiting manager state, so two tabs cannot race.
       busy = true;
+      mutationEpoch++;
       let failure;
       try {
         const current = await snapshot();
@@ -359,6 +529,7 @@ export async function createNinjaServer({
         );
       } finally {
         busy = false;
+        mutationEpoch++;
         rotate();
       }
       json(res, failure ? 409 : 200, {

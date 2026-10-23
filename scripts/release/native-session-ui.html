@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daedlo · Frontend session</title>
+    <style nonce="{{NONCE}}">
+      [hidden] {
+        display: none !important;
+      }
+      :root {
+        color-scheme: dark;
+        font: 16px/1.5 system-ui;
+        background: #0c1420;
+        color: #e7edf8;
+      }
+      body {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 40px 24px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      small {
+        color: #9cadc4;
+      }
+      h1 {
+        font-size: 30px;
+        margin: 10px 0;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0;
+      }
+      section {
+        background: #142031;
+        border: 1px solid #2a3c53;
+        border-radius: 14px;
+        padding: 24px;
+        margin: 22px 0;
+      }
+      .phase {
+        color: #85d5c0;
+        font-weight: 700;
+      }
+      .failed {
+        color: #ffb3a8;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 12px;
+        margin: 24px 0 0;
+      }
+      dt {
+        color: #9cadc4;
+      }
+      dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+      }
+      a,
+      button {
+        color: #e7edf8;
+        background: #284761;
+        border: 1px solid #476780;
+        padding: 10px 16px;
+        border-radius: 7px;
+        display: inline-block;
+        font: inherit;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      #error {
+        color: #ffb3a8;
+        white-space: pre-wrap;
+      }
+      #connection {
+        color: #ffcf87;
+      }
+      #history {
+        color: #a7bcd2;
+        padding-left: 22px;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      footer {
+        color: #9cadc4;
+        font-size: 14px;
+      }
+      @media (max-width: 600px) {
+        body {
+          padding: 24px 16px;
+        }
+        header {
+          display: block;
+        }
+        dl {
+          grid-template-columns: 1fr;
+          gap: 6px;
+        }
+        dd {
+          margin-bottom: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <small>DAEDLO · FRONTEND SESSION</small>
+        <h1 id="name">Connecting to the owning runner…</h1>
+      </div>
+      <span id="phase" class="phase">Status unconfirmed</span>
+    </header>
+    <p id="connection" role="status"></p>
+    <section>
+      <h2 id="summary">Checking startup</h2>
+      <p id="error" role="alert"></p>
+      <dl>
+        <dt>Target origin</dt>
+        <dd id="target">Unconfirmed</dd>
+        <dt>Model</dt>
+        <dd id="model">Unconfirmed</dd>
+        <dt>Run evidence</dt>
+        <dd id="evidence">Unconfirmed</dd>
+        <dt>Ownership</dt>
+        <dd id="ownership">Unconfirmed</dd>
+        <dt>Owned cleanup</dt>
+        <dd id="cleanup">Unconfirmed</dd>
+      </dl>
+    </section>
+    <section>
+      <h2>Observed startup phases</h2>
+      <ol id="history"></ol>
+      <nav>
+        <a id="viewer" hidden>Open this frontend’s viewer</a
+        ><a id="updates">Manage installation</a
+        ><button id="stop" disabled>Stop this frontend</button>
+      </nav>
+    </section>
+    <footer>
+      This page belongs to one named frontend and its private local owner.
+      Opening a viewer runs no flow. Attached resources are preserved during
+      owned cleanup. Keep this capability link private.
+    </footer>
+    <script nonce="{{NONCE}}">
+      const token = new URLSearchParams(location.hash.slice(1)).get("token");
+      const $ = (id) => document.getElementById(id);
+      let current = null,
+        stopped = false,
+        mutating = false;
+      const labels = {
+        bootstrap: "Bootstrap",
+        model_validation: "Model validation",
+        target_attachment: "Target attachment",
+        ready: "Ready",
+        failed: "Startup failed",
+        cleanup: "Owned cleanup",
+        stopped: "Stopped",
+      };
+      const summaries = {
+        bootstrap: "Starting the selected runtime",
+        model_validation: "Validating the model with the real engine",
+        target_attachment: "Attaching the controlled target",
+        ready: "This frontend is ready",
+        failed: "Startup did not establish readiness",
+        cleanup: "Closing owned resources",
+        stopped: "Frontend stopped",
+      };
+      const seen = new Set();
+      $("updates").href = "/#token=" + token;
+      function observe(phase) {
+        if (seen.has(phase)) return;
+        seen.add(phase);
+        const li = document.createElement("li");
+        li.textContent = labels[phase] || phase;
+        $("history").append(li);
+      }
+      function render(v) {
+        current = v;
+        const n = v.native,
+          f = n.frontend,
+          s = n.startup || {
+            phase: n.starting
+              ? "bootstrap"
+              : v.status.running
+                ? "ready"
+                : "stopped",
+            cleanup: "pending",
+          };
+        const phase = n.recovery ? "failed" : s.phase;
+        $("name").textContent = f?.name || v.status.project.label;
+        $("phase").textContent = labels[phase] || "Status unconfirmed";
+        $("phase").className = "phase" + (phase === "failed" ? " failed" : "");
+        $("summary").textContent = summaries[phase] || "Status unconfirmed";
+        $("error").textContent = s.error?.message || "";
+        $("target").textContent =
+          f?.targetOrigin || "Not configured (legacy frontend)";
+        $("model").textContent = f
+          ? f.model.id + " @ " + f.model.version
+          : "Unconfirmed";
+        $("evidence").textContent = f?.evidenceLocation || "Unconfirmed";
+        $("ownership").textContent = f
+          ? Object.entries(f.ownership)
+              .map(([k, v]) => k + ": " + v)
+              .join(" · ")
+          : "Unconfirmed";
+        $("cleanup").textContent =
+          s.cleanup === "complete"
+            ? "Complete"
+            : s.cleanup === "incomplete"
+              ? "Incomplete — retained handles require recovery"
+              : "Pending";
+        for (const p of n.startup?.history || []) observe(p);
+        observe(phase);
+        $("connection").textContent = "";
+        $("viewer").hidden = phase !== "ready" || !n.viewerUrl;
+        if (!$("viewer").hidden) $("viewer").href = n.viewerUrl;
+        else $("viewer").removeAttribute("href");
+        $("stop").disabled = mutating;
+      }
+      async function poll() {
+        if (stopped) return;
+        try {
+          const r = await fetch("/native", {
+            headers: { Authorization: "Bearer " + token },
+            cache: "no-store",
+          });
+          const v = await r.json();
+          if (!r.ok || !v.ok)
+            throw Error(v.requestError?.message || "Owner status unavailable");
+          render(v);
+        } catch (e) {
+          $("connection").textContent = "Status unconfirmed: " + e.message;
+          $("viewer").hidden = true;
+          $("viewer").removeAttribute("href");
+          $("stop").disabled = true;
+        }
+        if (!stopped) setTimeout(poll, 350);
+      }
+      $("stop").onclick = async () => {
+        if (!current || mutating) return;
+        mutating = true;
+        $("stop").disabled = true;
+        try {
+          const r = await fetch("/native", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + token,
+              Origin: location.origin,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "stop",
+              generation: current.generation,
+            }),
+          });
+          const v = await r.json();
+          if (!r.ok || !v.ok)
+            throw Error(v.requestError?.message || "Stop not confirmed");
+          stopped = true;
+          $("phase").textContent = "Stopped";
+          $("summary").textContent = "Owned cleanup completed";
+          $("cleanup").textContent = "Complete";
+          $("viewer").hidden = true;
+          $("viewer").removeAttribute("href");
+          $("connection").textContent = "";
+          observe("stopped");
+        } catch (e) {
+          $("connection").textContent = e.message;
+        } finally {
+          mutating = false;
+        }
+      };
+      if (!token)
+        $("connection").textContent =
+          "Open the exact private startup link supplied by daedlo-native.";
+      else poll();
+    </script>
+  </body>
+</html>

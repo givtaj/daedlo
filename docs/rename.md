@@ -2,7 +2,7 @@
 
 This guide describes the naming migration prepared for **0.1.4-alpha.4**. It does
 not establish that a release, repository rename, customer upgrade or rollback has
-completed. Actual results belong in [verification.md](verification.md). The
+completed. Actual results belong in [verification.md](https://github.com/givtaj/daedlo/blob/main/docs/verification.md). The
 repository stays private until the owner separately approves public access.
 
 ## Names and compatibility
@@ -137,5 +137,5 @@ blocked on the following release work:
 
 The currently published alpha.3 feed and downloads retain their existing names
 until an explicitly authorized, verified rollout. See the
-[release guide](releases.md) and [verification record](verification.md) for the
+[release guide](releases.md) and [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md) for the
 release boundary and actual status.

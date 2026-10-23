@@ -179,7 +179,35 @@ the CLI project module. Choose human-readable holds separately from execution
 speed; do not reconstruct the transition graph or silently reset an application
 to make a presentation continue.
 
+## Small executable starter
+
+The portable tools include `examples/starter/`: a disposable synthetic note model,
+Rust-owned flow, guarded adapter, request accounting and shipped real-browser
+acceptance. Its README documents copying it into a separate QA area and building
+against the exact selected engine crate. Run the copied acceptance against the
+exact installed runtime, including a rejected model hello and uncertain save.
+The fixture is a reference for authoring; it does not establish customer acceptance
+or replace the accepted product demonstration.
+
+Start request observation before the activity being measured. An attached adapter
+cannot recover requests whose start events predate its listeners. The ordinary CLI
+navigates before constructing its adapter; if initial navigation starts relevant
+work, use the reviewed custom-session launcher to attach observation first or an
+application readiness contract. Never infer that an empty observed set proves
+there were no preexisting requests. The starter retains missing terminal events
+as unresolved and documents explicit cancellation before navigation when supported.
+
 ## Complete the first onboarding
+
+For tools that include `daedlo-native`, use the [native setup guide](native-setup.md)
+around the same Ninja registration. Doctor separates static setup blockers;
+setup validates the first complete installation; start/status return the exact
+Codex viewer handoff and reuse the owned runner. Native commands and immediate
+managed-run archiving are next-release additions, absent from published alpha.3.
+Keep using the existing CLI/report procedure below for ordinary integrations.
+For managed native use, inspect the immediate `supervisor/run-reports/` archive and
+Ninja's final shutdown report, then verify safe stop and relaunch. Preserve
+custom skills and registration through explicit source refresh and Ninja updates.
 
 Product contributors review the outcome, language and useful branches. Developers
 review feasibility, observability and integration boundaries. QA contributors review

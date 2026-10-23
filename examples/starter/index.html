@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width" />
+  <title>Daedlo adapter starter</title>
+  <style>
+    body {
+      font: 18px system-ui;
+      max-width: 700px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+      color: #193534;
+      background: #f4f8f6;
+    }
+    label {
+      display: block;
+      margin: 1rem 0;
+    }
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 120px;
+      font: inherit;
+    }
+    button,
+    select {
+      font: inherit;
+      padding: 0.5rem;
+    }
+    output {
+      display: block;
+      padding: 1rem 0;
+    }
+    small {
+      color: #526c69;
+    }
+  </style>
+  <body data-phase="ready">
+    <h1>Adapter starter</h1>
+    <p>A disposable note editor for model and browser checks.</p>
+    <label>Note<textarea id="note" maxlength="1000"></textarea></label>
+    <label for="category">Category</label
+    ><select id="category">
+      <option value="plain">Plain</option>
+      <option value="work">Work</option>
+    </select>
+    <button id="save">Save note</button>
+    <button id="discard">Discard draft</button>
+    <output id="status" aria-live="polite">Ready</output
+    ><small
+      >In-memory synthetic fixture. Closing its server removes all notes.</small
+    >
+    <script type="module">
+      const note = document.querySelector("#note"),
+        category = document.querySelector("#category");
+      const phase = (value, label) => {
+        document.body.dataset.phase = value;
+        document.querySelector("#status").textContent = label;
+      };
+      const edit = () => {
+        delete document.body.dataset.operation;
+        phase("draft", "Draft");
+      };
+      note.addEventListener("input", edit);
+      category.addEventListener("change", edit);
+      document.querySelector("#discard").addEventListener("click", () => {
+        note.value = "";
+        category.value = "plain";
+        delete document.body.dataset.operation;
+        phase("ready", "Ready");
+      });
+      document.querySelector("#save").addEventListener("click", async () => {
+        if (!note.value.trim()) {
+          phase("validation", "Write a note before saving.");
+          return;
+        }
+        const operation =
+          document.body.dataset.operation ?? crypto.randomUUID();
+        document.body.dataset.operation = operation;
+        phase("saving", "Saving…");
+        try {
+          const response = await fetch("/api/notes", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              operation,
+              text: note.value,
+              category: category.value,
+            }),
+          });
+          if (!response.ok) throw new Error("Save was rejected");
+          await response.json();
+          phase("saved", "Saved. Independent readback still required.");
+        } catch {
+          phase(
+            "recovery",
+            "Response unavailable. Storage outcome is uncertain.",
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

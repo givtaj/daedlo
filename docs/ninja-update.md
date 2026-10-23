@@ -1,5 +1,11 @@
 # Operation Ninja-Update
 
+The unpublished next tools package adds [native setup](native-setup.md) commands
+around this same manager. It provides setup/reconnect/Codex viewer handoff and
+`refresh` to revalidate source against the accepted retained bundle without
+discovering a newer release. Existing `ninja serve` and ordinary integrations
+retain their interfaces; do not run two launchers against one managed store.
+
 Ninja-Update prepares, validates, activates and reverts a complete managed Daedlo
 project installation. It is included in alpha.3. The older alpha.2 archive client
 cannot bootstrap it by itself. A configured publisher catalog and one-time project
@@ -161,7 +167,12 @@ current authored files are not overwritten. The UI marks the historical snapshot
 Business writes already made remain in the application. No flow is replayed, no
 database is restored, and arbitrary login state or unsaved drafts are not promised
 to survive restart. Ordinary startup refuses changed registered source; prepare
-and validate it again. Explicit rollback can use the historical snapshot.
+and validate it again. In tools that provide `daedlo-native`, use `refresh --config FILE`
+then `restart --config FILE`: this prepares a new slot from the selected release's
+exact retained verified bundle, runs the same hooks and descriptor compatibility
+checks, and keeps the previous slot. Missing/tampered retained bundles block this
+operation; it never downloads a different release. Explicit rollback can use the
+historical snapshot.
 
 The browser executable hash and observed version are verified again at startup.
 Its external cache is an explicit dependency: this implementation does not copy or

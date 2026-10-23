@@ -465,3 +465,77 @@ test("unwinds CDP after screenshot, screencast startup, and port binding failure
     await first.close();
   }
 });
+
+test("named frontend status binds the visible identity to observed target and model", async (t) => {
+  const f = fixture();
+  let actualUrl = "http://127.0.0.1:4101/settings?private=do-not-display";
+  f.page.url = () => actualUrl;
+  const frontend = {
+    name: "Settings portal",
+    targetOrigin: "http://127.0.0.1:4101",
+    model: { id: "notebook", version: "1" },
+    evidenceLocation: "/local/synthetic/settings/reports",
+    ownership: { browser: "owned", context: "owned", application: "attached" },
+  };
+  const viewer = await createViewer({ ...f, frontend });
+  t.after(() => viewer.close());
+  const status = async () =>
+    JSON.parse((await request(`${viewer.url}/status`)).body);
+  let observed = await status();
+  assert.equal(observed.frontend?.name, "Settings portal");
+  assert.equal(observed.frontend.currentOrigin, frontend.targetOrigin);
+  assert.equal(observed.frontend.matchesTarget, true);
+  assert.equal(observed.frontend.matchesModel, true);
+  assert.equal(JSON.stringify(observed.frontend).includes("private="), false);
+  frontend.name = "changed by caller";
+  assert.equal((await status()).frontend.name, "Settings portal");
+  actualUrl = "http://127.0.0.1:4102/other";
+  observed = await status();
+  assert.equal(observed.frontend.matchesTarget, false);
+  assert.equal(observed.connected, false);
+  const rejected = await post(`${viewer.url}/command`, {
+    id: "write",
+    revision: "r1",
+  });
+  assert.equal(rejected.status, 409);
+  assert.equal(
+    f.calls.length,
+    0,
+    "a viewer showing a different frontend must not dispatch a command",
+  );
+  for (const body of [
+    { action: "resume" },
+    { action: "advance", value: "stage-1" },
+  ]) {
+    const result = await post(`${viewer.url}/control`, body);
+    assert.equal(
+      result.status,
+      409,
+      "controls that can cause effects must reject a target mismatch",
+    );
+    assert.equal(JSON.parse(result.body).error_code, "frontend_mismatch");
+  }
+  assert.equal(f.calls.length, 0);
+  for (const action of ["pause", "stop"]) {
+    assert.equal((await post(`${viewer.url}/control`, { action })).status, 200);
+  }
+  assert.deepEqual(f.calls, [["pause"], ["stop"]]);
+  actualUrl = frontend.targetOrigin + "/settings";
+  f.snapshot.descriptor = { ...descriptor, id: "different-model" };
+  assert.equal((await status()).frontend.matchesModel, false);
+});
+
+test("invalid frontend metadata fails before acquiring browser capture", async (t) => {
+  for (const bad of [
+    { name: "Portal\nsecret", targetOrigin: "http://127.0.0.1:4101" },
+    { name: "Portal", targetOrigin: "http://user:secret@127.0.0.1:4101" },
+    { name: "Portal", targetOrigin: "https://example.test/path?token=secret" },
+  ]) {
+    const f = fixture();
+    await assert.rejects(async () => {
+      const viewer = await createViewer({ ...f, frontend: bad });
+      t.after(() => viewer.close());
+    }, /Invalid frontend/);
+    assert.equal(f.cdp.calls.length, 0);
+  }
+});

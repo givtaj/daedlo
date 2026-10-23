@@ -15,6 +15,9 @@
     "release": "node scripts/release/cli.mjs",
     "test:release": "node --test tests/release-*.test.mjs",
     "ninja": "node scripts/release/ninja.mjs",
+    "native": "node scripts/release/native.mjs",
+    "test:native": "node --test tests/release-native-*.test.mjs",
+    "test:native:customer": "node tests/native-architecture-acceptance.mjs",
     "test:ninja": "node --test tests/release-ninja-*.test.mjs",
     "test:ninja:ui": "node --test tests/ninja-ui-browser.mjs",
     "test:ninja:customer": "node tests/ninja-architecture-acceptance.mjs",
@@ -22,7 +25,7 @@
     "demo": "node examples/roots/serve.mjs",
     "check": "node scripts/check.mjs && npm run types && npm run format:check",
     "types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target esnext --types node packages/runtime/src/index.d.ts",
-    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml",
+    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook examples/starter tests/starter*.mjs tests/alpha4-*.mjs tests/fixtures/alpha4-upgrade tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml",
     "demo:notebook": "node packages/runtime/src/cli.mjs --project examples/notebook/project.mjs",
     "roots:prepare": "node examples/roots/prepare-live.mjs",
     "roots:live": "node examples/roots/launch-live.mjs",
@@ -30,7 +33,9 @@
     "roots:feature:prepare": "node integrations/roots/prepare-feature.mjs",
     "roots:feature:stage": "node integrations/roots/stage-feature.mjs",
     "test:roots-feature": "node integrations/roots/feature-acceptance.mjs",
-    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs"
+    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs packages/runtime/tests/viewer-frontend-browser.mjs",
+    "test:starter": "node tests/starter-acceptance.mjs",
+    "test:starter:unit": "node --test tests/starter-accounting.test.mjs tests/starter-installed-inventory.test.mjs"
   },
   "devDependencies": {
     "@types/node": "24.13.4",

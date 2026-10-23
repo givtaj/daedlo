@@ -20,6 +20,8 @@ import {
 import { createNinjaSupervisor } from "./ninja-supervisor.mjs";
 import { createNinjaServer } from "./ninja-server.mjs";
 
+import { frontendConfiguration, frontendIdentity } from "./native-session.mjs";
+
 export const NINJA_CONTRACTS = Object.freeze({
   manager: 1,
   launcher: 1,
@@ -100,7 +102,10 @@ export function createNinjaProvider(
 }
 
 /** Local bootstrap config is trusted code/configuration, never accepted from the viewer. */
-export async function openNinja(configPath) {
+export async function readNinjaConfig(
+  configPath,
+  { validateSource = true } = {},
+) {
   configPath = resolve(configPath);
   await ninjaDirectory(dirname(configPath));
   const config = await ninjaRead(configPath);
@@ -114,6 +119,7 @@ export async function openNinja(configPath) {
     throw Error(
       "Ninja bootstrap needs schema 1, absolute store/source paths and configured publisher trust keys.",
     );
+  frontendConfiguration(config.frontend);
   const source = resolve(config.registration.sourceRoot),
     store = resolve(config.store);
   if (
@@ -126,7 +132,7 @@ export async function openNinja(configPath) {
     );
   if (!["stable", "preview"].includes(config.catalog.channel))
     throw Error("Choose the stable or preview update channel explicitly.");
-  await validateRegistration(config.registration);
+  if (validateSource) await validateRegistration(config.registration);
   const keys = await Promise.all(
     config.catalog.trustedKeys.map(async (k) => {
       if (typeof k.publicKeyFile !== "string" || !k.id)
@@ -156,11 +162,18 @@ export async function openNinja(configPath) {
     throw Error(
       "Installation settings accept explicit offline mode and absolute cache paths only.",
     );
+  return { config, keys, installation };
+}
+
+export async function openNinja(configPath, { recover = true } = {}) {
+  const { config, keys, installation } = await readNinjaConfig(configPath);
   const supervisor = await createNinjaSupervisor({
     root: join(config.store, "supervisor"),
     settings: config.settings || {},
+    frontend: frontendIdentity(config),
   });
   const manager = await createNinjaManager({
+    recover,
     root: config.store,
     registration: config.registration,
     provider: createNinjaProvider({ ...config.catalog, trustedKeys: keys }),

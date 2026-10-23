@@ -469,6 +469,34 @@ function fillFacts(target, values) {
 }
 
 function render(snapshot) {
+  const frontend = snapshot.frontend;
+  $("frontend-identity").hidden = !frontend;
+  if (frontend) {
+    $("frontend-name").textContent = frontend.name;
+    document.title = `${frontend.name} · Daedlo`;
+    fillFacts($("frontend-details"), [
+      { label: "Target", value: frontend.targetOrigin || "Not configured" },
+      {
+        label: "Observed origin",
+        value: frontend.currentOrigin || "Unavailable",
+      },
+      {
+        label: "Model",
+        value: `${frontend.model.id}@${frontend.model.version}`,
+      },
+      { label: "Evidence", value: frontend.evidenceLocation },
+      {
+        label: "Ownership",
+        value: `Browser: ${frontend.ownership.browser}; context: ${frontend.ownership.context}; application: ${frontend.ownership.application}`,
+      },
+    ]);
+    const mismatch =
+      frontend.matchesTarget === false || frontend.matchesModel === false;
+    $("frontend-warning").hidden = !mismatch;
+    $("frontend-warning").textContent = mismatch
+      ? "Target or model mismatch. Commands are disabled for this frontend."
+      : "";
+  }
   latest = snapshot;
   const driver = snapshot.driver || {};
   if (driver.descriptor) {

@@ -40,6 +40,18 @@ runtime README, public types and Rust trait govern APIs. Record both tools and
 runtime versions; never infer the package root from a copied skill's location or
 assume a remembered release is current.
 
+If the selected tools include `lib/native.mjs`, read `docs/native-setup.md` and
+use its doctor/setup/start/status/stop workflow with the same Ninja registration.
+Open the exact returned `viewerUrl` in Codex Browser; repeat start/status to
+reconnect to the owned runner without replay. The tab is a stream plus command
+controls, not the controlled application's DOM. Arrange a headed controlled
+browser from the outset when manual authentication is required. Distinguish host
+permission, missing dependencies, fixture prerequisites and actual QA failures;
+never disable sandboxing globally. Preserve the complete accepted installation,
+customized guidance, retained bundles and browser cache for Ninja updates/rollback.
+Use explicit `refresh` then `restart` for authored-source changes at the accepted
+Daedlo version. These native commands are absent from published alpha.3 tools.
+
 ## Collaborate, then execute
 
 - **Product:** useful story, observable outcome, non-goals and acceptance examples.

@@ -1,5 +1,68 @@
 # Verification record
 
+## Alpha.4 continuation after rename — local candidate, 2026-10-23
+
+Work resumed from renamed `main` at
+`ebe5c5e667f4b943b3c5550a0e58a1fe89ba6f12` in an isolated alpha.4 branch.
+The preserved native setup implementation at
+`42c4956a95f264282602db2e23ed3db8c88269a5` was integrated into this candidate;
+its original worktree remained clean at that commit. The primary checkout and
+private customer records remain separate. The Codex project listing now resolves
+`daedlo` to its canonical renamed directory. No publication is implied.
+
+The four additions are safe field-level invalid-model diagnostics, a visible
+startup screen before session readiness, named frontend identity/lifecycle, and
+a portable synthetic Rust/adapter starter with executable acceptance. Strict model
+rules and protocol 1 remain unchanged. Diagnostic positions are zero-based; named
+parameter positions use sorted map order without exposing labels or values.
+
+Test-first evidence includes a real Rust hello rejection lacking an actionable
+field; unavailable startup UI and erased failed-start state; absent frontend
+identity; resume/advance forwarding despite origin mismatch; legacy effect
+forwarding after identity loss; mismatched viewer/session pages; missing startup
+cancellation; and missing starter files in the tools archive. Setup/import errors
+and a corrected browser test locator were retained separately and are not claimed
+as product regressions.
+
+Completed local source checks at this checkpoint (macOS arm64, Node 22.20.0,
+Rust 1.96.0, Playwright 1.62.1):
+
+- Runtime **131/131**, Rust workspace **26 passed** plus one ignored subprocess
+  helper that is invoked by the parent real-hello tests; Rust format and Clippy
+  with warnings denied passed.
+- Existing source browser acceptance: **8 browser/API groups**, **4 motion**,
+  **9 controls**, **10 CLI**, **3 viewer**; **11 Roots archive** checks passed.
+- Starter real Rust/browser acceptance: **16 checks**, isolated model **3/3**,
+  request-accounting **2/2** and installed-inventory regressions **3/3** passed.
+  Viewer screenshots were inspected. The example is independent conformance,
+  not customer acceptance or a replacement product demonstration.
+- Combined release contracts **397/397** and final native/lifecycle/browser
+  checks **64/64** passed. Syntax, public declarations, formatting, repository
+  guardrails **35/35**, manager UI **2/2** and published-config compatibility
+  passed. Later review fixes also retain failing assertions for wrong-page
+  binding, legacy dispatch, owner-disconnect cancellation and cleanup metadata.
+- Portable tools closed inventory checks **8/8** passed, including the synthetic
+  starter, native session assets and migration guide with resolvable local links.
+
+A held previous-document keepalive request can lack a Playwright terminal event
+in the tested Chromium. The starter retains it as unresolved and refuses false
+settlement. Explicit cancellation before navigation is tested when supported;
+listener movement alone is not represented as a universal fix. This synthetic
+observation does not establish a defect in any customer's adapter or Daedlo core.
+
+Exact frozen-package installation, startup, starter and legacy
+tools-bootstrap/upgrade/rollback are **PENDING** at
+this source checkpoint. Their results must be appended from actual runs. Private
+logs/screenshots and failing assertions are retained under ignored
+`artifacts/alpha4-runtime/`, `alpha4-validation/`, `alpha4-native/`,
+`alpha4-starter/` and `alpha4-upgrade/`.
+
+Publication remains separate: manager capability/feed rollout, package-family
+website command rendering and explicit release authorization are still required.
+No production feed, signing/checkpoint state, website, repository visibility or
+customer dependency pin was changed. Existing release/history entries below retain
+their original scope and exact identities.
+
 ## Private launch controls and primary-folder rename — 2026-10-23
 
 The same GitHub repository is now `givtaj/daedlo`, stable ID `1391092739`, and
@@ -227,6 +290,49 @@ preserve the highest signed catalog generation instead of replaying its older
 feed. Current alpha.3 downloads, onboarding and the Apache next-release notice
 remain intact. This publication adds the plan/page only, with no teaching runtime,
 alpha.4 release, customer installation or data migration.
+## Native setup and Ninja continuation — 2026-10-23
+
+Implemented locally on `codex/native-setup`, based on
+`ca2412a5bf24b29d7e402aeba109b8f59a299ee9`. **Unpublished.** The native tools are an
+additive wrapper around the existing Ninja manager: staged read-only doctor,
+resumable first preparation, foreground runner ownership, authenticated reuse,
+exact Codex viewer handoff, safe stop and explicit same-version source refresh.
+Managed runs gain immediate private report archives. Existing CLI, archive updater
+and Ninja UI interfaces remain supported. No application dependency promotion,
+public website change, registry/release publication or background updater occurred.
+
+| Check | Actual result |
+| --- | --- |
+| Test-first regressions | PASS after genuine failing assertions: native route 404 instead of 200; setup/reconnect absent; missing per-run reports; missing refresh; wrong doctor compiler context and permission classification; inaccessible failed-start cleanup; false success after failed evidence retry; inconsistent viewer/installation handoffs and ambiguous post-action status. Initial sandbox `listen EPERM` was a setup blocker, not a behavioral failure; scoped loopback permission reached the actual failing assertion. |
+| Native focused checks | PASS, 46/46: preflight, single owner, stale/unresponsive receipts, dirty/active safe boundaries, actual partial-start cleanup retry, evidence persistence/repair, retained-bundle refresh, ownership and authenticated HTTP boundaries. |
+| Full release regression suite | PASS, 367/367, including existing packaging, installer, signed-catalog, transaction, crash/recovery, supervisor and updater checks. |
+| Existing runtime and Rust | PASS, 129 runtime tests and 23 locked/offline Rust tests. |
+| Existing real-browser integrations | PASS, 10 ordinary CLI cases and 2 Ninja update-screen cases. |
+| Source checks | PASS: JavaScript syntax, public TypeScript types, formatting and `git diff --check`. |
+| Exact portable tools | PASS: built explicit dirty-source candidate `0.1.4-alpha.4`, installed offline with `--prefix --workspaces=false --ignore-scripts`; all 40 installed inventory files match the archive. No npm dependencies or lifecycle scripts were introduced. |
+| Installed native real-app acceptance | PASS, 7 checkpoints against pinned Architecture Studio `d8cb9396609b722418015cdd3367b3ef659aeb69` with synthetic isolated data and immutable public alpha.3 runtime/crate. Setup performed one preparation and four transport reads; repeated setup did neither again. Repeated start/status reused one child and viewer without flow replay. |
+| Flow and preservation evidence | PASS: four actual success/negative flow passes (initial, relaunch, refreshed source, rollback), 28 immediate completed-run archives and 4 final session reports. Independent save/read-back and no-write assertions passed. Source refresh changed only an isolated launcher comment, rebuilt at the same runtime version, and preserved data and the complete previous slot. Rollback ran that previous snapshot without overwriting authoring changes. |
+| Codex Browser | PASS: the returned viewer rendered Connected with the live controlled application, observed state, enabled/disabled authored controls and separate execution/effect outcome. Reload retained the same completed run and persisted revision. No application action was issued during inspection. Screenshot and actual observation receipt retained privately. |
+| Cleanup | PASS: both native owner handles, controller browser, controlled browsers and synthetic application closed. Stop preserved the separately owned application until the test owner explicitly closed it. No evidence-copy errors or failed cleanup handles remained. The task-owned Codex tab was closed. |
+
+Private evidence is under ignored `artifacts/native-setup/`, especially
+`customer/run-6ZE6gJ/result.json`, `visible-inspection.json`, `codex-browser.png`,
+completed-run/final-report copies and the retained red/green logs. Do not publish
+those raw records. The tools archive SHA-256 is
+`165e63e7fd5c3ba585f5e2b26daa8584b622ebf878a9602744f62d032ea822b5`;
+its recorded source tree is
+`0c25129ba994dac9166130da0602a5dbdc074c72be8225bfd58a7bee35166fb2`
+with `dirty:true` on the baseline above. These identities describe the tested
+candidate, not a published release or a clean-commit package.
+
+Limits: existing macOS arm64 Node/Rust/browser toolchains were used. Initial setup
+used the real native API with an ephemeral signed-catalog transport serving frozen
+public bytes; reconnection/status/stop/refresh/restart used the installed CLI.
+Production-feed discovery was not re-run. Fresh-OS dependency installation,
+Windows/Linux, manual-auth onboarding, WBF and everyday Roots promotion remain
+NOT RUN. The native layer does not remove host sandbox policy or guarantee that a
+permission is granted permanently. Follow [native setup](native-setup.md) for the
+project handoff, retained tools/browser caches, source refresh and future updates.
 
 ## Apache-2.0 next-release preparation — 2026-10-23
 
