@@ -86,7 +86,10 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --locked -- -D warnings
 ```
 
-For a focused Node regression, run `node --test path/to/the-test.test.mjs`.
+For a focused Node regression, run `node --test path/to/the-test.test.mjs`. The current-tree privacy check is
+`node scripts/check-public-metadata.mjs`; it rejects private conversation links
+and tracked customer material. See [public launch controls](docs/public-launch.md)
+for the separate historical review and repository settings.
 Documentation-only edits usually need link/command review and formatting checks,
 not a new behavior test. Explain what you actually checked in the pull request.
 
