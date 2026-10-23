@@ -4,9 +4,11 @@
 
 The owner selected daily GitHub Actions renewal. The same production signing key
 has been stored in `DAEDLO_UPDATE_SIGNING_KEY`, with the Cloudflare account ID as a
-repository variable. The per-Worker deployment token is prepared but its creation
-is awaiting the requested action-time confirmation. **Automatic publication is
-NOT YET ENABLED OR VERIFIED.** The existing generation 1 feed remains live.
+repository variable. Following explicit approval, the token scoped to
+**Individual Workers → daedlo → Editor** was created and stored as
+`CLOUDFLARE_API_TOKEN` at `2026-10-23T11:18:25Z`. A read-only request authenticated
+it against the existing Daedlo deployment. **Automatic publication is NOT YET
+ENABLED OR VERIFIED.** The existing generation 1 feed remains live.
 
 The workflow, signer orchestration and signed-checkpoint restoration passed
 independent review. The exact pre-secret workflow command passed **113 tests**
@@ -26,7 +28,15 @@ Quality checks passed. The full 246-case release run passed 245 and exposed one
 packaged-guide reference failure introduced by the new maintainer documentation.
 Those references were corrected without changing assertions; all eight portable
 tools tests then passed, including exact offline consumer installation. The
-initial failed result is retained.
+initial failed result is retained. Full source/browser/exact-package push CI on
+`74cf5398ce017d19d18f05e35916cc87db2ec8cb` passed on Node 22 and 24, run
+[39942884250](https://github.com/givtaj/browser-driver/actions/runs/39942884250).
+The same-tree PR run passed Node 24 but Node 22 timed out waiting ten seconds for
+an installed CLI fixture to exit after its functional assertions passed. Its
+cleanup cause was not established from the original logs. Test-only bounded,
+sanitized resource-phase diagnostics were added without changing the timeout or
+assertions; the focused ten-case CLI suite passed. Runtime code and published
+assets were unchanged. Failed evidence remains in `artifacts/ninja-renewal/ci-review/`.
 
 These changes preserve immutable alpha.3 assets and its frozen source tag;
 the original published upgrade/rollback acceptance below remains valid for those

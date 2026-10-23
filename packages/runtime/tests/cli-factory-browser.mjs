@@ -177,6 +177,81 @@ function preserveEvidence(root, name, output, child) {
     { mode: 0o600 },
   );
 }
+// Only fixed labels and lifecycle states enter public test failure messages.
+// The fixture journal itself remains in private acceptance evidence.
+const cleanupLabels = new Set([
+  "HTTP fixture",
+  "controlled browser",
+  "driver session",
+  "live viewer",
+]);
+function cleanupDiagnostics(root, child) {
+  const known = (value, allowed) =>
+    allowed.has(value) ? value : "unrecognized";
+  const read = (name) => {
+    try {
+      const file = path.join(root, name);
+      if (fs.statSync(file).size > 65536) return null;
+      return fs.readFileSync(file, "utf8");
+    } catch {
+      return null;
+    }
+  };
+  let phases = [],
+    resources = [];
+  try {
+    phases = (read("cleanup-phase.jsonl") ?? "")
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .slice(-8)
+      .map((line) => {
+        const value = JSON.parse(line);
+        return {
+          label: known(value.label, cleanupLabels),
+          state: known(value.state, new Set(["closing", "closed", "failed"])),
+        };
+      });
+  } catch {
+    phases = [];
+  }
+  try {
+    const report = JSON.parse(read("report.json"));
+    if (Array.isArray(report?.resources))
+      resources = report.resources.slice(-8).map((value) => ({
+        label: known(value.label, cleanupLabels),
+        state: known(
+          value.status,
+          new Set(["owned", "attached", "closed", "cleanup_failed"]),
+        ),
+      }));
+  } catch {
+    resources = [];
+  }
+  return {
+    exitCode: Number.isInteger(child.exitCode) ? child.exitCode : null,
+    signal:
+      child.signalCode === null
+        ? null
+        : known(child.signalCode, new Set(["SIGINT", "SIGTERM", "SIGKILL"])),
+    reportPresent: fs.existsSync(path.join(root, "report.json")),
+    fixtureClosed: fs.existsSync(path.join(root, "fixture-closed")),
+    phases,
+    resources,
+  };
+}
+function cleanupJournal(root) {
+  return `
+      const journal = (label,state) => {try {fs.appendFileSync(${JSON.stringify(path.join(root, "cleanup-phase.jsonl"))},JSON.stringify({label,state})+'\\n')} catch {}};
+      const own = resources.own;
+      resources.own = (resource, options) => own(resource, {...options, close: async value => {
+        journal(options.label,'closing');
+        try {const result=await options.close(value);journal(options.label,'closed');return result}
+        catch(error){journal(options.label,'failed');throw error}
+      }});
+  `;
+}
+
 async function waitForMarker(marker, child, output) {
   const deadline = Date.now() + 15000;
   while (
@@ -209,6 +284,7 @@ for (const mode of [
     import fs from 'node:fs';
     import {createDriverSession} from ${JSON.stringify(runtime)};
     export async function createProject({resources}) {
+      ${cleanupJournal(root)}
       let writes = 0, resumes = 0, release;
       const server = http.createServer((req,res) => {
         if(req.method === 'POST' && req.url === '/save') { writes++; res.writeHead(201); res.end('saved'); }
@@ -294,7 +370,9 @@ for (const mode of [
       );
     }
     if (mode !== "override-active") child.kill("SIGTERM");
-    const [exitCode] = await boundedExit(exited);
+    const [exitCode] = await boundedExit(exited, () =>
+      cleanupDiagnostics(root, child),
+    );
     assert.equal(exitCode, 0, output);
     const result = JSON.parse(fs.readFileSync(report));
     assert.equal(result.lastResult.effect.status, "saved");
@@ -469,14 +547,20 @@ for (const failure of ["missing", "non-executable"])
     );
   });
 
-async function boundedExit(promise) {
+async function boundedExit(promise, diagnostics) {
   let timer;
   try {
     return await Promise.race([
       promise,
       new Promise((_, reject) => {
         timer = setTimeout(
-          () => reject(Error("CLI shutdown timed out")),
+          () =>
+            reject(
+              Error(
+                "CLI shutdown timed out" +
+                  (diagnostics ? `: ${JSON.stringify(diagnostics())}` : ""),
+              ),
+            ),
           10000,
         );
       }),
