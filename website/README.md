@@ -126,11 +126,15 @@ public files, private-key inputs and missing exact asset allowlist rules fail
 before replacing the feed or page. The website manifest admits only
 `updates/preview.json` and `updates/keys/daedlo-release-2026-10.pem` under that tree.
 
-The feed has validity of at most seven days. Renewal is a manual publisher
-operation with a strictly increasing generation; no automation is installed.
-Before expiry, obtain a newly signed catalog, rerun staging and all website
-checks, freeze the manifest, then have the release owner deploy and read back the
-exact bytes. An expired feed blocks new checks/downloads; installed sessions and
+The feed has validity of at most seven days. The owner authorized a daily
+GitHub Actions renewal with a strictly increasing generation. The reviewed
+`.github/workflows/ninja-renew.yml` downloads and verifies immutable release
+files, signs fresh metadata, checks a complete isolated website, persists its
+signed checkpoint, and activates an exact version of the existing Worker. It
+then verifies the live bytes and deployment identity. See
+[the publisher runbook](../docs/ninja-publishing.md) for credentials, checkpoint
+recovery and manual dispatch, and [verification](../docs/verification.md) for
+actual activation status. An expired feed blocks new checks/downloads; installed sessions and
 local rollback remain available subject to their integrity and safe-boundary
 checks. Never bypass expiry or change the publisher pin to recover.
 

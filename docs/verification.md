@@ -1,5 +1,40 @@
 # Verification record
 
+## Automatic catalog renewal — implementation in progress, 2026-10-23
+
+The owner selected daily GitHub Actions renewal. The same production signing key
+has been stored in `DAEDLO_UPDATE_SIGNING_KEY`, with the Cloudflare account ID as a
+repository variable. The per-Worker deployment token is prepared but its creation
+is awaiting the requested action-time confirmation. **Automatic publication is
+NOT YET ENABLED OR VERIFIED.** The existing generation 1 feed remains live.
+
+The workflow, signer orchestration and signed-checkpoint restoration passed
+independent review. The exact pre-secret workflow command passed **113 tests**
+with no skips, including 19 renewal and 15 checkpoint cases. Genuine failing
+assertions preceded the initial implementation and review fixes for canonical
+HTML redirects, checkpoint receipt changes, missing newer artifacts, deleted run
+history and stale reruns.
+
+A local preflight used the real production feed and protected key to prepare an
+isolated generation 2 candidate without deploying it: **49 website tests**,
+seven-page/three-archive acceptance, exact 30-file manifest revalidation and
+Wrangler 4.147.0 deployment dry run passed. The rendered renewal copy and expiry
+were inspected. That unpublished candidate is not an issued production checkpoint.
+Evidence is retained in ignored `artifacts/ninja-renewal/`.
+
+Quality checks passed. The full 246-case release run passed 245 and exposed one
+packaged-guide reference failure introduced by the new maintainer documentation.
+Those references were corrected without changing assertions; all eight portable
+tools tests then passed, including exact offline consumer installation. The
+initial failed result is retained.
+
+These changes preserve immutable alpha.3 assets and its frozen source tag;
+the original published upgrade/rollback acceptance below remains valid for those
+exact bytes. The [publisher runbook](ninja-publishing.md) describes daily 04:23 UTC
+operation, secret custody, durable public checkpoints and recovery that refuses
+a lower generation. Actual test and live execution results will replace this
+in-progress status after verification.
+
 ## Published Ninja-Update alpha.3 — 2026-10-23
 
 **Published** at [Daedlo](https://daedlo.com/install), with the
@@ -51,15 +86,15 @@ Public-trust packaging tests first failed on missing files, then passed. Website
 regressions covered raw-file versus signed-payload digests and independent trust
 wording; published-mode configuration checks reject partial or altered trust.
 
-The feed is generation **1**, issued `2026-10-23T10:16:16.000Z`, expires
+At initial publication the feed was generation **1**, issued `2026-10-23T10:16:16.000Z`, expires
 **2026-10-30T10:16:16.000Z**, and authenticates alpha.2 and alpha.3. Raw envelope
 SHA-256: `09fcadcbbf1a7bcdb6300d8489faf4949477997550e0a4993ab553c40e22e80e`;
 signed-payload checkpoint: `bde773d01a3cb0bb33330b74b17dd7e5068e33fb650a55d558d446a10f5bbad0`.
 Ed25519 key `daedlo-release-2026-10` is independently pinned in
 `docs/update-trust/production.json`. The private key remains local, owner-only,
 outside Git/packages/site; an off-device backup is **NOT VERIFIED**.
-Renewal is manual and must advance the generation; no schedule or cloud signing
-secret was configured. Expiry blocks new update checks/downloads, not accepted
+At initial publication renewal was manual and no cloud signing secret was
+configured. The later automatic-renewal section above owns current setup status. Expiry blocks new update checks/downloads, not accepted
 local use or verified local rollback. See [publisher operations](ninja-publishing.md).
 
 Operational evidence retains the initial canonical-timestamp configuration refusal,

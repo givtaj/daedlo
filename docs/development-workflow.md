@@ -75,7 +75,10 @@ invent failure or require an indefinite feedback period.
 
 Reports distinguish expected and observed outcomes and record version identities,
 test level, safe reproduction and redacted evidence references. No automatic
-telemetry, monitoring or schedules. Roots retains its existing canonical
+customer telemetry, upstream synchronization or customer monitoring. The owner
+explicitly authorized the publisher-only daily signed-feed renewal described in
+the source repository's `docs/ninja-publishing.md`; its deployment status is recorded
+in that repository's `docs/verification.md`. Roots retains its existing canonical
 `docs/verification/auth-release-2026-09-26/REPORT.md` and `CHANGELOG.md`; do not create
 a competing Roots release-status record. This repository's verification record
 describes this product's candidate checks.

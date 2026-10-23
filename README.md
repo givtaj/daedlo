@@ -21,9 +21,11 @@ This release adds [Operation Ninja-Update](docs/ninja-update.md):
 prepare a separate installation, validate the existing project, restart at a safe
 boundary and revert the complete installation if needed. It requires one-time
 managed registration and a pinned publisher key. The [signed preview feed](https://daedlo.com/updates/preview.json)
-and [setup guide](https://daedlo.com/updates) are live. Catalog generation 1 expires
-on 30 October 2026 at 10:16:16 UTC and requires manual renewal; expiry blocks new
-update checks/downloads while accepted local use and rollback remain available.
+and [setup guide](https://daedlo.com/updates) are live. The owner has authorized
+daily GitHub Actions catalog renewal; [verification](docs/verification.md) records
+its activation status. The initial generation 1 expires on 30 October 2026 at
+10:16:16 UTC. Expiry blocks new update checks/downloads while accepted local use
+and rollback remain available.
 WBF still needs its own project registration and disposable acceptance.
 
 ## The first alpha journey

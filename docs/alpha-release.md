@@ -37,8 +37,8 @@ frameworks are not sealed. See [Operation Ninja-Update](operations/ninja-update.
 | Published customer update | Actual production HTTPS feed/assets and freshly downloaded tools; eight checkpoints: authenticated alpha.2 baseline, controlled rejection after real checks, normal alpha.3 discovery/upgrade, rollback, unchanged source/data/tools, four final reports, relaunch and cleanup | PASS; visible Updated/Reverted control and viewer inspection passed |
 | WBF and ordinary Roots adoption | No WBF fixture or everyday Roots promotion performed | NOT RUN / outside this release's acceptance claim |
 
-GitHub publication completed at `2026-10-23T10:20:58Z`. Cloudflare version
-`7a4d7da7-6f12-45c9-9f73-52ad898c3c52` serves 100% of the existing Daedlo Worker;
+GitHub publication completed at `2026-10-23T10:20:58Z`. The initial Cloudflare version
+`7a4d7da7-6f12-45c9-9f73-52ad898c3c52` served 100% of the existing Daedlo Worker;
 deployment `ad90348b-91d6-4711-b1d2-bb979cf15e4d` was created at
 `2026-10-23T10:20:50.900528Z`. Hosting recovery and live receipts belong in
 [website hosting](website-hosting.md). The static site does not host an application
@@ -52,19 +52,20 @@ The ZIP is `daedlo-0.1.4-alpha.3.zip` (**206,234 bytes**), SHA-256
 does not change this package identity. The frozen website manifest SHA-256 is
 `073ddd3adf5f98338a6eae3e6fe54b5c173eb5dc93b14f35933abe890802d99f`.
 
-The production [preview catalog](https://daedlo.com/updates/preview.json) has
+The initial production [preview catalog](https://daedlo.com/updates/preview.json) had
 generation **1**, publisher `daedlo`, and key `daedlo-release-2026-10`. Its raw-file
 SHA-256 is `09fcadcbbf1a7bcdb6300d8489faf4949477997550e0a4993ab553c40e22e80e`.
 The [reviewed public trust metadata](update-trust/production.json) and bundled PEM
 provide the pin; a key and checksum from the same unverified page are insufficient.
 Both immutable alpha.2 and alpha.3 releases remain in the signed catalog.
 
-The catalog expires at **2026-10-30T10:16:16Z**. Renewal is manual, with a strictly
-increasing generation and at most seven days' validity; no monitoring or renewal
-schedule has been installed. Expiry blocks new discovery/downloads while the
+The initial catalog expires at **2026-10-30T10:16:16Z**. The owner selected daily
+GitHub Actions renewal with a strictly increasing generation and at most seven
+days' validity. [Verification](verification.md) records implementation and actual
+activation status. Expiry blocks new discovery/downloads while the
 installed session and existing local rollback remain available, subject to their
-normal integrity and safe-boundary checks. The signing key is retained locally;
-an off-device backup has **not been verified**. Do not bypass expiry or silently
+normal integrity and safe-boundary checks. The signing key is retained locally and in a GitHub repository secret;
+an independently recoverable off-device backup has **not been verified**. Do not bypass expiry or silently
 replace the publisher pin to recover.
 
 The published customer run completed at `2026-10-23T10:26:35.780Z` with a pinned

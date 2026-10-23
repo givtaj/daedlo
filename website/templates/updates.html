@@ -173,8 +173,10 @@ printf '%s  %s\n' '{{KEY_SHA256}}' '{{KEY_ID}}.pem' | shasum -a 256 -c -</code><
         <h2 id="freshness-title">A short-lived signed feed</h2>
         <p>
           This catalog expires at <strong>{{EXPIRES_AT}}</strong>. Catalog
-          validity is at most seven days. The publisher renews it manually with
-          an increasing generation; no renewal schedule is configured.
+          validity is at most seven days. GitHub Actions renews this catalog daily
+          with an increasing generation and verifies the published result. Release
+          downloads stay unchanged. If renewal fails, the publisher must resolve
+          it before the displayed expiry; clients never bypass expiry checks.
         </p>
         <p>
           An expired catalog blocks new update checks and downloads. It leaves

@@ -14,8 +14,9 @@ data and tools, final reports, relaunch and owned cleanup. The scoped alpha.3
 delivery is complete. See the [managed update guide](ninja-update.md)
 and actual [verification record](verification.md) for acceptance scope.
 Alpha.2 cannot bootstrap the managed updater itself; one-time setup is assisted.
-WBF remains untouched and unaccepted. Catalog renewal is manual, before the
-current expiry of 30 October 2026 at 10:16:16 UTC; no monitoring is configured.
+WBF remains untouched and unaccepted. The owner selected daily GitHub Actions
+catalog renewal. Its implementation and activation are tracked in verification;
+the initial catalog expires on 30 October 2026 at 10:16:16 UTC.
 
 ## Goal and approved constraints
 

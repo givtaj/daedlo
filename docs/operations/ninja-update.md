@@ -36,15 +36,16 @@ and everyday Roots resources remain untouched.
 The frozen site passed 49 tests and seven-page/three-archive acceptance. Live
 readback matched 27 served assets on each of both origins; nine private paths
 returned 404 per origin. Cloudflare version `7a4d7da7-6f12-45c9-9f73-52ad898c3c52`
-is active at 100%. Publication does not turn the original design requirements
+was active at 100% for initial publication. Publication does not turn the original design requirements
 below into acceptance for an unregistered customer application.
 
 Production catalog generation 1 expires at **2026-10-30T10:16:16Z**. The public
 publisher key and pin ship in [trust metadata](../update-trust/production.json).
-Manual renewal must increase the generation; no scheduled renewal or monitoring
-is configured. Expiry blocks new checks/downloads, while the accepted installation
+The owner selected daily GitHub Actions renewal with increasing generations;
+[verification](../verification.md) records its implementation and activation. Expiry blocks new checks/downloads, while the accepted installation
 and local rollback remain available subject to integrity and safe-boundary checks.
-The private signing key is local; an off-device backup has not been verified.
+The private signing key is local and stored in a GitHub repository secret; an
+independently recoverable off-device backup has not been verified.
 See [alpha delivery](../alpha-release.md), [verification](../verification.md) and
 [the published bootstrap guide](https://daedlo.com/updates.html) for release evidence
 and explicit user setup.

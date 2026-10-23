@@ -22,7 +22,7 @@
     "demo": "node examples/roots/serve.mjs",
     "check": "node scripts/check.mjs && npm run types && npm run format:check",
     "types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target esnext --types node packages/runtime/src/index.d.ts",
-    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/ci.yml",
+    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml",
     "demo:notebook": "node packages/runtime/src/cli.mjs --project examples/notebook/project.mjs",
     "roots:prepare": "node examples/roots/prepare-live.mjs",
     "roots:live": "node examples/roots/launch-live.mjs",
