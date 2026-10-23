@@ -16,11 +16,38 @@ unchanged. No customer model, flow, adapter or data migration is involved.
 | Website | Genuine FAIL first: 0/3 new licence tests; then all 58 website tests PASS. Desktop 1280px and narrow 390px headless Chromium licence-section checks and visual review PASS. |
 | Historical preservation | PASS: nine immutable download files, exact Codex prompt and installer unchanged. Apache and legacy MIT text files retain their original bytes. |
 | Shared-worktree source check | Syntax and types PASS; full formatting check FAIL on the pre-existing, unrelated untracked `tests/release-ninja-acceptance-cleanup.test.mjs`. It remains untouched and excluded from this change. |
-| Clean package build / CI / site publication | NOT RUN at this checkpoint; recorded separately when verified. |
+| Clean source and release suite | PASS at `01641786fa756c85540d4e3b3fcf470f7a5a85b9`: source syntax, types and formatting; 321/321 release tests. A disposable clean clone excludes the unrelated untracked test. |
+| Clean package build and notices | PASS: alpha.4 runtime, crate, tools and combined ZIP build from clean source. Exact four-file notice comparisons pass at five boundaries, including the embedded skill. All package declarations are Apache-2.0. |
+| Installed package acceptance | PASS on macOS arm64 with Node 22.20.0 and Rust 1.96.0: eight real Chromium groups, 10 CLI cases, 25 finalization cases and nine control cases; owned cleanup PASS. This is independent-fixture acceptance, not WBF onboarding or published-release acceptance. |
+| CI | PASS, Node 22 and 24, [run 39999144306](https://github.com/givtaj/browser-driver/actions/runs/39999144306): source, browser and exact packaged-consumer gates. [PR #6](https://github.com/givtaj/browser-driver/pull/6) merged as `bf7d86acec0cca207f58d8d118af98ccf3d1599b`. |
+| Site publication | PASS, [run 40000221353](https://github.com/givtaj/browser-driver/actions/runs/40000221353) published the licence notice from the merged source through the existing renewal workflow; all workflow steps, active-deployment verification and temporary-key cleanup passed. |
 
 Evidence remains under ignored `artifacts/apache-license/`. The isolated website
 browser and preview server were closed. This is a licence/package migration;
-alpha.4 customer acceptance and release publication remain separate gates.
+alpha.4 representative-customer acceptance and release publication remain separate
+gates. Clean evidence is retained in `artifacts/apache-license/clean-validation/`.
+The local alpha.4 manifest SHA-256 is
+`462bf822bc9bb52b08e939ca1ba0ff0a1fc7c895d1ea3297922b93081b527e48`;
+portable tools SHA-256 is
+`8677bcd73263af905229b75f9dc5a24e685292ee92543d9b65138723021c1ccf`.
+
+Production restored the authenticated generation-4 checkpoint (`bootstrap:false`)
+and published **generation 5**, expiring `2026-10-30T18:04:25.230Z`. Raw catalog
+SHA-256: `c7ea7b0d2a1697a987dc947cdfc96c90c8dbbfb6b2542ca591d341c7b4494b2f`.
+Active Worker version `cc75fed4-c42a-4e2b-8cd3-941d5ce1ec11`, deployment
+`5a38b635-ef40-45f9-b68a-5c21e8b9821c`, was verified at 100% traffic at
+`2026-10-23T18:04:41.345Z`. The prior Worker version was
+`e633db1f-60e1-42b8-a8a2-93a08ace014d`; a recovery must preserve the highest signed
+catalog generation rather than replaying the older feed.
+
+Independent canonical-site readback passed for **28 exact public files**, four
+security headers, immutable/revalidation cache rules, all nine historical release
+files and **nine private-path 404 boundaries**. The generation-5 feed signature,
+expiry, unchanged release entries, pinned public key and stability through the
+check passed. Receipts and reconstructed expected bytes are retained in
+`artifacts/apache-license/live-zUuHXX/`. The site distinguishes the upcoming
+Apache-2.0 public core from the still-published alpha.3 mixed-licence kit. No alpha.4
+GitHub Release, registry publication, feed entry or customer installation occurred.
 
 ## Unified website onboarding — published and verified, 2026-10-23
 
