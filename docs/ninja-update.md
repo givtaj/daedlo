@@ -1,13 +1,13 @@
 # Operation Ninja-Update
 
-The unpublished next tools package adds [native setup](native-setup.md) commands
-around this same manager. It provides setup/reconnect/Codex viewer handoff and
+The alpha.4 tools add [native setup](native-setup.md) commands around this same
+manager. The native launcher provides setup/reconnect/Codex viewer handoff and
 `refresh` to revalidate source against the accepted retained bundle without
 discovering a newer release. Existing `ninja serve` and ordinary integrations
 retain their interfaces; do not run two launchers against one managed store.
 
 Ninja-Update prepares, validates, activates and reverts a complete managed Daedlo
-project installation. It is included in alpha.3. The older alpha.2 archive client
+project installation. It is included from alpha.3. The older alpha.2 archive client
 cannot bootstrap it by itself. A configured publisher catalog and one-time project
 registration are prerequisites; the manager never enables publisher trust silently.
 
@@ -21,7 +21,7 @@ or unknown browser drafts block replacement.
 
 ## Bootstrap once
 
-The verified alpha.3 tools include `docs/update-trust/production.json` and
+The verified alpha.3 and alpha.4 tools include `docs/update-trust/production.json` and
 `docs/update-trust/daedlo-release-2026-10.pem`. These pin publisher `daedlo`, key ID
 `daedlo-release-2026-10`, and the preview catalog at
 `https://daedlo.com/updates/preview.json`. Use that bundled PEM in the configuration
@@ -54,15 +54,17 @@ node node_modules/@daedlo/release-tools/lib/ninja.mjs serve --config /absolute/p
 For a published alpha.3 installation, the package directory remains
 `node_modules/@browser-driver/release-tools`; use that kit's original commands.
 Do not rename an installed package directory by hand. The immutable alpha.3
-manager cannot read a future renamed Daedlo kit. The first renamed update needs
+manager cannot read a renamed Daedlo kit. The first renamed update needs
 verified new tools installed separately, a safe stop of the old manager, and the
 same existing configuration, store and publisher pin. Verify that the new manager
 can launch the accepted legacy installation before attempting an update.
 
 The [naming migration guide](https://github.com/givtaj/daedlo/blob/main/docs/rename.md)
 defines this sequence and the required customer upgrade/legacy-rollback drill.
-That drill and compatible capability signalling/feed rollout are outstanding
-alpha.4 publication gates; the naming change alone does not establish them.
+The selected kit's `release.json` records exact artifact verification; the current
+[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
+records publication and feed rollout. Complete and record the customer drill
+separately; package compatibility does not establish application acceptance.
 
 The command prints a loopback update-screen URL containing a private local token.
 Keep that URL local. The manager stays outside the runtime it replaces. Its

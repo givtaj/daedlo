@@ -1,8 +1,10 @@
 # Native setup with Codex
 
-This is an additive, unpublished native launcher for the next tools package.
-Released alpha.3 has Ninja-Update; it does not have `daedlo-native`. Keep the
-installed tools version and runtime version in the project handoff. Existing
+The alpha.4 tools include this additive native launcher. Use the selected kit
+receipt for exact identity and verification, and the current
+[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
+for publication status. Alpha.3 has Ninja-Update; it does not have `daedlo-native`.
+Keep the installed tools version and runtime version in the project handoff. Existing
 `createProject`, the runtime CLI, archive update commands and `ninja serve` remain
 supported. Use one launcher to own a managed project at a time.
 

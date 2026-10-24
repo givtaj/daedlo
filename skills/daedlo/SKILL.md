@@ -9,7 +9,10 @@ license: Apache-2.0
 Daedlo is the product, package and skill name. Existing browser-driver commands
 remain compatibility aliases; preserved historical receipts keep their original names.
 
-This instruction copy accompanies the Daedlo 0.1.4-alpha.4 candidate.
+This instruction copy accompanies the Daedlo 0.1.4-alpha.4 tools. Use the selected
+kit's `release.json` for exact identity and verification and the current
+[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
+for publication status.
 Its public core uses Apache-2.0. Read LICENSE and THIRD_PARTY_NOTICES.md, including
 the retained legacy MIT and third-party notices. Customer projects remain separate.
 

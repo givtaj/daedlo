@@ -6,15 +6,17 @@ evidence. The agent reads the application and does the integration work; the tea
 defines the intended behavior and what counts as success. Authored flows can then
 run without an AI agent or model API key.
 
-Current source uses the Daedlo package names, commands and skill paths below.
+The alpha.4 kit uses the Daedlo package names, commands and skill paths below.
 Published alpha.3 and earlier kits retain their original `browser-driver` names;
 follow the instructions bundled with the selected version.
 
-The next-release source target is **0.1.4-alpha.4** (unpublished), an assisted alpha for **macOS arm64 with
+This guide covers **0.1.4-alpha.4**, an assisted alpha for **macOS arm64 with
 Codex**, covering one agreed existing application flow and a relevant negative
-case. Exact package and representative-flow results belong to the selected release
-receipt; this guide does not establish acceptance for a new customer. Earlier public-preview and Roots
-candidate results retain their own identities. Linux, Windows, Claude Code,
+case. Exact package and representative-flow results belong to the selected kit's
+`release.json`; current publication status belongs in the
+[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md).
+This guide does not establish acceptance for a new customer. Earlier public-preview
+and Roots candidate results retain their own identities. Linux, Windows, Claude Code,
 fresh OS/toolchain installation and independent self-service onboarding are not
 part of this alpha's acceptance claim.
 
@@ -111,8 +113,10 @@ MCP server or registry installer. It is not included in the current runtime tarb
 
 ## Dependency preflight
 
-Read the selected candidate's manifests before installing. The requirements below
-describe the `0.1.4-alpha.4` candidate; require its own exact-package verification receipt before promotion. Use the selected kit and independently supplied verification receipt.
+Read the selected kit's manifests before installing. The requirements below
+describe `0.1.4-alpha.4`; require its exact-package verification receipt before
+customer promotion. Use the selected kit and independently supplied verification
+values.
 The existing public `0.1.2-rc.1` download is a different package identity. Follow
 the selected manifests rather than silently upgrading a working consumer.
 
@@ -142,11 +146,12 @@ setup blocker, not permission to restart services used by other projects.
 ## Install the runtime and create the customer integration
 
 The agent follows the skill's [installation reference](../skills/daedlo/references/onboarding.md)
-and the selected tools package or checkout's [release guide](releases.md). The current supported
-distribution path is an explicit candidate bundle or reviewed source checkout.
+and the selected tools package or checkout's [release guide](releases.md). The
+distribution path is the selected verified kit and its exact bundle, or a reviewed
+source checkout.
 Registry publication is not established by these instructions: do not assume that
 `npm install @daedlo/runtime` or `cargo add daedlo-engine` selects
-our verified candidate.
+the verified package pair.
 
 Verify an acquired bundle against its independently supplied manifest digest,
 install its exact runtime tarball, and compile the customer's engine against the
@@ -203,7 +208,7 @@ For tools that include `daedlo-native`, use the [native setup guide](native-setu
 around the same Ninja registration. Doctor separates static setup blockers;
 setup validates the first complete installation; start/status return the exact
 Codex viewer handoff and reuse the owned runner. Native commands and immediate
-managed-run archiving are next-release additions, absent from published alpha.3.
+managed-run archiving are alpha.4 additions, absent from alpha.3.
 Keep using the existing CLI/report procedure below for ordinary integrations.
 For managed native use, inspect the immediate `supervisor/run-reports/` archive and
 Ninja's final shutdown report, then verify safe stop and relaunch. Preserve

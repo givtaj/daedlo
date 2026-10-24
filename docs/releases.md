@@ -1,24 +1,27 @@
 # Install Daedlo 0.1.4-alpha.4
 
-This guide describes the unpublished next-release candidate. The website still
-distributes alpha.3 under its original terms; use its own kit instructions.
+This guide covers the Daedlo 0.1.4-alpha.4 kit. Its `release.json` records exact
+artifact identities and scoped verification. Consult the current
+[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
+for publication status; a guide alone does not establish public availability or
+acceptance of a customer application.
 
-This alpha candidate pairs the Daedlo runtime, Rust engine source,
+This alpha pairs the Daedlo runtime, Rust engine source,
 portable release tools and complete agent skill under the Daedlo technical names.
 Published alpha.3 and earlier kits retain their original `browser-driver` package
 names and commands. Wire/report identifiers remain compatible; follow the selected
 kit's instructions when working with an older release. The
 [naming migration guide](https://github.com/givtaj/daedlo/blob/main/docs/rename.md)
-records compatibility limits and release gates: an immutable alpha.3 manager
-cannot install a renamed kit without a separately verified new-tools bootstrap.
-The bootstrap, renamed upgrade, legacy rollback and capability/feed rollout must
-pass before alpha.4 publication; they are not established by this source change.
+records compatibility limits and the migration sequence: an immutable alpha.3
+manager cannot install a renamed kit without a separately verified new-tools bootstrap.
+Verify the bootstrap, renamed upgrade and legacy rollback for the selected
+integration; package and feed checks do not establish customer acceptance.
 
 Use the selected release receipt to obtain the exact versioned kit and follow
 its `START_HERE.md` instructions at the
 [public installation page](https://daedlo.com/install). The release receipt records
-publication and verification separately from this guide. `START_HERE.md` supplies
-the exact archive names, verification values and installation commands for the
+artifact identity and verification separately from this guide. `START_HERE.md`
+supplies the exact archive names, verification values and installation commands for the
 selected release. Use `AGENT_START.md` in the same kit to give a coding agent the
 installation and first-flow job. These kit guides sit outside the installed tools
 package; use the public installation page if you have only the tools package.
