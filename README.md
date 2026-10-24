@@ -11,30 +11,30 @@ application outcome. Authored flows run without an AI agent or model API key.
 [Contribute](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Get help](SUPPORT.md) ·
 [Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
-**0.1.4-alpha.3 is released: assisted macOS arm64 onboarding with Codex.**
+**0.1.4-alpha.4 is released: assisted macOS arm64 onboarding with Codex.**
 [Start with one Codex prompt](https://daedlo.com/install) or read the
-[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.3).
+[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.4).
 The exact installed kit, isolated application, source CI and public delivery
-passed their scoped checks on 23 October 2026. The [verification record](docs/verification.md)
+passed their scoped checks on 24 October 2026. The [verification record](docs/verification.md)
 owns measured results and limits; [alpha delivery](docs/alpha-release.md) owns the
 product scope and next acceptance milestone. Everyday Roots dependencies remain
 unchanged.
 
-This release adds [Operation Ninja-Update](docs/ninja-update.md):
+Alpha.4 extends [Operation Ninja-Update](docs/ninja-update.md):
 prepare a separate installation, validate the existing project, restart at a safe
 boundary and revert the complete installation if needed. It requires one-time
 managed registration and a pinned publisher key. The [signed preview feed](https://daedlo.com/updates/preview.json)
 and [setup guide](https://daedlo.com/updates) are live. Daily GitHub Actions catalog
-renewal is active at 04:23 UTC; two successful manual workflow dispatches published
-generations 2 and 3 while preserving the release downloads and publisher key.
+renewal is active at 04:23 UTC. Alpha.4 promotion and a subsequent ordinary renewal
+both passed, preserving every immutable release entry and the publisher key.
 [Verification](docs/verification.md) records the current feed, regional checks
 and limits. Expiry blocks new update checks/downloads while accepted local use
 and rollback remain available.
 WBF still needs its own project registration and disposable acceptance.
 
-## Next release licensing
+## Licensing and package names
 
-The source prepares **0.1.4-alpha.4**, which is not published. Daedlo-owned code,
+From **0.1.4-alpha.4**, Daedlo-owned code,
 documentation, examples and website source use **Apache-2.0**, subject to the
 [licensing scope](docs/licensing.md) and preserved notices. The complete legacy
 MIT grant and third-party notices remain in
@@ -47,20 +47,22 @@ Current source uses `@daedlo/runtime`, the `daedlo` CLI, `daedlo-engine`
 published kits keep their original `browser-driver` names and instructions.
 Wire/report identifiers remain compatible. Read the [naming migration guide](docs/rename.md)
 for CLI aliases, package imports and the required new-tools bootstrap before an
-alpha.3 manager can install a renamed release. Source naming does not imply a new
+alpha.3 installation can use the renamed tools. Source naming does not imply a new
 registry publication or customer dependency promotion. The repository is being
 prepared for community contributions and stays private until the owner approves
 opening access.
 
-The candidate includes [safe validation diagnostics](docs/contracts.md), a
+Alpha.4 includes [safe validation diagnostics](docs/contracts.md), a
 [small tested starter](examples/starter/README.md), and named frontend startup
 with isolated lifecycle.
 
-This branch also adds the unpublished [native setup workflow](docs/native-setup.md):
+It also includes the [native setup workflow](docs/native-setup.md):
 one managed setup, read-only doctor, reusable foreground runner and exact Codex
 Browser viewer handoff. It extends Ninja-Update with source refresh at the accepted
 version and immediate durable run reports. The published alpha.3 instructions and
-existing integrations remain supported. Actual local checks belong in verification.
+existing integrations remain supported. Exact installed and production HTTPS
+checks belong in verification. Immutable alpha.3 tools report `migration_required`
+before downloading alpha.4; independently verified new tools support both families.
 
 ## The first alpha journey
 

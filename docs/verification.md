@@ -1,5 +1,50 @@
 # Verification record
 
+## Alpha.4 released and production-verified — 2026-10-24
+
+**PASS — released.** [PR #10](https://github.com/givtaj/daedlo/pull/10) merged as
+`d71646dda1b70d662b275aa1784a093395ea842f`; its tree exactly matches the tested
+publisher head `b939691e36a01bfbc2f7e169dea49fcda1712ab9`. Package source remains
+`7bb3491aa49a7e9c8321e20db8904a75e7e63e03`. The exact tag resolves to that commit;
+[the prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.4) has
+exactly three files matching the final immutable identities below. Repository
+visibility remains **PRIVATE**. Earlier candidate entries are historical.
+
+| Gate | Actual evidence |
+| --- | --- |
+| Package CI | PASS: [40073590521](https://github.com/givtaj/daedlo/actions/runs/40073590521), Node 22/24 and metadata/secrets |
+| Publisher CI | PASS: [40074238487](https://github.com/givtaj/daedlo/actions/runs/40074238487), all three jobs |
+| Signed promotion | PASS: [40074721690](https://github.com/givtaj/daedlo/actions/runs/40074721690), restored generation 6, signed/retained generation 7 before deployment; staging, active deployment, all served assets/security and key cleanup passed |
+| Production website/installer | PASS: 8 assertions using actual HTTPS key, feed and all three downloads; live desktop/narrow inspection; DOM-copied installer executed offline; nine unrelated npm-workspace entries preserved; browser/fixture cleanup passed |
+| Production managed upgrade | PASS: 7 checkpoints with native global fetch; old alpha.3 refusal before candidate download, new-tools recovery with the same configuration/trust/store/checkpoint, alpha.4 activation, fresh manager restart, rollback/relaunch and preservation |
+| Ordinary renewal | PASS: [40075013109](https://github.com/givtaj/daedlo/actions/runs/40075013109), restored retained generation 7 with bootstrap:false and published generation 8; every release entry remained identical |
+| Native-task isolation | PASS: original checkout remains clean at `42c4956a95f264282602db2e23ed3db8c88269a5`; original chat idle; no ordinary customer/Roots dependency changes |
+
+The production upgrade observed three catalog requests and each of the three
+real download URLs for both alpha.3 and alpha.4. All three manager instances,
+the acceptance viewer browser and owned notebook app closed. Exact restart UI
+and live website installer/bootstrap screenshots were inspected. The synthetic
+notebook is an independent conformance fixture; customer business-flow acceptance,
+database recovery and application-process restart durability remain **NOT RUN**.
+Missing terminal request evidence remains unresolved, not a fabricated success.
+
+Promotion activated Worker version `340bfc21-2a5e-4221-8428-eb3c7a8f48ca` at 100%.
+Ordinary renewal activated `b8416a29-257f-45a2-b8bf-2c179a9df9d7` at 100%, deployment
+`614bb5f1-5d4d-4bee-a709-77ea55cbe2f0`. The generation-8 catalog expires
+`2026-10-31T07:40:19.539Z`, raw SHA-256
+`4e95e20b45c216dc7227a6e69da39acef50510f97b5d9388e8c54a462e99bb8d`,
+payload SHA-256 `ce8cd2d26f15e78f54a3ee6da52627ada406f55f60086f24b4d5d9e340ce7f13`.
+The latest retained artifact is `12551874583`, archive SHA-256
+`51182d75b8c366e18b37f3ac1c2cdc6527c9d89005cce7c6f94423f0009b702b`.
+Independent verification covered all eight workflow runs, the pinned signature,
+archive digest, unchanged generation-7 release entries and exact live/checkpoint
+bytes. Daily renewal remains 04:23 UTC; signing identity and expiry rules did not change.
+
+Private ignored receipts: `artifacts/alpha4-publish/production-upgrade/run-X8OFc4`,
+`artifacts/alpha4-website/live-JZwZIm/receipt.json`, the promotion/ordinary-renewal
+workflow receipts and `artifacts/alpha4-release-audit/production-generation-8`.
+No private traces or customer payloads were added to public artifacts.
+
 ## Alpha.4 publication artifact — 2026-10-24
 
 The final installation-guide audit replaced stale publication-status wording in

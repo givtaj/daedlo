@@ -1,40 +1,37 @@
 # Implementation plan
 
-Alpha.4 continuation after the rename integrates the preserved native setup
-implementation and adds four scoped improvements: field-level safe model
-validation diagnostics; visible startup before session readiness; named frontend
-identity and isolated lifecycle; and a small packaged Rust/adapter starter with
-real-browser acceptance. Exact installed package, startup cancellation and the
-alpha.3 tools bootstrap/upgrade/rollback are release gates. Production feed
-capability rollout and website command rendering remain separate publication work.
-The verification record records passes and unfinished gates from actual runs.
+Current release: [Daedlo alpha delivery — 24 October 2026](alpha-release.md),
+published assisted **0.1.4-alpha.4**. The rename and preserved native setup are
+integrated with four scoped improvements: safe field-level model validation
+errors, visible startup before readiness, named frontend identity and isolated
+lifecycle, and a packaged Rust/adapter starter with real-browser acceptance.
 
-Native continuation (unpublished): [native setup](native-setup.md) builds on the
-existing Ninja installation/rollback contracts. Scope: staged read-only preflight,
-resumable initial preparation, authenticated single-runner reconnect, exact Codex
-viewer handoff, immediate private run reports and explicit same-version source
-refresh. No competing updater or Docker requirement. Keep native tools versioned
-outside runtime slots and preserve customized project source. The verification
-record owns actual test/acceptance results and remaining limits.
+Exact installed package, native cancellation/cleanup, legacy-tools bootstrap,
+upgrade, restart and rollback passed. The website's package-family installation
+commands and copied installer passed before and after publication. Source and
+publisher CI passed on Node 22/24. The production feed uses manager contract 2
+for alpha.4 while retaining immutable manager-1 alpha.2/alpha.3 entries; old tools
+refuse alpha.4 before download. Promotion and ordinary renewal both passed with
+retained signed checkpoints. [Verification](verification.md) owns exact current
+identities, receipts and limits.
 
-Current release: [Daedlo alpha delivery — 23 October 2026](alpha-release.md),
-published assisted `0.1.4-alpha.3`.
-That record owns the bounded alpha scope and gates. The milestones below retain
-their historical scope and do not by themselves establish a current release.
+[Native setup](native-setup.md) builds on the existing Ninja installation and
+rollback contracts: read-only preflight, resumable preparation, single-runner
+reconnect, exact Codex viewer handoff, immediate private reports and explicit
+same-version source refresh. Keep native tools outside runtime slots and preserve
+customized project source. The original native task checkout is unchanged.
 
-Current delivery: [Operation Ninja-Update](operations/ninja-update.md)
-(23 October 2026). Published alpha.3 adds project-preserving installation,
-compatibility validation, activation and rollback with an authenticated preview
-feed. Exact installed prepublication and separate production HTTPS customer
-upgrade/rollback acceptance both passed eight checkpoints, with unchanged source,
-data and tools, final reports, relaunch and owned cleanup. The scoped alpha.3
-delivery is complete. See the [managed update guide](ninja-update.md)
-and actual [verification record](verification.md) for acceptance scope.
-Alpha.2 cannot bootstrap the managed updater itself; one-time setup is assisted.
-WBF remains untouched and unaccepted. Daily GitHub Actions catalog renewal is
-active at 04:23 UTC. Two successful manual dispatches verified generation 2 followed
-by authenticated checkpoint restoration and generation 3. Verification owns the
-current feed identity, Spain/US delivery evidence and remaining access limits.
+[Operation Ninja-Update](operations/ninja-update.md) delivered the preceding
+alpha.3 managed updater. Its dated eight-checkpoint synthetic Architecture Studio
+acceptance remains historical. Alpha.4's separate seven-checkpoint production
+HTTPS upgrade drill uses an independent notebook conformance fixture. These tests
+do not establish external customer business-flow acceptance or database recovery.
+Alpha.2 still requires an assisted managed-tools bootstrap; alpha.3 needs verified
+new tools for renamed kits. WBF and everyday Roots dependency promotion remain
+separate and unaccepted. Daily catalog renewal remains active at 04:23 UTC.
+
+The milestones below retain their historical scope and do not by themselves
+establish a current release.
 
 ## Goal and approved constraints
 

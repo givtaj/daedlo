@@ -1,12 +1,56 @@
-# Daedlo alpha delivery — 23 October 2026
+# Daedlo alpha delivery — 24 October 2026
+
+Release: **0.1.4-alpha.4**. Status: **published assisted alpha; production acceptance passed**.
+[Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·
+[Versioned release](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.4) ·
+[Exact public verification metadata](https://daedlo.com/downloads/0.1.4-alpha.4/release.json).
+[Verification](verification.md) owns measured results and deployment identities.
+
+The scope remains assisted **macOS arm64 + Codex** onboarding. Alpha.4 adds safe
+field-level validation diagnostics, visible native startup, named frontend
+isolation and a portable Rust/adapter starter with honest request/effect evidence.
+The renamed tools use manager contract 2 and recover retained manager-1 slots.
+Old alpha.3 tools refuse before download; use independently verified new tools
+with the same configuration, registration, store, trust pin and checkpoint.
+
+| Gate | Observed result |
+| --- | --- |
+| Exact-source and publisher CI | PASS on Node 22/24, including installed native/starter acceptance and metadata/secrets checks |
+| Exact installed kit | PASS: 8 browser groups, 10 CLI, 25 finalization, 9 control and 13 native checks; 59 tools/22 runtime files verified |
+| Shipped starter | PASS: 16 real-browser checks, exact Rust crate, independent readback and unresolved request evidence |
+| Production upgrade | PASS: 7 checkpoints over actual HTTPS, old-client refusal, new-tools recovery, candidate restart, rollback, preservation and cleanup |
+| Website and installer | PASS: 66 staged tests and 14 browser checks; 8 production assertions, live desktop/narrow inspection and exact copied installer with workspace preservation |
+| Publication and renewal | PASS: retained generation 7 promotion followed by ordinary generation 8 renewal; all immutable entries preserved |
+| Customer business-flow acceptance / normal Roots promotion | NOT RUN; outside this release's acceptance claim |
+
+The immutable package source is `7bb3491aa49a7e9c8321e20db8904a75e7e63e03`.
+ZIP `daedlo-0.1.4-alpha.4.zip` is **280,815 bytes**, SHA-256
+`3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75`.
+Later publisher/status commits do not change these package bytes. GitHub holds
+exactly the ZIP, `release.json` and `SHA256SUMS`. The repository remains private.
+
+The core uses Apache-2.0 with preserved legacy MIT/third-party notices. Older
+release terms and downloads remain unchanged. Production generation 8 expires
+`2026-10-31T07:40:19.539Z`; daily renewal stays at 04:23 UTC with the same pinned
+publisher identity and retained high-water checkpoint. Expiry blocks discovery
+and download, while accepted local use/rollback retain their normal safeguards.
+
+The independent notebook is a conformance fixture, not customer acceptance.
+Its separate in-memory app process preserved data across driver/manager changes;
+this does not prove database recovery or application-process restart durability.
+The next acceptance milestone remains one external builder's agreed useful flow
+and negative case. No customer invitation, dependency switch or repository
+visibility change is implied by this release.
+
+## Historical alpha.3 delivery — 23 October 2026
 
 Release: **0.1.4-alpha.3**. Status: **published assisted alpha with signed managed updates**.
 [Install](https://daedlo.com/install.html) · [Managed updates](https://daedlo.com/updates.html) ·
 [Versioned release](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.3).
-This is the current product/release decision record. Actual outcomes belong in
+This is the retained alpha.3 decision record. Actual outcomes belong in
 [verification](verification.md); the alpha.2 record below remains historical.
 
-## Current product decision
+### Alpha.3 product decision
 
 Keep the assisted **macOS arm64 + Codex** onboarding scope. Ninja-Update adds a
 one-time managed registration, then **Check for updates → Install update → Ready →
@@ -23,7 +67,7 @@ it does not overwrite current authoring files or undo business writes. Keep the
 accepted browser cache: the executable identity is checked, while linked browser
 frameworks are not sealed. See [Operation Ninja-Update](operations/ninja-update.md).
 
-## Alpha.3 release gates
+### Alpha.3 release gates
 
 | Gate | Actual evidence | Decision |
 | --- | --- | --- |
@@ -44,7 +88,7 @@ deployment `ad90348b-91d6-4711-b1d2-bb979cf15e4d` was created at
 [website hosting](website-hosting.md). The static site does not host an application
 database. The rc.1 demo and alpha.2 downloads retain their original bytes.
 
-## Exact package and update-feed identity
+### Alpha.3 package and feed identity
 
 The ZIP is `daedlo-0.1.4-alpha.3.zip` (**206,234 bytes**), SHA-256
 `f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190`, built once from
@@ -77,7 +121,7 @@ cleanup then completed. The baseline was explicitly selected from the authentica
 alpha.2 entry for the test; subsequent discovery used the normal production
 provider. No injected fetch transport or production application data was used.
 
-## Next product milestone
+### Alpha.3 follow-up milestone
 
 The scoped alpha.3 delivery is complete. Next, onboard one external builder's
 agreed useful flow and negative case. Measure setup time,
