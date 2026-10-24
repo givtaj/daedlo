@@ -1073,3 +1073,28 @@ main {
     transition: none !important;
   }
 }
+
+.frontend-identity {
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.frontend-identity h2 {
+  margin: 4px 0 12px;
+}
+.frontend-identity .facts {
+  grid-template-columns: minmax(110px, 0.2fr) minmax(0, 1fr);
+}
+.frontend-identity dd {
+  overflow-wrap: anywhere;
+}
+
+.frontend-identity dt {
+  color: #526469;
+}
+.frontend-identity dd {
+  color: var(--ink);
+  text-align: left;
+}

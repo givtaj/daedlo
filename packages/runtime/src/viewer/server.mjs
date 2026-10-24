@@ -11,8 +11,76 @@ const isObject = (value) =>
 const validId = (value) =>
   typeof value === "string" && value.length > 0 && value.length <= 256;
 
+function frontendIdentity(value) {
+  if (value === undefined) return null;
+  const safeText = (text, limit) =>
+    typeof text === "string" &&
+    text.trim().length > 0 &&
+    text.length <= limit &&
+    !/[\u0000-\u001f\u007f-\u009f]/.test(text);
+  const invalid = () => {
+    throw new TypeError("Invalid frontend identity metadata");
+  };
+  if (
+    !isObject(value) ||
+    Object.keys(value).some(
+      (key) =>
+        ![
+          "name",
+          "targetOrigin",
+          "model",
+          "evidenceLocation",
+          "ownership",
+        ].includes(key),
+    ) ||
+    !safeText(value.name, 120)
+  )
+    invalid();
+  if (value.targetOrigin !== null) {
+    let target;
+    try {
+      target = new URL(value.targetOrigin);
+    } catch {
+      invalid();
+    }
+    if (
+      !["http:", "https:"].includes(target.protocol) ||
+      target.origin !== value.targetOrigin ||
+      target.username ||
+      target.password
+    )
+      invalid();
+  }
+  if (
+    !isObject(value.model) ||
+    Object.keys(value.model).some((key) => !["id", "version"].includes(key)) ||
+    !safeText(value.model.id, 256) ||
+    !safeText(value.model.version, 256)
+  )
+    invalid();
+  if (!safeText(value.evidenceLocation, 1024)) invalid();
+  if (
+    !isObject(value.ownership) ||
+    Object.keys(value.ownership).some(
+      (key) => !["browser", "context", "application"].includes(key),
+    ) ||
+    !["owned", "attached", "unknown"].includes(value.ownership.browser) ||
+    !["owned", "attached", "unknown"].includes(value.ownership.context) ||
+    !["owned", "attached", "unknown"].includes(value.ownership.application)
+  )
+    invalid();
+  return structuredClone(value);
+}
+
 /** Mirror one existing controlled page. Closing the viewer never closes its session or browser. */
-export async function createViewer({ page, context, session, port = 0 }) {
+export async function createViewer({
+  page,
+  context,
+  session,
+  port = 0,
+  frontend,
+}) {
+  const identity = frontendIdentity(frontend);
   if (!page || !context || !session)
     throw new TypeError("A page, context and driver session are required");
   if (!Number.isInteger(port) || port < 0 || port > 65535)
@@ -109,6 +177,29 @@ export async function createViewer({ page, context, session, port = 0 }) {
     })();
     return closing;
   }
+  function frontendStatus(driver) {
+    if (!identity) return null;
+    let currentOrigin = null;
+    try {
+      const actual = new URL(page.url());
+      if (["http:", "https:"].includes(actual.protocol))
+        currentOrigin = actual.origin;
+    } catch {
+      /* An unavailable target remains unknown. */
+    }
+    const model = driver.descriptor;
+    return {
+      ...structuredClone(identity),
+      currentOrigin,
+      matchesTarget:
+        identity.targetOrigin === null
+          ? null
+          : currentOrigin === identity.targetOrigin,
+      matchesModel:
+        model?.id === identity.model.id &&
+        model?.version === identity.model.version,
+    };
+  }
   async function status() {
     let driver;
     try {
@@ -121,8 +212,12 @@ export async function createViewer({ page, context, session, port = 0 }) {
         error: "Driver observation unavailable",
       };
     }
+    const frontend = frontendStatus(driver);
     return {
+      frontend,
       connected:
+        frontend?.matchesTarget !== false &&
+        frontend?.matchesModel !== false &&
         !closed &&
         !disconnected &&
         !page.isClosed() &&
@@ -237,6 +332,22 @@ export async function createViewer({ page, context, session, port = 0 }) {
           if (!body) return;
           if (disconnected || closed || page.isClosed())
             return json(res, 409, { ok: false, error: "Browser disconnected" });
+          if (
+            path !== "/control" ||
+            ["resume", "advance"].includes(body.action)
+          ) {
+            const current = frontendStatus(await session.snapshot());
+            if (
+              current?.matchesTarget === false ||
+              current?.matchesModel === false
+            )
+              return json(res, 409, {
+                ok: false,
+                error_code: "frontend_mismatch",
+                error:
+                  "The observed target or model differs from this named frontend. Check its identity before running a command.",
+              });
+          }
           if (path === "/command") {
             if (
               !validId(body.id) ||

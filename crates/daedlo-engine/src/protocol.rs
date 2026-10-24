@@ -445,85 +445,190 @@ fn parameter_matches(parameter: &Parameter, value: &Value) -> bool {
     }
 }
 
-fn validate_descriptor(descriptor: &ModelDescriptor) -> Result<()> {
-    let invalid = || {
-        err(
-            "invalid_model",
-            "Model descriptor has invalid or inconsistent declarations",
-        )
+// Paths use declaration indexes instead of caller-authored names. Parameters
+// are BTreeMap entries, indexed in Rust's lexicographic key order. Every rule is
+// static text; malformed descriptors must never leak labels, keys or values.
+fn invalid_model(path: &str, rule: &str) -> DriverError {
+    let parameter_order = if path.contains(".params[") {
+        " Parameter indexes are zero-based in sorted name order."
+    } else {
+        ""
     };
-    if descriptor.id.is_empty()
-        || descriptor.version.is_empty()
-        || descriptor.label.is_empty()
-        || descriptor.states.is_empty()
-    {
-        return Err(invalid());
-    }
-    let mut states = BTreeMap::new();
-    for state in &descriptor.states {
-        if state.id.is_empty()
-            || state.label.is_empty()
-            || states.insert(&state.id, state).is_some()
-        {
-            return Err(invalid());
+    err(
+        "invalid_model",
+        &format!("Invalid model at {path}: {rule}.{parameter_order}"),
+    )
+}
+
+fn validate_descriptor(descriptor: &ModelDescriptor) -> Result<()> {
+    for (field, value) in [
+        ("id", &descriptor.id),
+        ("version", &descriptor.version),
+        ("label", &descriptor.label),
+    ] {
+        if value.is_empty() {
+            return Err(invalid_model(
+                &format!("descriptor.{field}"),
+                "must not be empty",
+            ));
         }
     }
-    for state in &descriptor.states {
+    if descriptor.states.is_empty() {
+        return Err(invalid_model(
+            "descriptor.states",
+            "must contain at least one state",
+        ));
+    }
+    let mut states = BTreeMap::new();
+    for (index, state) in descriptor.states.iter().enumerate() {
+        let path = format!("descriptor.states[{index}]");
+        if state.id.is_empty() {
+            return Err(invalid_model(&format!("{path}.id"), "must not be empty"));
+        }
+        if state.label.is_empty() {
+            return Err(invalid_model(&format!("{path}.label"), "must not be empty"));
+        }
+        if states.insert(&state.id, (index, state)).is_some() {
+            return Err(invalid_model(
+                &format!("{path}.id"),
+                "must be unique among states",
+            ));
+        }
+    }
+    for (index, state) in descriptor.states.iter().enumerate() {
         let mut seen = BTreeSet::new();
-        let mut cursor = state;
-        while let Some(parent) = &cursor.parent {
-            if !seen.insert(&cursor.id) {
-                return Err(invalid());
+        let mut cursor = (index, state);
+        while let Some(parent) = &cursor.1.parent {
+            let path = format!("descriptor.states[{}].parent", cursor.0);
+            if !seen.insert(&cursor.1.id) {
+                return Err(invalid_model(&path, "state parents must not form a cycle"));
             }
-            cursor = states.get(parent).ok_or_else(invalid)?;
+            cursor = *states
+                .get(parent)
+                .ok_or_else(|| invalid_model(&path, "must reference a declared state"))?;
         }
     }
     let mut commands = BTreeMap::new();
-    for command in &descriptor.commands {
-        if command.id.is_empty()
-            || command.label.is_empty()
-            || commands.insert(&command.id, command).is_some()
-        {
-            return Err(invalid());
+    for (index, command) in descriptor.commands.iter().enumerate() {
+        let path = format!("descriptor.commands[{index}]");
+        if command.id.is_empty() {
+            return Err(invalid_model(&format!("{path}.id"), "must not be empty"));
         }
-        for (name, parameter) in &command.params {
-            if name.is_empty()
-                || parameter.label.is_empty()
-                || parameter.minimum.is_some_and(|v| !v.is_finite())
-                || parameter.maximum.is_some_and(|v| !v.is_finite())
-                || matches!((parameter.minimum,parameter.maximum), (Some(a),Some(b)) if a>b)
-                || (parameter.kind == ParameterType::Select && parameter.options.is_empty())
-                || (parameter.kind != ParameterType::Select && !parameter.options.is_empty())
-                || (parameter.kind != ParameterType::Text && parameter.max_length.is_some())
-                || (parameter.kind != ParameterType::Number
-                    && (parameter.minimum.is_some() || parameter.maximum.is_some()))
-                || parameter
-                    .default
-                    .as_ref()
-                    .is_some_and(|value| !parameter_matches(parameter, value))
+        if command.label.is_empty() {
+            return Err(invalid_model(&format!("{path}.label"), "must not be empty"));
+        }
+        if commands.insert(&command.id, command).is_some() {
+            return Err(invalid_model(
+                &format!("{path}.id"),
+                "must be unique among commands",
+            ));
+        }
+        for (parameter_index, (name, parameter)) in command.params.iter().enumerate() {
+            let path = format!("{path}.params[{parameter_index}]");
+            if name.is_empty() {
+                return Err(invalid_model(&format!("{path}.name"), "must not be empty"));
+            }
+            if parameter.label.is_empty() {
+                return Err(invalid_model(&format!("{path}.label"), "must not be empty"));
+            }
+            for (field, value) in [
+                ("minimum", parameter.minimum),
+                ("maximum", parameter.maximum),
+            ] {
+                if let Some(value) = value {
+                    if !value.is_finite() {
+                        return Err(invalid_model(&format!("{path}.{field}"), "must be finite"));
+                    }
+                    if parameter.kind != ParameterType::Number {
+                        return Err(invalid_model(
+                            &format!("{path}.{field}"),
+                            "only permitted for number parameters",
+                        ));
+                    }
+                }
+            }
+            if matches!((parameter.minimum,parameter.maximum), (Some(a),Some(b)) if a>b) {
+                return Err(invalid_model(
+                    &format!("{path}.minimum"),
+                    "must not exceed maximum",
+                ));
+            }
+            if parameter.kind == ParameterType::Select && parameter.options.is_empty() {
+                return Err(invalid_model(
+                    &format!("{path}.options"),
+                    "select parameters must contain at least one option",
+                ));
+            }
+            if parameter.kind != ParameterType::Select && !parameter.options.is_empty() {
+                return Err(invalid_model(
+                    &format!("{path}.options"),
+                    "only permitted for select parameters",
+                ));
+            }
+            if parameter.kind != ParameterType::Text && parameter.max_length.is_some() {
+                return Err(invalid_model(
+                    &format!("{path}.maxLength"),
+                    "maxLength (Rust max_length) is only permitted for text parameters",
+                ));
+            }
+            if parameter
+                .default
+                .as_ref()
+                .is_some_and(|value| !parameter_matches(parameter, value))
             {
-                return Err(invalid());
+                return Err(invalid_model(
+                    &format!("{path}.default"),
+                    "must match the parameter type and constraints",
+                ));
             }
             let mut options = BTreeSet::new();
-            for option in &parameter.options {
-                if option.label.is_empty() || !options.insert(&option.value) {
-                    return Err(invalid());
+            for (option_index, option) in parameter.options.iter().enumerate() {
+                let path = format!("{path}.options[{option_index}]");
+                if option.label.is_empty() {
+                    return Err(invalid_model(&format!("{path}.label"), "must not be empty"));
+                }
+                if !options.insert(&option.value) {
+                    return Err(invalid_model(
+                        &format!("{path}.value"),
+                        "must be unique among options",
+                    ));
                 }
             }
         }
     }
     let mut recipes = BTreeSet::new();
-    for recipe in &descriptor.recipes {
-        if recipe.id.is_empty()
-            || recipe.label.is_empty()
-            || recipe.steps.is_empty()
-            || !recipes.insert(&recipe.id)
-        {
-            return Err(invalid());
+    for (index, recipe) in descriptor.recipes.iter().enumerate() {
+        let path = format!("descriptor.recipes[{index}]");
+        if recipe.id.is_empty() {
+            return Err(invalid_model(&format!("{path}.id"), "must not be empty"));
         }
-        for step in &recipe.steps {
-            let command = commands.get(&step.command).ok_or_else(invalid)?;
-            parameters(command, &step.params).map_err(|_| invalid())?;
+        if recipe.label.is_empty() {
+            return Err(invalid_model(&format!("{path}.label"), "must not be empty"));
+        }
+        if recipe.steps.is_empty() {
+            return Err(invalid_model(
+                &format!("{path}.steps"),
+                "must contain at least one step",
+            ));
+        }
+        if !recipes.insert(&recipe.id) {
+            return Err(invalid_model(
+                &format!("{path}.id"),
+                "must be unique among recipes",
+            ));
+        }
+        for (step_index, step) in recipe.steps.iter().enumerate() {
+            let path = format!("{path}.steps[{step_index}]");
+            let command = commands.get(&step.command).ok_or_else(|| {
+                invalid_model(
+                    &format!("{path}.command"),
+                    "must reference a declared command",
+                )
+            })?;
+            // `parameters` is the same strict normalizer used by execution. Its
+            // messages are fixed rules and never contain supplied keys/values.
+            parameters(command, &step.params)
+                .map_err(|error| invalid_model(&format!("{path}.params"), &error.message))?;
         }
     }
     Ok(())

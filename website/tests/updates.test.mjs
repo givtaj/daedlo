@@ -380,3 +380,22 @@ test("update instructions explain pinned trust, one-time registration, expiry an
     assert.match(template.replace(/\s+/g, " "), pattern);
   assert.doesNotMatch(template, /curl[^<]*\|\s*(sh|bash)\b/);
 });
+
+test("website acceptance requires explicit test trust and retains the production default", async (t) => {
+  const f = await fixture(t);
+  const { checkWebsite } = await import("./acceptance.mjs");
+  await writeFile(
+    join(f.site, "public/index.html"),
+    "<h1>Make “it works” something you can show</h1><p>Illustration, not a live browser; application-specific integration.</p>",
+  );
+  await writeFile(
+    join(f.site, "public/privacy.html"),
+    '<a href="mailto:info@daedlo.com">Info</a><a href="mailto:support@daedlo.com">Support</a>',
+  );
+  await assert.rejects(checkWebsite({ websiteRoot: f.site }), /pinned trust/);
+  const result = await checkWebsite({
+    websiteRoot: f.site,
+    updateTrust: f.options,
+  });
+  assert.equal(result.archives, 2);
+});

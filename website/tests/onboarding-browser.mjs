@@ -11,7 +11,10 @@ import {
   parseOptions,
   renderInstallTemplate,
   verifyReleaseDirectory,
+  websiteReleaseNames,
 } from "../scripts/stage-release.mjs";
+
+import { UPDATE_TRUST } from "../scripts/stage-updates.mjs";
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const success =
@@ -21,6 +24,7 @@ const unavailable =
 
 export async function checkOnboardingBrowser({
   websiteRoot,
+  updateTrust = UPDATE_TRUST,
   evidenceRoot = join(repository, "artifacts/unified-onboarding"),
 } = {}) {
   assert.ok(
@@ -35,11 +39,22 @@ export async function checkOnboardingBrowser({
     status: "RUNNING",
     mode: "headless Chromium inspecting a local staged website",
     evidence,
+    trust: {
+      publicKeySha256: updateTrust.expectedPublicKeySha256,
+      mode:
+        updateTrust.expectedPublicKeySha256 ===
+        UPDATE_TRUST.expectedPublicKeySha256
+          ? "production pin"
+          : "explicit isolated test pin",
+    },
     checks: [],
     screenshots: [],
     cleanup: {},
   };
-  const server = createPreviewServer({ publicRoot: join(site, "public") });
+  const server = createPreviewServer({
+    publicRoot: join(site, "public"),
+    updateTrust,
+  });
   let browser;
   const errors = [];
   let failure;
@@ -177,6 +192,8 @@ export async function checkOnboardingBrowser({
       html.equals(renderInstallTemplate(template, release.metadata)),
       "The browser must inspect the current rendered source template.",
     );
+    const names = websiteReleaseNames(release.metadata);
+    assert.ok(payload.includes(`skills/${names.skill}/SKILL.md`));
     receipt.release = {
       version,
       archiveSha256: release.metadata.archive.sha256,
@@ -338,6 +355,39 @@ export async function checkOnboardingBrowser({
     await screenshot(manual.page, "javascript-disabled-manual.png");
 
     await open(desktop.page, "/updates.html");
+    for (const [label, current] of [
+      ["desktop", desktop],
+      ["narrow", narrow],
+    ]) {
+      if (current !== desktop) await open(current.page, "/updates.html");
+      const text = (await current.page.locator("main").innerText()).replace(
+        /\s+/g,
+        " ",
+      );
+      assert.ok(text.includes(`node_modules/${names.tools}/lib/ninja.mjs`));
+      assert.match(
+        text,
+        /Alpha\.3 cannot install the renamed alpha\.4 package family/,
+      );
+      assert.match(text, /same existing configuration and managed store/);
+      assert.match(
+        text,
+        /Preserve the publisher trust pin and signed catalog checkpoint/,
+      );
+      await noOverflow(current.page, `${label} updates`);
+      await screenshot(current.page, `${label}-updates.png`);
+      await current.page
+        .locator('[aria-labelledby="bootstrap-title"]')
+        .scrollIntoViewIfNeeded();
+      await current.page.screenshot({
+        path: join(evidence, `${label}-bootstrap.png`),
+      });
+      receipt.screenshots.push(`${label}-bootstrap.png`);
+      receipt.checks.push({
+        name: `${label} update bootstrap and exact tools family`,
+        status: "PASS",
+      });
+    }
     const entry = desktop.page.locator('a[href="/install.html#agent"]');
     assert.ok(
       (await entry.count()) >= 1,
@@ -361,6 +411,33 @@ export async function checkOnboardingBrowser({
     );
     receipt.checks.push({
       name: "updates links to the same complete install prompt",
+      status: "PASS",
+    });
+    await desktop.page.locator("#manual > summary").click();
+    await desktop.page.locator("#tools details > summary").click();
+    assert.equal(
+      await desktop.page.locator("#tools-install-code").isVisible(),
+      true,
+    );
+    const installer = await desktop.page
+      .locator("#tools-install-code")
+      .textContent();
+    assert.ok(installer.includes(release.metadata.tools.file));
+    assert.ok(
+      installer.includes(`node_modules/${names.tools}/lib/consumer-cli.mjs`),
+    );
+    await writeFile(
+      join(evidence, "browser-installer.sh"),
+      installer.trim() + "\n",
+      { flag: "wx" },
+    );
+    await desktop.page.locator("#tools").scrollIntoViewIfNeeded();
+    await desktop.page.screenshot({
+      path: join(evidence, "desktop-installer.png"),
+    });
+    receipt.screenshots.push("desktop-installer.png");
+    receipt.checks.push({
+      name: "installer copied from rendered browser DOM uses verified package family",
       status: "PASS",
     });
     assert.deepEqual(errors, []);

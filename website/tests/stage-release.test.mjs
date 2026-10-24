@@ -46,8 +46,17 @@ async function fixture(t) {
     schemaVersion: 1,
     version,
     archive: { file: zipName, bytes: bytes.length, sha256: sha256(bytes) },
-    tools: { sha256: "b".repeat(64) },
-    bundle: { manifestSha256: "c".repeat(64) },
+    tools: {
+      file: `tools/browser-driver-tools-${version}.tgz`,
+      sha256: "b".repeat(64),
+    },
+    bundle: {
+      manifestSha256: "c".repeat(64),
+      artifacts: {
+        runtime: { name: "@browser-driver/runtime" },
+        engine: { name: "browser-driver-engine" },
+      },
+    },
   };
   await writeFile(join(kit, zipName), bytes);
   await writeFile(

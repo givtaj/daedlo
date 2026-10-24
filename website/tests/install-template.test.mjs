@@ -33,6 +33,9 @@ test("install template binds downloads to one version and visible integrity evid
       "{{ZIP_SHA256}}",
       "{{TOOLS_SHA256}}",
       "{{MANIFEST_SHA256}}",
+      "{{TOOLS_FILE}}",
+      "{{TOOLS_PACKAGE}}",
+      "{{SKILL_NAME}}",
     ].sort(),
   );
   for (const target of [
@@ -78,13 +81,9 @@ test("published tools block matches the version-specific verified setup instruct
     ],
     { encoding: "utf8" },
   );
-  const kitGuide = renderedGuide
-    .replaceAll(version, "{{VERSION}}")
-    .replaceAll(metadata.tools.sha256, "{{TOOLS_SHA256}}")
-    .replaceAll(metadata.bundle.manifestSha256, "{{MANIFEST_SHA256}}");
-  const actual = template.match(
-    /<code id="tools-install-code">([\s\S]*?)<\/code>/,
-  )?.[1];
+  const actual = renderInstallTemplate(template, metadata)
+    .toString()
+    .match(/<code id="tools-install-code">([\s\S]*?)<\/code>/)?.[1];
   assert.ok(
     actual,
     "Visitors need the checked tools install block, not only a direction to another file.",
@@ -95,7 +94,7 @@ test("published tools block matches the version-specific verified setup instruct
     .replaceAll("&amp;", "&");
   assert.equal(
     decoded.trim(),
-    kitGuide.match(/```sh\n([\s\S]*?)\n```/)[1].trim(),
+    renderedGuide.match(/```sh\n([\s\S]*?)\n```/)[1].trim(),
   );
   const publishedBlock = install.match(
     /<code id="tools-install-code">([\s\S]*?)<\/code>/,

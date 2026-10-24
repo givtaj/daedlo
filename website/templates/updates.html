@@ -53,18 +53,40 @@
           need a second setup prompt.
         </p>
         <p>
-          The agent verifies the alpha.3 tools in a separate directory, reads
+          The agent verifies the {{VERSION}} tools in a separate directory,
+          reads
           <code>docs/ninja-update.md</code>, and supplies your real paths, model
           identity and managed launcher. Acceptance checks use disposable data.
           The registration records dependency locks and custom skills alongside
-          the model, states, flows, adapter and configuration. Alpha.2 cannot
-          upgrade the manager itself.
+          the model, states, flows, adapter and configuration. The old tools
+          cannot upgrade the manager itself.
         </p>
         <p>
           A signed download alone does not establish that your application
           behaves correctly. Unsupported contracts or source changes need
           review. The sections below are the trust and operating reference for
           the setup your agent leaves.
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="bootstrap-title">
+        <h2 id="bootstrap-title">Moving from alpha.3 to alpha.4</h2>
+        <p>
+          Alpha.3 cannot install the renamed alpha.4 package family. Keep the
+          accepted installation available while your agent downloads the current
+          kit and installs its independently verified tools in a separate
+          directory using the
+          <a href="/install.html#manual">verified install instructions</a>. The
+          old tools may report that migration is required; they must not install
+          the new package family.
+        </p>
+        <p>
+          Start the new tools with the same existing configuration and managed
+          store. Preserve the publisher trust pin and signed catalog checkpoint.
+          First recover and verify the accepted earlier installation with the
+          new tools; then check for updates and run alpha.4 acceptance. Do not
+          change customer contract fields, reset the checkpoint or replace the
+          key to bypass a compatibility or verification failure. The catalog URL
+          stays the same.
         </p>
       </section>
       <section class="guide-block" aria-labelledby="trust-title">
@@ -97,9 +119,9 @@ curl --fail --show-error --proto '=https' \
   'https://daedlo.com{{KEY_URL}}' --output '{{KEY_ID}}.pem'
 printf '%s  %s\n' '{{KEY_SHA256}}' '{{KEY_ID}}.pem' | shasum -a 256 -c -</code></pre>
         <p>
-          Continue only when verification reports OK. The agent adds this
-          catalog section to the project’s trusted local configuration, placing
-          the verified PEM beside that configuration:
+          Continue only when verification reports OK. For a new registration,
+          the agent adds this catalog section to the project’s trusted local
+          configuration, placing the verified PEM beside that configuration:
         </p>
         <pre
           class="install-code"
@@ -131,7 +153,7 @@ printf '%s  %s\n' '{{KEY_SHA256}}' '{{KEY_ID}}.pem' | shasum -a 256 -c -</code><
           class="install-code"
           tabindex="0"
           aria-label="Open the local update screen"
-        ><code>node node_modules/@browser-driver/release-tools/lib/ninja.mjs serve \
+        ><code>node node_modules/{{TOOLS_PACKAGE}}/lib/ninja.mjs serve \
   --config /absolute/path/to/ninja-local.json</code></pre>
         <p>
           Open the loopback URL printed by the command. It contains a private

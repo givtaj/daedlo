@@ -1,8 +1,10 @@
 # Daedlo 0.1.4-alpha.4 portable release tools
 
-This is the unpublished next-release candidate. Its public core uses Apache-2.0
-with required legacy MIT and third-party notices retained. The website continues
-to distribute alpha.3 under its original terms until a new release is published.
+This guide covers the alpha.4 portable tools. The selected kit's `release.json`
+records exact artifact identities and verification; the current
+[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
+records publication status. The public core uses Apache-2.0 with required legacy
+MIT and third-party notices retained. Alpha.3 retains its original terms.
 
 The `@daedlo/release-tools` package verifies and selects exact driver
 archives in a separate local store. It also includes the contracts, onboarding

@@ -83,6 +83,22 @@ Do not bypass a digest or compatibility failure. A successful check establishes
 package integrity and measured toolchain compatibility, not your application's
 behavior. Keep the verified kit in a durable location for installation and rebuilds.
 
+## Existing alpha.3 managed installations
+
+Alpha.3 tools cannot install renamed alpha.4 kits. The signed feed declares
+manager contract 2; old tools report `migration_required` before download.
+Verify and install this kit's new tools in the fresh directory above, retaining
+the old tools. Stop the old manager at a safe boundary and wait for its owned
+cleanup. Start `installed-tools/node_modules/{{TOOLS_NAME}}/lib/ninja.mjs` with
+the **same existing configuration**, registration, store and public-key pin.
+Preserve the configuration path, checkpoint, application source and data; never
+run two managers against the same store or reset trust to bypass a refusal.
+
+Before installing the candidate, use the new tools to recover, launch and health
+check the accepted legacy slot. Then verify the candidate and rollback in an
+isolated application fixture. New tools support both package families; general
+package acceptance does not prove your application's migration or business flow.
+
 ## Connect your application
 
 Open your application project in Codex and follow

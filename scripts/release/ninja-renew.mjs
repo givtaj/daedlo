@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-/** Production alpha.3 feed renewal. This issuer-side tool never deploys, changes
+/** Production signed feed renewal. This issuer-side tool never deploys, changes
  * consumer verification, installs packages, or copies private keys. The CLI pins
- * one production origin/key and nine immutable release files. Reviewed source
+ * one production origin/key and an explicitly pinned immutable release inventory. Reviewed source
  * changes must explicitly extend that inventory before a later product release.
  *
  * prepare --private-key ABS --output FRESH_ABS [--checkpoint SIGNED_CATALOG]
@@ -37,7 +37,7 @@ const ORIGIN = "https://daedlo.com",
   FEED = ORIGIN + "/updates/preview.json",
   KEY = "daedlo-release-2026-10";
 const VERSIONS = ["0.1.2-rc.1", "0.1.4-alpha.2", "0.1.4-alpha.3"];
-const CURRENT = VERSIONS.at(-1),
+const ALPHA4 = "0.1.4-alpha.4",
   DAY = 86400000;
 const CONTRACTS = {
   manager: 1,
@@ -55,7 +55,29 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
     generation: 1,
     sha256: "bde773d01a3cb0bb33330b74b17dd7e5068e33fb650a55d558d446a10f5bbad0",
   },
+  promotion: {
+    version: "0.1.4-alpha.4",
+    sourceCommit: "7bb3491aa49a7e9c8321e20db8904a75e7e63e03",
+  },
+  releaseContracts: { "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 } },
   assets: {
+    "0.1.4-alpha.4": {
+      "daedlo-0.1.4-alpha.4.zip": {
+        bytes: 280815,
+        sha256:
+          "3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75",
+      },
+      "release.json": {
+        bytes: 6978,
+        sha256:
+          "7ff86a221af63c212bf4a271263367e72c674ff9497281da9253d3f1ffc2f70b",
+      },
+      SHA256SUMS: {
+        bytes: 91,
+        sha256:
+          "f3415dda3246bca2277c2d175b22aa97bb19c301843a0e2fa9f2401dbe162b07",
+      },
+    },
     "0.1.2-rc.1": {
       "daedlo-0.1.2-rc.1.zip": item(
         147172,
@@ -130,7 +152,7 @@ const HTTP_DIAGNOSTIC_PATHS = new Set([
   ),
   "/updates/preview.json",
   `/updates/keys/${KEY}.pem`,
-  ...VERSIONS.flatMap((version) =>
+  ...[...VERSIONS, ALPHA4].flatMap((version) =>
     [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"].map(
       (name) => `/downloads/${version}/${name}`,
     ),
@@ -215,11 +237,35 @@ async function read(path, max = 4 * 1024 * 1024) {
   }
 }
 function settings(deps = {}) {
+  const policy = deps.policy ?? PRODUCTION_RENEWAL_POLICY;
+  const versions = [
+    ...VERSIONS,
+    ...(Object.hasOwn(policy.assets, ALPHA4) ? [ALPHA4] : []),
+  ];
+  if (
+    !isDeepStrictEqual(Object.keys(policy.assets).sort(), [...versions].sort())
+  )
+    fail("Unsupported pinned renewal release inventory");
+  const releaseContracts = policy.releaseContracts ?? {};
+  if (
+    !releaseContracts ||
+    typeof releaseContracts !== "object" ||
+    Array.isArray(releaseContracts) ||
+    Object.keys(releaseContracts).some((v) => !versions.slice(1).includes(v))
+  )
+    fail("Unsupported pinned release contracts");
+  for (const version of versions.slice(1)) {
+    const expected = { ...CONTRACTS, manager: version === ALPHA4 ? 2 : 1 };
+    if (!isDeepStrictEqual(releaseContracts[version] ?? CONTRACTS, expected))
+      fail("Unsupported pinned release contracts");
+  }
   return {
+    versions,
+    releaseContracts,
     fetchImpl: deps.fetchImpl ?? globalThis.fetch,
     now: clock(deps.now ?? Date.now()),
     sourceRoot: resolve(deps.sourceRoot ?? ROOT),
-    policy: deps.policy ?? PRODUCTION_RENEWAL_POLICY,
+    policy,
   };
 }
 async function trust(s) {
@@ -310,10 +356,10 @@ function history(bytes, s, t, previousState = null) {
     now: issued,
     previousState,
   });
+  const versions = verified.catalog.releases.map((r) => r.version).sort();
   if (
-    !isDeepStrictEqual(
-      verified.catalog.releases.map((r) => r.version).sort(),
-      VERSIONS.slice(1),
+    ![VERSIONS.slice(1), s.versions.slice(1)].some((allowed) =>
+      isDeepStrictEqual(versions, allowed),
     )
   )
     fail("Unsupported renewal release inventory");
@@ -323,7 +369,10 @@ function history(bytes, s, t, previousState = null) {
       !isDeepStrictEqual(release.platforms, [
         { os: "darwin", arch: "arm64" },
       ]) ||
-      !isDeepStrictEqual(release.contracts, CONTRACTS) ||
+      !isDeepStrictEqual(
+        release.contracts,
+        s.releaseContracts[release.version] ?? CONTRACTS,
+      ) ||
       release.notesUrl !== ORIGIN + "/updates.html"
     )
       fail("Unsupported immutable release contract");
@@ -343,7 +392,22 @@ function history(bytes, s, t, previousState = null) {
   }
   return verified;
 }
-async function baseline(s, t, checkpointPath) {
+function requireBaselineInventory(verified, s, promoteAlpha4) {
+  if (
+    typeof promoteAlpha4 !== "boolean" ||
+    (promoteAlpha4 && !s.versions.includes(ALPHA4))
+  )
+    fail("Alpha4 promotion requires its explicitly pinned release inventory");
+  if (
+    !promoteAlpha4 &&
+    !isDeepStrictEqual(
+      verified.catalog.releases.map((r) => r.version).sort(),
+      s.versions.slice(1),
+    )
+  )
+    fail("Renewal baseline inventory requires explicit alpha4 promotion");
+}
+async function baseline(s, t, checkpointPath, promoteAlpha4) {
   const response = await fetchBytes(FEED, s, { date: true });
   let previousState;
   if (checkpointPath)
@@ -353,6 +417,7 @@ async function baseline(s, t, checkpointPath) {
       t,
     ).checkpoint;
   const verified = history(response.bytes, s, t, previousState);
+  requireBaselineInventory(verified, s, promoteAlpha4);
   if (
     !checkpointPath &&
     !isDeepStrictEqual(verified.checkpoint, s.policy.initialCheckpoint)
@@ -388,7 +453,7 @@ async function assertBaseline(bytes, s, t) {
 /** Prepare reviewed source plus authenticated immutable downloads in a fresh tree.
  * No publish authority is used here. The returned checkpoint is public signed data. */
 export async function prepareNinjaRenewal(
-  { privateKeyPath, output, checkpointPath } = {},
+  { privateKeyPath, output, checkpointPath, promoteAlpha4 = false } = {},
   deps = {},
 ) {
   const s = settings(deps),
@@ -397,7 +462,7 @@ export async function prepareNinjaRenewal(
   const inspected = await inspectPublisherKey({ privateKeyPath, keyId: KEY });
   if (!Buffer.from(inspected.publicKeyPem).equals(t.pem))
     fail("Private signing key does not match bundled production pin");
-  const prior = await baseline(s, t, checkpointPath);
+  const prior = await baseline(s, t, checkpointPath, promoteAlpha4);
   const sourceBefore = await inventory(s.sourceRoot, SOURCE_FILES);
   await fs.mkdir(output, { mode: 0o700 });
   const site = join(output, "site"),
@@ -412,7 +477,7 @@ export async function prepareNinjaRenewal(
       mode: 0o644,
     });
   }
-  for (const version of VERSIONS) {
+  for (const version of s.versions) {
     const dir = join(downloads, version);
     await fs.mkdir(dir);
     for (const [name, pin] of Object.entries(s.policy.assets[version])) {
@@ -448,7 +513,8 @@ export async function prepareNinjaRenewal(
       channel: "preview",
       platforms: [{ os: "darwin", arch: "arm64" }],
       contracts: CONTRACTS,
-      kitDirectories: VERSIONS.slice(1).map((v) => join(downloads, v)),
+      releaseContracts: s.releaseContracts,
+      kitDirectories: s.versions.slice(1).map((v) => join(downloads, v)),
       output: join(output, "signed"),
       previousCatalogPath: baselinePath,
     },
@@ -465,7 +531,7 @@ export async function prepareNinjaRenewal(
     websiteRoot: site,
     catalogFile: catalogPath,
     publicKeyFile: join(s.sourceRoot, "docs/update-trust", KEY + ".pem"),
-    expectedVersion: CURRENT,
+    expectedVersion: s.versions.at(-1),
     ...updateTrust,
   });
   const manifest = await createWebsiteManifest({
@@ -493,6 +559,7 @@ export async function prepareNinjaRenewal(
   const receipt = {
     schemaVersion: 1,
     kind: "daedlo-feed-renewal",
+    promoteAlpha4,
     status: "PREPARED",
     generation: pub.generation,
     baselineGeneration: prior.catalog.generation,
@@ -546,13 +613,22 @@ async function prepared(output, s, t) {
   )
     fail("Renewal catalog identity changed");
   const old = history(prior, s, t);
+  requireBaselineInventory(old, s, receipt.promoteAlpha4 ?? false);
+  const next = history(catalog, s, t, old.checkpoint);
+  requireBaselineInventory(next, s, false);
   if (
     old.catalog.generation !== receipt.baselineGeneration ||
     old.catalogSha256 !== receipt.baselinePayloadSha256
   )
     fail("Renewal baseline identity changed");
-  if (!isDeepStrictEqual(verified.catalog.releases, old.catalog.releases))
-    fail("Renewal changed immutable release entries");
+  for (const release of old.catalog.releases)
+    if (
+      !isDeepStrictEqual(
+        verified.catalog.releases.find((r) => r.version === release.version),
+        release,
+      )
+    )
+      fail("Renewal changed immutable release entries");
   const manifest = await createWebsiteManifest({
     websiteRoot: join(output, "site"),
     updateTrust: {

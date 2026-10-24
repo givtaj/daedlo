@@ -769,3 +769,16 @@ test("historical installation receipts infer only the legacy package identity", 
     await preserved(f);
   }
 });
+
+test("new installer accepts manager2 renamed packages and refuses unknown manager3 before acquisition", async (t) => {
+  const f = await fixture(t, "daedlo");
+  f.verifiedKit.identity.contracts.manager = 2;
+  const before = await snapshotProject(f.registration);
+  const installed = await f.prepare();
+  await verifyInstallation(installed.path);
+  assert.deepEqual(await snapshotProject(f.registration), before);
+  const other = await fixture(t, "daedlo");
+  other.verifiedKit.identity.contracts.manager = 3;
+  await assert.rejects(other.prepare(), /supported manager contracts/);
+  await assert.rejects(fs.stat(other.destination), { code: "ENOENT" });
+});

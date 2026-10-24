@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { isDeepStrictEqual } from "node:util";
 import { join, resolve, parse, sep } from "node:path";
+import { verifyBundle } from "./manifest.mjs";
 
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 function fail(code, message) {
@@ -288,6 +289,118 @@ export async function createNinjaManager({
     s.error = { code: e.code || "operation_failed", message: e.message };
     await save(s);
   }
+  async function retainedKit(current, id) {
+    if (
+      !idPattern.test(current.version ?? "") ||
+      current.release?.version !== current.version ||
+      !/^[a-f0-9]{64}$/.test(current.release?.manifestSha256 ?? "")
+    )
+      fail(
+        "invalid_installation",
+        "The accepted installation lacks a verified retained release identity.",
+      );
+    const relative = `daedlo-${current.version}`;
+    const source = join(root, "downloads", current.id, relative, "bundle");
+    let verified;
+    try {
+      await ninjaDirectory(source);
+      verified = await verifyBundle(source, {
+        expectedManifestSha256: current.release.manifestSha256,
+      });
+    } catch (e) {
+      if (e.code === "ENOENT")
+        fail(
+          "retained_bundle_missing",
+          "The accepted release bundle is no longer retained. Restore its exact verified bytes before refreshing; no newer release was downloaded.",
+        );
+      fail(
+        "retained_bundle_invalid",
+        `The accepted retained release bundle failed verification: ${e.message}`,
+      );
+    }
+    if (
+      verified.manifest.version !== current.version ||
+      verified.manifest.source.dirty
+    )
+      fail("invalid_installation", "Retained release identity changed.");
+    // Keep the canonical retained-bundle layout for every new installation so
+    // subsequent refreshes do not depend on another slot's download lifetime.
+    const download = join(root, "downloads", id);
+    await fs.mkdir(download, { mode: 0o700 });
+    const bundlePath = join(download, relative, "bundle");
+    await ninjaDirectory(bundlePath, { create: true });
+    const entries = [
+      ["manifest.json", 64 * 1024],
+      ["SHA256SUMS", 4096],
+      ...Object.values(verified.manifest.artifacts).map((a) => [
+        a.file,
+        a.bytes,
+      ]),
+    ];
+    for (const [file, maximum] of entries) {
+      const handle = await fs.open(
+        join(source, file),
+        constants.O_RDONLY | constants.O_NOFOLLOW,
+      );
+      try {
+        const stat = await handle.stat();
+        if (!stat.isFile() || stat.size > maximum)
+          fail("invalid_record", "Retained release entry changed.");
+        const bytes = await handle.readFile();
+        if (bytes.length > maximum)
+          fail("invalid_record", "Retained release entry changed.");
+        await fs.writeFile(join(bundlePath, file), bytes, {
+          flag: "wx",
+          mode: 0o600,
+        });
+      } finally {
+        await handle.close();
+      }
+    }
+    await verifyBundle(bundlePath, {
+      expectedManifestSha256: current.release.manifestSha256,
+    });
+    return { bundlePath, identity: structuredClone(current.release) };
+  }
+  async function prepareCandidate(s, id, kit, expectedRelease) {
+    s.phase = "validating";
+    await save(s);
+    const installed = await installer.prepare({
+      registration,
+      verifiedKit: kit,
+      destination: slot(id),
+    });
+    if (installed.id !== id)
+      fail(
+        "invalid_installation",
+        "Installation identity does not match its owned slot.",
+      );
+    if (
+      expectedRelease &&
+      (installed.version !== expectedRelease.version ||
+        !isDeepStrictEqual(installed.release, expectedRelease))
+    )
+      fail(
+        "invalid_installation",
+        "Refresh must retain the accepted exact release identity.",
+      );
+    const current = await receipt(s.current);
+    if (
+      current &&
+      !isDeepStrictEqual(
+        current.handshake?.descriptor,
+        installed.handshake?.descriptor,
+      )
+    )
+      fail(
+        "migration_required",
+        "Candidate changes the accepted states, commands or flows.",
+      );
+    s.operation = { id, status: "ready", expectedCurrent: s.current };
+    s.phase = "ready";
+    await save(s);
+    return view();
+  }
   async function recoverJournal() {
     const journal = await ninjaRead(journalPath, { optional: true });
     if (!journal || ["committed", "recovered"].includes(journal.phase)) return;
@@ -500,34 +613,32 @@ export async function createNinjaManager({
             s.available,
             join(root, "downloads", id),
           );
-          s.phase = "validating";
-          await save(s);
-          const installed = await installer.prepare({
-            registration,
-            verifiedKit: kit,
-            destination: slot(id),
-          });
-          if (installed.id !== id)
-            fail(
-              "invalid_installation",
-              "Installation identity does not match its owned slot.",
-            );
-          const current = await receipt(s.current);
-          if (
-            current &&
-            !isDeepStrictEqual(
-              current.handshake?.descriptor,
-              installed.handshake?.descriptor,
-            )
-          )
-            fail(
-              "migration_required",
-              "Candidate changes the accepted states, commands or flows.",
-            );
-          s.operation = { id, status: "ready", expectedCurrent: s.current };
-          s.phase = "ready";
-          await save(s);
-          return view();
+          return await prepareCandidate(s, id, kit);
+        } catch (e) {
+          s.operation = { id, status: "failed", expectedCurrent: s.current };
+          await recordError(s, e);
+          throw e;
+        }
+      });
+    },
+    async refresh() {
+      return mutate(async () => {
+        await recoverJournal();
+        const s = await read();
+        if (!s.current)
+          fail(
+            "not_installed",
+            "Refresh requires an accepted installation; prepare and activate it first.",
+          );
+        const current = await receipt(s.current);
+        const id = randomUUID();
+        s.operation = { id, status: "preparing", expectedCurrent: s.current };
+        s.phase = "preparing";
+        s.error = null;
+        await save(s);
+        try {
+          const kit = await retainedKit(current, id);
+          return await prepareCandidate(s, id, kit, current.release);
         } catch (e) {
           s.operation = { id, status: "failed", expectedCurrent: s.current };
           await recordError(s, e);

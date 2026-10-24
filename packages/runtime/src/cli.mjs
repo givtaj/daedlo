@@ -209,6 +209,7 @@ async function main() {
       context,
       session,
       port: opt.port,
+      frontend: project.frontend,
     });
     resources.own(viewer, { label: "live viewer", close: (v) => v.close() });
     checkStop();

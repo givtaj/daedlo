@@ -29,6 +29,7 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { sha256 } from "./manifest.mjs";
+import { releaseNames } from "./names.mjs";
 import {
   ninjaCatalogSigningBytes,
   verifyNinjaCatalog,
@@ -58,7 +59,11 @@ const required = [
   "kitDirectories",
   "output",
 ];
-const optional = ["previousCatalogPath", "previousTrustedKeys"];
+const optional = [
+  "previousCatalogPath",
+  "previousTrustedKeys",
+  "releaseContracts",
+];
 function fail(message) {
   throw Error(message);
 }
@@ -324,6 +329,10 @@ export async function publishNinjaCatalog(config, { now = Date.now() } = {}) {
     config.kitDirectories.length > 128
   )
     fail("A nonempty bounded public kit inventory is required");
+  const overrides = config.releaseContracts ?? {};
+  if (!overrides || typeof overrides !== "object" || Array.isArray(overrides))
+    fail("Invalid per-release contract overrides");
+  const unusedOverrides = new Set(Object.keys(overrides));
   const output = await pathValue(config.output, { fresh: true }),
     parent = dirname(output),
     parentIdentity = await fs.lstat(parent);
@@ -348,6 +357,14 @@ export async function publishNinjaCatalog(config, { now = Date.now() } = {}) {
       )
     )
       fail("Invalid public kit release version");
+    const contracts = Object.hasOwn(overrides, m.version)
+      ? overrides[m.version]
+      : config.contracts;
+    unusedOverrides.delete(m.version);
+    const names = releaseNames(m.bundle?.artifacts);
+    const manager = names.prefix === "daedlo" ? 2 : 1;
+    if (contracts?.manager !== manager)
+      fail(`Release ${m.version} package family requires manager ${manager}`);
     const filename = `daedlo-${m.version}.zip`;
     if (
       !isDeepStrictEqual(
@@ -373,13 +390,14 @@ export async function publishNinjaCatalog(config, { now = Date.now() } = {}) {
       version: m.version,
       channel: config.channel,
       platforms: config.platforms,
-      contracts: config.contracts,
+      contracts,
       notesUrl: config.notesUrl,
       kit: asset(filename, archive),
       metadata: asset("release.json", metadata),
       checksums: asset("SHA256SUMS", checksums),
     });
   }
+  if (unusedOverrides.size) fail("Unused per-release contract override");
   releases.sort((a, b) => a.version.localeCompare(b.version, "en"));
   if (previousVerified) {
     for (const entry of previousVerified.catalog.releases) {

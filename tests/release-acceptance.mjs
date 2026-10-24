@@ -107,6 +107,8 @@ export async function runReleaseAcceptance({
   bundle,
   output,
   expectedManifestSha256,
+  toolsArchive,
+  expectedToolsSha256,
   repoRoot = fileURLToPath(new URL("../", import.meta.url)),
 }) {
   assert.match(
@@ -114,6 +116,36 @@ export async function runReleaseAcceptance({
     /^[a-f0-9]{64}$/,
     "Supply the independently recorded expected manifest SHA256",
   );
+  assert.equal(
+    toolsArchive === undefined,
+    expectedToolsSha256 === undefined,
+    "toolsArchive and expectedToolsSha256 must be supplied together",
+  );
+  let toolsBytes;
+  if (toolsArchive !== undefined) {
+    assert.ok(
+      typeof toolsArchive === "string" && toolsArchive,
+      "Tools archive path is required",
+    );
+    assert.match(
+      expectedToolsSha256 ?? "",
+      /^[a-f0-9]{64}$/,
+      "Supply the independently recorded tools SHA256",
+    );
+    toolsArchive = resolve(toolsArchive);
+    const info = fs.lstatSync(toolsArchive);
+    assert.ok(
+      info.isFile() && !info.isSymbolicLink(),
+      "Tools archive must be a regular file",
+    );
+    toolsBytes = fs.readFileSync(toolsArchive);
+    assert.equal(
+      createHash("sha256").update(toolsBytes).digest("hex"),
+      expectedToolsSha256,
+      "Tools archive digest mismatch",
+    );
+    validatePackageArchive(toolsBytes, "package");
+  }
   repoRoot = resolve(repoRoot);
   bundle = resolve(bundle);
   output = resolve(output);
@@ -202,7 +234,7 @@ export async function runReleaseAcceptance({
   function extract(name, archive, destination, prefix, artifact) {
     // List and extract the same verified bytes so a replaced input path cannot
     // introduce links between the safety check and extraction.
-    const bytes = fs.readFileSync(archive);
+    const bytes = Buffer.isBuffer(archive) ? archive : fs.readFileSync(archive);
     assert.equal(bytes.length, artifact.bytes);
     assert.equal(
       createHash("sha256").update(bytes).digest("hex"),
@@ -233,6 +265,71 @@ export async function runReleaseAcceptance({
       `${manifest.artifacts.engine.name}-${manifest.artifacts.engine.version}`,
       manifest.artifacts.engine,
     );
+    let installedTools, toolsExpected, toolsSource;
+    if (toolsBytes) {
+      const extracted = join(temporary, "tools-archive"),
+        toolsWork = join(temporary, "tools-consumer");
+      fs.mkdirSync(extracted);
+      fs.mkdirSync(toolsWork);
+      toolsExpected = extract("tools", toolsBytes, extracted, "package", {
+        bytes: toolsBytes.length,
+        sha256: expectedToolsSha256,
+      });
+      toolsSource = JSON.parse(
+        fs.readFileSync(join(toolsExpected, "SOURCE.json")),
+      );
+      const toolsPackage = JSON.parse(
+        fs.readFileSync(join(toolsExpected, "package.json")),
+      );
+      assert.equal(toolsSource.schemaVersion, 1);
+      assert.equal(toolsSource.kind, "browser-driver-release-tools");
+      assert.equal(
+        toolsSource.version,
+        manifest.version,
+        "Tools version must match the selected bundle",
+      );
+      assert.deepEqual(
+        toolsSource.source,
+        manifest.source,
+        "Tools and bundle must identify the same frozen source",
+      );
+      assert.equal(toolsPackage.version, manifest.version);
+      assert.equal(
+        toolsPackage.name,
+        manifest.artifacts.runtime.name.replace(/\/runtime$/, "/release-tools"),
+      );
+      assert.equal(toolsSource.name, toolsPackage.name);
+      const verifiedArchive = join(temporary, "verified-tools.tgz");
+      fs.writeFileSync(verifiedArchive, toolsBytes);
+      fs.writeFileSync(
+        join(toolsWork, "package.json"),
+        JSON.stringify({
+          name: "isolated-native-tools-acceptance",
+          version: "1.0.0",
+          private: true,
+          type: "module",
+        }),
+      );
+      run("native-tools-install", "npm", [
+        "install",
+        "--prefix",
+        toolsWork,
+        "--workspaces=false",
+        "--offline",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--cache",
+        cache,
+        verifiedArchive,
+      ]);
+      installedTools = join(toolsWork, "node_modules", toolsPackage.name);
+      result.installedNativeTools = {
+        archiveSha256: expectedToolsSha256,
+        sourceReceiptSha256: sha256(join(installedTools, "SOURCE.json")),
+        inventory: verifyInstalledRuntime(toolsExpected, installedTools),
+      };
+    }
     const requireFromRepo = createRequire(join(repoRoot, "package.json"));
     const dependencyTarballs = [];
     for (const name of ["playwright", "playwright-core"]) {
@@ -412,6 +509,77 @@ export async function runReleaseAcceptance({
         version: pkg.version,
       }),
     );
+    run(
+      "installed-frontend-viewer",
+      process.execPath,
+      [
+        "--test",
+        join(repoRoot, "packages/runtime/tests/viewer-frontend-browser.mjs"),
+      ],
+      {
+        env: {
+          CLI_TEST_RUNTIME: fileURLToPath(entry),
+          FRONTEND_VIEWER_OUTPUT: join(output, "frontend-viewer"),
+        },
+      },
+    );
+    result.frontendViewer = "PASS";
+    if (installedTools) {
+      const nativeOutput = join(output, "native");
+      run(
+        "installed-native-startup",
+        process.execPath,
+        [
+          "--test",
+          join(repoRoot, "tests/release-native-startup-browser.test.mjs"),
+        ],
+        {
+          env: {
+            DAEDLO_NATIVE_TOOLS_ROOT: join(installedTools, "lib"),
+            DAEDLO_NATIVE_RUNTIME_PATH: fileURLToPath(entry),
+            DAEDLO_NATIVE_ENGINE_PATH: enginePath,
+            DAEDLO_NATIVE_ENGINE_CRATE: crateRoot,
+            DAEDLO_NATIVE_TARGET_DIR: join(temporary, "native-target"),
+            DAEDLO_NATIVE_OUTPUT: nativeOutput,
+          },
+          timeout: 180000,
+        },
+      );
+      const native = JSON.parse(
+        fs.readFileSync(join(nativeOutput, "browser-result.json")),
+      );
+      assert.equal(native.status, "PASS");
+      assert.equal(native.toolsRoot, join(installedTools, "lib"));
+      assert.equal(native.runtimePath, fileURLToPath(entry));
+      assert.equal(native.enginePath, enginePath);
+      assert.equal(native.engineCrate, crateRoot);
+      assert.equal(native.runtime.name, pkg.name);
+      assert.equal(native.runtime.version, pkg.version);
+      assert.ok(
+        Array.isArray(native.checks) && native.checks.length >= 13,
+        "All native frontend startup/lifecycle checks must run",
+      );
+      result.nativeStartup = {
+        status: "PASS",
+        checks: native.checks,
+        browser: native.browser,
+      };
+      result.installedNativeTools.inventory = verifyInstalledRuntime(
+        toolsExpected,
+        installedTools,
+      );
+      assert.deepEqual(
+        JSON.parse(fs.readFileSync(join(installedTools, "SOURCE.json"))),
+        toolsSource,
+        "Installed tools source receipt changed during acceptance",
+      );
+      assert.equal(
+        sha256(toolsArchive),
+        expectedToolsSha256,
+        "Selected tools archive changed during acceptance",
+      );
+    }
+
     result.installedRuntime = verifyInstalledRuntime(
       packageExpected,
       installed,
@@ -446,15 +614,27 @@ if (
   process.argv[1] &&
   pathToFileURL(resolve(process.argv[1])).href === import.meta.url
 ) {
-  const [bundle, output, expectedManifestSha256] = process.argv.slice(2);
+  const [
+    bundle,
+    output,
+    expectedManifestSha256,
+    toolsArchive,
+    expectedToolsSha256,
+  ] = process.argv.slice(2);
   if (
     !bundle ||
     !output ||
     !expectedManifestSha256 ||
-    process.argv.length !== 5
+    ![5, 7].includes(process.argv.length)
   )
     throw Error(
-      "Usage: node tests/release-acceptance.mjs BUNDLE_DIR FRESH_OUTPUT EXPECTED_MANIFEST_SHA256",
+      "Usage: node tests/release-acceptance.mjs BUNDLE_DIR FRESH_OUTPUT EXPECTED_MANIFEST_SHA256 [TOOLS_ARCHIVE EXPECTED_TOOLS_SHA256]",
     );
-  await runReleaseAcceptance({ bundle, output, expectedManifestSha256 });
+  await runReleaseAcceptance({
+    bundle,
+    output,
+    expectedManifestSha256,
+    toolsArchive,
+    expectedToolsSha256,
+  });
 }

@@ -1,13 +1,15 @@
 # Migrate browser-driver naming to Daedlo
 
-This guide describes the naming migration prepared for **0.1.4-alpha.4**. It does
-not establish that a release, repository rename, customer upgrade or rollback has
-completed. Actual results belong in [verification.md](verification.md). The
-repository stays private until the owner separately approves public access.
+This guide describes the naming and compatibility of **0.1.4-alpha.4**. The
+selected kit's `release.json` records exact source and artifact identities and
+scoped verification. Current publication results belong in the
+[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md);
+customer upgrade and rollback results belong in that project's handoff.
+The repository stays private until the owner separately approves public access.
 
 ## Names and compatibility
 
-| Area | Previous name | Current-source target |
+| Area | Previous name | Alpha.4 name |
 | --- | --- | --- |
 | Same GitHub repository | `givtaj/browser-driver` | `givtaj/daedlo` |
 | npm workspace | `browser-driver-workspace` | `daedlo-workspace` |
@@ -75,15 +77,18 @@ preserved through the manager transition.
 ## Existing alpha.3 managers need a tools bootstrap
 
 The immutable alpha.3 manager understands the original `browser-driver` archive
-and package names. It **cannot install a future renamed Daedlo kit**. New tools
+and package names. It **cannot install a renamed Daedlo kit**. New tools
 understand both families, including validating a retained legacy installation and
 returning to a legacy slot, but an installed old manager does not gain that
-capability from a new feed entry or CLI alias.
+capability from a new feed entry or CLI alias. Alpha.4 declares manager contract
+2 in the signed feed. Old tools report `migration_required` and stop before
+candidate download; verified new tools accept manager 1 and 2 while preserving
+the same registration, trust pin, store and high-water checkpoint.
 
 The first renamed update therefore needs a one-time, independently verified
 installation of the new tools alongside the accepted old tools. The following is
-the required migration sequence for a future qualified release, not a claim that
-the live customer transition has passed:
+the required migration sequence for the selected verified release. Complete it
+for the customer integration and record its results:
 
 1. Obtain the new tools from that release's trusted receipt and verify the exact
    archive and source identity. Install them in a fresh, separate tools directory
@@ -112,15 +117,16 @@ For the new tools installation, the manager entrypoint is
 [managed-update contract](ninja-update.md) still governs ownership and acceptance.
 A package/store compatibility test alone is not this customer migration drill.
 
-## Required before publishing alpha.4
+## Verification boundaries
 
-Publishing renamed artifacts or adding them to the production update feed remains
-blocked on the following release work:
+Release verification and customer adoption require distinct evidence. Use the
+selected kit's `release.json` and current verification record to identify completed
+release checks, and the customer handoff for application-specific acceptance:
 
 - Verify the exact new tools bootstrap against an accepted alpha.3 installation,
   followed by the renamed package upgrade and legacy rollback in a disposable
   customer fixture. Record source, data, accepted-tool and resource preservation.
-- Define and verify manager capability signalling and the feed rollout so legacy
+- Verify manager capability signalling and the feed rollout so legacy
   clients are not offered an unsupported renamed update. A version label or
   unchanged manager contract number alone does not establish that support.
 - Verify the exact built runtime, engine, tools and kit together, including
@@ -128,14 +134,14 @@ blocked on the following release work:
   signing/checkpoint continuity and recovery. Source tests are only part of this
   gate.
 - Update and test website command rendering for the selected package family.
-  Current website templates intentionally target the immutable alpha.3 package
-  names; changing only a version number would produce incorrect renamed-kit
+  The templates now derive tools and skill paths from verified package metadata;
+  changing only a version number without those identities would produce incorrect
   installation commands.
 - Obtain the separately required release/publication authorization. Repository
   visibility, package publication, website deployment and customer dependency
   promotion are distinct actions.
 
-The currently published alpha.3 feed and downloads retain their existing names
-until an explicitly authorized, verified rollout. See the
-[release guide](releases.md) and [verification record](verification.md) for the
+Alpha.3 feed entries and downloads retain their existing names and immutable
+identities when a renamed release is added. See the
+[release guide](releases.md) and [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md) for the
 release boundary and actual status.

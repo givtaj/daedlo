@@ -31,6 +31,10 @@ const libraries = [
   "ninja-supervisor",
   "ninja-child",
   "ninja-server",
+  "ninja-evidence",
+  "native",
+  "native-doctor",
+  "native-session",
 ];
 const documents = [
   "contracts",
@@ -40,6 +44,24 @@ const documents = [
   "update-client",
   "presentation",
   "ninja-update",
+  "native-setup",
+  "rename",
+];
+const starterFiles = [
+  "README.md",
+  "acceptance.mjs",
+  "adapter.mjs",
+  "build-model.mjs",
+  "fixture.mjs",
+  "index.html",
+  "project.mjs",
+  "request-acceptance.mjs",
+  "request-accounting.mjs",
+  "runtime.mjs",
+  "model/Cargo.toml",
+  "model/src/lib.rs",
+  "model/src/main.rs",
+  "model/src/bin/starter-invalid-model.rs",
 ];
 const skillPrefix = "skills/daedlo/";
 const requiredSkill = [
@@ -172,7 +194,11 @@ export async function buildToolsArchive({
     if (!entry) throw Error(`Required tools source is missing: ${source}.`);
     entries.set(destination, {
       bytes: entry.bytes,
-      mode: ["lib/consumer-cli.mjs", "lib/ninja.mjs"].includes(destination)
+      mode: [
+        "lib/consumer-cli.mjs",
+        "lib/ninja.mjs",
+        "lib/native.mjs",
+      ].includes(destination)
         ? 0o755
         : 0o644,
     });
@@ -180,7 +206,9 @@ export async function buildToolsArchive({
   for (const name of libraries)
     copy(`scripts/release/${name}.mjs`, `lib/${name}.mjs`);
   copy("scripts/release/ninja-ui.html", "lib/ninja-ui.html");
+  copy("scripts/release/native-session-ui.html", "lib/native-session-ui.html");
   for (const name of documents) copy(`docs/${name}.md`);
+  for (const file of starterFiles) copy(`examples/starter/${file}`);
   copy("docs/update-trust/production.json");
   copy("docs/update-trust/daedlo-release-2026-10.pem");
   copy("docs/update-client.md", "README.md");
@@ -197,6 +225,15 @@ export async function buildToolsArchive({
       throw Error(`Required skill source is missing: ${file}.`);
   for (const file of sourceFiles.keys())
     if (file.startsWith(skillPrefix)) copy(file);
+  const runtimePackage = JSON.parse(
+    sourceFiles.get("packages/runtime/package.json").bytes.toString("utf8"),
+  );
+  const nodeMajor = Number(/^>=(\d+)$/.exec(runtimePackage.engines?.node)?.[1]);
+  const rustVersion = /^rust-version\s*=\s*"([0-9.]+)"\s*$/m.exec(
+    sourceFiles.get("Cargo.toml").bytes.toString("utf8"),
+  )?.[1];
+  if (!Number.isSafeInteger(nodeMajor) || nodeMajor < 22 || !rustVersion)
+    throw Error("Tools require explicit Node and Rust compatibility metadata.");
   const pkg = {
     name: "@daedlo/release-tools",
     version,
@@ -206,15 +243,18 @@ export async function buildToolsArchive({
     license: licensing.license,
     type: "module",
     engines: { node: ">=22" },
+    daedloCompatibility: { nodeMajor, rustVersion },
     bin: {
       "daedlo-release": "lib/consumer-cli.mjs",
       "browser-driver-release": "lib/consumer-cli.mjs",
       "ninja-update": "lib/ninja.mjs",
+      "daedlo-native": "lib/native.mjs",
     },
     files: [
       "lib",
       "docs",
       "skills",
+      "examples/starter",
       "README.md",
       ...licensing.files,
       "SOURCE.json",

@@ -52,6 +52,16 @@ registry publication or customer dependency promotion. The repository is being
 prepared for community contributions and stays private until the owner approves
 opening access.
 
+The candidate includes [safe validation diagnostics](docs/contracts.md), a
+[small tested starter](examples/starter/README.md), and named frontend startup
+with isolated lifecycle.
+
+This branch also adds the unpublished [native setup workflow](docs/native-setup.md):
+one managed setup, read-only doctor, reusable foreground runner and exact Codex
+Browser viewer handoff. It extends Ninja-Update with source refresh at the accepted
+version and immediate durable run reports. The published alpha.3 instructions and
+existing integrations remain supported. Actual local checks belong in verification.
+
 ## The first alpha journey
 
 Start with one agreed, existing feature and a relevant negative case. An agent

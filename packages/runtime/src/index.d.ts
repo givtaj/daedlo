@@ -268,6 +268,7 @@ export interface ResourceScope {
 /** Trusted CLI project. The CLI owns its browser, viewer, returned session and shutdown. */
 export type DriverProject = {
   url: string;
+  frontend?: FrontendIdentity;
 } & (
   | {
       enginePath: string;
@@ -304,11 +305,24 @@ export function createDriverSession<F>(options: {
   resources?: ResourceScope;
   presentations?: Presentation[];
 }): Promise<DriverSession>;
+export interface FrontendIdentity {
+  name: string;
+  targetOrigin: string | null;
+  model: { id: string; version: string };
+  /** Local evidence directory; never a credential or public report field. */
+  evidenceLocation: string;
+  ownership: {
+    browser: "owned" | "attached" | "unknown";
+    context: "owned" | "attached" | "unknown";
+    application: "owned" | "attached" | "unknown";
+  };
+}
 export function createViewer(options: {
   page: Page;
   context: BrowserContext;
   session: DriverSession;
   port?: number;
+  frontend?: FrontendIdentity;
 }): Promise<{ url: string; close(): Promise<void> }>;
 export function createResourceScope(): ResourceScope;
 export function createEngineClient(

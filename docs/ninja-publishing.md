@@ -181,3 +181,29 @@ The checkpoint is mandatory after the initial, independently pinned generation 1
 `live --output /absolute/fresh-renewal` verifies the exact staged deployment after
 publication. Keep signing and private provider outputs outside Git and the public
 asset tree. Application rollback and publisher feed recovery are separate operations.
+
+
+## Alpha.4 promotion through the existing publication lock
+
+The manual `promote_alpha4` input defaults to false and uses the same
+`production-ninja-renew` concurrency group, authenticated run history and
+`Persist signed renewal checkpoint` step as ordinary renewal. Promotion requires
+reviewed source pins for the exact alpha.4 package commit and all three immutable
+release files. The helper accepts only explicit local paths; repository identity,
+tag, asset names, download origins and public destination are fixed in source.
+It downloads the pinned draft or published prerelease through the GitHub API,
+validates every byte and clean source identity, then delegates to normal signed
+staging. An unavailable draft is a refusal, not a reason to broaden token scope.
+The workflow retains read-only GitHub permissions.
+
+The signed catalog retains the exact alpha.2/alpha.3 entries with manager contract
+1 and adds alpha.4 with manager contract 2. Verified new tools support both
+families; immutable alpha.3 tools report `migration_required` before downloading
+the renamed candidate. This is a tools bootstrap with the same registration,
+configuration, trust pin, store and checkpoint. No trust reset is part of it.
+
+Promotion may extend the approved legacy inventory once. Ordinary renewal
+requires the complete pinned inventory and cannot silently omit alpha.4. A
+failed promotion remains subject to the same retained high-water checkpoint and
+operator-recovery rules above. Publication must follow exact artifact acceptance
+and remote CI; customer application acceptance remains separate.
