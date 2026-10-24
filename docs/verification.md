@@ -1,5 +1,50 @@
 # Verification record
 
+## Alpha.4 frozen release and publication gate — 2026-10-24
+
+Clean package source is `bd8e393351f3116920c976cfd3221035e2304db3`.
+[Exact-source CI 40072524866](https://github.com/givtaj/daedlo/actions/runs/40072524866)
+is **PASS**: Node 22/24 source, browser, package/native/starter acceptance, public
+metadata and full-history secrets scan. The earlier scan failure was a verified
+public PEM digest false positive; one exact historical fingerprint was excepted,
+the current label was clarified, and a synthetic detection control still passed.
+No history was rewritten and no general secret rule was disabled.
+
+| Immutable final artifact | SHA-256 |
+| --- | --- |
+| Source tree | `78358a15128a34d2b172fdfa8ed3e86716e166a514348b417842f83d9177a679` |
+| Bundle manifest | `4bd0193a20b00c01c986ef73fbc9b28108dc4494569d026dd34ad84472d3770f` |
+| Portable tools | `3cef22b472d21d2a188051008399cdfc8f605ee72399a27d003e8563e0e27fdc` |
+| Complete kit ZIP | `e060da304e9ec612472f580bdfdb06ac2bc048dc4fa409bc6e91d1aff13a1ec7` |
+
+- PASS: exact installed runtime/crate/tools; 8 browser groups, 10 CLI, 25
+  finalization, 9 browser-control cases, frontend isolation and 13 native startup
+  checkpoints. All 59 tools/22 runtime file bytes verified; owned cleanup passed.
+- PASS: exact shipped starter 16 checks with real Rust hello, independent save
+  readback, rejected/stale drafts and honest unresolved request evidence.
+- PASS: managed upgrade 7 checkpoints: real old-client pre-download refusal,
+  unchanged configuration/trust/store, new-tools legacy recovery, candidate
+  activation, fresh manager restart, rollback and relaunch. All owned resources
+  closed. The independent synthetic notebook uses an ephemeral signed feed.
+- PASS: website 66 tests, 8 pages/4 archives/35 assets and 14 real Chromium checks.
+  Desktop/narrow layouts inspected. DOM-copied installer exactly matched the ZIP
+  guide, ran offline and preserved all nine surrounding npm-workspace entries.
+- PASS: the original native setup checkout remains clean at
+  `42c4956a95f264282602db2e23ed3db8c88269a5`; its chat is idle.
+
+The public `release.json` contains only sanitized aggregate verification and exact
+artifact identities. ZIP bytes remain immutable. Production policy pins those
+three final files separately from the package source; publisher-source CI,
+signed-feed publication and production HTTPS upgrade/rollback remain required
+at this checkpoint. The GitHub prerelease is a draft. Production activation must
+retain the existing signing identity and authenticated high-water checkpoint.
+Customer business-flow acceptance and ordinary dependency promotion remain
+separate. Earlier candidate receipts below are historical.
+
+Evidence stays ignored: `artifacts/alpha4-release-final/installed-release`,
+`installed-starter`, `upgrade-acceptance/run-MQLzsi`,
+`artifacts/alpha4-website/final-Y9RcCE/receipt.json` and the source-CI receipt.
+
 ## Alpha.4 feed and installer integration — 2026-10-24
 
 The isolated branch adds manager-2 compatibility for renamed kits, preserving
