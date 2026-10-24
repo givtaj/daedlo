@@ -40,7 +40,8 @@ const PRODUCTION = Object.freeze({
   origin: "https://daedlo.com",
   url: "https://daedlo.com/updates/preview.json",
   keyId: "daedlo-release-2026-10",
-  keySha256: "df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297",
+  publicPemSha256:
+    "df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297",
 });
 const networkFetch = globalThis.fetch;
 const LEGACY_SHA =
@@ -68,7 +69,7 @@ const productionTrust = productionHttps
 if (productionHttps) {
   assert.equal(
     hash(productionTrust),
-    PRODUCTION.keySha256,
+    PRODUCTION.publicPemSha256,
     "Bundled production public trust must match the independent fixed pin",
   );
   assert.equal(
@@ -94,7 +95,12 @@ const result = {
     : "exact installed tools bootstrap, upgrade and rollback",
   transport: productionHttps ? "production-https" : "ephemeral-signed-feed",
   ...(productionHttps
-    ? { feed: { url: PRODUCTION.url, publicKeySha256: PRODUCTION.keySha256 } }
+    ? {
+        feed: {
+          url: PRODUCTION.url,
+          publicKeySha256: PRODUCTION.publicPemSha256,
+        },
+      }
     : {}),
   checks: [],
   cleanup: [],
@@ -718,6 +724,7 @@ try {
       await addEntry(candidate);
       publish(2);
     }
+    const beforeRefusal = await notes(application.url);
     const fetchCount = fetches.length;
     const refused = await active.manager.check();
     assert.equal(
@@ -726,7 +733,6 @@ try {
       "Old tools must not offer renamed alpha4",
     );
     assert.equal(refused.error?.code, "migration_required");
-    const beforeRefusal = await notes(application.url);
     const refusal = refused.error;
     await assert.rejects(active.manager.prepare("0.1.4-alpha.4"), {
       code: "stale_operation",
