@@ -20,6 +20,11 @@ outside its acceptance claim. Read the exact version's verification receipt;
 neither this guide nor a previous candidate's results establish this kit's release
 or acceptance status.
 
+For an existing alpha.3 managed integration, first follow the tools bootstrap in
+`START_HERE.md`. Reuse its existing configuration, registration, store, trust pin
+and checkpoint. Do not replace an accepted integration with a newly initialized
+one. Prove recovery of its retained legacy slot before proposing activation.
+
 ## Instructions for the agent
 
 1. Read the application's instructions and inspect its current changes. Resolve

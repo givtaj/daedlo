@@ -12,6 +12,7 @@ import {
   requireDirectory,
   sha256,
   verifyReleaseDirectory,
+  websiteReleaseNames,
 } from "./stage-release.mjs";
 
 export const UPDATE_TRUST = Object.freeze({
@@ -73,12 +74,14 @@ async function verifyDownloads(publicRoot, catalog, expectedVersion) {
       "Catalog must retain accepted alpha.2 and the requested current release",
     );
   await requireDirectory(join(publicRoot, "downloads"));
+  const metadataByVersion = new Map();
   for (const release of catalog.releases) {
     const directory = join(publicRoot, "downloads", release.version);
     const local = await verifyReleaseDirectory({
       releaseDirectory: directory,
       expectedVersion: release.version,
     });
+    metadataByVersion.set(release.version, local.metadata);
     for (const [field, file] of [
       ["kit", `daedlo-${release.version}.zip`],
       ["metadata", "release.json"],
@@ -101,6 +104,7 @@ async function verifyDownloads(publicRoot, catalog, expectedVersion) {
         "Catalog release notes must point to the public update instructions",
       );
   }
+  return metadataByVersion;
 }
 async function validate({
   publicRoot,
@@ -121,7 +125,11 @@ async function validate({
     previousState,
     now,
   });
-  await verifyDownloads(publicRoot, verified.catalog, expectedVersion);
+  const metadataByVersion = await verifyDownloads(
+    publicRoot,
+    verified.catalog,
+    expectedVersion,
+  );
   const ignore = (
     await readRegularFile(join(publicRoot, ".assetsignore"))
   ).toString();
@@ -134,7 +142,7 @@ async function validate({
   ])
     if (!ignore.split(/\r?\n/).includes("!" + path))
       throw Error("Exact public update allowlist entry required: " + path);
-  return verified;
+  return { ...verified, metadataByVersion };
 }
 export async function readStagedUpdates({
   publicRoot = join(DEFAULT_WEBSITE_ROOT, "public"),
@@ -166,7 +174,7 @@ export async function readStagedUpdates({
 }
 export function renderUpdatesTemplate(
   template,
-  { catalog, version, publicKeySha256 },
+  { catalog, version, publicKeySha256, metadata },
 ) {
   const values = {
     FEED_URL,
@@ -177,6 +185,11 @@ export function renderUpdatesTemplate(
     VERSION: version,
   };
   const found = [...template.matchAll(/{{([^}]+)}}/g)].map((m) => m[1]);
+  if (found.includes("TOOLS_PACKAGE")) {
+    if (metadata?.version !== version)
+      throw Error("Update tools metadata version mismatch");
+    values.TOOLS_PACKAGE = websiteReleaseNames(metadata).tools;
+  }
   if (
     Object.keys(values).some((k) => !found.includes(k)) ||
     found.some((k) => !Object.hasOwn(values, k))
@@ -256,6 +269,7 @@ export async function stageUpdates({
       catalog: verified.catalog,
       version: expectedVersion,
       publicKeySha256: sha256(keyBytes),
+      metadata: verified.metadataByVersion.get(expectedVersion),
     },
   );
   const updates = join(publicRoot, "updates");

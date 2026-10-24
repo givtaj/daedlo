@@ -1,10 +1,12 @@
 // Exact installed alpha.3 -> renamed alpha.4 -> alpha.3 drill using only the
-// independent notebook fixture. A local synthetic signed catalog supplies bytes;
-// this is never production-feed, customer acceptance or release authorization.
+// independent notebook fixture. Default transport uses a local synthetic feed;
+// --production-https reads the fixed live feed with pinned public trust and real
+// HTTPS. Neither mode mutates production or establishes customer acceptance.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import fs from "node:fs/promises";
+import { channel } from "node:diagnostics_channel";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -17,7 +19,30 @@ const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const readJson = async (path) => JSON.parse(await fs.readFile(path, "utf8"));
 const writeJson = (path, value) =>
   fs.writeFile(path, JSON.stringify(value, null, 2) + "\n", { mode: 0o600 });
-const legacyOnly = process.argv.includes("--legacy-only");
+const args = process.argv.slice(2);
+for (const arg of args)
+  assert.ok(
+    ["--legacy-only", "--production-https"].includes(arg),
+    "Unsupported upgrade acceptance argument",
+  );
+assert.equal(
+  new Set(args).size,
+  args.length,
+  "Duplicate upgrade acceptance argument",
+);
+const legacyOnly = args.includes("--legacy-only");
+const productionHttps = args.includes("--production-https");
+assert.ok(
+  !(productionHttps && legacyOnly),
+  "Production HTTPS acceptance requires the complete upgrade drill",
+);
+const PRODUCTION = Object.freeze({
+  origin: "https://daedlo.com",
+  url: "https://daedlo.com/updates/preview.json",
+  keyId: "daedlo-release-2026-10",
+  keySha256: "df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297",
+});
+const networkFetch = globalThis.fetch;
 const LEGACY_SHA =
   "f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190";
 assert.ok(
@@ -35,6 +60,23 @@ if (!legacyOnly) {
     "Pin the candidate ZIP with ALPHA4_CANDIDATE_SHA256",
   );
 }
+const productionTrust = productionHttps
+  ? await fs.readFile(
+      join(repo, "docs/update-trust", PRODUCTION.keyId + ".pem"),
+    )
+  : null;
+if (productionHttps) {
+  assert.equal(
+    hash(productionTrust),
+    PRODUCTION.keySha256,
+    "Bundled production public trust must match the independent fixed pin",
+  );
+  assert.equal(
+    process.platform + "/" + process.arch,
+    "darwin/arm64",
+    "Production alpha4 acceptance is scoped to macOS arm64",
+  );
+}
 const outputParent = resolve(
   process.env.ALPHA4_UPGRADE_OUTPUT ?? join(repo, "artifacts/alpha4-upgrade"),
 );
@@ -50,14 +92,22 @@ const result = {
   scope: legacyOnly
     ? "legacy fixture preparation only"
     : "exact installed tools bootstrap, upgrade and rollback",
+  transport: productionHttps ? "production-https" : "ephemeral-signed-feed",
+  ...(productionHttps
+    ? { feed: { url: PRODUCTION.url, publicKeySha256: PRODUCTION.keySha256 } }
+    : {}),
   checks: [],
   cleanup: [],
   limits: [
     "Independent synthetic notebook; no WBF, Roots or other customer checkout accessed",
     "Existing host toolchains and matching Playwright Chromium; clean OS is not tested",
-    "Ephemeral local signed catalog with injected fetch transport; no production feed, private publisher key or network publication",
+    productionHttps
+      ? "Fixed production HTTPS feed and immutable downloads with bundled pinned public trust; no private publisher key or production mutation"
+      : "Ephemeral local signed catalog with injected fetch transport; no production feed, private publisher key or network publication",
     "Notebook records live in the separately owned app process; exact data preservation is checked across driver and manager changes, not an application-process restart",
-    "Legacy feed capability signalling and production rollout, website command rendering, and release authorization remain separate gates",
+    productionHttps
+      ? "Website command rendering, customer acceptance, and release authorization remain separate gates"
+      : "Production rollout, website command rendering, and release authorization remain separate gates",
   ],
 };
 await writeJson(join(output, "result.json"), result);
@@ -288,6 +338,13 @@ async function prepareProject(legacy) {
 }
 let active, application, controller;
 const managers = [];
+const fetches = [];
+const requestChannel = channel("undici:request:create");
+const observeRequest = ({ request }) => {
+  const url = new URL(request.path, request.origin);
+  if (url.origin === PRODUCTION.origin) fetches.push(url.href);
+};
+if (productionHttps) requestChannel.subscribe(observeRequest);
 const statePath = join(work, "manager/state.json");
 const configPath = join(work, "managed.json");
 const currentReceipt = async () => {
@@ -467,20 +524,28 @@ try {
     pathToFileURL(join(sourceRoot, "server.mjs"))
   );
   application = await createNotebookServer();
-  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
-  const keyId = "ephemeral-alpha4-acceptance";
+  const { privateKey, publicKey } = productionHttps
+    ? {}
+    : generateKeyPairSync("ed25519");
+  const keyId = productionHttps
+    ? PRODUCTION.keyId
+    : "ephemeral-alpha4-acceptance";
   await fs.writeFile(
     join(work, "publisher-public.pem"),
-    publicKey.export({ type: "spki", format: "pem" }),
+    productionHttps
+      ? productionTrust
+      : publicKey.export({ type: "spki", format: "pem" }),
   );
-  const origin = "https://alpha4-acceptance.example.test";
+  const origin = productionHttps
+    ? PRODUCTION.origin
+    : "https://alpha4-acceptance.example.test";
   const config = {
     schemaVersion: 1,
     store: join(work, "manager"),
     registration,
     settings: { origin: application.url },
     catalog: {
-      url: origin + "/catalog.json",
+      url: productionHttps ? PRODUCTION.url : origin + "/catalog.json",
       publisher: "daedlo",
       channel: "preview",
       trustedKeys: [{ id: keyId, publicKeyFile: "publisher-public.pem" }],
@@ -503,7 +568,11 @@ try {
       version: value.metadata.version,
       channel: "preview",
       platforms: [{ os: process.platform, arch: process.arch }],
-      contracts: structuredClone(old.NINJA_CONTRACTS),
+      contracts: {
+        ...structuredClone(old.NINJA_CONTRACTS),
+        manager:
+          value.manifest.artifacts.runtime.name === "@daedlo/runtime" ? 2 : 1,
+      },
       notesUrl: origin + "/notes/" + value.metadata.version,
       kit: await asset(value.metadata.archive.file),
       metadata: await asset("release.json"),
@@ -539,28 +608,67 @@ try {
       }),
     );
   }
-  await addEntry(legacy);
-  publish(1);
+  if (!productionHttps) {
+    await addEntry(legacy);
+    publish(1);
+  }
+  async function assertAvailableKit(value) {
+    const available = (await readJson(statePath)).available;
+    assert.equal(available?.version, value.metadata.version);
+    for (const [field, name] of [
+      ["kit", value.metadata.archive.file],
+      ["metadata", "release.json"],
+      ["checksums", "SHA256SUMS"],
+    ]) {
+      const bytes = await fs.readFile(join(value.directory, name));
+      assert.deepEqual(
+        available[field],
+        {
+          url: `${origin}/downloads/${value.metadata.version}/${name}`,
+          bytes: bytes.length,
+          sha256: hash(bytes),
+        },
+        "Authenticated offered assets must match the explicitly pinned local kit",
+      );
+    }
+  }
+  async function preparePinned(value) {
+    await assertAvailableKit(value);
+    const before = fetches.length;
+    const prepared = await active.manager.prepare(value.metadata.version);
+    assert.deepEqual(
+      fetches.slice(before),
+      ["release.json", "SHA256SUMS", value.metadata.archive.file].map(
+        (name) => `${origin}/downloads/${value.metadata.version}/${name}`,
+      ),
+      "Manager downloads all three signed assets using the selected transport",
+    );
+    return prepared;
+  }
   async function open(api) {
-    // openNinja is the immutable alpha.3 public bootstrap API. Its provider
-    // captures fetch at construction, so the test installs only this bounded
-    // synthetic transport during bootstrap; the production code is unchanged.
+    // Both real immutable tools use their public bootstrap API. Production mode
+    // keeps the actual global fetch untouched; diagnostics observe requests only.
+    // Ephemeral mode supplies its bounded synthetic transport during bootstrap.
     assert.deepEqual(await readJson(configPath), config);
     const originalFetch = globalThis.fetch;
     let handles;
-    globalThis.fetch = async (url) => {
-      const address = String(url);
-      const bytes = address === config.catalog.url ? feed : assets.get(address);
-      assert.ok(bytes, "Only explicit local catalog assets may be fetched");
-      return new Response(bytes, {
-        status: 200,
-        headers: { "Content-Length": String(bytes.length) },
-      });
-    };
+    if (productionHttps) assert.equal(globalThis.fetch, networkFetch);
+    else
+      globalThis.fetch = async (url) => {
+        const address = String(url);
+        fetches.push(address);
+        const bytes =
+          address === config.catalog.url ? feed : assets.get(address);
+        assert.ok(bytes, "Only explicit local catalog assets may be fetched");
+        return new Response(bytes, {
+          status: 200,
+          headers: { "Content-Length": String(bytes.length) },
+        });
+      };
     try {
       handles = await api.openNinja(configPath);
     } finally {
-      globalThis.fetch = originalFetch;
+      if (!productionHttps) globalThis.fetch = originalFetch;
     }
     active = { ...handles, api, closed: false };
     managers.push(active);
@@ -568,13 +676,14 @@ try {
 
   await open(old);
   await active.manager.check();
-  let prepared = await active.manager.prepare("0.1.4-alpha.3");
+  let prepared = await preparePinned(legacy);
   assert.equal(prepared.operation.status, "ready");
   await active.manager.activate(prepared.operation.id, {
     acknowledgeRestart: true,
   });
   const baselineReceipt = await currentReceipt();
   assert.equal(baselineReceipt.version, "0.1.4-alpha.3");
+  assert.equal(baselineReceipt.release.archiveSha256, LEGACY_SHA);
   await managedFlow("legacy-old-tools", { durable: false });
   await record(
     "Immutable alpha.3 installed by its exact old tools; real negative/save flow passed",
@@ -605,17 +714,28 @@ try {
       source: candidate.metadata.source,
       manifestSha256: candidate.metadata.bundle.manifestSha256,
     };
-    await addEntry(candidate);
-    publish(2);
-    await active.manager.check();
+    if (!productionHttps) {
+      await addEntry(candidate);
+      publish(2);
+    }
+    const fetchCount = fetches.length;
+    const refused = await active.manager.check();
+    assert.equal(
+      refused.available,
+      null,
+      "Old tools must not offer renamed alpha4",
+    );
+    assert.equal(refused.error?.code, "migration_required");
     const beforeRefusal = await notes(application.url);
-    let refusal;
-    await assert.rejects(active.manager.prepare("0.1.4-alpha.4"), (error) => {
-      refusal = { code: error.code ?? null, message: error.message };
-      return /artifact|package|metadata|name|schema|prefix|family|archive|bundle|unsupported/i.test(
-        error.message,
-      );
+    const refusal = refused.error;
+    await assert.rejects(active.manager.prepare("0.1.4-alpha.4"), {
+      code: "stale_operation",
     });
+    assert.deepEqual(
+      fetches.slice(fetchCount),
+      [config.catalog.url],
+      "Old client must reject at discovery before any candidate download",
+    );
     assert.equal((await currentReceipt()).id, baselineReceipt.id);
     assert.equal(
       (await active.supervisor.status()).running.id,
@@ -625,12 +745,14 @@ try {
     assert.deepEqual(await old.snapshotProject(registration), original);
     await writeJson(join(output, "legacy-refusal.json"), refusal);
     await record(
-      "Old alpha.3 tools refuse renamed kit and preserve accepted slot/data",
+      "Immutable alpha.3 tools report migration_required before download and preserve accepted slot/data",
       refusal,
     );
     await closeManager();
     const checkpoint = (await readJson(statePath)).checkpoint;
-    assert.equal(checkpoint.generation, 2);
+    if (!productionHttps) assert.equal(checkpoint.generation, 2);
+    else assert.ok(checkpoint.generation >= 2);
+    result.legacyCheckpoint = checkpoint;
     const ownerBytes = await fs.readFile(
       join(config.store, ".ninja-project.json"),
     );
@@ -659,8 +781,14 @@ try {
       { toolsFiles: Object.keys(newTools.inventory).length },
     );
     const beforeUpgrade = await notes(application.url);
-    await active.manager.check();
-    prepared = await active.manager.prepare("0.1.4-alpha.4");
+    const offered = await active.manager.check();
+    assert.equal(offered.available?.version, "0.1.4-alpha.4");
+    assert.equal(offered.error, null);
+    const acceptedCheckpoint = (await readJson(statePath)).checkpoint;
+    assert.ok(acceptedCheckpoint.generation >= checkpoint.generation);
+    if (acceptedCheckpoint.generation === checkpoint.generation)
+      assert.deepEqual(acceptedCheckpoint, checkpoint);
+    prepared = await preparePinned(candidate);
     assert.equal(prepared.operation.status, "ready");
     assert.deepEqual(await notes(application.url), beforeUpgrade);
     await active.manager.activate(prepared.operation.id, {
@@ -668,6 +796,12 @@ try {
     });
     const candidateReceipt = await currentReceipt();
     assert.equal(candidateReceipt.version, "0.1.4-alpha.4");
+    assert.equal(candidateReceipt.release.archiveSha256, candidate.expectedSha);
+    assert.equal(
+      candidateReceipt.release.manifestSha256,
+      candidate.metadata.bundle.manifestSha256,
+    );
+    await newer.verifyInstallation(candidateReceipt.path, { registration });
     assert.deepEqual(
       candidateReceipt.handshake.descriptor,
       baselineReceipt.handshake.descriptor,
@@ -677,6 +811,24 @@ try {
     await record(
       "Exact renamed alpha.4 installation preserves data/model and passes real negative/save flow",
       { installationId: candidateReceipt.id },
+    );
+    const beforeRestart = await notes(application.url);
+    await closeManager();
+    await open(newer);
+    assert.deepEqual(
+      (await readJson(statePath)).checkpoint,
+      acceptedCheckpoint,
+    );
+    await active.manager.start();
+    assert.equal((await currentReceipt()).id, candidateReceipt.id);
+    assert.equal(
+      (await active.supervisor.status()).running.id,
+      candidateReceipt.id,
+    );
+    assert.deepEqual(await notes(application.url), beforeRestart);
+    await managedFlow("candidate-restarted-alpha4");
+    await record(
+      "Fresh manager recovers retained alpha4 installation and restarts it with preserved notebook data",
     );
     const beforeRollback = await notes(application.url);
     await active.manager.rollback({ acknowledgeRestart: true });
@@ -702,7 +854,11 @@ try {
       await fs.readFile(join(work, "publisher-public.pem")),
       trustBytes,
     );
-    assert.deepEqual((await readJson(statePath)).checkpoint, checkpoint);
+    assert.deepEqual(
+      (await readJson(statePath)).checkpoint,
+      acceptedCheckpoint,
+    );
+    result.finalCheckpoint = acceptedCheckpoint;
     const reports = await fs.readdir(join(config.store, "reports"));
     assert.ok(
       reports.length >= 4,
@@ -732,16 +888,23 @@ try {
   process.exitCode = 1;
 } finally {
   let driverClosed = true;
-  for (const value of managers) {
-    if (value.closed) continue;
+  for (const [index, value] of managers.entries()) {
     try {
-      await value.manager.close();
+      if (!value.closed) await value.manager.close();
+      const status = await value.supervisor.status();
+      assert.equal(status.running, null);
+      assert.equal(status.cleanupPending, false);
       value.closed = true;
-      result.cleanup.push({ resource: "managed driver", status: "closed" });
+      result.cleanup.push({
+        resource: "managed driver",
+        instance: index + 1,
+        status: "closed",
+      });
     } catch (error) {
       driverClosed = false;
       result.cleanup.push({
         resource: "managed driver",
+        instance: index + 1,
         status: "incomplete",
         error: error.message,
       });
@@ -786,6 +949,8 @@ try {
     result.status = "FAIL";
     process.exitCode = 1;
   }
+  if (productionHttps) requestChannel.unsubscribe(observeRequest);
+  result.transportRequests = fetches;
   result.finishedAt = new Date().toISOString();
   await writeJson(join(output, "result.json"), result);
   console.log(

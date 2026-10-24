@@ -43,7 +43,12 @@ sys.stdout.buffer.write(out.getvalue())`,
     },
   );
 }
-function kit(change = () => {}) {
+const legacyVersion = version;
+function kit(
+  change = () => {},
+  version = legacyVersion,
+  packagePrefix = "browser-driver",
+) {
   const source = {
     commit: "a".repeat(40),
     dirty: false,
@@ -55,7 +60,7 @@ function kit(change = () => {}) {
   const artifact = (kind, name, extension, bytes) => ({
     name,
     version,
-    file: `browser-driver-${kind}-${version}.${extension}`,
+    file: `${packagePrefix}-${kind}-${version}.${extension}`,
     bytes: bytes.length,
     sha256: sha256(bytes),
   });
@@ -63,17 +68,17 @@ function kit(change = () => {}) {
     version,
     source,
     artifacts: {
-      runtime: artifact("runtime", "@browser-driver/runtime", "tgz", runtime),
-      engine: artifact("engine", "browser-driver-engine", "crate", engine),
+      runtime: artifact("runtime", `@${packagePrefix}/runtime`, "tgz", runtime),
+      engine: artifact("engine", `${packagePrefix}-engine`, "crate", engine),
     },
   });
   const manifestBytes = Buffer.from(JSON.stringify(manifest) + "\n");
-  const toolsFile = `browser-driver-tools-${version}.tgz`;
+  const toolsFile = `${packagePrefix}-tools-${version}.tgz`;
   const toolsReceipt = Buffer.from(
     JSON.stringify({
       schemaVersion: 1,
       kind: "browser-driver-release-tools",
-      name: "@browser-driver/release-tools",
+      name: `@${packagePrefix}/release-tools`,
       version,
       source,
       archive: { file: toolsFile, bytes: tools.length, sha256: sha256(tools) },
@@ -539,3 +544,51 @@ if (process.env.DAEDLO_NINJA_ALPHA_KIT)
       "b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1",
     );
   });
+
+test("publisher requires manager2 for renamed kits and retains immutable manager1 entries through explicit per-version contracts", async (t) => {
+  const f = await fixture(t);
+  await publish(f.config);
+  const previousCatalogPath = join(f.config.output, "preview.json");
+  const old = JSON.parse(await fs.readFile(previousCatalogPath));
+  const newVersion = "0.1.4-alpha.4";
+  const candidate = kit(() => {}, newVersion, "daedlo");
+  const dir = join(f.root, "renamed-kit");
+  await fs.mkdir(dir);
+  await fs.writeFile(join(dir, `daedlo-${newVersion}.zip`), candidate.zip);
+  await fs.writeFile(join(dir, "release.json"), candidate.metadata);
+  await fs.writeFile(join(dir, "SHA256SUMS"), candidate.checksums);
+  const next = {
+    ...f.config,
+    generation: 2,
+    previousCatalogPath,
+    kitDirectories: [f.kitPath, dir],
+    output: join(f.root, "missing-manager"),
+  };
+  await assert.rejects(publish(next), /manager.*2|renamed.*manager/i);
+  const explicit = {
+    ...next,
+    output: join(f.root, "mixed"),
+    releaseContracts: { [newVersion]: { ...contracts, manager: 2 } },
+  };
+  await publish(explicit);
+  const mixed = JSON.parse(
+    await fs.readFile(join(explicit.output, "preview.json")),
+  );
+  assert.deepEqual(
+    mixed.signed.releases.find((r) => r.version === version),
+    old.signed.releases[0],
+  );
+  assert.equal(
+    mixed.signed.releases.find((r) => r.version === newVersion).contracts
+      .manager,
+    2,
+  );
+  await assert.rejects(
+    publish({
+      ...explicit,
+      output: join(f.root, "unknown-override"),
+      releaseContracts: { "0.1.4-alpha.99": { ...contracts, manager: 2 } },
+    }),
+    /release contract|override|manager/i,
+  );
+});

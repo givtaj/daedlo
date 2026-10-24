@@ -12,6 +12,7 @@ import {
 } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { releaseNames } from "../../scripts/release/names.mjs";
 
 export const DEFAULT_WEBSITE_ROOT = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -112,6 +113,19 @@ export function requireZipAllowlist(ignoreText, version) {
     );
 }
 
+export function websiteReleaseNames(metadata) {
+  const names = releaseNames(metadata?.bundle?.artifacts);
+  if (
+    !VERSION_PATTERN.test(metadata.version) ||
+    metadata.tools?.file !==
+      `tools/${names.prefix}-tools-${metadata.version}.tgz`
+  )
+    throw new Error(
+      "Release tools identity does not match its package family and version",
+    );
+  return names;
+}
+
 export function renderInstallTemplate(template, metadata) {
   const values = {
     VERSION: metadata.version,
@@ -119,6 +133,17 @@ export function renderInstallTemplate(template, metadata) {
     ZIP_BYTES: String(metadata.archive.bytes),
   };
   const found = [...template.matchAll(/{{([^}]+)}}/g)].map((match) => match[1]);
+  const familyKeys = ["TOOLS_FILE", "TOOLS_PACKAGE", "SKILL_NAME"];
+  if (familyKeys.some((key) => found.includes(key))) {
+    const names = websiteReleaseNames(metadata);
+    const familyValues = {
+      TOOLS_FILE: metadata.tools.file,
+      TOOLS_PACKAGE: names.tools,
+      SKILL_NAME: names.skill,
+    };
+    for (const key of familyKeys)
+      if (found.includes(key)) values[key] = familyValues[key];
+  }
   for (const [key, digest] of Object.entries({
     TOOLS_SHA256: metadata.tools?.sha256,
     MANIFEST_SHA256: metadata.bundle?.manifestSha256,

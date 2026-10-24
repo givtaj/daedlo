@@ -51,7 +51,7 @@ jobs:
       - name: Test shared runtime, release contracts and archive workbench
         run: |
           npm test
-          node --test tests/release-*.test.mjs
+          node --test tests/release-*.test.mjs tests/alpha4-*.test.mjs
           node tests/ninja-architecture-acceptance.mjs --test-published-config
           npm run test:roots-example
       - name: Run independent browser acceptance from source

@@ -101,7 +101,7 @@ Set up Daedlo end to end for the application repository open in this Codex chat:
 
 2. Use a durable fresh directory outside the application and any npm workspace. Download https://daedlo.com/downloads/{{VERSION}}/daedlo-{{VERSION}}.zip over HTTPS. Verify its SHA-256 is {{ZIP_SHA256}} before extraction or execution; stop on mismatch. Read the extracted START_HERE.md and AGENT_START.md. Verify the tools archive against {{TOOLS_SHA256}}, install it using the exact START_HERE.md block, and verify the bundle against {{MANIFEST_SHA256}}. For every scoped npm install use both --prefix and --workspaces=false, and verify ancestor manifests and locks remain unchanged. Preflight the documented Node, Rust, Python and matching Playwright/Chromium requirements; preserve working toolchains.
 
-3. Read the installed tools' skills/browser-driver/SKILL.md and its references, docs/agent-onboarding.md, docs/contracts.md and docs/ninja-update.md. Install the complete bundled skill for Codex without overwriting local customizations; explicitly read it if discovery is unavailable. Build a separate QA integration through the public Rust model and JavaScript adapter interfaces. Rust owns states, guards, outcomes and recipes; do not duplicate the transition graph in JavaScript. Design new integration files for the managed-launch contract from the outset. Review unsupported existing contracts instead of silently rewriting accepted behavior.
+3. Read the installed tools' skills/{{SKILL_NAME}}/SKILL.md and its references, docs/agent-onboarding.md, docs/contracts.md and docs/ninja-update.md. Install the complete bundled skill for Codex without overwriting local customizations; explicitly read it if discovery is unavailable. Build a separate QA integration through the public Rust model and JavaScript adapter interfaces. Rust owns states, guards, outcomes and recipes; do not duplicate the transition graph in JavaScript. Design new integration files for the managed-launch contract from the outset. Review unsupported existing contracts instead of silently rewriting accepted behavior.
 
 4. Verify one agreed existing flow in a visible local viewer using a separate controlled browser. Inspect the UI and distinguish execution from the application outcome. For a save, independently read back persisted data and verify reload. Test a relevant negative case, including independent no-write evidence where applicable. Preserve reports, close only owned resources, relaunch and repeat. Keep credentials, customer data and private traces out of shared records.
 
@@ -258,7 +258,7 @@ Set up Daedlo end to end for the application repository open in this Codex chat:
             ><code id="tools-install-code">(
   set -eu
   driver_kit="$(pwd -P)"
-  node --input-type=module - "$driver_kit/tools/browser-driver-tools-{{VERSION}}.tgz" &lt;&lt;'NODE'
+  node --input-type=module - "$driver_kit/{{TOOLS_FILE}}" &lt;&lt;'NODE'
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 const digest = createHash('sha256').update(readFileSync(process.argv[2])).digest('hex');
@@ -269,8 +269,8 @@ NODE
   cd "$driver_kit/installed-tools"
   npm install --prefix "$driver_kit/installed-tools" --workspaces=false \
     --offline --ignore-scripts --no-audit --no-fund \
-    "$driver_kit/tools/browser-driver-tools-{{VERSION}}.tgz"
-  node node_modules/@browser-driver/release-tools/lib/consumer-cli.mjs \
+    "$driver_kit/{{TOOLS_FILE}}"
+  node node_modules/{{TOOLS_PACKAGE}}/lib/consumer-cli.mjs \
     verify --bundle "$driver_kit/bundle" --sha256 '{{MANIFEST_SHA256}}'
 )</code></pre>
           </details>
@@ -350,6 +350,17 @@ NODE
           <h2 id="alpha-changes-title">What changed in this alpha</h2>
           <ul>
             <li>
+              Alpha.4 uses Daedlo package names and verifies installed runtime
+              dependencies before reporting that setup is ready.
+            </li>
+            <li>
+              Existing alpha.3 installations use an independently verified tools
+              upgrade before moving to the renamed packages.
+              <a href="/updates.html"
+                >Follow the managed-update instructions.</a
+              >
+            </li>
+            <li>
               Ninja-Update verifies and tests new versions separately, then lets
               you restart or revert while preserving your authored integration
               and application data.
@@ -403,10 +414,10 @@ NODE
           Public component licences, with their history intact.
         </h2>
         <p>
-          Starting with the next release, Daedlo’s public core will use
-          Apache-2.0. Required legacy MIT and third-party licence notices remain
-          included. This change does not revoke permissions already granted for
-          earlier releases.
+          From 0.1.4-alpha.4, Daedlo’s public core uses Apache-2.0. Required
+          legacy MIT and third-party licence notices remain included. This
+          change does not revoke permissions already granted for earlier
+          releases.
         </p>
         <p>
           The published 0.1.4-alpha.3 kit remains MIT AND Apache-2.0: Daedlo
@@ -417,8 +428,9 @@ NODE
           Your application, models, flows, adapters and data are separate from
           Daedlo’s public-core licence. Integrating Daedlo does not transfer
           ownership or require you to publish them. Third-party code you include
-          keeps its own terms. Existing browser-driver package names and
-          commands remain in the kit for compatibility.
+          keeps its own terms. Alpha.4 uses Daedlo package and skill names.
+          Earlier downloads retain their original browser-driver names; follow
+          the instructions bundled with the version you install.
         </p>
         <div class="guide-callout">
           <p>

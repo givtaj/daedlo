@@ -12,8 +12,17 @@ const template = () =>
 const metadata = (version, digest) => ({
   version,
   archive: { bytes: 206234, sha256: digest },
-  tools: { sha256: "b".repeat(64) },
-  bundle: { manifestSha256: "c".repeat(64) },
+  tools: {
+    file: `tools/browser-driver-tools-${version}.tgz`,
+    sha256: "b".repeat(64),
+  },
+  bundle: {
+    manifestSha256: "c".repeat(64),
+    artifacts: {
+      runtime: { name: "@browser-driver/runtime" },
+      engine: { name: "browser-driver-engine" },
+    },
+  },
 });
 function promptFrom(html) {
   const matches = [

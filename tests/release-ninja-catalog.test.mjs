@@ -694,3 +694,40 @@ test("signed Ninja catalog verifies a complete renamed Daedlo kit without changi
   assert.equal(verified.manifest.artifacts.runtime.name, "@daedlo/runtime");
   assert.equal(result.metadata.tools.file, `tools/daedlo-tools-${version}.tgz`);
 });
+
+test("manager2 selects renamed releases and legacy recovery while manager1 refuses renamed and future managers remain unsupported", () => {
+  const renamed = { ...dummy, contracts: { ...contracts, manager: 2 } };
+  const v = verified(catalog(renamed));
+  assert.equal(choose(v).status, "incompatible");
+  assert.deepEqual(choose(v).reasons, ["contracts.manager"]);
+  assert.equal(
+    choose(v, { contracts: { ...contracts, manager: 2 } }).status,
+    "update_available",
+  );
+  assert.equal(
+    choose(verified(), { contracts: { ...contracts, manager: 2 } }).status,
+    "update_available",
+    "new manager must preserve legacy recovery",
+  );
+  const future = verified(
+    catalog({ ...dummy, contracts: { ...contracts, manager: 3 } }),
+  );
+  assert.equal(
+    choose(future, { contracts: { ...contracts, manager: 2 } }).status,
+    "incompatible",
+  );
+  const changed = verified(
+    catalog({ ...renamed, contracts: { ...renamed.contracts, launcher: 2 } }),
+  );
+  assert.equal(
+    choose(changed, { contracts: { ...contracts, manager: 2 } }).status,
+    "incompatible",
+  );
+});
+
+test("new provider advertises renamed-package manager2 capability without changing customer interfaces", async () => {
+  const { NINJA_CONTRACTS } = await import("../scripts/release/ninja.mjs");
+  assert.equal(NINJA_CONTRACTS.manager, 2);
+  for (const key of ["launcher", "nodeAdapter", "rustModel", "protocol"])
+    assert.equal(NINJA_CONTRACTS[key], 1);
+});

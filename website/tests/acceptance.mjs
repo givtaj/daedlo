@@ -13,13 +13,15 @@ import {
 import {
   readStagedUpdates,
   renderUpdatesTemplate,
+  UPDATE_TRUST,
 } from "../scripts/stage-updates.mjs";
 
 export async function checkWebsite({
   websiteRoot = DEFAULT_WEBSITE_ROOT,
+  updateTrust = UPDATE_TRUST,
 } = {}) {
   const root = join(resolve(websiteRoot), "public");
-  const manifest = await createWebsiteManifest({ websiteRoot });
+  const manifest = await createWebsiteManifest({ websiteRoot, updateTrust });
   const publicFiles = manifest.files
     .filter((file) => file.path.startsWith("public/"))
     .map((file) => file.path.slice("public/".length));
@@ -109,7 +111,10 @@ export async function checkWebsite({
       "Rendered installation page must match the verified archive version, size and digest.",
     );
     if (publicFiles.includes("updates/preview.json")) {
-      const updates = await readStagedUpdates({ publicRoot: root });
+      const updates = await readStagedUpdates({
+        publicRoot: root,
+        updateTrust,
+      });
       const updateTemplate = await readFile(
         join(resolve(websiteRoot), "templates/updates.html"),
         "utf8",
@@ -117,6 +122,7 @@ export async function checkWebsite({
       const expected = renderUpdatesTemplate(updateTemplate, {
         catalog: updates.catalog,
         version,
+        metadata: release.metadata,
         publicKeySha256: updates.files.find((f) => f.file.endsWith(".pem"))
           .sha256,
       });

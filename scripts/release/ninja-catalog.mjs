@@ -361,9 +361,15 @@ function compatibility(release, platform, contracts) {
     )
   )
     reasons.push("platform");
-  for (const name of contractNames)
-    if (release.contracts[name] !== contracts[name])
-      reasons.push(`contracts.${name}`);
+  for (const name of contractNames) {
+    // Manager 2 can recover immutable legacy slots as well as renamed kits.
+    // Other managed interfaces remain exact; future manager versions fail closed.
+    const supported =
+      name === "manager" && contracts.manager === 2
+        ? [1, 2].includes(release.contracts.manager)
+        : release.contracts[name] === contracts[name];
+    if (!supported) reasons.push(`contracts.${name}`);
+  }
   for (const c of contracts.capabilities)
     if (!release.contracts.capabilities.includes(c))
       reasons.push(`capability.${c}`);

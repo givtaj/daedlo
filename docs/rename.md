@@ -78,7 +78,10 @@ The immutable alpha.3 manager understands the original `browser-driver` archive
 and package names. It **cannot install a future renamed Daedlo kit**. New tools
 understand both families, including validating a retained legacy installation and
 returning to a legacy slot, but an installed old manager does not gain that
-capability from a new feed entry or CLI alias.
+capability from a new feed entry or CLI alias. Alpha.4 declares manager contract
+2 in the signed feed. Old tools report `migration_required` and stop before
+candidate download; verified new tools accept manager 1 and 2 while preserving
+the same registration, trust pin, store and high-water checkpoint.
 
 The first renamed update therefore needs a one-time, independently verified
 installation of the new tools alongside the accepted old tools. The following is
@@ -128,8 +131,8 @@ blocked on the following release work:
   signing/checkpoint continuity and recovery. Source tests are only part of this
   gate.
 - Update and test website command rendering for the selected package family.
-  Current website templates intentionally target the immutable alpha.3 package
-  names; changing only a version number would produce incorrect renamed-kit
+  The templates now derive tools and skill paths from verified package metadata;
+  changing only a version number without those identities would produce incorrect
   installation commands.
 - Obtain the separately required release/publication authorization. Repository
   visibility, package publication, website deployment and customer dependency

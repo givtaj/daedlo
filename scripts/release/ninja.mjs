@@ -23,7 +23,7 @@ import { createNinjaServer } from "./ninja-server.mjs";
 import { frontendConfiguration, frontendIdentity } from "./native-session.mjs";
 
 export const NINJA_CONTRACTS = Object.freeze({
-  manager: 1,
+  manager: 2,
   launcher: 1,
   nodeAdapter: 1,
   rustModel: 1,

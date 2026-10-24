@@ -87,8 +87,12 @@ engine release. The immutable public rc.1 artifacts do not implement it.
 
 ## Public Node API
 
-Managed installation/activation is a separate version-1 contract implemented in
-the portable tools manager. See [Operation Ninja-Update](ninja-update.md) for its
+Managed installation/activation is a separate contract implemented in the
+portable tools manager. Alpha.4 advertises manager version 2: it can recover both
+legacy manager-1 installations and renamed manager-2 kits. Immutable alpha.3
+tools support manager 1 only and report `migration_required` before downloading
+an alpha.4 candidate. Launcher, Node adapter, Rust model and protocol interfaces
+remain version 1; unknown manager versions fail closed. See [Operation Ninja-Update](ninja-update.md) for its
 registration, launcher, isolated hook, browser identity and recovery boundaries.
 It does not change the JSON Lines protocol or move application rules into Node.
 

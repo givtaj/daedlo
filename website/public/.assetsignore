@@ -45,3 +45,9 @@
 !/updates/preview.json
 !/updates/keys/
 !/updates/keys/daedlo-release-2026-10.pem
+
+# Exact renamed alpha; older releases remain immutable.
+!/downloads/0.1.4-alpha.4/
+!/downloads/0.1.4-alpha.4/daedlo-0.1.4-alpha.4.zip
+!/downloads/0.1.4-alpha.4/SHA256SUMS
+!/downloads/0.1.4-alpha.4/release.json

@@ -827,7 +827,7 @@ export async function prepareInstallation({
     );
   if (await stat(path)) fail("Installation destination must be fresh");
   const contracts = verifiedKit?.identity?.contracts;
-  if (!contracts || contracts.manager !== 1)
+  if (!contracts || ![1, 2].includes(contracts.manager))
     fail("Verified kit lacks supported manager contracts");
   for (const key of ["launcher", "nodeAdapter", "rustModel", "protocol"])
     if (contracts[key] !== registration.interfaces[key])

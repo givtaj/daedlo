@@ -14,10 +14,19 @@ async function licenseParagraphs() {
     "utf8",
   );
   const html = renderInstallTemplate(template, {
-    version: "0.1.4-alpha.3",
+    version: "0.1.4-alpha.4",
     archive: { bytes: 1, sha256: "a".repeat(64) },
-    tools: { sha256: "b".repeat(64) },
-    bundle: { manifestSha256: "c".repeat(64) },
+    tools: {
+      file: "tools/daedlo-tools-0.1.4-alpha.4.tgz",
+      sha256: "b".repeat(64),
+    },
+    bundle: {
+      manifestSha256: "c".repeat(64),
+      artifacts: {
+        runtime: { name: "@daedlo/runtime" },
+        engine: { name: "daedlo-engine" },
+      },
+    },
   }).toString();
   const section = html.match(
     /<section\b[^>]*aria-labelledby="license-title"[^>]*>([\s\S]*?)<\/section>/,
@@ -34,12 +43,12 @@ async function licenseParagraphs() {
   );
 }
 
-test("next-release Apache terms retain legacy notices and prior permissions", async () => {
+test("alpha.4 Apache terms retain legacy notices and prior permissions", async () => {
   const paragraphs = await licenseParagraphs();
-  const future = paragraphs.find((text) => /next release/i.test(text));
+  const future = paragraphs.find((text) => /From 0\.1\.4-alpha\.4/i.test(text));
   assert.ok(
     future,
-    "Visitors must be told the Apache change starts with the next release.",
+    "Visitors must be told the Apache change starts with alpha.4.",
   );
   assert.match(future, /public core[^.]*Apache-2\.0/i);
   assert.match(future, /legacy MIT and third-party[^.]*notices/i);

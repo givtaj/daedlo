@@ -1,5 +1,31 @@
 # Verification record
 
+## Alpha.4 feed and installer integration — 2026-10-24
+
+The isolated branch adds manager-2 compatibility for renamed kits, preserving
+immutable manager-1 releases and legacy recovery. Old tools now see
+`migration_required` before candidate download. Website installation paths derive
+from verified package metadata, and the publication workflow has one explicit
+alpha.4 promotion input under its existing high-water checkpoint lock.
+
+- PASS: 411 release regression tests, including manager compatibility, immutable
+  feed inventory, bounded GitHub asset retrieval and workflow credential/order
+  checks. Genuine failing assertions were recorded before behavior changes.
+- PASS: website tests 65/65 against retained legacy assets, exact prior-candidate
+  installer comparisons 5/5 and 14 real Chromium checks at desktop/narrow widths.
+- PASS: [remote CI 40071244966](https://github.com/givtaj/daedlo/actions/runs/40071244966)
+  for earlier committed candidate `eda45238dca8e184fb73d0ba2ab9975117df8438`,
+  including Node 22/24 source, exact installed native/starter acceptance and
+  secrets/public-metadata gates. This does not cover later feed/site changes.
+- NOT RUN at this checkpoint: final rebuilt artifact acceptance, CI for these new
+  changes, signed production promotion and production HTTPS upgrade/rollback.
+
+The original native setup checkout remains clean at
+`42c4956a95f264282602db2e23ed3db8c88269a5`. No production publication has occurred
+at this checkpoint. Final immutable artifact pins must land before merging the
+website claims; ordinary renewal then refuses a legacy-only baseline until the
+explicit promotion succeeds. Previous candidate results below are historical.
+
 ## Final alpha.4 local acceptance — 2026-10-24
 
 The four improvements and integrated native setup are implemented and locally

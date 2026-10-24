@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "23 4 * * *"
   workflow_dispatch:
+    inputs:
+      promote_alpha4:
+        description: Publish the reviewed and pinned alpha.4 kit
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -40,8 +45,8 @@ jobs:
           node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; assert.equal(JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/daedlo-wrangler/node_modules/wrangler/package.json")).version, "4.147.0");'
       - name: Check renewal and publication safety before credential scope
         run: |
-          node --test tests/release-ninja-catalog.test.mjs tests/release-ninja-publisher.test.mjs tests/release-ninja-renew.test.mjs tests/release-ninja-checkpoint.test.mjs website/tests/updates.test.mjs website/tests/stage-release.test.mjs
-          node_modules/.bin/prettier --check .github/workflows/ninja-renew.yml scripts/release/ninja-checkpoint.mjs scripts/release/ninja-renew.mjs tests/release-ninja-checkpoint.test.mjs tests/release-ninja-renew.test.mjs
+          node --test tests/release-ninja-catalog.test.mjs tests/release-ninja-publisher.test.mjs tests/release-ninja-renew.test.mjs tests/release-ninja-promotion.test.mjs tests/release-ninja-checkpoint.test.mjs website/tests/updates.test.mjs website/tests/stage-release.test.mjs
+          node_modules/.bin/prettier --check .github/workflows/ninja-renew.yml scripts/release/ninja-checkpoint.mjs scripts/release/ninja-renew.mjs scripts/release/ninja-promotion.mjs tests/release-ninja-promotion.test.mjs tests/release-ninja-checkpoint.test.mjs tests/release-ninja-renew.test.mjs
       - name: Restore authenticated renewal high-water checkpoint
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -50,6 +55,8 @@ jobs:
       - name: Prepare verified public renewal with temporary signing key
         env:
           DAEDLO_UPDATE_SIGNING_KEY: ${{ secrets.DAEDLO_UPDATE_SIGNING_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+          NINJA_PROMOTE_ALPHA4: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha4 && 'true' || 'false' }}
         run: |
           set -euo pipefail
           umask 077
@@ -64,7 +71,11 @@ jobs:
           if test -f "$RUNNER_TEMP/daedlo-checkpoint/catalog.json"; then
             checkpoint=(--checkpoint "$RUNNER_TEMP/daedlo-checkpoint/catalog.json")
           fi
-          node scripts/release/ninja-renew.mjs prepare --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+          if test "$NINJA_PROMOTE_ALPHA4" = "true"; then
+            node scripts/release/ninja-promotion.mjs --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+          else
+            node scripts/release/ninja-renew.mjs prepare --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+          fi
       - name: Validate the exact staged public website
         env:
           DAEDLO_WEBSITE_ROOT: ${{ runner.temp }}/daedlo-renewal/site
@@ -95,7 +106,7 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           test ! -e "$WRANGLER_OUTPUT_FILE_PATH"
-          "$RUNNER_TEMP/daedlo-wrangler/node_modules/.bin/wrangler" versions upload --config "$RUNNER_TEMP/daedlo-renewal/site/wrangler.jsonc" --name daedlo --message "Scheduled signed catalog renewal"
+          "$RUNNER_TEMP/daedlo-wrangler/node_modules/.bin/wrangler" versions upload --config "$RUNNER_TEMP/daedlo-renewal/site/wrangler.jsonc" --name daedlo --message "Verified signed catalog publication"
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import assert from 'node:assert/strict';
@@ -114,7 +125,7 @@ jobs:
           NINJA_VERSION_ID: ${{ steps.upload.outputs.version-id }}
         run: |
           node scripts/release/ninja-renew.mjs verify --output "$RUNNER_TEMP/daedlo-renewal"
-          "$RUNNER_TEMP/daedlo-wrangler/node_modules/.bin/wrangler" versions deploy "$NINJA_VERSION_ID@100" --config "$RUNNER_TEMP/daedlo-renewal/site/wrangler.jsonc" --name daedlo --yes --message "Scheduled signed catalog renewal"
+          "$RUNNER_TEMP/daedlo-wrangler/node_modules/.bin/wrangler" versions deploy "$NINJA_VERSION_ID@100" --config "$RUNNER_TEMP/daedlo-renewal/site/wrangler.jsonc" --name daedlo --yes --message "Verified signed catalog publication"
       - name: Verify the active deployment identity
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
