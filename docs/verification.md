@@ -1,5 +1,56 @@
 # Verification record
 
+## Final alpha.4 local acceptance — 2026-10-24
+
+The four improvements and integrated native setup are implemented and locally
+verified. **Unpublished; not yet cleared for production rollout.** Final runtime,
+engine, tools and kit came from clean source
+`5c66209166922db5ae732e0ba5841b350f1e090f` on `codex/alpha4-wbf`.
+The source regression results in the preceding development checkpoint below cover
+the implementation. The final source change replaces fixture-specific labels with
+generic names and waits for the exact completed save before taking upgrade viewer
+screenshots. All exact-package checks below were rerun on the final artifacts.
+This verification entry is a later documentation-only change.
+
+| Final artifact identity | SHA-256 |
+| --- | --- |
+| Source tree | `cc75051b022d3e157eea67f2dbe1a58eada18dbf1d9ed31a3f702fd17e400013` |
+| Bundle manifest | `f65516c377b8002e897c3341318cac2ca1ca1f67ff8724ae277725e9686dffca` |
+| Portable tools | `ed5fae3ae1ea141f75d7b7bab84cf22a531c37e663c263bba9cbb45e599e2e03` |
+| Complete kit ZIP | `e1cf534fa853f189b4b44242f2ef7730dfe2db536aa2c0a097f3425b803e53a4` |
+
+| Exact installed acceptance | Observed result |
+| --- | --- |
+| Runtime/crate installation | PASS: independent offline consumer, exact crate compilation, both CLI aliases, all 22 runtime file bytes verified before/after. |
+| Browser and existing behavior | PASS: 8 browser/API groups, 10 CLI, 25 finalization and 9 browser-control checks; named frontend viewer isolation passes. |
+| Native startup and lifecycle | PASS: 13 browser checkpoints using exact installed tools/runtime/crate. Includes delayed bootstrap, invalid real Rust hello with safe diagnostic, concurrent frontends, target failure, cooperative and unacknowledged cancellation, preserved ownership and attached-app survival. |
+| Shipped starter | PASS: 16 checks executed from the installed tools' copied starter against the exact installed runtime and extracted crate. Successful independent readback, no-write rejection, stale drafts, uncertain effects, redirects/aborts and unresolved request evidence remain distinct. All 59 tools files verified before/after. |
+| Legacy tools bootstrap and rollback | PASS: 6 checkpoints with immutable alpha.3 ZIP `f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190`. Old tools refuse the renamed kit without disturbing the accepted slot/data; new tools recover legacy, activate alpha.4, restore the complete alpha.3 slot and relaunch. Config, trust/checkpoint, authored states/flows/adapter, both tools installs and app records are preserved. Five lifecycle reports and durable completed-run reports retained. |
+| Presentation and cleanup | PASS: startup/failure/ready screens, named viewer, starter saved result and exact candidate/rollback save screenshots inspected. Owned resources and temporary consumers closed; attached app remained alive until its independent test owner closed it. No retained cleanup failures. |
+| Package/private boundaries | PASS: closed inventories, required unchanged notices and source identities verified. Customer/generated directories excluded and new fixture labels generic. |
+
+Final evidence is private and ignored: `artifacts/alpha4-final/identity.json`,
+`installed-release/results.json`, `installed-release/native/browser-result.json`,
+`installed-starter/result.json`, and
+`artifacts/alpha4-upgrade/run-8pHy8U/result.json`. Earlier frozen candidates and
+failed/setup receipts remain historical. An interrupted final kit assembly was
+classified as an interrupted build, then completed into a fresh output from the
+verified source-bound bundle/tools; it was not counted as a browser failure.
+
+The upgrade fixture is an independent notebook with an ephemeral local signed
+catalog. Its app-process records were preserved across driver/manager changes;
+this does not prove database backup/restore, app-process restart durability,
+actual customer acceptance or production-feed delivery. Missing previous-document
+terminal events remain an explicit unresolved condition, not a claimed core fix.
+
+The original native setup worktree remains clean at
+`42c4956a95f264282602db2e23ed3db8c88269a5`; normal customer checkouts and dependencies
+were not changed. No push, merge, release, feed/signing/checkpoint mutation,
+website deployment or repository visibility change occurred. Remote CI for this
+branch has **NOT RUN**. Before publication, verify legacy-manager capability/feed
+rollout and package-family website command rendering, complete the relevant
+release checks/approval, and keep customer promotion separately authorized.
+
 ## Alpha.4 continuation after rename — local candidate, 2026-10-23
 
 Work resumed from renamed `main` at
