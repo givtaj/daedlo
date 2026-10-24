@@ -1,5 +1,34 @@
 # Verification record
 
+## Alpha.4 publication artifact — 2026-10-24
+
+The final installation-guide audit replaced stale publication-status wording in
+all seven affected shipped guides; command/configuration blocks are unchanged.
+The final clean package source is `7bb3491aa49a7e9c8321e20db8904a75e7e63e03`.
+[Exact-source CI 40073590521](https://github.com/givtaj/daedlo/actions/runs/40073590521)
+passes Node 22/24 source/browser/package/native/starter checks and metadata/secrets.
+All exact-package local acceptance was rerun on these bytes: installed runtime
+8 browser groups, 10 CLI, 25 finalization, 9 control and 13 native checks; starter
+16; managed upgrade/restart/rollback 7; website 66 tests and 14 Chromium checks;
+DOM-copied offline installer with all nine surrounding workspace entries preserved.
+Owned cleanup passed. The package and metadata are the only current publication
+candidate; preceding artifact identities are historical.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Source tree | `cbe572dc02d8f998c0fec81efb8a77681526c22e654c8be4b95627c4abb2be39` |
+| Bundle manifest | `85137d29cda75d45da829efb488fc277b46af637ce85dac248b499a52718879c` |
+| Tools | `ea1a07a7b771a046fa6d32891e3a62463b57f7753e81fc3dba10d6463f6fd2bd` |
+| ZIP (280815 bytes) | `3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75` |
+| External verification metadata | `7ff86a221af63c212bf4a271263367e72c674ff9497281da9253d3f1ffc2f70b` |
+| SHA256SUMS | `f3415dda3246bca2277c2d175b22aa97bb19c301843a0e2fa9f2401dbe162b07` |
+
+Publisher policy pins this exact three-file inventory. Signed publication and
+production HTTPS acceptance remain pending at this checkpoint; the native setup
+checkout and normal customer dependencies remain untouched. Evidence stays in
+ignored `artifacts/alpha4-publish` and
+`artifacts/alpha4-website/final-wn6Dnh/receipt.json`.
+
 ## Alpha.4 frozen release and publication gate — 2026-10-24
 
 Clean package source is `bd8e393351f3116920c976cfd3221035e2304db3`.

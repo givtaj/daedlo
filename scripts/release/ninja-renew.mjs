@@ -57,25 +57,25 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
   },
   promotion: {
     version: "0.1.4-alpha.4",
-    sourceCommit: "bd8e393351f3116920c976cfd3221035e2304db3",
+    sourceCommit: "7bb3491aa49a7e9c8321e20db8904a75e7e63e03",
   },
   releaseContracts: { "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 } },
   assets: {
     "0.1.4-alpha.4": {
       "daedlo-0.1.4-alpha.4.zip": {
-        bytes: 280646,
+        bytes: 280815,
         sha256:
-          "e060da304e9ec612472f580bdfdb06ac2bc048dc4fa409bc6e91d1aff13a1ec7",
+          "3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75",
       },
       "release.json": {
         bytes: 6978,
         sha256:
-          "3a056d68744ad972cfd01a923a654d5fa4d18a967c25422a0216ce57b6d761df",
+          "7ff86a221af63c212bf4a271263367e72c674ff9497281da9253d3f1ffc2f70b",
       },
       SHA256SUMS: {
         bytes: 91,
         sha256:
-          "f28519c8579fd6f832e35841395eeb0647bd0b49e48c6d850039a8efacd342e0",
+          "f3415dda3246bca2277c2d175b22aa97bb19c301843a0e2fa9f2401dbe162b07",
       },
     },
     "0.1.2-rc.1": {
