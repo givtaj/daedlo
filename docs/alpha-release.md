@@ -1,4 +1,37 @@
-# Daedlo alpha delivery — 24 October 2026
+# Daedlo alpha delivery — 26 October 2026
+
+Release: **0.1.4-alpha.5**. Status: **published assisted alpha; production acceptance passed**.
+[Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·
+[Versioned release](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.5) ·
+[Exact verification metadata](https://daedlo.com/downloads/0.1.4-alpha.5/release.json).
+
+The scope remains assisted **macOS arm64 + Codex**. Alpha.5 adds an executable
+managed custom-runner reference, private application-policy example, separate
+model preflight and installation hooks, persistence-proof guidance and an optional
+custom-runner report archive. The native injected session, protocol and managed
+contracts remain unchanged. The in-memory cache remains limited to 16 completed reports; each report retains
+at most 200 events. Archiving cannot reconstruct discarded history.
+
+| Gate | Observed result |
+| --- | --- |
+| Source and publisher CI | PASS on Node 22/24 and metadata/secrets; reviewed publisher tree matches tested PR tree |
+| Exact installed runtime and tools | PASS: browser 8, CLI 10, finalization 25, control 9, native 13; 69 tools/22 runtime files verified |
+| Shipped references | PASS: starter 16, evidence 9, managed 8, real installation/hooks and independent review |
+| Production upgrade | PASS: seven actual HTTPS alpha.4 → alpha.5 → alpha.4 checkpoints, restart, preservation and cleanup |
+| Website and installer | PASS: 68 website tests, 14 browser and four layout checks; eight actual production checks and copied offline installer |
+| Customer integration acceptance | Separate: native registration, customer upgrade/rollback and application fault coverage remain application-owned |
+
+Immutable package source is `6577d8fd578c1df8f3cc74eb6436dc537061ba21`.
+The ZIP is **298366 bytes**, SHA-256
+`2d9cbae796edd4cd5967b76458020e3366fa9d33cc1eed65a3e1d523eb65122f`.
+Publisher/status commits do not change those bytes. The private GitHub repository
+holds exactly the same three release files as the public download path.
+[Verification](verification.md) records the signed checkpoints, active deployment
+and actual delivery evidence. Historical releases, licenses and trust identity
+remain intact. Synthetic conformance does not establish customer business-flow
+acceptance, database recovery or application-process restart durability.
+
+## Historical alpha.4 delivery — 24 October 2026
 
 Release: **0.1.4-alpha.4**. Status: **published assisted alpha; production acceptance passed**.
 [Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·

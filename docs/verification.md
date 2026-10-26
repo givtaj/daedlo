@@ -1,6 +1,61 @@
 # Verification record
 
-## Alpha.5 immutable publication candidate — 2026-10-26
+## Alpha.5 released and production-verified — 2026-10-26
+
+**PASS — released and support follow-up sent.** [PR #15](https://github.com/givtaj/daedlo/pull/15)
+merged as `4f030c86178e3d7b67af0157af015c34d725c28e`. Its tree
+`57b078b214f886c079760edb2f8b279dbdd7a85b` exactly matches the reviewed publisher
+head `0fe7720ff3e724af173829b51010b16ccb8a8298` and tested PR merge
+`e622f4746c058bf5c9e479f639a01aaa134c942a`. Package source remains
+`6577d8fd578c1df8f3cc74eb6436dc537061ba21`; the published tag resolves to that
+commit. [The prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.5)
+and public download path contain exactly the three pinned files below. Repository
+visibility remains **PRIVATE**. Earlier candidate entries are historical.
+
+| Gate | Actual evidence |
+| --- | --- |
+| Exact-source CI | PASS: [40311754111](https://github.com/givtaj/daedlo/actions/runs/40311754111), Node 22/24 and metadata/secrets |
+| Publisher PR CI | PASS: [40313924806](https://github.com/givtaj/daedlo/actions/runs/40313924806), all three jobs; tested tree equals merged tree |
+| Publication safeguards | PASS: 115 tests and independent review of all 15 pinned files, retained historical pins, signing identity and workflow ordering |
+| Signed promotion | PASS: [40315317417](https://github.com/givtaj/daedlo/actions/runs/40315317417), restored generation 11, saved generation 12 before deployment, active identity/live assets/security and key cleanup |
+| Production website/installer | PASS: eight actual HTTPS/browser checks, pinned key/feed/all three downloads, desktop/narrow inspection and exact copied offline installer; nine surrounding workspace entries preserved |
+| Production upgrade | PASS: seven actual HTTPS alpha.4 → alpha.5 → alpha.4 checkpoints, tools bootstrap, activation, fresh manager restart, rollback/relaunch and preservation |
+| Ordinary renewal | PASS: [40315723435](https://github.com/givtaj/daedlo/actions/runs/40315723435), retained generation 12 and published generation 13; every release entry unchanged |
+| Authorized support follow-up | PASS: reply sent after publication and production verification, with exact update instructions and remaining customer acceptance; correspondence stays private |
+
+The production drill observed four real catalog requests and all three asset URLs
+for each of alpha.4 and alpha.5. Initial setup selected the independently pinned
+alpha.4 baseline from the authenticated feed; normal candidate discovery used the
+actual installed provider. All three manager instances, the browser and owned
+notebook app closed. It retained 25 per-run and six lifecycle reports and preserved
+source, tools, configuration, publisher trust, checkpoint and five saved synthetic
+records. The live installer/browser fixture also closed and removed its owned
+files. Final restart, rollback and desktop/narrow website screenshots were inspected.
+
+Promotion activated Worker version `677bd91c-024e-468f-9d91-4871254936fa` at 100%,
+deployment `eeceb680-89da-400d-8648-17ff77861855`. Ordinary renewal activated
+`ced9e68e-77f3-4520-92dc-578d4e401ff6` at 100%, deployment
+`e75f05d2-4761-48f9-867a-fd37ec7464f4`. The generation-13 catalog expires
+`2026-11-02T11:32:10.179Z`, raw SHA-256
+`77d3023d6dd1ca593f65f129ffe8c638eb1ef8da1e1eb451eebd2ec5a244013e`,
+payload SHA-256 `67014432af4da6da422a2b6ac5d53d313a9f2ca35c6c9632df4930fb50aeffcd`.
+Retained checkpoint artifact is `12647305509`, archive SHA-256
+`f84d3cff0c5f0bb19a3e333bd865223bb0081fba202f26782f8ad923c9b12c62`.
+Live bytes equal the saved signed checkpoint. The key and 04:23 UTC renewal
+schedule remain unchanged; regional/provider-host restrictions remain as recorded
+for the existing service.
+
+Private ignored evidence: `artifacts/alpha5-final/{installed-release,installed-starter}`,
+`artifacts/alpha5-final/production-upgrade/run-GBNwD8`,
+`artifacts/alpha5-website/live-3KU5oO/receipt.json`, publication/renewal receipts and
+saved public checkpoints. No private correspondence, credentials, catalogs or
+session traces were added to Git or release assets. Customer native registration,
+customer upgrade/rollback, concurrent customer frontends, full detached-document
+fault coverage and ordinary dependency promotion remain outside this delivery's
+acceptance. The report's 200-event bound remains explicit. [Epic #11](https://github.com/givtaj/daedlo/issues/11)
+closes product delivery, not customer adoption.
+
+## Historical alpha.5 immutable publication checkpoint — 2026-10-26
 
 **PASS — pre-publication gates. Publication pending.** The final package source is
 `6577d8fd578c1df8f3cc74eb6436dc537061ba21`. [Exact-source CI 40311754111](https://github.com/givtaj/daedlo/actions/runs/40311754111)
@@ -42,7 +97,7 @@ ephemeral signature; only
 verification metadata/feed presentation changed from the tested website.
 Publisher-source CI, signed publication, production HTTPS upgrade/installer acceptance and the support reply remain required.
 
-## Alpha.5 managed integration candidate — 2026-10-26
+## Historical alpha.5 managed integration checkpoint — 2026-10-26
 
 **IN PROGRESS — not published.** [Epic #11](https://github.com/givtaj/daedlo/issues/11)
 tracks the managed custom-runner reference, persistence/reporting guidance and

@@ -12,47 +12,29 @@ identity, model-owned flows, strict guards and conservative effect evidence.
 - [x] [Evidence guidance #13](https://github.com/givtaj/daedlo/issues/13): persistence
   proof before effect finalization, immutable per-run capture and explicit bounds,
   immediate native archives and recovery without replay.
-- [ ] [Delivery #14](https://github.com/givtaj/daedlo/issues/14): exact package and
+- [x] [Delivery #14](https://github.com/givtaj/daedlo/issues/14): exact package and
   upgrade/restart/rollback acceptance, CI, immutable release, signed publication,
   live verification, then the authorized support reply.
 
 Product conformance does not establish customer managed adoption or complete
 application fault coverage. Preserve customer records and accepted installations.
-Actual results belong in docs/verification.md; unchecked items are not complete.
+Product delivery and the authorized post-publication support reply are complete.
+Actual results and remaining customer acceptance belong in docs/verification.md.
 
 
-Current release: [Daedlo alpha delivery — 24 October 2026](alpha-release.md),
-published assisted **0.1.4-alpha.4**. The rename and preserved native setup are
-integrated with four scoped improvements: safe field-level model validation
-errors, visible startup before readiness, named frontend identity and isolated
-lifecycle, and a packaged Rust/adapter starter with real-browser acceptance.
+Current release: [Daedlo alpha delivery — 26 October 2026](alpha-release.md),
+published assisted **0.1.4-alpha.5**. Managed custom-runner onboarding and evidence
+reporting are shipped and verified from exact installed artifacts. Native two-
+frontend lifecycle, independent saved/uncertain evidence, source and publisher CI,
+actual production installer and HTTPS upgrade/restart/rollback passed. The signed
+feed preserves every previous release and the existing publisher trust.
 
-Exact installed package, native cancellation/cleanup, legacy-tools bootstrap,
-upgrade, restart and rollback passed. The website's package-family installation
-commands and copied installer passed before and after publication. Source and
-publisher CI passed on Node 22/24. The production feed uses manager contract 2
-for alpha.4 while retaining immutable manager-1 alpha.2/alpha.3 entries; old tools
-refuse alpha.4 before download. Promotion and ordinary renewal both passed with
-retained signed checkpoints. [Verification](verification.md) owns exact current
-identities, receipts and limits.
-
-[Native setup](native-setup.md) builds on the existing Ninja installation and
-rollback contracts: read-only preflight, resumable preparation, single-runner
-reconnect, exact Codex viewer handoff, immediate private reports and explicit
-same-version source refresh. Keep native tools outside runtime slots and preserve
-customized project source. The original native task checkout is unchanged.
-
-[Operation Ninja-Update](operations/ninja-update.md) delivered the preceding
-alpha.3 managed updater. Its dated eight-checkpoint synthetic Architecture Studio
-acceptance remains historical. Alpha.4's separate seven-checkpoint production
-HTTPS upgrade drill uses an independent notebook conformance fixture. These tests
-do not establish external customer business-flow acceptance or database recovery.
-Alpha.2 still requires an assisted managed-tools bootstrap; alpha.3 needs verified
-new tools for renamed kits. WBF and everyday Roots dependency promotion remain
-separate and unaccepted. Daily catalog renewal remains active at 04:23 UTC.
-
-The milestones below retain their historical scope and do not by themselves
-establish a current release.
+The [verification record](verification.md) owns exact identities and scoped
+results. Customer native registration, business-flow and full fault coverage,
+customer upgrade/rollback and ordinary dependency promotion remain separate.
+The original native setup worktree and everyday Roots dependencies are unchanged.
+Daily renewal remains active at 04:23 UTC. Earlier milestones below retain their
+historical scope and do not establish additional current customer acceptance.
 
 ## Goal and approved constraints
 

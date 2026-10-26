@@ -11,31 +11,28 @@ application outcome. Authored flows run without an AI agent or model API key.
 [Contribute](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Get help](SUPPORT.md) ·
 [Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
-**0.1.4-alpha.4 is released: assisted macOS arm64 onboarding with Codex.**
+**0.1.4-alpha.5 is released: assisted macOS arm64 onboarding with Codex.**
 [Start with one Codex prompt](https://daedlo.com/install) or read the
-[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.4).
-The exact installed kit, isolated application, source CI and public delivery
-passed their scoped checks on 24 October 2026. The [verification record](docs/verification.md)
-owns measured results and limits; [alpha delivery](docs/alpha-release.md) owns the
-product scope and next acceptance milestone. Everyday Roots dependencies remain
-unchanged.
+[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.5).
+The exact installed kit, source CI, managed reference, public installer and
+production HTTPS upgrade/restart/rollback passed their scoped checks on 26 October
+2026. The [verification record](docs/verification.md) owns measured results and
+limits; [alpha delivery](docs/alpha-release.md) owns the product scope.
 
-Alpha.4 extends [Operation Ninja-Update](docs/ninja-update.md):
-prepare a separate installation, validate the existing project, restart at a safe
-boundary and revert the complete installation if needed. It requires one-time
-managed registration and a pinned publisher key. The [signed preview feed](https://daedlo.com/updates/preview.json)
-and [setup guide](https://daedlo.com/updates) are live. Daily GitHub Actions catalog
-renewal is active at 04:23 UTC. Alpha.4 promotion and a subsequent ordinary renewal
-both passed, preserving every immutable release entry and the publisher key.
-[Verification](docs/verification.md) records the current feed, regional checks
-and limits. Expiry blocks new update checks/downloads while accepted local use
-and rollback remain available.
-WBF still needs its own project registration and disposable acceptance.
+Alpha.5 adds a complete [managed custom-runner reference](docs/managed-integration.md)
+and [persistence/reporting guide](docs/evidence-reporting.md). Keep the injected
+native session intact, connect independent proof before finalization, and archive
+each completed canonical report. Reports retain their explicit 200-event bound;
+archiving cannot restore truncated history.
 
-Alpha.5 is in verification under [epic #11](https://github.com/givtaj/daedlo/issues/11).
-It adds an executable managed custom-runner reference and evidence-reporting
-guidance. Publication and production acceptance are tracked separately in the
-[verification record](docs/verification.md).
+[Operation Ninja-Update](docs/ninja-update.md) prepares a separate installation,
+validates the existing project, restarts at a safe boundary and supports complete
+rollback. One-time managed registration and a pinned publisher key are required.
+The [signed preview feed](https://daedlo.com/updates/preview.json) and
+[setup guide](https://daedlo.com/updates) are live. Daily catalog renewal remains
+active at 04:23 UTC. Expiry blocks new checks/downloads while accepted local use
+and rollback remain available. Customer registration and business-flow acceptance
+remain separate; everyday Roots dependencies are unchanged.
 
 ## Licensing and package names
 
@@ -57,7 +54,7 @@ registry publication or customer dependency promotion. The repository is being
 prepared for community contributions and stays private until the owner approves
 opening access.
 
-Alpha.4 includes [safe validation diagnostics](docs/contracts.md), a
+Alpha.5 retains [safe validation diagnostics](docs/contracts.md), a
 [small tested starter](examples/starter/README.md), and named frontend startup
 with isolated lifecycle.
 
@@ -67,7 +64,7 @@ Browser viewer handoff. It extends Ninja-Update with source refresh at the accep
 version and immediate durable run reports. The published alpha.3 instructions and
 existing integrations remain supported. Exact installed and production HTTPS
 checks belong in verification. Immutable alpha.3 tools report `migration_required`
-before downloading alpha.4; independently verified new tools support both families.
+before downloading alpha.4 or later; independently verified new tools support both families.
 
 ## The first alpha journey
 
