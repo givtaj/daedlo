@@ -50,6 +50,23 @@ Worker or domain permission is required. See verification for provisioning statu
    discovery/downloads, and disposable data. Record upgrade, rejected candidate,
    rollback, byte integrity, reports and cleanup separately from source checks.
 
+## Explicit release promotion
+
+Alpha.4 and alpha.5 use separate reviewed promotion selections in the existing
+renewal workflow. After exact-package acceptance, pin the candidate's clean
+source commit and its complete three-file public inventory in
+`scripts/release/ninja-renew.mjs`. Retain all previous identities. Publish the
+matching GitHub prerelease, merge reviewed publisher policy, then dispatch
+`promote_alpha5=true` on the default branch for alpha.5. Never select both inputs
+or use ordinary renewal to introduce an unpinned release.
+
+The alpha.5 path requires the retained alpha.4 entry, the same authenticated
+high-water checkpoint and signing identity, and manager contract 2. It preserves
+all earlier releases exactly. After successful promotion, ordinary renewal must
+retain alpha.5; a higher generation cannot remove it. These workflow capabilities
+do not establish publication until the live gates pass and verification records
+the actual result.
+
 ## Automatic renewal
 
 The reviewed workflow is `.github/workflows/ninja-renew.yml`: daily at **04:23 UTC**
@@ -69,7 +86,7 @@ and unchanged downloads. Daily scheduling is enabled; its first unattended run
 has not yet been observed. Exact identities and regional limits are in verification.
 
 The job restores its authenticated high-water checkpoint, downloads and verifies
-all nine immutable files for rc.1, alpha.2 and alpha.3, and signs a new catalog
+every pinned immutable file for retained releases, and signs a new catalog
 with a strictly greater generation. It retains existing release entries exactly.
 It rebuilds only the static website from reviewed source; it does not rebuild a
 release archive, change customer files, update the application or change its

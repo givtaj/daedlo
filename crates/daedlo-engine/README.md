@@ -1,6 +1,6 @@
 # Daedlo engine — `daedlo-engine`
 
-**Daedlo 0.1.4-alpha.4 candidate for assisted macOS arm64 onboarding.**
+**Daedlo 0.1.4-alpha.5 candidate for assisted macOS arm64 onboarding.**
 Read LICENSE and THIRD_PARTY_NOTICES.md: Apache-2.0 for the public core, with
 required legacy MIT and third-party notices retained. Earlier releases keep
 their original terms; customer models, adapters, flows and data remain separate.

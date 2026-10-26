@@ -4,7 +4,8 @@ Static product introduction, Roots origin story, one-prompt assisted onboarding,
 integration guide, privacy/contact page and recorded real-application demo.
 The supported alpha path is macOS arm64 with Codex and one existing application
 flow. The dated verification in the current release metadata records its exact
-source, package checks, customer acceptance and limitations.
+source, package checks, customer acceptance status and limitations. Published
+fixture checks do not establish acceptance of a customer's application.
 
 The planned teaching-mode page describes a proposed Roots Journal lesson.
 Teaching mode is not implemented or included in the current release.
@@ -45,7 +46,7 @@ local artifact cache. For an unpublished preflight, use the release owner's
 verified local three-file directories instead of downloading them.
 
 ```sh
-for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3; do
+for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3 0.1.4-alpha.4 0.1.4-alpha.5; do
   mkdir -p "artifacts/website-inputs/$daedlo_website_version"
   for daedlo_website_file in "daedlo-$daedlo_website_version.zip" SHA256SUMS release.json; do
     curl --fail --show-error --location \
@@ -63,6 +64,12 @@ node website/scripts/stage-release.mjs --website-root website \
 node website/scripts/stage-release.mjs --website-root website \
   --release-dir artifacts/website-inputs/0.1.4-alpha.3 \
   --expected-version 0.1.4-alpha.3
+node website/scripts/stage-release.mjs --website-root website \
+  --release-dir artifacts/website-inputs/0.1.4-alpha.4 \
+  --expected-version 0.1.4-alpha.4
+node website/scripts/stage-release.mjs --website-root website \
+  --release-dir artifacts/website-inputs/0.1.4-alpha.5 \
+  --expected-version 0.1.4-alpha.5
 
 # Before publication, use the release owner's signed catalog instead.
 curl --fail --show-error --proto '=https' \
@@ -71,13 +78,13 @@ curl --fail --show-error --proto '=https' \
 node website/scripts/stage-updates.mjs --website-root website \
   --catalog artifacts/website-inputs/preview.json \
   --public-key docs/update-trust/daedlo-release-2026-10.pem \
-  --expected-version 0.1.4-alpha.3
+  --expected-version 0.1.4-alpha.5
 ```
 
-Stage rc.1 and alpha.2 first, then alpha.3, then the signed preview feed. The final
+Stage rc.1 and alpha.2 first, then alpha.3, alpha.4 and alpha.5, followed by the signed preview feed. The final
 release step renders the current installation page. Feed staging renders
 `updates.html` with the exact public key pin and catalog expiry. Validate and
-review only after all four steps. The current ZIP identity comes from the release
+review only after all releases and the feed are staged. The current ZIP identity comes from the release
 owner’s frozen metadata; do not rebuild or modify historical releases.
 The stager checks the exact three-file inventory, archive size and digest, version
 and ZIP allowlist. It refuses to replace a staged immutable version with changed
@@ -89,6 +96,11 @@ Expected archive identities:
 | --- | --- |
 | `0.1.2-rc.1` | `da5ce1387eb147a3fb3a7225decd3e51e9fc355a505583ccc20cb2a9bf33963b` |
 | `0.1.4-alpha.2` | `b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1` |
+| `0.1.4-alpha.3` | `f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190` |
+| `0.1.4-alpha.4` | `3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75` |
+
+Use the release owner's independently frozen alpha.5 identity for the new kit;
+do not copy a digest from an unverified download or rebuild an older archive.
 
 The alpha `release.json` must include its final sanitized `verification` record.
 Packaging-only metadata cannot satisfy the website release assertions. Both the

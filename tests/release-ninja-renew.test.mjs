@@ -160,7 +160,16 @@ function kit(version, change = () => {}, packagePrefix = "browser-driver") {
   };
 }
 
-async function fixture(t, { alpha4 = false, promoted = alpha4 } = {}) {
+async function fixture(
+  t,
+  {
+    alpha4 = false,
+    promoted = alpha4,
+    alpha5 = false,
+    promoted5 = alpha5,
+  } = {},
+) {
+  alpha4 ||= alpha5;
   const root = await fs.realpath(
     await fs.mkdtemp(join(tmpdir(), "ninja-renew-test-")),
   );
@@ -197,12 +206,15 @@ async function fixture(t, { alpha4 = false, promoted = alpha4 } = {}) {
     "0.1.4-alpha.2",
     "0.1.4-alpha.3",
     ...(alpha4 ? ["0.1.4-alpha.4"] : []),
+    ...(alpha5 ? ["0.1.4-alpha.5"] : []),
   ];
   for (const version of versions) {
     const files = kit(
       version,
       () => {},
-      version === "0.1.4-alpha.4" ? "daedlo" : "browser-driver",
+      ["0.1.4-alpha.4", "0.1.4-alpha.5"].includes(version)
+        ? "daedlo"
+        : "browser-driver",
     );
     const entries = {
       [`daedlo-${version}.zip`]: files.zip,
@@ -215,7 +227,11 @@ async function fixture(t, { alpha4 = false, promoted = alpha4 } = {}) {
       bodies.set(url, b);
       assets[version][name] = { bytes: b.length, sha256: sha256(b) };
     }
-    if (version === "0.1.2-rc.1" || (version === "0.1.4-alpha.4" && !promoted))
+    if (
+      version === "0.1.2-rc.1" ||
+      (version === "0.1.4-alpha.4" && !promoted) ||
+      (version === "0.1.4-alpha.5" && !promoted5)
+    )
       continue;
     const asset = (name) => ({
       url: `${origin}/downloads/${version}/${name}`,
@@ -225,8 +241,9 @@ async function fixture(t, { alpha4 = false, promoted = alpha4 } = {}) {
       version,
       channel: "preview",
       platforms: [{ os: "darwin", arch: "arm64" }],
-      contracts:
-        version === "0.1.4-alpha.4" ? { ...contracts, manager: 2 } : contracts,
+      contracts: ["0.1.4-alpha.4", "0.1.4-alpha.5"].includes(version)
+        ? { ...contracts, manager: 2 }
+        : contracts,
       notesUrl: origin + "/updates.html",
       kit: asset(`daedlo-${version}.zip`),
       metadata: asset("release.json"),
@@ -263,9 +280,10 @@ async function fixture(t, { alpha4 = false, promoted = alpha4 } = {}) {
   const policy = {
     publicKeyPemSha256: sha256(pem),
     assets,
-    releaseContracts: alpha4
-      ? { "0.1.4-alpha.4": { ...contracts, manager: 2 } }
-      : {},
+    releaseContracts: {
+      ...(alpha4 ? { "0.1.4-alpha.4": { ...contracts, manager: 2 } } : {}),
+      ...(alpha5 ? { "0.1.4-alpha.5": { ...contracts, manager: 2 } } : {}),
+    },
     initialCheckpoint: {
       generation: 1,
       sha256: sha256(ninjaCatalogSigningBytes(signed)),
@@ -766,6 +784,23 @@ test("workflow limits events, credentials, concurrency and deployed configuratio
     text,
     /if test "\$NINJA_PROMOTE_ALPHA4" = "true"; then\n\s+node scripts\/release\/ninja-promotion\.mjs/,
   );
+  assert.match(
+    text,
+    /promote_alpha5:\n\s+description:[^\n]+\n\s+type: boolean\n\s+default: false/,
+  );
+  assert.match(
+    text,
+    /NINJA_PROMOTE_ALPHA5:.*github.event_name == 'workflow_dispatch'.*inputs.promote_alpha5/,
+  );
+  assert.match(
+    text,
+    /elif test "\$NINJA_PROMOTE_ALPHA5" = "true"; then\n\s+node scripts\/release\/ninja-promotion\.mjs --release 0\.1\.4-alpha\.5/,
+  );
+  assert.match(text, /test "\$PROMOTE_ALPHA4:\$PROMOTE_ALPHA5" != "true:true"/);
+  assert.ok(
+    text.indexOf("Validate one explicit promotion selection") <
+      text.indexOf("secrets.DAEDLO_UPDATE_SIGNING_KEY"),
+  );
   assert.match(text, /tests\/release-ninja-promotion\.test\.mjs/);
   assert.equal((text.match(/group: production-ninja-renew/g) ?? []).length, 1);
 
@@ -916,4 +951,110 @@ test("promotion refuses missing alpha4 pins and unsupported pinned manager contr
   const future = await fixture(t, { alpha4: true });
   future.policy.releaseContracts["0.1.4-alpha.4"].manager = 3;
   await assert.rejects(prep(future), /pinned release contracts/);
+});
+
+test("only explicit alpha5 promotion extends alpha4 and preserves every signed entry", async (t) => {
+  const f = await fixture(t, { alpha4: true, alpha5: true, promoted5: false });
+  await assert.rejects(prep(f), /inventory|promotion/i);
+  await assert.rejects(
+    prepareNinjaRenewal({ ...f.options, promoteAlpha4: true }, f.dependencies),
+    /inventory|promotion/i,
+  );
+  const result = await prepareNinjaRenewal(
+    { ...f.options, promoteAlpha5: true },
+    f.dependencies,
+  );
+  const envelope = JSON.parse(
+    await fs.readFile(join(result.sitePath, "public/updates/preview.json")),
+  );
+  assert.deepEqual(envelope.signed.releases.slice(0, 3), f.signed.releases);
+  assert.equal(envelope.signed.releases.at(-1).version, "0.1.4-alpha.5");
+  assert.equal(envelope.signed.releases.at(-1).contracts.manager, 2);
+  assert.equal(
+    (await verifyNinjaRenewal({ output: f.options.output }, f.dependencies))
+      .status,
+    "PASS",
+  );
+  const receiptPath = join(f.options.output, "renewal-receipt.json");
+  const receipt = JSON.parse(await fs.readFile(receiptPath));
+  assert.equal(receipt.promoteAlpha5, true);
+  receipt.promoteAlpha5 = false;
+  await fs.writeFile(receiptPath, JSON.stringify(receipt));
+  await assert.rejects(
+    verifyNinjaRenewal({ output: f.options.output }, f.dependencies),
+    /inventory|promotion/i,
+  );
+});
+
+test("alpha5 renewal preserves complete inventory and authenticates alpha4 checkpoint history", async (t) => {
+  const f = await fixture(t, { alpha4: true, alpha5: true });
+  const finalReleases = f.signed.releases;
+  f.signed.releases = finalReleases.slice(0, 3);
+  const checkpointPath = join(f.root, "alpha4-checkpoint.json");
+  await fs.writeFile(checkpointPath, f.envelope());
+  f.signed.releases = finalReleases;
+  f.signed.generation = 2;
+  f.bodies.set(feed, f.envelope());
+  const result = await prepareNinjaRenewal(
+    { ...f.options, checkpointPath },
+    f.dependencies,
+  );
+  assert.equal(result.generation, 3);
+  const envelope = JSON.parse(
+    await fs.readFile(join(result.sitePath, "public/updates/preview.json")),
+  );
+  assert.deepEqual(envelope.signed.releases, finalReleases);
+  assert.equal(
+    (await verifyNinjaRenewal({ output: f.options.output }, f.dependencies))
+      .status,
+    "PASS",
+  );
+});
+
+test("alpha5 promotion cannot skip alpha4, combine promotions or renew from an omitted release", async (t) => {
+  const skipped = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    promoted: false,
+    promoted5: false,
+  });
+  await assert.rejects(
+    prepareNinjaRenewal(
+      { ...skipped.options, promoteAlpha5: true },
+      skipped.dependencies,
+    ),
+    /inventory|promotion/i,
+  );
+  const both = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    promoted5: false,
+  });
+  await assert.rejects(
+    prepareNinjaRenewal(
+      { ...both.options, promoteAlpha4: true, promoteAlpha5: true },
+      both.dependencies,
+    ),
+    /promotion/i,
+  );
+  const missing = await fixture(t, { alpha4: true, alpha5: true });
+  delete missing.policy.assets["0.1.4-alpha.4"];
+  await assert.rejects(prep(missing), /inventory/i);
+});
+
+test("alpha5 promotion refuses a later live generation that dropped a retained release", async (t) => {
+  const f = await fixture(t, { alpha4: true, alpha5: true });
+  const checkpointPath = join(f.root, "alpha5-checkpoint.json");
+  await fs.writeFile(checkpointPath, f.envelope());
+  f.signed.releases.pop();
+  f.signed.generation = 2;
+  f.bodies.set(feed, f.envelope());
+  await assert.rejects(
+    prepareNinjaRenewal(
+      { ...f.options, checkpointPath, promoteAlpha5: true },
+      f.dependencies,
+    ),
+    /retained release/i,
+  );
+  await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
 });

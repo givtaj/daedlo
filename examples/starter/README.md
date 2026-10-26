@@ -76,7 +76,7 @@ node /absolute/path/to/starter/build-model.mjs \
 
 The builder copies the model into that output, rewrites only the shared crate path
 in the copy, and creates a separate Cargo lockfile/target tree. The example pins
-`daedlo-engine = 0.1.4-alpha.4`; an incompatible selected crate fails rather than
+`daedlo-engine = 0.1.4-alpha.5`; an incompatible selected crate fails rather than
 silently upgrading. Preserve the generated lockfile, build log and selected
 release manifest for repeatable verification. No model lock or build output is
 written back into this starter directory.
@@ -93,6 +93,15 @@ separate successful/uncertain run reports, invalid-model hello evidence and view
 screenshots. Inspect the visible screenshots; a passing headless assertion alone
 does not establish presentation quality. Reusing source-runtime files does not
 establish installed-release acceptance.
+
+## Managed launch and completed reports
+
+Use the adjacent [managed reference](../managed-starter/README.md) to adapt an
+existing runner while keeping the native session intact. The tools also include
+[managed integration](../../docs/managed-integration.md) and
+[evidence reporting](../../docs/evidence-reporting.md) guides. Custom public-runtime
+runners can use this starter's `report-archive.mjs`; native runners already have
+immediate durable reporting. Both retain the report's explicit event bound.
 
 ## Request completion and ownership
 

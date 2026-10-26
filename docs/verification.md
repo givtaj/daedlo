@@ -1,5 +1,94 @@
 # Verification record
 
+## Alpha.5 immutable publication candidate — 2026-10-26
+
+**PASS — pre-publication gates. Publication pending.** The final package source is
+`6577d8fd578c1df8f3cc74eb6436dc537061ba21`. [Exact-source CI 40311754111](https://github.com/givtaj/daedlo/actions/runs/40311754111)
+and [PR CI 40311761721](https://github.com/givtaj/daedlo/actions/runs/40311761721)
+pass all Node 22/24 and metadata/secrets jobs. Earlier candidate identities and
+the diagnosed inline-launch test failure below remain historical.
+
+| Exact artifact | SHA-256 |
+| --- | --- |
+| Source tree | `2a6a1f69255c5572107161cfc336e6eea063662701c9bfd88eb986f2f407cbbe` |
+| Bundle manifest | `4409059f142b62af4f9baf6dd8becf4cb3e203a372e1f60b06e6c9e0baad525f` |
+| Tools | `58ae7d6f0ec1ef512023837a7d8f43003757d70887d2360cc1b31744923bc812` |
+| ZIP (298366 bytes) | `2d9cbae796edd4cd5967b76458020e3366fa9d33cc1eed65a3e1d523eb65122f` |
+| External verification metadata (7869 bytes) | `865cd55317899052a4e71fff1257e835a2abe418a818a66dd1a893bc2adea704` |
+| SHA256SUMS | `3698a6f2ebe9025af0ddebb13558494ff7c0673710d590255233e966e808bd3a` |
+
+- PASS: exact installed runtime/crate/tools; 8 browser groups, 10 CLI, 25
+  finalization, 9 control, frontend viewer and 13 native startup checks. All 69
+  tools and 22 runtime file bytes verified, including all new references.
+- PASS: exact shipped starter 16, evidence 9 and managed reference 8. Actual managed
+  installation validates both source snapshots and real acceptance/health hooks;
+  locked dependency acquisition may use the registry. Saved/uncertain effects,
+  private-policy denial, simultaneous frontend isolation and restart are covered.
+- PASS: synthetic alpha.4 → alpha.5 → alpha.4 upgrade/restart/rollback, seven
+  checkpoints, 25 run reports and six lifecycle reports. Accepted source, tools,
+  config, trust, checkpoint and application data preserved. Owned cleanup passed.
+- PASS: website 68, onboarding browser 14 and layout 4; exact DOM-copied offline
+  installer preserves nine surrounding workspace entries. Desktop/narrow and
+  native final-state screenshots inspected. Independent package review confirms
+  14 new documentation links resolve and no customer/generated material shipped.
+
+The report contract remains bounded: 16 cached completed reports and at most 200
+events per report; archiving cannot restore truncated history. Product fixtures
+do not establish customer native registration, application fault coverage or
+ordinary dependency promotion. The final kit includes only sanitized aggregate
+verification; private receipts stay ignored under `artifacts/alpha5-final` and
+`artifacts/alpha5-website`. Final metadata staging also passes with an explicitly
+ephemeral signature; only
+verification metadata/feed presentation changed from the tested website.
+Publisher-source CI, signed publication, production HTTPS upgrade/installer acceptance and the support reply remain required.
+
+## Alpha.5 managed integration candidate — 2026-10-26
+
+**IN PROGRESS — not published.** [Epic #11](https://github.com/givtaj/daedlo/issues/11)
+tracks the managed custom-runner reference, persistence/reporting guidance and
+alpha.5 publication. Runtime/report/model contracts remain unchanged. The
+managed reference reuses the shipped starter model and private application
+metadata; it does not duplicate a customer state graph or prove a private
+customer catalog schema.
+
+PASS: 131 runtime tests, Rust workspace tests, format and Clippy; affected
+source browser, control, CLI, viewer, Ninja UI and archive checks. The archive
+helper had a genuine failing assertion before implementation (0 durable reports
+versus 20 expected); its nine unit tests and nine real-browser evidence groups
+now pass. The managed wrapper similarly failed its denied-save assertion before
+guard wiring. Packaging failed its missing-reference inventory assertion before
+adding the explicit files; the complete eight-test packaging suite now passes.
+The full release/mode run passed 433 of 434 checks while a new README was still
+being written; that sole setup failure passes in the completed packaging rerun.
+The managed source reference passes eight native/browser checks, including two
+simultaneous frontends, one confirmed save, a real write with an uncertain report,
+policy denial, restart and attached-application survival. Source mode seeds its
+installation receipt and is not installed-package acceptance. Independent review
+found and repaired cleanup ownership gaps; ten helper/adapter checks pass.
+Metadata safeguards pass 35/35 and starter inventory/accounting passes 7/7.
+
+The first frozen candidate passes exact installed runtime/browser/CLI/control
+checks and 13 native startup checks; its installed starter16 and evidence9 pass.
+The nested managed test initially failed before child bootstrap because the
+acceptance harness inherited Node's eval-only `--input-type` flag. A bounded
+reproduction established the cause and a direct-file control passed. CI now
+invokes the existing installed-starter file entrypoint. The failed child PID is
+absent; its incomplete-cleanup marker is retained as failure evidence. This does
+not establish a launcher defect in the documented file-based workflow.
+
+The same candidate also passes seven synthetic alpha.4-to-alpha.5-to-alpha.4
+upgrade checkpoints, with 25 per-run and six lifecycle reports, source/data/trust
+preservation and owned cleanup. Website acceptance passes 68 tests, 14 browser
+checks and four layout checks; the exact DOM-copied offline installer preserves
+nine surrounding workspace entries. Final source/package identities still need
+to be rebuilt after the CI invocation correction.
+
+NOT RUN at this checkpoint: final exact installed managed/evidence references,
+full frozen-source CI, signed publication, production upgrade/rollback and the
+customer notification. Local receipts stay in ignored artifacts. Customer
+registration, application business-flow acceptance and ordinary dependency
+promotion remain separate.
+
 ## Alpha.4 released and production-verified — 2026-10-24
 
 **PASS — released.** [PR #10](https://github.com/givtaj/daedlo/pull/10) merged as

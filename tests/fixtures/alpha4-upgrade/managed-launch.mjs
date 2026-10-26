@@ -71,7 +71,7 @@ export async function createManagedLaunch({
     },
     identity: {
       application: "Independent notebook",
-      fixture: "Synthetic alpha.3 to alpha.4 upgrade",
+      fixture: "Synthetic accepted-baseline to candidate upgrade",
     },
   });
   resources.own(session, {

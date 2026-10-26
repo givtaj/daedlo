@@ -27,7 +27,7 @@ const metadata = (version, digest) => ({
 function promptFrom(html) {
   const matches = [
     ...html.matchAll(
-      /<pre\b([^>]*\bid=["']onboarding-prompt["'][^>]*)>([\s\S]*?)<\/pre>/g,
+      /<pre\b([^>]*\bid=["']onboarding-prompt["'][^>]*)>([\s\S]*?)<\/pre\s*>/g,
     ),
   ];
   assert.equal(
@@ -169,6 +169,24 @@ test("canonical agent prompt appears before manual installation and identifies W
     /<blockquote\b/i,
     "Do not retain a competing legacy onboarding prompt.",
   );
+});
+
+test("copied prompt routes native execution through its managed session and preserves bounded evidence honestly", async () => {
+  const prompt = promptFrom(await template());
+  for (const [label, pattern] of [
+    ["managed reference", /examples\/managed-starter/],
+    ["managed contract", /docs\/managed-integration\.md/],
+    ["evidence contract", /docs\/evidence-reporting\.md/],
+    ["exact session", /return the exact session[^.]*injected runtime/i],
+    ["asynchronous proof before finalization", /await[\s\S]{0,100}adapter\.effectStatus\(\)[^.]*before[^.]*finaliz/i],
+    ["separate later proof", /later proof[^.]*separate[^.]*original report/i],
+    ["bounded reports", /16 completed reports[^.]*200 events/i],
+    ["native immediate archive", /native[^.]*archive[^.]*immediate/i],
+    ["archive failure blocks", /archive failure[^.]*block[^.]*retry-evidence/i],
+    ["no replay", /without replaying[^.]*action/i],
+  ])
+    assert.match(prompt, pattern, `The copied prompt is missing ${label}.`);
+  assert.doesNotMatch(prompt, /(?:complete|unlimited) (?:run |event )?history/i);
 });
 
 test("update setup points to the canonical install prompt instead of maintaining another prompt", async () => {

@@ -1,6 +1,6 @@
-# Install Daedlo 0.1.4-alpha.4
+# Install Daedlo 0.1.4-alpha.5
 
-This guide covers the Daedlo 0.1.4-alpha.4 kit. Its `release.json` records exact
+This guide covers the Daedlo 0.1.4-alpha.5 kit. Its `release.json` records exact
 artifact identities and scoped verification. Consult the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 for publication status; a guide alone does not establish public availability or
@@ -43,10 +43,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `daedlo-runtime-0.1.4-alpha.4.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
-| `daedlo-engine-0.1.4-alpha.4.crate` | Rust library source for the customer's application model                                                                |
+| `daedlo-runtime-0.1.4-alpha.5.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
+| `daedlo-engine-0.1.4-alpha.5.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `daedlo-tools-0.1.4-alpha.4.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
+| `daedlo-tools-0.1.4-alpha.5.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory

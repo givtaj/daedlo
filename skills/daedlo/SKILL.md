@@ -9,13 +9,12 @@ license: Apache-2.0
 Daedlo is the product, package and skill name. Existing browser-driver commands
 remain compatibility aliases; preserved historical receipts keep their original names.
 
-This instruction copy accompanies the Daedlo 0.1.4-alpha.4 tools. Use the selected
+This instruction copy accompanies the Daedlo 0.1.4-alpha.5 tools. Use the selected
 kit's `release.json` for exact identity and verification and the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 for publication status.
 Its public core uses Apache-2.0. Read LICENSE and THIRD_PARTY_NOTICES.md, including
 the retained legacy MIT and third-party notices. Customer projects remain separate.
-
 
 Help the user reach one useful, repeatable browser flow with inspectable evidence.
 Any web application backend can use the same native Rust model and Node/Playwright
@@ -37,8 +36,9 @@ Locate the chosen release-tools installation or reviewed source checkout from th
 user's context or receipt. Read `README.md`, `docs/contracts.md`,
 `docs/agent-onboarding.md` and `docs/releases.md` from that package or checkout root.
 The portable tools include these references and this complete skill; they do not
-require a source checkout. `docs/verification.md` and repository examples are
-optional upstream evidence, absent from the portable tools. Selected-release
+require a source checkout. `docs/verification.md` and the historical Roots archive are optional upstream
+evidence, absent from the portable tools. The independent starter and managed
+reference ship under `examples/starter/` and `examples/managed-starter/`. Selected-release
 runtime README, public types and Rust trait govern APIs. Record both tools and
 runtime versions; never infer the package root from a copied skill's location or
 assume a remembered release is current.
@@ -54,6 +54,11 @@ never disable sandboxing globally. Preserve the complete accepted installation,
 customized guidance, retained bundles and browser cache for Ninja updates/rollback.
 Use explicit `refresh` then `restart` for authored-source changes at the accepted
 Daedlo version. These native commands are absent from published alpha.3 tools.
+For an existing custom runner, read `docs/managed-integration.md` and
+`docs/evidence-reporting.md`. Keep the injected native session intact, move model
+preflight into disposable hooks, and connect exact-operation persistence proof
+before the result freezes. Archive each completed canonical report immediately;
+preserve event truncation and distinguish it from complete application evidence.
 
 ## Collaborate, then execute
 

@@ -9,8 +9,8 @@ The user approved implementation of the proposed local driver and isolated Roots
 
 ## Ownership
 
-- One Node package: `@daedlo/runtime`, version `0.1.4-alpha.4`, Node >=22, ESM; protocol 1.
-- One Rust library: `daedlo-engine`, version `0.1.4-alpha.4`; compiled customer engine binaries implement `ApplicationModel`.
+- One Node package: `@daedlo/runtime`, version `0.1.4-alpha.5`, Node >=22, ESM; protocol 1.
+- One Rust library: `daedlo-engine`, version `0.1.4-alpha.5`; compiled customer engine binaries implement `ApplicationModel`.
 - Runtime owns one execution, revisions, interruption, transport and the viewer. Customer owns facts, nested state enums, commands, guards, outcome interpretation, browser handlers and fixture semantics.
 - App integrations are trusted code. Guarded action helpers are the supported effect path, not an isolation boundary against malicious adapters.
 - The first Roots consumer remains tied to commit `d4008e39aeaa137bb54ff48ca2d11748083a971a`. The explicitly requested Journal edit port may stage a reviewed working-tree feature overlay on pinned base `96275b53145e00e282d7c6a6f80faf3a5ad6df10` through the source checkout's `integrations/roots/prepare-feature.mjs` (not included in portable tools). Only selected source files whose bytes match the supplied review receipts are copied into the isolated snapshot. Record its source digest and distinguish this overlay from committed Roots source; unrelated dirty files remain untouched. Later ports still require a requested review of explicit source identities. No automatic sync or services.

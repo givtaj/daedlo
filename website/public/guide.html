@@ -118,6 +118,15 @@
           successful HTTP status alone is not a generic proof that the intended
           data persisted.
         </p>
+        <p>
+          The managed integration keeps one session for execution, the viewer
+          and run reports. Its native launcher archives each finalized report
+          immediately. Reports remain bounded: memory keeps 16 completed runs,
+          and each report retains at most 200 events. Check the truncation
+          indicator; archiving cannot recover events already omitted from a
+          long run. A later persistence check stays separate from the original
+          report.
+        </p>
       </section>
       <section class="guide-block">
         <h2>Planned: teach the workflow</h2>

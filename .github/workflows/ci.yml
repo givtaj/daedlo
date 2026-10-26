@@ -64,6 +64,9 @@ jobs:
           npm run test:ninja:ui
           npm run test:starter:unit
           npm run test:starter
+          node --test tests/managed-starter-*.test.mjs
+          npm run test:managed-starter
+          npm run test:evidence
       - name: Build an immutable candidate bundle from the clean checkout
         id: bundle
         run: |
@@ -92,11 +95,12 @@ jobs:
           node --input-type=module <<'NODE'
           import fs from 'node:fs/promises';
           import { runReleaseAcceptance } from './tests/release-acceptance.mjs';
-          import { runInstalledStarter } from './tests/alpha4-installed-starter.mjs';
+          import { execFileSync } from 'node:child_process';
           const tools = JSON.parse(await fs.readFile('artifacts/ci-tools-identity.json', 'utf8'));
           const options = {bundle: 'artifacts/ci-bundle', toolsArchive: tools.archive, expectedToolsSha256: tools.sha256, expectedManifestSha256: process.env.EXPECTED_MANIFEST_SHA256};
           await runReleaseAcceptance({...options, output: 'artifacts/ci-native-acceptance'});
-          await runInstalledStarter({...options, output: 'artifacts/ci-starter-acceptance'});
+          // Native child processes must start from a real file, without inheriting this eval's --input-type flag.
+          execFileSync(process.execPath, ['tests/alpha4-installed-starter.mjs', options.bundle, tools.archive, tools.sha256, options.expectedManifestSha256, 'artifacts/ci-starter-acceptance'], {stdio: 'inherit'});
           NODE
       # Only distributable bytes are uploaded. Browser evidence and local logs stay private.
       # This is a workflow artifact, not a GitHub Release or registry publication.

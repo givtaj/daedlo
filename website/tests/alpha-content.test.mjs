@@ -9,6 +9,16 @@ const website = resolve(process.env.DAEDLO_WEBSITE_ROOT ?? sourceWebsite);
 const read = (path) => readFile(resolve(website, path), "utf8");
 const flat = (html) => html.replace(/\s+/g, " ");
 
+test("homepage release label matches the current runtime release", async () => {
+  const runtime = JSON.parse(await readFile(
+    resolve(sourceWebsite, "../packages/runtime/package.json"), "utf8",
+  ));
+  assert.ok(
+    (await read("public/index.html")).includes(`${runtime.version} · Assisted alpha.`),
+    "The public release label must not lag the release being staged.",
+  );
+});
+
 test("alpha home and install state the supported assisted release scope", async () => {
   for (const file of ["public/index.html", "templates/install.html"]) {
     const html = flat(await read(file));
