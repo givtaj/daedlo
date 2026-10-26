@@ -10,9 +10,12 @@ recipes and allow complete step inspection. Preserve existing clients.
 - [x] Preserve direct commands, recipe IDs, availability, guards and full execution.
 - [x] Reproduce regressions first; pass source, real-browser and installed checks.
 - [x] Inspect desktop/narrow layouts and record owned cleanup.
+- [x] Verify unchanged published alpha.5 Ninja tools can update, restart and roll back
+  an isolated candidate while preserving the existing model, configuration and data.
 
-Implemented and locally verified; release publication is separate. Exact measured
-results and the unpublished candidate identity are in `docs/verification.md`.
+Implemented and locally verified; [PR #16](https://github.com/givtaj/daedlo/pull/16)
+tracks review and current CI. Release publication is separate. Exact measured
+results and the unpublished candidate identities are in `docs/verification.md`.
 
 ## Managed custom-runner and evidence delivery — 2026-10-26
 

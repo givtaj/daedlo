@@ -2,7 +2,7 @@
 
 ## Shared recipe paths — local candidate, 2026-10-26
 
-**PASS — local source and installed-candidate checks. Not published.** The viewer
+**PASS — local source, installed-candidate and Ninja lifecycle checks. Not published.** The viewer
 now groups recipes by identical authored starting command IDs and JSON parameters,
 shows their shared prefix and offers complete ordered step previews. Groups start
 expanded; individual recipe buttons, reasons, revisions and dispatch payloads are
@@ -22,9 +22,12 @@ remain unchanged.
 | Source browser | PASS: four shared-path cases plus three existing presentation/frontend cases; independent availability, exact once-only dispatch, pending double-click, reconnect, singleton/empty models and private-parameter omission |
 | Layout inspection | PASS: actual desktop/narrow panel captures inspected; full sequences remain visible; disclosure survives status polling |
 | Installed candidate | PASS: exact 23-file npm installation and customer engine compiled against the candidate crate; eight notebook browser groups, ten CLI cases, 25 finalization cases, nine control-boundary cases, frontend identity and four new shared-path browser cases |
+| Existing browser flows | PASS: notebook eight, motion four, controls nine, CLI ten and Ninja UI two |
+| Ninja compatibility | PASS: 240 contract/mode tests, including 11 local-mode identity checks; seven actual upgrade, fresh-manager restart, rollback and relaunch checkpoints using unchanged published alpha.5 tools |
+| Rust | PASS: format, Clippy and 26 tests; one existing subprocess-only fixture remains intentionally ignored |
 | Owned cleanup | PASS: installed disposable consumer removed; viewer/browser/fixture cleanup recorded; attached application survives viewer close |
 | Repository checks | PASS: syntax, TypeScript, Prettier, public metadata, 12 installed-acceptance contract tests and diff whitespace |
-| Remote CI / publication | NOT RUN for this local feature; no release or customer promotion performed |
+| Remote CI / publication | [PR #16 checks](https://github.com/givtaj/daedlo/pull/16/checks) track the current head; no release or customer promotion performed |
 
 Ignored evidence: `artifacts/shared-flow-panel/{runtime-tests.tap,check-final.log,
 release-contract-tests.tap,existing-viewer-tests.tap,installed/results.json}`,
@@ -43,6 +46,34 @@ Post-check comparison of all 23 package files found only the explanatory
 `README.md` addition differed; runtime source, viewer assets, package metadata
 and licenses match the installed-tested bytes. This is independent fixture
 conformance, not acceptance for an inaccessible customer application.
+
+The separate Ninja drill used the clean reviewed implementation commit
+`c9dcf2f5c87a7887ae327c4106e3e3809b420f40`. Its isolated packaging snapshot
+`ee2fda3dab64d8e0cfa4c8fdbfad3848fc8d77fd` uses `0.1.4-alpha.6` **only as a local
+test identity**; repository versions, customer pins and published feeds are
+unchanged. All 17 runtime source files match the reviewed commit byte for byte;
+of all 23 runtime package files, only package version metadata differs. Local ZIP
+SHA-256 is `80cfa2c49d8917d748a4a47a37071899c7440295dcb5ead85daf159227d355de`.
+The drill reuses the exact published alpha.5 tools archive, SHA-256
+`58ae7d6f0ec1ef512023837a7d8f43003757d70887d2360cc1b31744923bc812`, throughout
+installation, update, fresh-manager restart, rollback and relaunch.
+
+The existing model, authored source, tools, configuration, publisher trust,
+checkpoint and five synthetic saved records were preserved. All 25 run reports
+and six lifecycle reports were retained; three managed drivers, the browser and
+owned notebook app closed with no pending cleanup. Candidate, restart and rollback
+screenshots were inspected. The mode regressions first produced seven genuine
+failures and then passed all 11 checks; independent review found no concrete
+regression in the product or upgrade-harness changes.
+
+Ignored evidence is under `artifacts/shared-flow-panel/pr-review` and
+`artifacts/shared-flow-panel/ninja-compat-s3Px7L/{review-receipt.json,
+snapshot-receipt.json,drill/run-uVewz7/result.json}`. This drill uses an ephemeral
+local signed catalog and injected transport with the independent notebook. It
+does not establish production transport, a clean operating system, application
+process restart, native launcher startup or WBF acceptance. Multi-branch viewer
+behavior is covered by the separate browser suite; the lifecycle drill retains
+the existing singleton model.
 
 ## Alpha.5 released and production-verified — 2026-10-26
 
