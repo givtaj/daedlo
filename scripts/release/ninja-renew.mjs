@@ -60,11 +60,33 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
     version: "0.1.4-alpha.4",
     sourceCommit: "7bb3491aa49a7e9c8321e20db8904a75e7e63e03",
   },
-  // Fill sourceCommit, add exact assets[ALPHA5] and its manager-2 releaseContracts
-  // only after freezing and accepting the immutable package. Unpinned fails closed.
-  alpha5Promotion: { version: ALPHA5, sourceCommit: null },
-  releaseContracts: { "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 } },
+  // Exact accepted package source; later publisher commits do not rebuild it.
+  alpha5Promotion: {
+    version: ALPHA5,
+    sourceCommit: "6577d8fd578c1df8f3cc74eb6436dc537061ba21",
+  },
+  releaseContracts: {
+    "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 },
+    "0.1.4-alpha.5": { ...CONTRACTS, manager: 2 },
+  },
   assets: {
+    "0.1.4-alpha.5": {
+      "daedlo-0.1.4-alpha.5.zip": {
+        bytes: 298366,
+        sha256:
+          "2d9cbae796edd4cd5967b76458020e3366fa9d33cc1eed65a3e1d523eb65122f",
+      },
+      "release.json": {
+        bytes: 7869,
+        sha256:
+          "865cd55317899052a4e71fff1257e835a2abe418a818a66dd1a893bc2adea704",
+      },
+      SHA256SUMS: {
+        bytes: 91,
+        sha256:
+          "3698a6f2ebe9025af0ddebb13558494ff7c0673710d590255233e966e808bd3a",
+      },
+    },
     "0.1.4-alpha.4": {
       "daedlo-0.1.4-alpha.4.zip": {
         bytes: 280815,
