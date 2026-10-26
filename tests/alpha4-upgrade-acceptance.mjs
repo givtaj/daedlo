@@ -1,4 +1,4 @@
-// Exact installed alpha.3 -> renamed alpha.4 -> alpha.3 drill using only the
+// Exact installed accepted baseline -> selected candidate -> baseline drill using only the
 // independent notebook fixture. Default transport uses a local synthetic feed;
 // --production-https reads the fixed live feed with pinned public trust and real
 // HTTPS. Neither mode mutates production or establishes customer acceptance.
@@ -44,16 +44,37 @@ const PRODUCTION = Object.freeze({
     "df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297",
 });
 const networkFetch = globalThis.fetch;
-const LEGACY_SHA =
-  "f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190";
+const baselineVersion = process.env.DAEDLO_UPGRADE_BASELINE ?? "0.1.4-alpha.3";
+const baselinePins = {
+  "0.1.4-alpha.3":
+    "f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190",
+  "0.1.4-alpha.4":
+    "3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75",
+};
+assert.ok(
+  Object.hasOwn(baselinePins, baselineVersion),
+  "Only independently pinned baselines may be selected",
+);
+const LEGACY_SHA = baselinePins[baselineVersion];
+const legacyNames = baselineVersion === "0.1.4-alpha.3";
+const candidateVersion =
+  process.env.DAEDLO_UPGRADE_CANDIDATE_VERSION ??
+  JSON.parse(
+    await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
+  ).version;
+assert.match(
+  candidateVersion,
+  /^0\.1\.4-alpha\.[45]$/,
+  "Only the reviewed renamed candidate release may be selected",
+);
 assert.ok(
   process.env.ALPHA4_LEGACY_KIT,
-  "Set ALPHA4_LEGACY_KIT to the immutable alpha.3 public kit directory",
+  "Set ALPHA4_LEGACY_KIT to the selected immutable baseline public kit directory",
 );
 if (!legacyOnly) {
   assert.ok(
     process.env.ALPHA4_CANDIDATE_KIT,
-    "Set ALPHA4_CANDIDATE_KIT to the exact alpha.4 public kit directory",
+    "Set ALPHA4_CANDIDATE_KIT to the exact selected candidate public kit directory",
   );
   assert.match(
     process.env.ALPHA4_CANDIDATE_SHA256 ?? "",
@@ -295,7 +316,10 @@ async function prepareProject(legacy) {
           join(repo, "examples/notebook-engine/src", name),
           "utf8",
         )
-      ).replaceAll("daedlo_engine", "browser_driver_engine"),
+      ).replaceAll(
+        "daedlo_engine",
+        legacyNames ? "browser_driver_engine" : "daedlo_engine",
+      ),
     );
   const crate = join(work, "legacy-crate");
   await fs.mkdir(crate);
@@ -305,8 +329,9 @@ async function prepareProject(legacy) {
     "-C",
     crate,
   ]);
-  const enginePath = join(crate, "browser-driver-engine-0.1.4-alpha.3");
-  const cargo = `[package]\nname = "notebook-engine"\nversion = "1.0.0"\nedition = "2021"\nrust-version = "1.96"\npublish = false\n\n[workspace]\n\n[dependencies]\nbrowser-driver-engine = { path = ${JSON.stringify(enginePath)}, version = "=0.1.4-alpha.3" }\nserde = { version = "1", features = ["derive"] }\nserde_json = "1"\n`;
+  const engineName = legacy.manifest.artifacts.engine.name;
+  const enginePath = join(crate, `${engineName}-${baselineVersion}`);
+  const cargo = `[package]\nname = "notebook-engine"\nversion = "1.0.0"\nedition = "2021"\nrust-version = "1.96"\npublish = false\n\n[workspace]\n\n[dependencies]\n${engineName} = { path = ${JSON.stringify(enginePath)}, version = "=${baselineVersion}" }\nserde = { version = "1", features = ["derive"] }\nserde_json = "1"\n`;
   await fs.writeFile(join(sourceRoot, "engine/Cargo.toml"), cargo);
   await writeJson(join(sourceRoot, "package.json"), {
     private: true,
@@ -314,7 +339,8 @@ async function prepareProject(legacy) {
     version: "1.0.0",
     type: "module",
     dependencies: {
-      "@browser-driver/runtime": `file:${join(legacy.root, "bundle", legacy.manifest.artifacts.runtime.file)}`,
+      [legacy.manifest.artifacts.runtime.name]:
+        `file:${join(legacy.root, "bundle", legacy.manifest.artifacts.runtime.file)}`,
     },
   });
   await run(
@@ -486,7 +512,7 @@ async function managedFlow(label, { durable = true } = {}) {
 try {
   const legacy = await kit(
     process.env.ALPHA4_LEGACY_KIT,
-    "0.1.4-alpha.3",
+    baselineVersion,
     LEGACY_SHA,
     join(work, "legacy-kit"),
   );
@@ -651,6 +677,7 @@ try {
     );
     return prepared;
   }
+  let baselineSetup = true;
   async function open(api) {
     // Both real immutable tools use their public bootstrap API. Production mode
     // keeps the actual global fetch untouched; diagnostics observe requests only.
@@ -672,7 +699,87 @@ try {
         });
       };
     try {
-      handles = await api.openNinja(configPath);
+      if (productionHttps && !legacyNames && managers.length === 0) {
+        // Only the initial fixture selection is pinned. Both discovery and all
+        // downloads still use the installed provider's real HTTPS verification.
+        const loaded = await api.readNinjaConfig(configPath);
+        const publisher = {
+          ...loaded.config.catalog,
+          trustedKeys: loaded.keys,
+        };
+        const actual = api.createNinjaProvider(publisher);
+        // Manager-1 baseline tools predate this module; only the manager-2
+        // initial-selection seam needs to mirror openNinja's frontend identity.
+        const { frontendIdentity } = await import(
+          pathToFileURL(join(oldTools.lib, "native-session.mjs"))
+        );
+        const supervisor = await api.createNinjaSupervisor({
+          root: join(config.store, "supervisor"),
+          settings: config.settings,
+          frontend: frontendIdentity(config),
+        });
+        assert.deepEqual(
+          (await supervisor.status()).frontend,
+          frontendIdentity(config),
+          "Baseline setup preserves normal public-bootstrap frontend identity",
+        );
+        const manager = await api.createNinjaManager({
+          root: config.store,
+          registration,
+          supervisor,
+          provider: {
+            async check(context) {
+              const offered = await actual.check(context);
+              if (!baselineSetup) return offered;
+              const verified = await api.fetchNinjaCatalog({
+                ...publisher,
+                previousState: context.previousState,
+                now: Date.now(),
+              });
+              assert.deepEqual(
+                offered.checkpoint,
+                verified.checkpoint,
+                "Authenticated feed changed during baseline selection",
+              );
+              assert.equal(
+                offered.available?.version,
+                candidateVersion,
+                "Normal discovery must offer the candidate",
+              );
+              const baseline = verified.catalog.releases.find(
+                (entry) => entry.version === baselineVersion,
+              );
+              assert.ok(baseline, "Authenticated baseline release is required");
+              assert.equal(baseline.kit.sha256, LEGACY_SHA);
+              assert.deepEqual(baseline.contracts, api.NINJA_CONTRACTS);
+              assert.ok(
+                baseline.platforms.some(
+                  (p) => p.os === process.platform && p.arch === process.arch,
+                ),
+              );
+              result.baselineSelection = {
+                policy:
+                  "Explicit authenticated immutable baseline for initial fixture setup only; subsequent discovery uses normal provider selection",
+                version: baselineVersion,
+                normallySelected: offered.available.version,
+                checkpoint: verified.checkpoint,
+              };
+              return {
+                ...offered,
+                available: { ...baseline, id: baseline.version },
+              };
+            },
+            download: (release, destination) =>
+              actual.download(release, destination),
+          },
+          installer: {
+            prepare: (args) =>
+              api.prepareInstallation({ ...args, ...loaded.installation }),
+            verify: api.verifyInstallation,
+          },
+        });
+        handles = { manager, supervisor };
+      } else handles = await api.openNinja(configPath);
     } finally {
       if (!productionHttps) globalThis.fetch = originalFetch;
     }
@@ -687,12 +794,13 @@ try {
   await active.manager.activate(prepared.operation.id, {
     acknowledgeRestart: true,
   });
+  baselineSetup = false;
   const baselineReceipt = await currentReceipt();
-  assert.equal(baselineReceipt.version, "0.1.4-alpha.3");
+  assert.equal(baselineReceipt.version, baselineVersion);
   assert.equal(baselineReceipt.release.archiveSha256, LEGACY_SHA);
-  await managedFlow("legacy-old-tools", { durable: false });
+  await managedFlow("baseline-old-tools", { durable: !legacyNames });
   await record(
-    "Immutable alpha.3 installed by its exact old tools; real negative/save flow passed",
+    `Immutable ${baselineVersion} installed by its exact tools; real negative/save flow passed`,
     {
       installationId: baselineReceipt.id,
       toolsFiles: Object.keys(oldTools.inventory).length,
@@ -708,7 +816,7 @@ try {
   } else {
     const candidate = await kit(
       process.env.ALPHA4_CANDIDATE_KIT,
-      "0.1.4-alpha.4",
+      candidateVersion,
       process.env.ALPHA4_CANDIDATE_SHA256,
       join(work, "candidate-kit"),
     );
@@ -727,20 +835,29 @@ try {
     const beforeRefusal = await notes(application.url);
     const fetchCount = fetches.length;
     const refused = await active.manager.check();
-    assert.equal(
-      refused.available,
-      null,
-      "Old tools must not offer renamed alpha4",
-    );
-    assert.equal(refused.error?.code, "migration_required");
     const refusal = refused.error;
-    await assert.rejects(active.manager.prepare("0.1.4-alpha.4"), {
-      code: "stale_operation",
-    });
+    if (legacyNames) {
+      assert.equal(
+        refused.available,
+        null,
+        "Old tools must not offer a renamed candidate",
+      );
+      assert.equal(refused.error?.code, "migration_required");
+      await assert.rejects(active.manager.prepare(candidateVersion), {
+        code: "stale_operation",
+      });
+    } else {
+      assert.equal(
+        refused.available?.version,
+        candidateVersion,
+        "Accepted manager-2 tools discover the compatible candidate",
+      );
+      assert.equal(refused.error, null);
+    }
     assert.deepEqual(
       fetches.slice(fetchCount),
       [config.catalog.url],
-      "Old client must reject at discovery before any candidate download",
+      "Discovery must not download or replace the accepted slot",
     );
     assert.equal((await currentReceipt()).id, baselineReceipt.id);
     assert.equal(
@@ -749,10 +866,15 @@ try {
     );
     assert.deepEqual(await notes(application.url), beforeRefusal);
     assert.deepEqual(await old.snapshotProject(registration), original);
-    await writeJson(join(output, "legacy-refusal.json"), refusal);
+    await writeJson(join(output, "baseline-discovery.json"), {
+      available: refused.available,
+      error: refusal,
+    });
     await record(
-      "Immutable alpha.3 tools report migration_required before download and preserve accepted slot/data",
-      refusal,
+      legacyNames
+        ? "Immutable alpha.3 tools refuse renamed candidate before download and preserve accepted slot/data"
+        : "Accepted manager-2 tools discover candidate without download or accepted-slot/data changes",
+      { error: refusal },
     );
     await closeManager();
     const checkpoint = (await readJson(statePath)).checkpoint;
@@ -779,7 +901,7 @@ try {
     assert.equal((await currentReceipt()).id, baselineReceipt.id);
     assert.equal(
       (await active.supervisor.status()).running.version,
-      "0.1.4-alpha.3",
+      baselineVersion,
     );
     await managedFlow("legacy-new-tools");
     await record(
@@ -788,7 +910,7 @@ try {
     );
     const beforeUpgrade = await notes(application.url);
     const offered = await active.manager.check();
-    assert.equal(offered.available?.version, "0.1.4-alpha.4");
+    assert.equal(offered.available?.version, candidateVersion);
     assert.equal(offered.error, null);
     const acceptedCheckpoint = (await readJson(statePath)).checkpoint;
     assert.ok(acceptedCheckpoint.generation >= checkpoint.generation);
@@ -801,7 +923,7 @@ try {
       acknowledgeRestart: true,
     });
     const candidateReceipt = await currentReceipt();
-    assert.equal(candidateReceipt.version, "0.1.4-alpha.4");
+    assert.equal(candidateReceipt.version, candidateVersion);
     assert.equal(candidateReceipt.release.archiveSha256, candidate.expectedSha);
     assert.equal(
       candidateReceipt.release.manifestSha256,
@@ -813,9 +935,9 @@ try {
       baselineReceipt.handshake.descriptor,
     );
     assert.deepEqual(await notes(application.url), beforeUpgrade);
-    await managedFlow("candidate-alpha4");
+    await managedFlow("candidate-" + candidateVersion);
     await record(
-      "Exact renamed alpha.4 installation preserves data/model and passes real negative/save flow",
+      `Exact ${candidateVersion} installation preserves data/model and passes real negative/save flow`,
       { installationId: candidateReceipt.id },
     );
     const beforeRestart = await notes(application.url);
@@ -832,17 +954,17 @@ try {
       candidateReceipt.id,
     );
     assert.deepEqual(await notes(application.url), beforeRestart);
-    await managedFlow("candidate-restarted-alpha4");
+    await managedFlow("candidate-restarted-" + candidateVersion);
     await record(
-      "Fresh manager recovers retained alpha4 installation and restarts it with preserved notebook data",
+      "Fresh manager recovers retained candidate and restarts it with preserved notebook data",
     );
     const beforeRollback = await notes(application.url);
     await active.manager.rollback({ acknowledgeRestart: true });
     assert.equal((await currentReceipt()).id, baselineReceipt.id);
     assert.deepEqual(await notes(application.url), beforeRollback);
-    await managedFlow("rollback-alpha3");
+    await managedFlow("rollback-" + baselineVersion);
     await record(
-      "Complete retained alpha.3 slot restored without data changes; real negative/save flow passes",
+      `Complete retained ${baselineVersion} slot restored without data changes; real negative/save flow passes`,
     );
     await closeManager();
     active.closed = false;

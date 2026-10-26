@@ -12,7 +12,9 @@ const args = {
   output: "/private/fresh-promotion",
   checkpointPath: "/private/checkpoint/catalog.json",
 };
-function fixture() {
+function fixture(candidateVersion = version) {
+  const version = candidateVersion;
+  const publicBase = `https://daedlo.com/downloads/${version}/`;
   const files = new Map([
     [`daedlo-${version}.zip`, Buffer.from("exact pinned candidate archive")],
     [
@@ -105,7 +107,10 @@ function fixture() {
     fetchImpl,
     prepareImpl: async (options, renewalDeps) => {
       state.prepared++;
-      assert.deepEqual(options, { ...args, promoteAlpha4: true });
+      assert.deepEqual(options, {
+        ...args,
+        [version.endsWith("alpha.5") ? "promoteAlpha5" : "promoteAlpha4"]: true,
+      });
       assert.equal(renewalDeps.policy, policy);
       for (const [name, bytes] of files) {
         const response = await renewalDeps.fetchImpl(publicBase + name, {
@@ -329,4 +334,39 @@ test("bounded annotated tags must peel to the pinned commit without cycles", asy
     await assert.rejects(prepareNinjaPromotion(args, f.deps), /Promotion.*tag/);
     assert.equal(f.state.prepared, 0);
   }
+});
+
+test("explicit alpha5 promotion uses only alpha5 pins and keeps the alpha4 path compatible", async () => {
+  const f = fixture("0.1.4-alpha.5");
+  f.policy.alpha5Promotion = f.policy.promotion;
+  delete f.policy.promotion;
+  const result = await prepareNinjaPromotion(
+    { ...args, promoteAlpha5: true },
+    f.deps,
+  );
+  assert.equal(result.status, "PREPARED");
+  assert.equal(f.state.prepared, 1);
+  assert.ok(
+    f.calls.some((c) => c.url.endsWith("/git/ref/tags/v0.1.4-alpha.5")),
+  );
+  assert.ok(!f.calls.some((c) => c.url.includes("alpha.4")));
+});
+
+test("alpha5 requires its own reviewed policy and cannot silently use alpha4 pins", async () => {
+  const f = fixture();
+  await assert.rejects(
+    prepareNinjaPromotion({ ...args, promoteAlpha5: true }, f.deps),
+    /reviewed candidate/,
+  );
+  assert.equal(f.calls.length, 0);
+  assert.equal(f.state.prepared, 0);
+});
+
+test("promotion selector must be a boolean rather than truthy caller input", async () => {
+  const f = fixture();
+  await assert.rejects(
+    prepareNinjaPromotion({ ...args, promoteAlpha5: "true" }, f.deps),
+    /Promotion/,
+  );
+  assert.equal(f.calls.length, 0);
 });

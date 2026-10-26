@@ -1,5 +1,36 @@
 # Verification record
 
+## Alpha.5 managed integration candidate — 2026-10-26
+
+**IN PROGRESS — not published.** [Epic #11](https://github.com/givtaj/daedlo/issues/11)
+tracks the managed custom-runner reference, persistence/reporting guidance and
+alpha.5 publication. Runtime/report/model contracts remain unchanged. The
+managed reference reuses the shipped starter model and private application
+metadata; it does not duplicate a customer state graph or prove a private
+customer catalog schema.
+
+PASS: 131 runtime tests, Rust workspace tests, format and Clippy; affected
+source browser, control, CLI, viewer, Ninja UI and archive checks. The archive
+helper had a genuine failing assertion before implementation (0 durable reports
+versus 20 expected); its nine unit tests and nine real-browser evidence groups
+now pass. The managed wrapper similarly failed its denied-save assertion before
+guard wiring. Packaging failed its missing-reference inventory assertion before
+adding the explicit files; the complete eight-test packaging suite now passes.
+The full release/mode run passed 433 of 434 checks while a new README was still
+being written; that sole setup failure passes in the completed packaging rerun.
+The managed source reference passes eight native/browser checks, including two
+simultaneous frontends, one confirmed save, a real write with an uncertain report,
+policy denial, restart and attached-application survival. Source mode seeds its
+installation receipt and is not installed-package acceptance. Independent review
+found and repaired cleanup ownership gaps; ten helper/adapter checks pass.
+Metadata safeguards pass 35/35 and starter inventory/accounting passes 7/7.
+
+NOT RUN at this checkpoint: final exact installed managed/evidence references,
+full frozen-source CI, signed publication, production upgrade/rollback and the
+customer notification. Local receipts stay in ignored artifacts. Customer
+registration, application business-flow acceptance and ordinary dependency
+promotion remain separate.
+
 ## Alpha.4 released and production-verified — 2026-10-24
 
 **PASS — released.** [PR #10](https://github.com/givtaj/daedlo/pull/10) merged as

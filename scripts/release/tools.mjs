@@ -46,6 +46,8 @@ const documents = [
   "ninja-update",
   "native-setup",
   "rename",
+  "managed-integration",
+  "evidence-reporting",
 ];
 const starterFiles = [
   "README.md",
@@ -57,11 +59,21 @@ const starterFiles = [
   "project.mjs",
   "request-acceptance.mjs",
   "request-accounting.mjs",
+  "report-archive.mjs",
   "runtime.mjs",
   "model/Cargo.toml",
   "model/src/lib.rs",
   "model/src/main.rs",
   "model/src/bin/starter-invalid-model.rs",
+];
+const managedFiles = [
+  "README.md",
+  "adapter.mjs",
+  "catalog.mjs",
+  "managed-launch.mjs",
+  "installation-hook.mjs",
+  "prepare.mjs",
+  "serve-fixture.mjs",
 ];
 const skillPrefix = "skills/daedlo/";
 const requiredSkill = [
@@ -209,6 +221,7 @@ export async function buildToolsArchive({
   copy("scripts/release/native-session-ui.html", "lib/native-session-ui.html");
   for (const name of documents) copy(`docs/${name}.md`);
   for (const file of starterFiles) copy(`examples/starter/${file}`);
+  for (const file of managedFiles) copy(`examples/managed-starter/${file}`);
   copy("docs/update-trust/production.json");
   copy("docs/update-trust/daedlo-release-2026-10.pem");
   copy("docs/update-client.md", "README.md");
@@ -255,6 +268,7 @@ export async function buildToolsArchive({
       "docs",
       "skills",
       "examples/starter",
+      "examples/managed-starter",
       "README.md",
       ...licensing.files,
       "SOURCE.json",

@@ -39,6 +39,8 @@ const documents = [
   "ninja-update",
   "native-setup",
   "rename",
+  "managed-integration",
+  "evidence-reporting",
 ];
 const trustFiles = [
   "docs/update-trust/production.json",
@@ -61,11 +63,21 @@ const starterFiles = [
   "project.mjs",
   "request-acceptance.mjs",
   "request-accounting.mjs",
+  "report-archive.mjs",
   "runtime.mjs",
   "model/Cargo.toml",
   "model/src/lib.rs",
   "model/src/main.rs",
   "model/src/bin/starter-invalid-model.rs",
+];
+const managedFiles = [
+  "README.md",
+  "adapter.mjs",
+  "catalog.mjs",
+  "managed-launch.mjs",
+  "installation-hook.mjs",
+  "prepare.mjs",
+  "serve-fixture.mjs",
 ];
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
@@ -107,6 +119,10 @@ async function fixture(t) {
     files[`skills/daedlo/${name}`] = `Fixture ${name}\n`;
   for (const name of starterFiles)
     files[`examples/starter/${name}`] = `Synthetic starter ${name}\n`;
+  for (const name of managedFiles)
+    files[`examples/managed-starter/${name}`] = `Managed reference ${name}\n`;
+  files["examples/managed-starter/local-private.json"] =
+    "PRIVATE_MANAGED_SENTINEL\n";
   files["examples/starter/local-secret.txt"] = "PRIVATE_STARTER_SENTINEL\n";
   for (const [path, bytes] of Object.entries(files)) {
     await fs.mkdir(dirname(join(repoRoot, path)), { recursive: true });
@@ -149,6 +165,7 @@ test("portable tools have a closed consumer inventory and complete agent referen
     ...documents.map((name) => `docs/${name}.md`),
     ...trustFiles,
     ...starterFiles.map((name) => `examples/starter/${name}`),
+    ...managedFiles.map((name) => `examples/managed-starter/${name}`),
     ...skillFiles.map((name) => `skills/daedlo/${name}`),
   ].sort();
   assert.deepEqual(
@@ -333,6 +350,7 @@ test("the exact archive installs offline and runs real consumer commands outside
     "scripts/release/ninja-ui.html",
     "scripts/release/native-session-ui.html",
     ...starterFiles.map((name) => `examples/starter/${name}`),
+    ...managedFiles.map((name) => `examples/managed-starter/${name}`),
     ...libraries.map((name) => `scripts/release/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),
     ...skillFiles.map((name) => `skills/daedlo/${name}`),

@@ -9,6 +9,10 @@ on:
         description: Publish the reviewed and pinned alpha.4 kit
         type: boolean
         default: false
+      promote_alpha5:
+        description: Publish the reviewed and pinned alpha.5 kit
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -32,6 +36,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Validate one explicit promotion selection
+        env:
+          PROMOTE_ALPHA4: ${{ inputs.promote_alpha4 && 'true' || 'false' }}
+          PROMOTE_ALPHA5: ${{ inputs.promote_alpha5 && 'true' || 'false' }}
+        run: test "$PROMOTE_ALPHA4:$PROMOTE_ALPHA5" != "true:true"
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -57,6 +66,7 @@ jobs:
           DAEDLO_UPDATE_SIGNING_KEY: ${{ secrets.DAEDLO_UPDATE_SIGNING_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
           NINJA_PROMOTE_ALPHA4: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha4 && 'true' || 'false' }}
+          NINJA_PROMOTE_ALPHA5: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha5 && 'true' || 'false' }}
         run: |
           set -euo pipefail
           umask 077
@@ -73,6 +83,8 @@ jobs:
           fi
           if test "$NINJA_PROMOTE_ALPHA4" = "true"; then
             node scripts/release/ninja-promotion.mjs --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+          elif test "$NINJA_PROMOTE_ALPHA5" = "true"; then
+            node scripts/release/ninja-promotion.mjs --release 0.1.4-alpha.5 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           else
             node scripts/release/ninja-renew.mjs prepare --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           fi

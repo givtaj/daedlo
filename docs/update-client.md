@@ -1,6 +1,6 @@
-# Daedlo 0.1.4-alpha.4 portable release tools
+# Daedlo 0.1.4-alpha.5 portable release tools
 
-This guide covers the alpha.4 portable tools. The selected kit's `release.json`
+This guide covers the alpha.5 portable tools. The selected kit's `release.json`
 records exact artifact identities and verification; the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 records publication status. The public core uses Apache-2.0 with required legacy

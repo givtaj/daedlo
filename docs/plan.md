@@ -1,5 +1,26 @@
 # Implementation plan
 
+## Managed custom-runner and evidence delivery — 2026-10-26
+
+[Epic #11](https://github.com/givtaj/daedlo/issues/11) targets alpha.5. Reuse the
+accepted synthetic starter model; preserve injected native runtime/session
+identity, model-owned flows, strict guards and conservative effect evidence.
+
+- [ ] [Managed reference #12](https://github.com/givtaj/daedlo/issues/12): separate
+  preflight hooks, supported configuration/private metadata boundaries, real
+  browser flow, independent frontend lifecycle and cleanup.
+- [ ] [Evidence guidance #13](https://github.com/givtaj/daedlo/issues/13): persistence
+  proof before effect finalization, immutable per-run capture and explicit bounds,
+  immediate native archives and recovery without replay.
+- [ ] [Delivery #14](https://github.com/givtaj/daedlo/issues/14): exact package and
+  upgrade/restart/rollback acceptance, CI, immutable release, signed publication,
+  live verification, then the authorized support reply.
+
+Product conformance does not establish customer managed adoption or complete
+application fault coverage. Preserve customer records and accepted installations.
+Actual results belong in docs/verification.md; unchecked items are not complete.
+
+
 Current release: [Daedlo alpha delivery — 24 October 2026](alpha-release.md),
 published assisted **0.1.4-alpha.4**. The rename and preserved native setup are
 integrated with four scoped improvements: safe field-level model validation

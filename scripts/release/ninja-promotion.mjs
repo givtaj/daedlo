@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-/** Trusted alpha.4 preparation for the existing renewal workflow. It fetches a
+/** Trusted reviewed release preparation for the existing renewal workflow. It fetches a
  * fixed, reviewed kit from GitHub and delegates signing/staging to renewal. The
  * workflow must persist its normal checkpoint before any deployment. This tool
  * neither publishes a GitHub release nor deploys a Worker. Policy, transport and
- * preparation seams are for trusted tests only; the CLI accepts paths only.
+ * preparation seams are for trusted tests only; the CLI accepts paths and one
+ * allowlisted release selector only.
  */
 import { isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,10 +17,8 @@ import {
 const REPOSITORY = "givtaj/daedlo";
 const REPOSITORY_ID = 1391092739;
 const BASE = `https://api.github.com/repos/${REPOSITORY}`;
-const VERSION = "0.1.4-alpha.4";
-const TAG = `v${VERSION}`;
-const PUBLIC_BASE = `https://daedlo.com/downloads/${VERSION}/`;
-const NAMES = [`daedlo-${VERSION}.zip`, "release.json", "SHA256SUMS"];
+const ALPHA4 = "0.1.4-alpha.4";
+const ALPHA5 = "0.1.4-alpha.5";
 const MAX_JSON = 1024 * 1024;
 const MAX_ASSET = 64 * 1024 * 1024;
 const fail = (message) => {
@@ -27,23 +26,29 @@ const fail = (message) => {
 };
 const positive = (n) => Number.isSafeInteger(n) && n > 0;
 
-function pinned(policy) {
-  const promotion = policy?.promotion;
-  const pins = policy?.assets?.[VERSION];
+function pinned(policy, version) {
+  const promotion =
+    version === ALPHA5 ? policy?.alpha5Promotion : policy?.promotion;
+  const pins = policy?.assets?.[version];
+  const names = [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"];
   if (
-    promotion?.version !== VERSION ||
+    promotion?.version !== version ||
     !/^[a-f0-9]{40}$/.test(promotion?.sourceCommit ?? "") ||
     !pins ||
-    Object.keys(pins).sort().join() !== [...NAMES].sort().join() ||
-    NAMES.some(
+    Object.keys(pins).sort().join() !== [...names].sort().join() ||
+    names.some(
       (name) =>
         !positive(pins[name]?.bytes) ||
-        pins[name].bytes > (name === NAMES[0] ? MAX_ASSET : MAX_JSON) ||
+        pins[name].bytes > (name === names[0] ? MAX_ASSET : MAX_JSON) ||
         !/^[a-f0-9]{64}$/.test(pins[name]?.sha256 ?? ""),
     )
   )
     fail("requires reviewed candidate source and exact asset pins");
-  return { sourceCommit: promotion.sourceCommit, pins: structuredClone(pins) };
+  return {
+    sourceCommit: promotion.sourceCommit,
+    pins: structuredClone(pins),
+    names,
+  };
 }
 async function request(fetchImpl, url, options) {
   try {
@@ -84,11 +89,23 @@ function json(bytes) {
 }
 
 export async function prepareNinjaPromotion(options = {}, deps = {}) {
-  const { privateKeyPath, output, checkpointPath } = options;
+  const {
+    privateKeyPath,
+    output,
+    checkpointPath,
+    promoteAlpha5 = false,
+  } = options;
   if (
     Object.keys(options).some(
-      (key) => !["privateKeyPath", "output", "checkpointPath"].includes(key),
+      (key) =>
+        ![
+          "privateKeyPath",
+          "output",
+          "checkpointPath",
+          "promoteAlpha5",
+        ].includes(key),
     ) ||
+    typeof promoteAlpha5 !== "boolean" ||
     [privateKeyPath, output, checkpointPath].some(
       (path) =>
         typeof path !== "string" || !isAbsolute(path) || path.includes("\0"),
@@ -96,7 +113,10 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
   )
     fail("requires explicit key, output and checkpoint paths");
   const policy = deps.policy ?? PRODUCTION_RENEWAL_POLICY;
-  const { pins, sourceCommit } = pinned(policy);
+  const version = promoteAlpha5 ? ALPHA5 : ALPHA4;
+  const tag = `v${version}`;
+  const publicBase = `https://daedlo.com/downloads/${version}/`;
+  const { pins, sourceCommit, names } = pinned(policy, version);
   const token = deps.token ?? process.env.GITHUB_TOKEN;
   if (typeof token !== "string" || !token || /\s/.test(token))
     fail("requires a GitHub credential");
@@ -127,7 +147,7 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
     const releases = await api(`/releases?per_page=100&page=${page}`);
     if (!Array.isArray(releases) || releases.length > 100)
       fail("invalid release inventory");
-    matches.push(...releases.filter((release) => release?.tag_name === TAG));
+    matches.push(...releases.filter((release) => release?.tag_name === tag));
     if (releases.length < 100) break;
   }
   if (matches.length !== 1)
@@ -142,11 +162,11 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
     fail("release tag or source identity mismatch");
   // target_commitish is release metadata, not proof of an existing Git tag.
   // Resolve the fixed ref independently; drafts may not have created it yet.
-  const ref = await api(`/git/ref/tags/${TAG}`, { missingDraftTag: true });
+  const ref = await api(`/git/ref/tags/${tag}`, { missingDraftTag: true });
   if (ref === null) {
     if (!release.draft) fail("published release tag is missing");
   } else {
-    if (ref.ref !== `refs/tags/${TAG}`) fail("tag reference mismatch");
+    if (ref.ref !== `refs/tags/${tag}`) fail("tag reference mismatch");
     let object = ref.object;
     const seen = new Set();
     for (let depth = 0; object?.type === "tag"; depth++) {
@@ -169,12 +189,12 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
   );
   if (
     !Array.isArray(assets) ||
-    assets.length !== NAMES.length ||
+    assets.length !== names.length ||
     assets
       .map((asset) => asset?.name)
       .sort()
-      .join() !== [...NAMES].sort().join() ||
-    new Set(assets.map((asset) => asset.id)).size !== NAMES.length ||
+      .join() !== [...names].sort().join() ||
+    new Set(assets.map((asset) => asset.id)).size !== names.length ||
     assets.some(
       (asset) =>
         !positive(asset.id) ||
@@ -219,13 +239,13 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
       sha256(bytes) !== pins[asset.name].sha256
     )
       fail("asset integrity mismatch");
-    downloaded.set(PUBLIC_BASE + asset.name, bytes);
+    downloaded.set(publicBase + asset.name, bytes);
   }
-  const metadata = json(downloaded.get(PUBLIC_BASE + "release.json"));
+  const metadata = json(downloaded.get(publicBase + "release.json"));
   if (
     metadata?.schemaVersion !== 1 ||
     metadata.kind !== "daedlo-public-kit" ||
-    metadata.version !== VERSION ||
+    metadata.version !== version ||
     metadata.source?.commit !== sourceCommit ||
     metadata.source.dirty !== false ||
     !/^[a-f0-9]{64}$/.test(metadata.source.treeSha256 ?? "")
@@ -233,7 +253,12 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
     fail("source identity mismatch");
   const prepare = deps.prepareImpl ?? prepareNinjaRenewal;
   return prepare(
-    { privateKeyPath, output, checkpointPath, promoteAlpha4: true },
+    {
+      privateKeyPath,
+      output,
+      checkpointPath,
+      [promoteAlpha5 ? "promoteAlpha5" : "promoteAlpha4"]: true,
+    },
     {
       policy,
       ...(deps.now === undefined ? {} : { now: deps.now }),
@@ -272,18 +297,23 @@ if (
       const key = args[i],
         value = args[i + 1];
       if (
-        !["--private-key", "--output", "--checkpoint"].includes(key) ||
+        !["--private-key", "--output", "--checkpoint", "--release"].includes(
+          key,
+        ) ||
         Object.hasOwn(parsed, key) ||
         !value ||
         value.startsWith("--")
       )
-        fail("CLI accepts only --private-key, --output and --checkpoint paths");
+        fail("CLI accepts only explicit paths and an allowlisted --release");
       parsed[key] = value;
     }
+    if (parsed["--release"] && ![ALPHA4, ALPHA5].includes(parsed["--release"]))
+      fail("unsupported release selector");
     const result = await prepareNinjaPromotion({
       privateKeyPath: parsed["--private-key"],
       output: parsed["--output"],
       checkpointPath: parsed["--checkpoint"],
+      promoteAlpha5: parsed["--release"] === ALPHA5,
     });
     console.log(JSON.stringify(result));
   } catch (error) {

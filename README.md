@@ -32,6 +32,11 @@ and limits. Expiry blocks new update checks/downloads while accepted local use
 and rollback remain available.
 WBF still needs its own project registration and disposable acceptance.
 
+Alpha.5 is in verification under [epic #11](https://github.com/givtaj/daedlo/issues/11).
+It adds an executable managed custom-runner reference and evidence-reporting
+guidance. Publication and production acceptance are tracked separately in the
+[verification record](docs/verification.md).
+
 ## Licensing and package names
 
 From **0.1.4-alpha.4**, Daedlo-owned code,

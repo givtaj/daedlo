@@ -7,6 +7,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { verifyBundle } from "../scripts/release/manifest.mjs";
+import { runManagedStarterAcceptance } from "./managed-starter-acceptance.mjs";
+import { runEvidenceReporting } from "./evidence-reporting-acceptance.mjs";
 import {
   validatePackageArchive,
   verifyInstalledRuntime,
@@ -439,6 +441,30 @@ export async function runInstalledStarter({
     assert.equal(browser.cleanup.adapter.pendingCount, 0);
     result.browserChecks = browser.checks;
     result.browserVersion = browser.identity.browserVersion;
+    if (manifest.version === "0.1.4-alpha.5") {
+      result.evidenceReference = await runEvidenceReporting({
+        runtimePath: fileURLToPath(publicRuntimeUrl),
+        enginePath: modelBuild.enginePath,
+        starterRoot: starter,
+        output: join(output, "evidence"),
+      });
+      assert.equal(result.evidenceReference.status, "PASS");
+      assert.ok(result.evidenceReference.checks.length >= 9);
+      assert.deepEqual(result.evidenceReference.cleanup.failures, []);
+      result.managedReference = await runManagedStarterAcceptance({
+        output: join(output, "managed"),
+        toolsRoot: join(installedTools, "lib"),
+        runtimePath: fileURLToPath(publicRuntimeUrl),
+        engineCrate: selected.engine.root,
+        exampleRoot: join(installedTools, "examples/managed-starter"),
+        bundle,
+        expectedManifestSha256,
+      });
+      result.managedDependencyInstall =
+        "locked dependencies may use registry access; Daedlo bundle and references are the exact verified package";
+      assert.equal(result.managedReference.status, "PASS");
+      assert.equal(result.managedReference.cleanup, "PASS");
+    }
     result.toolsInventory = verifyToolsSource(installedTools, manifest);
     verifyInstalledRuntime(toolsExpected, installedTools);
     result.runtimeInventory = verifyInstalledRuntime(

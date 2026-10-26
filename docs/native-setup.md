@@ -1,6 +1,6 @@
 # Native setup with Codex
 
-The alpha.4 tools include this additive native launcher. Use the selected kit
+The alpha.5 tools retain the native launcher introduced in alpha.4. Use the selected kit
 receipt for exact identity and verification, and the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 for publication status. Alpha.3 has Ninja-Update; it does not have `daedlo-native`.
@@ -153,7 +153,17 @@ itself is a separate verified bootstrap: stop, install a new tools directory,
 check its contracts, run doctor, then start against the same configuration/store.
 Keep the previous tools directory for recovery. There is no background updater.
 
+## Existing custom runners
+
+Use the [managed integration reference](managed-integration.md) for separate model
+preflight, guarded actions and explicit private application metadata while keeping
+the exact injected session. The complete `examples/managed-starter/` reference
+ships with the tools alongside its independent starter model.
+
 ## Evidence and recovery
+
+See [effect evidence and immutable reporting](evidence-reporting.md) for public
+custom runners, exact-operation proof and the limits of bounded reports.
 
 Managed completed runs are saved immediately in `store/supervisor/run-reports/` as
 private JSON envelopes with installation identity and the runtime's canonical
