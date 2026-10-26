@@ -1,4 +1,6 @@
 // Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
+import { groupRecipePaths } from "./recipe-paths.mjs";
+
 const $ = (id) => document.getElementById(id);
 const text = (value) =>
   value === null || value === undefined
@@ -382,7 +384,11 @@ function buildDescriptor(descriptor) {
       node("p", "empty-state", "This model has no commands."),
     );
   $("recipes").replaceChildren();
-  for (const recipe of descriptor.recipes || []) {
+  const commandLabels = new Map(
+    (descriptor.commands || []).map((command) => [command.id, command.label]),
+  );
+  const stepLabel = (step) => commandLabels.get(step.command) || step.command;
+  const appendRecipe = (recipe, parent, sharedCount = 0) => {
     const container = node("div", "recipe-card");
     const button = node("button", "recipe-button");
     button.type = "button";
@@ -402,8 +408,62 @@ function buildDescriptor(descriptor) {
     button.setAttribute("aria-describedby", reason.id);
     button.addEventListener("click", () => void run(recipe.id, {}, true));
     container.append(button, reason);
-    $("recipes").append(container);
+    const preview = node("details", "recipe-step-preview");
+    preview.append(node("summary", "", "Preview steps"));
+    const steps = node("ol", "recipe-step-list");
+    steps.setAttribute("aria-label", `Full sequence for ${recipe.label}`);
+    for (const [index, step] of (recipe.steps || []).entries()) {
+      const item = node("li", "");
+      item.append(node("span", "", stepLabel(step)));
+      if (index < sharedCount)
+        item.append(node("small", "shared-step-label", "Shared step"));
+      steps.append(item);
+    }
+    preview.append(steps);
+    if (!steps.children.length)
+      preview.append(node("p", "empty-state", "No authored steps."));
+    container.append(preview);
+    parent.append(container);
     recipeViews.set(recipe.id, { button, reason });
+  };
+  for (const path of groupRecipePaths(descriptor.recipes || [])) {
+    if (!path.sharedSteps.length) {
+      for (const recipe of path.recipes) appendRecipe(recipe, $("recipes"));
+      continue;
+    }
+    const group = node("details", "recipe-path-group");
+    group.dataset.flowGroup = path.recipes[0].id;
+    group.open = true;
+    const summary = node("summary", "recipe-path-summary");
+    const heading = node("span", "recipe-path-heading");
+    heading.append(
+      node("small", "", "Shared path"),
+      node("strong", "", stepLabel(path.sharedSteps[0])),
+    );
+    summary.append(
+      heading,
+      node("span", "recipe-path-count", `${path.recipes.length} flows`),
+    );
+    group.append(summary);
+    const content = node("div", "recipe-path-content");
+    content.append(node("p", "shared-path-caption", "Shared starting steps"));
+    const sharedSteps = node("ol", "shared-path-steps");
+    for (const step of path.sharedSteps)
+      sharedSteps.append(node("li", "", stepLabel(step)));
+    content.append(
+      sharedSteps,
+      node(
+        "p",
+        "shared-path-note",
+        "Each flow runs its full sequence with fresh checks.",
+      ),
+    );
+    const branches = node("div", "recipe-path-branches");
+    for (const recipe of path.recipes)
+      appendRecipe(recipe, branches, path.sharedSteps.length);
+    content.append(branches);
+    group.append(content);
+    $("recipes").append(group);
   }
   if (!recipeViews.size)
     $("recipes").append(node("p", "empty-state", "No authored recipes."));

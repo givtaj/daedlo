@@ -524,6 +524,24 @@ export async function runReleaseAcceptance({
       },
     );
     result.frontendViewer = "PASS";
+    run(
+      "installed-recipe-paths-viewer",
+      process.execPath,
+      [
+        "--test",
+        join(
+          repoRoot,
+          "packages/runtime/tests/viewer-recipe-paths-browser.mjs",
+        ),
+      ],
+      {
+        env: {
+          CLI_TEST_RUNTIME: fileURLToPath(entry),
+          RECIPE_PATHS_OUTPUT: join(output, "recipe-paths-viewer"),
+        },
+      },
+    );
+    result.recipePathsViewer = "PASS";
     if (installedTools) {
       const nativeOutput = join(output, "native");
       run(

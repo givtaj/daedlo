@@ -11,6 +11,13 @@ their original terms; customer models, adapters, flows and data remain separate.
 
 Local visible browser control through a versioned native Rust application model.
 One ESM package includes the session runtime, generic viewer, resource scope and CLI.
+
+The unreleased viewer groups recipes with identical authored starting steps into
+expandable shared paths and offers an ordered step preview for every recipe.
+Existing model descriptors work unchanged. Previewing does not execute anything;
+each run still performs the full canonical recipe with fresh guards. Shared paths
+compare command IDs and parameters, never labels or inferred page prerequisites,
+and show command labels without printing recipe parameters.
 Node 22+ and Playwright Chromium are required. The application supplies its own
 compiled engine executable and trusted browser adapter.
 

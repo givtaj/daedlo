@@ -33,7 +33,7 @@
     "roots:feature:prepare": "node integrations/roots/prepare-feature.mjs",
     "roots:feature:stage": "node integrations/roots/stage-feature.mjs",
     "test:roots-feature": "node integrations/roots/feature-acceptance.mjs",
-    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs packages/runtime/tests/viewer-frontend-browser.mjs",
+    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs packages/runtime/tests/viewer-frontend-browser.mjs packages/runtime/tests/viewer-recipe-paths-browser.mjs",
     "test:starter": "node tests/starter-acceptance.mjs",
     "test:starter:unit": "node --test tests/starter-accounting.test.mjs tests/starter-installed-inventory.test.mjs",
     "test:managed-starter": "node tests/managed-starter-acceptance.mjs",

@@ -1,5 +1,49 @@
 # Verification record
 
+## Shared recipe paths — local candidate, 2026-10-26
+
+**PASS — local source and installed-candidate checks. Not published.** The viewer
+now groups recipes by identical authored starting command IDs and JSON parameters,
+shows their shared prefix and offers complete ordered step previews. Groups start
+expanded; individual recipe buttons, reasons, revisions and dispatch payloads are
+preserved. Expansion is read-only. Each run executes its full canonical recipe;
+the display never infers satisfied prerequisites or skips shared steps.
+
+No Rust model/schema, protocol, public API, session executor, dependency or lockfile
+changed. Legacy descriptors require no new fields. Viewer DOM ancestry and visual
+grouping change; undocumented direct-child or ordering selectors are not a public
+compatibility contract. Published alpha.5 artifacts and ordinary customer pins
+remain unchanged.
+
+| Gate | Actual result |
+| --- | --- |
+| Regression before implementation | PASS: helper no-group baseline failed `2 !== 1`; browser showed zero shared groups where one was required; new asset returned HTTP 404 instead of 200. Setup failures were excluded from these behavioral failures. |
+| Runtime suite | PASS: 138 tests, including seven prefix-comparison cases and ten viewer HTTP cases |
+| Source browser | PASS: four shared-path cases plus three existing presentation/frontend cases; independent availability, exact once-only dispatch, pending double-click, reconnect, singleton/empty models and private-parameter omission |
+| Layout inspection | PASS: actual desktop/narrow panel captures inspected; full sequences remain visible; disclosure survives status polling |
+| Installed candidate | PASS: exact 23-file npm installation and customer engine compiled against the candidate crate; eight notebook browser groups, ten CLI cases, 25 finalization cases, nine control-boundary cases, frontend identity and four new shared-path browser cases |
+| Owned cleanup | PASS: installed disposable consumer removed; viewer/browser/fixture cleanup recorded; attached application survives viewer close |
+| Repository checks | PASS: syntax, TypeScript, Prettier, public metadata, 12 installed-acceptance contract tests and diff whitespace |
+| Remote CI / publication | NOT RUN for this local feature; no release or customer promotion performed |
+
+Ignored evidence: `artifacts/shared-flow-panel/{runtime-tests.tap,check-final.log,
+release-contract-tests.tap,existing-viewer-tests.tap,installed/results.json}`,
+source browser receipts under `browser/run-4NUFI0` and `browser/run-3ljykN`, and
+installed shared-path receipts under `installed/recipe-paths-viewer/run-jgI9cF`.
+The original browser regression is retained under
+`artifacts/shared-path/browser/run-Yfoknm/grouping.json`.
+
+The unpublished test bundle retains the development version `0.1.4-alpha.5` and
+explicit `source.dirty:true` at base `7194996ec79172c87c814e5d942b7e3c5d8ce40c`;
+it is not the published alpha.5 identity. Manifest SHA-256 is
+`270a41b046c27550ab89b4b381a3671178cb3e866541462c0d7985461e12f56c`, runtime
+archive SHA-256 is
+`04568afefce6cd008860b6db5f38f71017e021d630900f59c7f7b892f297c089`.
+Post-check comparison of all 23 package files found only the explanatory
+`README.md` addition differed; runtime source, viewer assets, package metadata
+and licenses match the installed-tested bytes. This is independent fixture
+conformance, not acceptance for an inaccessible customer application.
+
 ## Alpha.5 released and production-verified — 2026-10-26
 
 **PASS — released and support follow-up sent.** [PR #15](https://github.com/givtaj/daedlo/pull/15)

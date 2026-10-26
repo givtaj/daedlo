@@ -1,5 +1,19 @@
 # Implementation plan
 
+## Shared recipe paths — 2026-10-26
+
+Approved UI direction: show a common authored entry path once, branch into its
+recipes and allow complete step inspection. Preserve existing clients.
+
+- [x] Compare canonical command IDs and parameters without adding descriptor fields.
+- [x] Show shared prefixes, expandable groups and full per-recipe step previews.
+- [x] Preserve direct commands, recipe IDs, availability, guards and full execution.
+- [x] Reproduce regressions first; pass source, real-browser and installed checks.
+- [x] Inspect desktop/narrow layouts and record owned cleanup.
+
+Implemented and locally verified; release publication is separate. Exact measured
+results and the unpublished candidate identity are in `docs/verification.md`.
+
 ## Managed custom-runner and evidence delivery — 2026-10-26
 
 [Epic #11](https://github.com/givtaj/daedlo/issues/11) targets alpha.5. Reuse the

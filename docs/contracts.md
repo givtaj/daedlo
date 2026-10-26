@@ -121,6 +121,24 @@ Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runReci
 
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
 
+The unreleased viewer also previews each recipe's ordered command labels and
+groups recipes with identical starting steps into expandable shared paths. The
+comparison uses existing command IDs and complete JSON parameter values (object
+key order is irrelevant); labels alone never establish a shared path. Each group
+shows the longest prefix shared by every member and starts expanded so its
+existing run buttons remain reachable. Parameters are not printed in previews.
+Recipes without a shared prefix keep their individual cards. No new model,
+protocol or public API fields are required.
+
+Shared paths are a display of authored sequences, not state-transition edges or
+proof that a prerequisite is satisfied. Expanding a group or preview executes
+nothing. Starting a recipe sends the unchanged `{id,revision,recipe:true}` request
+and executes its complete canonical plan with the existing fresh-state guards;
+shared steps are never cached, skipped, or run once for several recipes. Direct
+commands, presentations, lifecycle controls and application outcome reporting
+retain their existing contracts. The new grouping changes viewer DOM ancestry
+and visual grouping, which are not public API contracts.
+
 A viewer may receive `frontend:{name,targetOrigin,model,evidenceLocation,ownership}`.
 This is bounded local display metadata: a static name, canonical HTTP(S) origin
 (or null for an unspecified legacy target), model ID/version, evidence directory,
