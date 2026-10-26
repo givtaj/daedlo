@@ -25,6 +25,22 @@ installation receipt and is not installed-package acceptance. Independent review
 found and repaired cleanup ownership gaps; ten helper/adapter checks pass.
 Metadata safeguards pass 35/35 and starter inventory/accounting passes 7/7.
 
+The first frozen candidate passes exact installed runtime/browser/CLI/control
+checks and 13 native startup checks; its installed starter16 and evidence9 pass.
+The nested managed test initially failed before child bootstrap because the
+acceptance harness inherited Node's eval-only `--input-type` flag. A bounded
+reproduction established the cause and a direct-file control passed. CI now
+invokes the existing installed-starter file entrypoint. The failed child PID is
+absent; its incomplete-cleanup marker is retained as failure evidence. This does
+not establish a launcher defect in the documented file-based workflow.
+
+The same candidate also passes seven synthetic alpha.4-to-alpha.5-to-alpha.4
+upgrade checkpoints, with 25 per-run and six lifecycle reports, source/data/trust
+preservation and owned cleanup. Website acceptance passes 68 tests, 14 browser
+checks and four layout checks; the exact DOM-copied offline installer preserves
+nine surrounding workspace entries. Final source/package identities still need
+to be rebuilt after the CI invocation correction.
+
 NOT RUN at this checkpoint: final exact installed managed/evidence references,
 full frozen-source CI, signed publication, production upgrade/rollback and the
 customer notification. Local receipts stay in ignored artifacts. Customer
