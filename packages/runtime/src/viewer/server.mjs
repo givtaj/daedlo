@@ -113,7 +113,11 @@ export async function createViewer({
   let frames = 0,
     updatedAt = null,
     captureCleanup,
-    closing;
+    closing,
+    captureError,
+    targetGone = false,
+    screencastStopped = false,
+    detached = false;
 
   const json = (res, code, data) => {
     if (res.destroyed || res.writableEnded) return;
@@ -148,38 +152,105 @@ export async function createViewer({
       .send("Page.screencastFrameAck", { sessionId: event.sessionId })
       .catch(disconnect);
   };
+  const captureReleased = () =>
+    !cdp || detached || targetGone || page.isClosed();
+  function finishCapture() {
+    page.off("close", targetDisconnected);
+    cdp?.off("close", targetDisconnected);
+    cdp?.off("Disconnected", targetDisconnected);
+    captureError = null;
+  }
   function cleanupCapture() {
     if (captureCleanup) return captureCleanup;
     captureCleanup = (async () => {
       clearInterval(heartbeat);
-      page.off("close", disconnect);
-      cdp?.off("Disconnected", disconnect);
       cdp?.off("Page.screencastFrame", receive);
       for (const res of clients) res.end();
       clients.clear();
-      if (cdp) {
-        // Disconnect may already have closed the target. HTTP teardown must still finish.
-        await cdp.send("Page.stopScreencast").catch(() => {});
-        await cdp.detach().catch(() => {});
+      if (!captureReleased() && !screencastStopped) {
+        try {
+          await cdp.send("Page.stopScreencast");
+          screencastStopped = true;
+        } catch {
+          // Detaching can still dispose capture after a failed stop command.
+        }
       }
-    })();
+      if (!captureReleased()) {
+        try {
+          await cdp.detach();
+          detached = true;
+        } catch {
+          // A closed target is terminal; a live transport failure stays owned.
+        }
+      }
+      if (captureReleased()) {
+        finishCapture();
+        return;
+      }
+      captureError = Object.assign(
+        new AggregateError(
+          [
+            ...(!screencastStopped
+              ? [Error("Screencast stop incomplete.")]
+              : []),
+            Error("Capture detach incomplete."),
+          ],
+          "Viewer capture cleanup incomplete; failed handles retained for retry.",
+        ),
+        { error_code: "cleanup_incomplete" },
+      );
+      throw captureError;
+    })()
+      .catch((error) => {
+        // Target closure can arrive as the failed CDP operation settles.
+        if (!captureReleased()) throw error;
+        finishCapture();
+      })
+      .finally(() => {
+        captureCleanup = null;
+      });
     return captureCleanup;
   }
   function disconnect() {
     disconnected = true;
-    void cleanupCapture();
+    // Event callbacks cannot return cleanup failures to a caller. Keep ownership
+    // and expose the safe failure in status until an explicit close retries it.
+    void cleanupCapture().catch(() => {});
+  }
+  function targetDisconnected() {
+    targetGone = true;
+    finishCapture();
+    disconnect();
+  }
+  async function closeHttp() {
+    if (server?.listening)
+      await new Promise((resolve, reject) => {
+        server.close((error) =>
+          error ? reject(Error("Viewer HTTP cleanup incomplete.")) : resolve(),
+        );
+        server.closeAllConnections();
+      });
   }
   async function close() {
     if (closing) return closing;
     closed = true;
     closing = (async () => {
-      await cleanupCapture();
-      if (server?.listening)
-        await new Promise((resolve) => {
-          server.close(resolve);
-          server.closeAllConnections();
-        });
-    })();
+      // Always tear down HTTP, even when capture cleanup rejects.
+      const results = await Promise.allSettled([cleanupCapture(), closeHttp()]);
+      const errors = results
+        .filter((result) => result.status === "rejected")
+        .map((result) => result.reason);
+      if (errors.length)
+        throw Object.assign(
+          new AggregateError(
+            errors,
+            "Viewer cleanup incomplete; call close() to retry.",
+          ),
+          { error_code: "cleanup_incomplete" },
+        );
+    })().finally(() => {
+      closing = null;
+    });
     return closing;
   }
   function frontendStatus(driver) {
@@ -231,6 +302,15 @@ export async function createViewer({
       updatedAt,
       viewers: clients.size,
       driver,
+      ...(captureError
+        ? {
+            cleanupError: {
+              error_code: "cleanup_incomplete",
+              error:
+                "Viewer capture cleanup is incomplete; close the viewer to retry.",
+            },
+          }
+        : {}),
     };
   }
   async function readBody(req, res) {
@@ -259,8 +339,9 @@ export async function createViewer({
   }
   try {
     cdp = await context.newCDPSession(page);
-    page.on("close", disconnect);
-    cdp.on("Disconnected", disconnect);
+    page.on("close", targetDisconnected);
+    cdp.on("close", targetDisconnected);
+    cdp.on("Disconnected", targetDisconnected);
     cdp.on("Page.screencastFrame", receive);
     frame = await page.screenshot({ type: "jpeg", quality: 75, timeout: 5000 });
     updatedAt = new Date().toISOString();
@@ -442,6 +523,8 @@ export async function createViewer({
         resolve();
       });
     });
+    if (disconnected || page.isClosed())
+      throw Error("The browser disconnected while starting the viewer");
     url = `http://127.0.0.1:${server.address().port}`;
     heartbeat = setInterval(() => {
       for (const res of clients) sendFrame(res);
@@ -449,7 +532,19 @@ export async function createViewer({
     heartbeat.unref();
     return { url, close };
   } catch (error) {
-    await close();
+    try {
+      await close();
+    } catch (cleanup) {
+      // There is no returned viewer on failed startup. Retain explicit retry
+      // authority without copying private browser error messages or causes.
+      throw Object.assign(
+        new AggregateError(
+          [Error("Viewer startup failed."), cleanup],
+          "Viewer startup failed; cleanup incomplete. Call error.close() to retry.",
+        ),
+        { error_code: "cleanup_incomplete", close },
+      );
+    }
     throw error;
   }
 }
