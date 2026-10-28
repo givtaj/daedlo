@@ -121,7 +121,7 @@ Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runReci
 
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
 
-The unreleased viewer also previews each recipe's ordered command labels and
+The alpha.6 viewer also previews each recipe's ordered command labels and
 groups recipes with identical starting steps into expandable shared paths. The
 comparison uses existing command IDs and complete JSON parameter values (object
 key order is irrelevant); labels alone never establish a shared path. Each group

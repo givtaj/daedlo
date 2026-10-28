@@ -1,4 +1,22 @@
-# Daedlo alpha delivery — 26 October 2026
+# Daedlo alpha delivery — 28 October 2026
+
+Release candidate: **0.1.4-alpha.6**. Status: **preparing exact-package acceptance;
+not published**. [PR #16](https://github.com/givtaj/daedlo/pull/16) adds expandable
+shared recipe paths and complete ordered step previews. Grouping compares authored
+command IDs and full parameters; viewing steps never executes them. Every recipe
+retains its own availability and runs its complete guarded sequence.
+
+No model, protocol, public API or managed configuration migration is required.
+Viewer DOM ancestry changes; customer selectors tied to undocumented element
+ancestry require their own review. The assisted macOS arm64/Codex scope and the
+alpha.5 managed integration and reporting guidance remain unchanged.
+
+The [verification record](verification.md) owns current measured results. Source
+and installed checks, old-tools update/restart/rollback, signed publication and
+production HTTPS acceptance must pass before this candidate is announced as live.
+Customer application acceptance remains separate.
+
+## Historical alpha.5 delivery — 26 October 2026
 
 Release: **0.1.4-alpha.5**. Status: **published assisted alpha; production acceptance passed**.
 [Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·

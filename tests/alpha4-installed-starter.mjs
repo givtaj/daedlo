@@ -111,6 +111,53 @@ export function verifyToolsSource(installed, manifest) {
   };
 }
 
+// Keep reference dispatch separately testable without rebuilding an installed bundle.
+// Callers supply verified installed paths; the reference runners perform their
+// real-browser checks and retain their acceptance receipts.
+export async function runInstalledStarterReferences(
+  result,
+  {
+    runtimePath,
+    enginePath,
+    starterRoot,
+    output,
+    toolsRoot,
+    engineCrate,
+    exampleRoot,
+    bundle,
+    expectedManifestSha256,
+  },
+  {
+    evidenceRunner = runEvidenceReporting,
+    managedRunner = runManagedStarterAcceptance,
+  } = {},
+) {
+  if (["0.1.4-alpha.5", "0.1.4-alpha.6"].includes(result.version)) {
+    result.evidenceReference = await evidenceRunner({
+      runtimePath,
+      enginePath,
+      starterRoot,
+      output: join(output, "evidence"),
+    });
+    assert.equal(result.evidenceReference.status, "PASS");
+    assert.ok(result.evidenceReference.checks.length >= 9);
+    assert.deepEqual(result.evidenceReference.cleanup.failures, []);
+    result.managedReference = await managedRunner({
+      output: join(output, "managed"),
+      toolsRoot,
+      runtimePath,
+      engineCrate,
+      exampleRoot,
+      bundle,
+      expectedManifestSha256,
+    });
+    result.managedDependencyInstall =
+      "locked dependencies may use registry access; Daedlo bundle and references are the exact verified package";
+    assert.equal(result.managedReference.status, "PASS");
+    assert.equal(result.managedReference.cleanup, "PASS");
+  }
+}
+
 export async function runInstalledStarter({
   bundle,
   toolsArchive,
@@ -441,30 +488,17 @@ export async function runInstalledStarter({
     assert.equal(browser.cleanup.adapter.pendingCount, 0);
     result.browserChecks = browser.checks;
     result.browserVersion = browser.identity.browserVersion;
-    if (manifest.version === "0.1.4-alpha.5") {
-      result.evidenceReference = await runEvidenceReporting({
-        runtimePath: fileURLToPath(publicRuntimeUrl),
-        enginePath: modelBuild.enginePath,
-        starterRoot: starter,
-        output: join(output, "evidence"),
-      });
-      assert.equal(result.evidenceReference.status, "PASS");
-      assert.ok(result.evidenceReference.checks.length >= 9);
-      assert.deepEqual(result.evidenceReference.cleanup.failures, []);
-      result.managedReference = await runManagedStarterAcceptance({
-        output: join(output, "managed"),
-        toolsRoot: join(installedTools, "lib"),
-        runtimePath: fileURLToPath(publicRuntimeUrl),
-        engineCrate: selected.engine.root,
-        exampleRoot: join(installedTools, "examples/managed-starter"),
-        bundle,
-        expectedManifestSha256,
-      });
-      result.managedDependencyInstall =
-        "locked dependencies may use registry access; Daedlo bundle and references are the exact verified package";
-      assert.equal(result.managedReference.status, "PASS");
-      assert.equal(result.managedReference.cleanup, "PASS");
-    }
+    await runInstalledStarterReferences(result, {
+      runtimePath: fileURLToPath(publicRuntimeUrl),
+      enginePath: modelBuild.enginePath,
+      starterRoot: starter,
+      output,
+      toolsRoot: join(installedTools, "lib"),
+      engineCrate: selected.engine.root,
+      exampleRoot: join(installedTools, "examples/managed-starter"),
+      bundle,
+      expectedManifestSha256,
+    });
     result.toolsInventory = verifyToolsSource(installedTools, manifest);
     verifyInstalledRuntime(toolsExpected, installedTools);
     result.runtimeInventory = verifyInstalledRuntime(

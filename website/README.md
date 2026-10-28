@@ -46,7 +46,7 @@ local artifact cache. For an unpublished preflight, use the release owner's
 verified local three-file directories instead of downloading them.
 
 ```sh
-for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3 0.1.4-alpha.4 0.1.4-alpha.5; do
+for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3 0.1.4-alpha.4 0.1.4-alpha.5 0.1.4-alpha.6; do
   mkdir -p "artifacts/website-inputs/$daedlo_website_version"
   for daedlo_website_file in "daedlo-$daedlo_website_version.zip" SHA256SUMS release.json; do
     curl --fail --show-error --location \
@@ -70,6 +70,9 @@ node website/scripts/stage-release.mjs --website-root website \
 node website/scripts/stage-release.mjs --website-root website \
   --release-dir artifacts/website-inputs/0.1.4-alpha.5 \
   --expected-version 0.1.4-alpha.5
+node website/scripts/stage-release.mjs --website-root website \
+  --release-dir artifacts/website-inputs/0.1.4-alpha.6 \
+  --expected-version 0.1.4-alpha.6
 
 # Before publication, use the release owner's signed catalog instead.
 curl --fail --show-error --proto '=https' \

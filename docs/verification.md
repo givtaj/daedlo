@@ -1,5 +1,29 @@
 # Verification record
 
+## Alpha.6 release preparation — 2026-10-28
+
+**IN PROGRESS — not published.** Shared recipe paths merged in
+[PR #16](https://github.com/givtaj/daedlo/pull/16) as
+`a6c81e2a4509a13fdd8a4dcc93656deb4a016a7a`. The reviewed source head
+`6fc9e7f963bf514ae7b24f0998128f51d310f9b1` passed Node 22/24 and metadata/secrets
+in [CI 40346816956](https://github.com/givtaj/daedlo/actions/runs/40346816956).
+That feature evidence and the earlier local-only alpha.6 packaging below do not
+establish acceptance of this new immutable release candidate.
+
+The alpha.6 package versions and bundled instructions are being prepared together.
+Exact installed runtime/tools/starter acceptance, the published alpha.5 tools
+upgrade drill, immutable publisher pins, source/publisher CI, signed publication,
+production HTTPS update/restart/rollback and the WBF reply remain required.
+Existing published downloads, signing identity and customer installations remain
+unchanged. No access to WBF source or acceptance environment is assumed.
+
+Release-harness regressions were reproduced before implementation: alpha.6
+production mode was rejected (seven new failures), and both installed reference
+runners were skipped (seven failing assertions, including missing failure
+propagation). The bounded alpha.5-to-alpha.6 mode now passes all 23 mode tests;
+the reference dispatch and existing inventory checks pass 14 tests. The runtime
+suite passes 138 tests. These checks do not replace the final installed drills.
+
 ## Shared recipe paths — local candidate, 2026-10-26
 
 **PASS — local source, installed-candidate and Ninja lifecycle checks. Not published.** The viewer

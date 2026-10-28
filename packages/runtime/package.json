@@ -1,6 +1,6 @@
 {
   "name": "@daedlo/runtime",
-  "version": "0.1.4-alpha.5",
+  "version": "0.1.4-alpha.6",
   "description": "Visible browser control with a typed Rust application model",
   "license": "Apache-2.0",
   "type": "module",
