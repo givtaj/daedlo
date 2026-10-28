@@ -619,6 +619,214 @@ test("HTTP diagnostic never emits a queried or unreviewed request path", async (
       "Unexpected renewal HTTP status: [unreviewed-path] status=502 expected=200",
   });
 });
+test("network diagnostics identify the renewal stage and safe path without retry or raw transport details", async (t) => {
+  const f = await fixture(t);
+  const failures = [
+    [
+      new TypeError("private transport detail", {
+        cause: { code: "ENOTFOUND", hostname: "private-host" },
+      }),
+      "dns",
+    ],
+    [
+      new TypeError("private transport detail", {
+        cause: { code: "ECONNRESET" },
+      }),
+      "connection",
+    ],
+    [
+      new TypeError("private transport detail", {
+        cause: { code: "CERT_HAS_EXPIRED" },
+      }),
+      "tls",
+    ],
+    [
+      new TypeError("private transport detail", {
+        cause: { code: "UND_ERR_CONNECT_TIMEOUT" },
+      }),
+      "timeout",
+    ],
+    [new DOMException("private transport detail", "TimeoutError"), "timeout"],
+    [new DOMException("private transport detail", "AbortError"), "aborted"],
+    [
+      new Error("private transport detail", {
+        cause: { code: "unrecognized-private-code" },
+      }),
+      "network",
+    ],
+  ];
+  for (const [failure, category] of failures) {
+    let requests = 0;
+    f.dependencies.fetchImpl = async (url, options) => {
+      requests++;
+      assert.equal(url, feed);
+      assert.equal(options.redirect, "error");
+      assert.deepEqual(options.headers, { "Cache-Control": "no-cache" });
+      assert.ok(options.signal instanceof AbortSignal);
+      throw failure;
+    };
+    await assert.rejects(prep(f), (error) => {
+      assert.equal(
+        error.message,
+        `Renewal network failure: stage=prepare path=/updates/preview.json phase=headers category=${category}`,
+      );
+      assert.equal(
+        error.cause,
+        undefined,
+        "Raw causes must not escape in the error object",
+      );
+      return true;
+    });
+    assert.equal(requests, 1, "A failed request must not be retried");
+    await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+  }
+});
+test("network diagnostics redact unreviewed paths and query values", async (t) => {
+  const f = await fixture(t);
+  const pin = f.policy.assets["0.1.2-rc.1"]["daedlo-0.1.2-rc.1.zip"];
+  f.policy.assets["0.1.2-rc.1"] = {
+    "unreviewed-secret.zip?token=private-query": pin,
+  };
+  const original = f.dependencies.fetchImpl;
+  f.dependencies.fetchImpl = async (url, options) => {
+    if (url === feed) return original(url, options);
+    throw new Error(`private URL: ${url}`);
+  };
+  await assert.rejects(prep(f), {
+    message:
+      "Renewal network failure: stage=prepare path=[unreviewed-path] phase=headers category=network",
+  });
+});
+test("network body failure cancels and releases the reader without exposing its error", async (t) => {
+  const f = await fixture(t);
+  const original = f.dependencies.fetchImpl;
+  const calls = { request: 0, read: 0, cancel: 0, release: 0 };
+  f.dependencies.fetchImpl = async (url, options) => {
+    calls.request++;
+    const response = await original(url, options);
+    Object.defineProperty(response, "body", {
+      value: {
+        getReader: () => ({
+          read: async () => {
+            calls.read++;
+            throw new TypeError("private response body", {
+              cause: { code: "UND_ERR_BODY_TIMEOUT" },
+            });
+          },
+          cancel: async () => {
+            calls.cancel++;
+          },
+          releaseLock: () => {
+            calls.release++;
+          },
+        }),
+      },
+    });
+    return response;
+  };
+  await assert.rejects(prep(f), {
+    message:
+      "Renewal network failure: stage=prepare path=/updates/preview.json phase=body category=timeout",
+  });
+  assert.deepEqual(calls, { request: 1, read: 1, cancel: 1, release: 1 });
+  await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+});
+test("network predeploy failure preserves the prepared checkpoint and fails closed", async (t) => {
+  const f = await fixture(t);
+  await prep(f);
+  const checkpoint = await fs.readFile(
+    join(f.options.output, "checkpoint/catalog.json"),
+  );
+  let requests = 0;
+  f.dependencies.fetchImpl = async () => {
+    requests++;
+    throw new DOMException("private abort reason", "AbortError");
+  };
+  await assert.rejects(
+    verifyNinjaRenewal({ output: f.options.output }, f.dependencies),
+    {
+      message:
+        "Renewal network failure: stage=verify path=/updates/preview.json phase=headers category=aborted",
+    },
+  );
+  assert.equal(requests, 1);
+  assert.deepEqual(
+    await fs.readFile(join(f.options.output, "checkpoint/catalog.json")),
+    checkpoint,
+  );
+});
+test("network live verification identifies canonical assets and private boundary body failures", async (t) => {
+  const f = await fixture(t, { alpha4: true, alpha5: true, alpha6: true });
+  await prep(f);
+  const receipt = JSON.parse(
+    await fs.readFile(join(f.options.output, "renewal-receipt.json")),
+  );
+  const served = new Map();
+  for (const file of receipt.manifest.files) {
+    if (
+      file.path.startsWith("public/") &&
+      !["public/_headers", "public/.assetsignore"].includes(file.path)
+    )
+      served.set(
+        origin + "/" + file.path.slice(7),
+        await fs.readFile(join(f.options.output, "site", file.path)),
+      );
+  }
+  for (const [target, phase] of [
+    ["/", "headers"],
+    ["/.env", "body"],
+  ]) {
+    let failures = 0;
+    const fetchImpl = async (url, options) => {
+      if (url === origin + "/index.html") {
+        assert.equal(options.redirect, "manual");
+        return new Response("", { status: 308, headers: { location: "/" } });
+      }
+      if (url === origin + target) {
+        failures++;
+        const failure = new TypeError("private socket and peer details", {
+          cause: { code: "UND_ERR_SOCKET" },
+        });
+        if (phase === "headers") throw failure;
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.error(failure);
+            },
+          }),
+          { status: 404 },
+        );
+      }
+      const bytes = served.get(
+        url === origin + "/" ? origin + "/index.html" : url,
+      );
+      return new Response(bytes ?? "", {
+        status: bytes ? 200 : 404,
+        headers: {
+          "x-content-type-options": "nosniff",
+          "cache-control":
+            url === feed
+              ? "no-cache, must-revalidate"
+              : "public, max-age=31536000, immutable",
+        },
+      });
+    };
+    await assert.rejects(
+      verifyLiveNinjaRenewal(
+        { output: f.options.output },
+        { ...f.dependencies, fetchImpl },
+      ),
+      {
+        message: `Renewal network failure: stage=live path=${target} phase=${phase} category=connection`,
+      },
+    );
+    assert.equal(
+      failures,
+      1,
+      "Live failures must not retry or yield a PASS receipt",
+    );
+  }
+});
 test("transport rejects redirect, wrong HTTPS Date and oversized catalog before staging", async (t) => {
   for (const kind of ["redirect", "date", "size"]) {
     const f = await fixture(t);

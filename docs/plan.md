@@ -1,5 +1,22 @@
 # Implementation plan
 
+## Release diagnostics and customer acceptance guidance — 2026-10-28
+
+- [x] Reproduce the renewal network-diagnostic gap, then report a reviewed request
+  path, prepare/verify/live stage, headers/body phase and bounded failure category.
+  Keep strict checks, the existing timeout, checkpoint preservation and no retries.
+- [x] Pass the affected renewal/publication safeguards and source quality checks;
+  retain the original production failure's unknown cause and successful recovery.
+- [x] Add a customer-run acceptance checklist and sanitized support-result template
+  to the shipped [managed integration guide](managed-integration.md#customer-run-acceptance).
+
+External customers run application acceptance in their own disposable environments.
+Their private source, catalogs and data stay with them. Upstream provides tested
+references and reviews sanitized reproductions; these local checks do not complete
+customer registration, business-flow, frontend-isolation or upgrade acceptance.
+This change does not publish a kit or deploy the renewal workflow. Actual checks
+are recorded in [verification](verification.md).
+
 ## Alpha.6 publication — 2026-10-28
 
 The owner authorized merging PR #16, publishing the shared-path viewer, verifying
