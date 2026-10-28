@@ -8,9 +8,10 @@ production Ninja updates and replying in the existing WBF conversation afterward
 - [x] Merge the reviewed feature after checking its current head and required CI.
 - [x] Freeze the versioned source and pass exact installed runtime/tools/references.
 - [x] Verify published alpha.5 tools update, restart and roll back the candidate.
-- [ ] Review immutable publisher pins, complete CI and publish through the existing workflow.
-- [ ] Verify actual production HTTPS discovery, installation, restart and rollback.
-- [ ] Send the scoped post-publication WBF reply and record delivery privately.
+- [x] Review immutable publisher pins, complete CI and publish through the existing workflow.
+- [x] Verify actual production HTTPS discovery, installation, restart and rollback.
+- [x] Verify ordinary signed renewal retains alpha.6 and every historical release.
+- [x] Send the scoped post-publication WBF reply and record the verified sent message privately.
 
 ## Shared recipe paths — 2026-10-26
 
@@ -25,9 +26,9 @@ recipes and allow complete step inspection. Preserve existing clients.
 - [x] Verify unchanged published alpha.5 Ninja tools can update, restart and roll back
   an isolated candidate while preserving the existing model, configuration and data.
 
-Implemented and locally verified; [PR #16](https://github.com/givtaj/daedlo/pull/16)
-tracks review and current CI. Release publication is separate. Exact measured
-results and the unpublished candidate identities are in `docs/verification.md`.
+Implemented, reviewed and merged in [PR #16](https://github.com/givtaj/daedlo/pull/16).
+Alpha.6 is published and production-verified. Exact measured results and historical
+candidate identities are in `docs/verification.md`.
 
 ## Managed custom-runner and evidence delivery — 2026-10-26
 
@@ -51,12 +52,12 @@ Product delivery and the authorized post-publication support reply are complete.
 Actual results and remaining customer acceptance belong in docs/verification.md.
 
 
-Current release: [Daedlo alpha delivery — 26 October 2026](alpha-release.md),
-published assisted **0.1.4-alpha.5**. Managed custom-runner onboarding and evidence
-reporting are shipped and verified from exact installed artifacts. Native two-
-frontend lifecycle, independent saved/uncertain evidence, source and publisher CI,
-actual production installer and HTTPS upgrade/restart/rollback passed. The signed
-feed preserves every previous release and the existing publisher trust.
+Current release: [Daedlo alpha delivery — 28 October 2026](alpha-release.md),
+published assisted **0.1.4-alpha.6**. Shared recipe paths join the managed runner
+and reporting guidance. Exact installed runtime/tools/references, source and
+publisher CI, the actual public installer and HTTPS upgrade/restart/rollback
+passed. Published alpha.5 tools remain unchanged through the update drill. The
+signed feed preserves every previous release and the existing publisher trust.
 
 The [verification record](verification.md) owns exact identities and scoped
 results. Customer native registration, business-flow and full fault coverage,

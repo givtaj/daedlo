@@ -1,8 +1,8 @@
 # Verification record
 
-## Alpha.6 immutable release checkpoint — 2026-10-28
+## Alpha.6 released and production-verified — 2026-10-28
 
-**PASS — pre-publication acceptance. Signed publication pending.** Shared recipe paths merged in
+**PASS — immutable package, signed publication and production acceptance.** Shared recipe paths merged in
 [PR #16](https://github.com/givtaj/daedlo/pull/16) as
 `a6c81e2a4509a13fdd8a4dcc93656deb4a016a7a`. The reviewed source head
 `6fc9e7f963bf514ae7b24f0998128f51d310f9b1` passed Node 22/24 and metadata/secrets
@@ -36,10 +36,59 @@ historical; their identities are not this release.
   two independent reviews found no blocking logic or pin defects. All 15 historical
   files, trust and checkpoint identities remain unchanged.
 
-[PR #17](https://github.com/givtaj/daedlo/pull/17) carries the release and immutable
-publisher extension. Publisher-head CI, signed publication, production HTTPS
-update/restart/rollback, ordinary renewal and the WBF reply remain required.
-Customer registration and application acceptance remain separate.
+[PR #17](https://github.com/givtaj/daedlo/pull/17) merged the release and immutable
+publisher extension as `ec25d484a7052e3acf9225313f2d8cc3c0658673`. Its tree matches
+reviewed head `4cbf5ba9d3ea11a90668b34a2139a98b1930f1d8`, with Node 22/24 and
+metadata/secrets PASS in
+[publisher CI 40683528474](https://github.com/givtaj/daedlo/actions/runs/40683528474).
+
+| Production gate | Observed result |
+| --- | --- |
+| Immutable GitHub release | PASS: published prerelease/tag targets exact source `9f121005`; all three downloaded assets match the final pins |
+| Signed promotion | PASS: generation 15 → 16, checkpoint persisted before deployment; active Worker identity, all public files and security policies verified |
+| Existing tools update | PASS: seven actual HTTPS alpha.5 → alpha.6 → alpha.5 checkpoints using unchanged published alpha.5 tools; fresh-manager restart, rollback/relaunch and preservation passed |
+| Website and copied installer | PASS: eight actual HTTPS/browser/installer checks; eight desktop/narrow screenshots inspected; nine surrounding workspace entries preserved |
+| Ordinary renewal | PASS after documented recovery: generation 17 → 18, retained checkpoint restored from the failed attempt, unchanged release entries, 39 public assets and nine private boundaries verified |
+| Owned resource cleanup | PASS: three managers, acceptance browser and notebook app closed; website browser closed and disposable installer fixture removed |
+| Authorized support follow-up | PASS: existing-thread reply sent after publication and final renewal verification; SENT label, reply threading, body and actual sender headers read back; correspondence remains private |
+| Customer integration | NOT RUN: WBF registration, business flows, customer upgrade/rollback and complete fault coverage remain application-owned |
+
+[Promotion 40685647198](https://github.com/givtaj/daedlo/actions/runs/40685647198)
+restored generation 15 and persisted generation 16 before any deployment mutation.
+Catalog SHA-256 is `db0e70a17477d7742b95afebb6ef959cb1422374bb151011b85cddefac6d87c2`;
+signed payload SHA-256 is `b71f8e00411eab0f82d6eccdb9e45ba6529a2a596bfc86faa6cd7d9974f9c191`.
+Worker `daedlo` version `8e7fa53a-2e59-4671-9b81-6dd7684b349a` was verified active
+at 100% in deployment `0493d688-c86a-4717-b5e7-aa2fc14c7c3b`. Temporary signing-key
+cleanup passed. Alpha.2–alpha.6 downloads and the existing publisher trust remain.
+
+The production lifecycle recorded four real catalog requests and all three asset
+URLs for both alpha.5 and alpha.6. Its 69 alpha.5 tools files remained unchanged;
+six lifecycle reports and 25 completed-run reports were retained. Source snapshots
+were identical; config/trust/checkpoint and synthetic data assertions passed.
+Candidate, fresh-manager restart and rollback screenshots were inspected.
+
+[Ordinary renewal 40686278587](https://github.com/givtaj/daedlo/actions/runs/40686278587)
+issued and deployed generation 17 but **FAILED** its final live check with
+`fetch failed`. The logs do not identify the request or underlying network cause.
+Its checkpoint was preserved. Separate read-only recovery verified that the live
+catalog exactly matched that checkpoint, the reconstructed 42-file site manifest
+matched the workflow's original manifest, and the unchanged live verifier passed
+all 39 public assets and nine private boundaries. A fresh website/installer check
+also passed; its eight screenshots matched the inspected generation 16 images.
+No retry, policy weakening, signing-key change or checkpoint reset was added.
+
+The documented fresh-dispatch recovery,
+[renewal 40687124952](https://github.com/givtaj/daedlo/actions/runs/40687124952),
+**PASSED** every gate. It restored the failed attempt's authenticated generation
+17 checkpoint and advanced to 18 with identical release entries. Current catalog
+SHA-256 is `d169be29d532ce2648169a9d3912efefbc7fa6f505deb235e83cf7b8068fc393`;
+payload SHA-256 is `f7e1fd208064284a9362ac2c75308f638205cc09af508c85d8d17b9ff3ae08eb`.
+Worker version `caff0d2c-cac1-49f9-a81c-900181c4e260` was verified at 100% in
+deployment `ce82bd36-7257-480a-b332-e8f6a1b060a8`; all live assets, security checks
+and temporary-key cleanup passed. This does not relabel the earlier failed run.
+The authorized WBF reply was sent afterward with update/rollback instructions
+and the remaining application acceptance scope; actual SENT headers and body were
+verified in the original conversation. No WBF installation was accessed or promoted.
 
 Release-harness regressions were reproduced before implementation: alpha.6
 production mode was rejected (seven new failures), and both installed reference
@@ -50,15 +99,20 @@ suite passes 138 tests. The first source candidate `da198c6` failed CI because i
 licensing test still expected alpha.5. The strict expectation was corrected,
 the kit was rebuilt from clean `9f121005`, and every installed/lifecycle/website
 check above was rerun against the replacement bytes. The failed attempt and its
-local receipts remain private under `artifacts/alpha6-final`; it will not be published.
+local receipts remain private under `artifacts/alpha6-final`; it was not published.
 
 Current ignored evidence is under `artifacts/alpha6-accepted`, including source CI,
 installed runtime/starter receipts, `local-upgrade/run-oogP9b/result.json`, final
-public identities and publisher checks. Website receipts are
+public identities, publisher checks, `production-promotion-receipt.json` and
+`production-upgrade/run-5ZRQAz/result.json`. Recovery evidence includes both renewal
+workflow logs/checkpoints and `recovery-iOPKNN/recovery-result.json`. Website receipts are
 `artifacts/alpha6-website/accepted-fsNUoO/receipt.json` and
-`artifacts/alpha6-website/metadata-XobHrM/receipt.json`. Local signed-feed checks
+`artifacts/alpha6-website/metadata-XobHrM/receipt.json`; actual production evidence
+is `artifacts/alpha6-website/live-qvKLFk/receipt.json`, with generation 17 recovery
+under `artifacts/alpha6-website/live-DcZZaV/`. Local signed-feed checks
 use an ephemeral key and independent in-memory notebook; they do not prove live
-delivery, customer business flows or application-process restart durability.
+delivery. Actual HTTPS acceptance above separately establishes delivery; neither
+fixture establishes customer business flows or application-process restart durability.
 
 ## Shared recipe paths — local candidate, 2026-10-26
 

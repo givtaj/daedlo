@@ -1,7 +1,11 @@
 # Daedlo alpha delivery — 28 October 2026
 
-Release candidate: **0.1.4-alpha.6**. Status: **exact-package acceptance passed;
-signed publication pending**. [PR #16](https://github.com/givtaj/daedlo/pull/16) adds expandable
+Release: **0.1.4-alpha.6**. Status: **published assisted alpha; production acceptance passed**.
+[Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·
+[Versioned release](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.6) ·
+[Exact verification metadata](https://daedlo.com/downloads/0.1.4-alpha.6/release.json).
+
+[PR #16](https://github.com/givtaj/daedlo/pull/16) adds expandable
 shared recipe paths and complete ordered step previews. Grouping compares authored
 command IDs and full parameters; viewing steps never executes them. Every recipe
 retains its own availability and runs its complete guarded sequence.
@@ -12,10 +16,20 @@ ancestry require their own review. The assisted macOS arm64/Codex scope and the
 alpha.5 managed integration and reporting guidance remain unchanged.
 
 The [verification record](verification.md) owns exact hashes and measured results.
-Source CI, installed runtime/tools/references, old-tools update/restart/rollback
-and website/installer acceptance passed. Publisher CI, signed publication and
-production HTTPS acceptance remain required before this candidate is announced
-as live. Customer application acceptance remains separate.
+Source and publisher CI, installed runtime/tools/references, signed publication,
+seven actual HTTPS alpha.5 → alpha.6 → alpha.5 checkpoints and eight live website/
+installer checks passed. The upgrade reused all 69 published alpha.5 tools files;
+fresh-manager restart, retained-slot rollback, source/configuration/trust/data
+preservation and owned cleanup passed. Desktop/narrow and lifecycle screenshots
+were inspected. Customer application acceptance remains separate.
+
+Immutable package source is `9f1210053c09ead91e0e71c3b3423c560a818ca1`.
+The ZIP is **301268 bytes**, SHA-256
+`536476e8a3f160d58b269873ffb6da55820e804357a95aa0f4358c9d5a515123`.
+Publisher/status commits do not change these bytes. The public download path and
+private GitHub release hold the same three files. Historical downloads and the
+publisher key remain intact. Synthetic acceptance does not establish customer
+business outcomes or application-process restart durability.
 
 ## Historical alpha.5 delivery — 26 October 2026
 

@@ -11,13 +11,19 @@ application outcome. Authored flows run without an AI agent or model API key.
 [Contribute](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Get help](SUPPORT.md) ·
 [Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
-**0.1.4-alpha.5 is released: assisted macOS arm64 onboarding with Codex.**
+**0.1.4-alpha.6 is released: assisted macOS arm64 onboarding with Codex.**
 [Start with one Codex prompt](https://daedlo.com/install) or read the
-[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.5).
+[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.6).
 The exact installed kit, source CI, managed reference, public installer and
-production HTTPS upgrade/restart/rollback passed their scoped checks on 26 October
+production HTTPS upgrade/restart/rollback passed their scoped checks on 28 October
 2026. The [verification record](docs/verification.md) owns measured results and
 limits; [alpha delivery](docs/alpha-release.md) owns the product scope.
+
+Alpha.6 groups recipes with identical authored starting steps and shows complete
+ordered previews. Viewing a path is read-only; every recipe keeps its own
+availability and executes its full guarded sequence. Existing model, protocol,
+public API and managed configuration contracts remain unchanged. Published
+alpha.5 tools passed the live update, restart and rollback drill unchanged.
 
 Alpha.5 adds a complete [managed custom-runner reference](docs/managed-integration.md)
 and [persistence/reporting guide](docs/evidence-reporting.md). Keep the injected
