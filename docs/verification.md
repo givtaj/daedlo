@@ -1,5 +1,65 @@
 # Verification record
 
+## Alpha.6 immutable release checkpoint — 2026-10-28
+
+**PASS — pre-publication acceptance. Signed publication pending.** Shared recipe paths merged in
+[PR #16](https://github.com/givtaj/daedlo/pull/16) as
+`a6c81e2a4509a13fdd8a4dcc93656deb4a016a7a`. The reviewed source head
+`6fc9e7f963bf514ae7b24f0998128f51d310f9b1` passed Node 22/24 and metadata/secrets
+in [CI 40346816956](https://github.com/givtaj/daedlo/actions/runs/40346816956).
+The final package source is `9f1210053c09ead91e0e71c3b3423c560a818ca1`;
+[exact-source CI 40681953847](https://github.com/givtaj/daedlo/actions/runs/40681953847)
+passes Node 22/24 and metadata/secrets. Earlier local-only packages below are
+historical; their identities are not this release.
+
+| Exact artifact | SHA-256 |
+| --- | --- |
+| Clean source tree | `237b0ed3b190f7a5d04ca7c3980b3c8f7761969128f300ae2fddf58f287870dc` |
+| Bundle manifest | `0358c37c9e70e0c09e6bb720ef339d7dee51e3d6e6a2a669fd218a5cbb9aa59c` |
+| Tools archive | `a3cb7707abd90cc14206382ea37e987d2b68324b53d6c12986e02985623aae55` |
+| ZIP (301268 bytes) | `536476e8a3f160d58b269873ffb6da55820e804357a95aa0f4358c9d5a515123` |
+| External verification metadata (8082 bytes) | `e5ba120148d22474aa457582b48754ec635f532dffea52e23bc1f65c52c991c2` |
+| SHA256SUMS (91 bytes) | `f022fed5fe80291893dc0dadf9908bbe37bdd74a24a45fcb6bf856d3816b2838` |
+
+- PASS: exact 23 runtime files and 69 tools files; eight notebook browser groups,
+  ten CLI cases, 25 finalization cases, nine control cases, frontend viewer,
+  four shared-path browser cases and 13 native startup checks.
+- PASS: exact shipped starter 16, evidence reference nine and managed reference
+  eight; independent installation and hooks. All owned cleanup passed.
+- PASS: seven actual local alpha.5 → alpha.6 → alpha.5 checkpoints, using unchanged
+  published alpha.5 tools throughout. Fresh-manager restart, rollback/relaunch,
+  source/configuration/trust/checkpoint/data preservation and cleanup passed.
+- PASS: website 68, onboarding browser 14 and layout four; browser-copied offline
+  installer preserved nine surrounding entries. Desktop/narrow and lifecycle
+  screenshots inspected. Final metadata restaging preserved all ZIP/static bytes.
+- PASS: 207 publisher safeguards after eight genuine new failing regressions;
+  two independent reviews found no blocking logic or pin defects. All 15 historical
+  files, trust and checkpoint identities remain unchanged.
+
+[PR #17](https://github.com/givtaj/daedlo/pull/17) carries the release and immutable
+publisher extension. Publisher-head CI, signed publication, production HTTPS
+update/restart/rollback, ordinary renewal and the WBF reply remain required.
+Customer registration and application acceptance remain separate.
+
+Release-harness regressions were reproduced before implementation: alpha.6
+production mode was rejected (seven new failures), and both installed reference
+runners were skipped (seven failing assertions, including missing failure
+propagation). The bounded alpha.5-to-alpha.6 mode now passes all 23 mode tests;
+the reference dispatch and existing inventory checks pass 14 tests. The runtime
+suite passes 138 tests. The first source candidate `da198c6` failed CI because its
+licensing test still expected alpha.5. The strict expectation was corrected,
+the kit was rebuilt from clean `9f121005`, and every installed/lifecycle/website
+check above was rerun against the replacement bytes. The failed attempt and its
+local receipts remain private under `artifacts/alpha6-final`; it will not be published.
+
+Current ignored evidence is under `artifacts/alpha6-accepted`, including source CI,
+installed runtime/starter receipts, `local-upgrade/run-oogP9b/result.json`, final
+public identities and publisher checks. Website receipts are
+`artifacts/alpha6-website/accepted-fsNUoO/receipt.json` and
+`artifacts/alpha6-website/metadata-XobHrM/receipt.json`. Local signed-feed checks
+use an ephemeral key and independent in-memory notebook; they do not prove live
+delivery, customer business flows or application-process restart durability.
+
 ## Shared recipe paths — local candidate, 2026-10-26
 
 **PASS — local source, installed-candidate and Ninja lifecycle checks. Not published.** The viewer

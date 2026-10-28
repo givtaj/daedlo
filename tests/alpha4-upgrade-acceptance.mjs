@@ -2,6 +2,8 @@
 // independent notebook fixture. Default transport uses a local synthetic feed;
 // --production-https reads the fixed live feed with pinned public trust and real
 // HTTPS. Neither mode mutates production or establishes customer acceptance.
+// --alpha6-upgrade keeps published alpha.5 tools for the full alpha.6 lifecycle,
+// using the synthetic feed by default or production HTTPS when explicitly selected.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
@@ -22,7 +24,12 @@ const writeJson = (path, value) =>
 const args = process.argv.slice(2);
 for (const arg of args)
   assert.ok(
-    ["--legacy-only", "--production-https", "--local-candidate"].includes(arg),
+    [
+      "--legacy-only",
+      "--production-https",
+      "--local-candidate",
+      "--alpha6-upgrade",
+    ].includes(arg),
     "Unsupported upgrade acceptance argument",
   );
 assert.equal(
@@ -33,6 +40,11 @@ assert.equal(
 const legacyOnly = args.includes("--legacy-only");
 const productionHttps = args.includes("--production-https");
 const localCandidate = args.includes("--local-candidate");
+const alpha6Upgrade = args.includes("--alpha6-upgrade");
+assert.ok(
+  !(alpha6Upgrade && (localCandidate || legacyOnly)),
+  "Alpha.6 upgrade mode cannot use local-candidate or legacy-only",
+);
 assert.ok(
   !(localCandidate && (productionHttps || legacyOnly)),
   "Local candidate mode cannot use production HTTPS or legacy-only",
@@ -69,16 +81,17 @@ const candidateVersion =
   JSON.parse(
     await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
   ).version;
-if (localCandidate) {
+if (localCandidate || alpha6Upgrade) {
+  const mode = localCandidate ? "Local candidate" : "Alpha.6 upgrade";
   assert.equal(
     baselineVersion,
     "0.1.4-alpha.5",
-    "Local candidate mode requires the published alpha.5 baseline",
+    `${mode} mode requires the published alpha.5 baseline`,
   );
   assert.equal(
     candidateVersion,
     "0.1.4-alpha.6",
-    "Local candidate mode requires exactly 0.1.4-alpha.6",
+    `${mode} mode requires exactly 0.1.4-alpha.6`,
   );
 } else {
   assert.match(
@@ -87,6 +100,7 @@ if (localCandidate) {
     "Only the reviewed renamed candidate release may be selected",
   );
 }
+const reusePublishedTools = localCandidate || alpha6Upgrade;
 assert.ok(
   process.env.ALPHA4_LEGACY_KIT,
   "Set ALPHA4_LEGACY_KIT to the selected immutable baseline public kit directory",
@@ -136,7 +150,9 @@ const result = {
     : "exact installed tools bootstrap, upgrade and rollback",
   transport: productionHttps ? "production-https" : "ephemeral-signed-feed",
   localCandidate,
-  toolsPolicy: localCandidate
+  alpha6Upgrade,
+  reusePublishedTools,
+  toolsPolicy: reusePublishedTools
     ? "Keep exact published alpha.5 tools for baseline, upgrade, restart and rollback"
     : "Verify candidate tools bootstrap before upgrading the accepted installation",
   ...(productionHttps
@@ -455,7 +471,7 @@ async function managedFlow(label, { durable = true } = {}) {
   });
   await view.goto(live.running.viewerUrl);
   await view.locator('[data-command="edit"]').waitFor();
-  if (localCandidate) {
+  if (reusePublishedTools) {
     const recipe = view.locator('button[data-recipe="save_example"]');
     assert.equal(await recipe.isVisible(), true);
     assert.equal(await view.locator(".recipe-path-group").count(), 0);
@@ -923,17 +939,17 @@ try {
     const ownerBytes = await fs.readFile(
       join(config.store, ".ninja-project.json"),
     );
-    // Local feature acceptance specifically proves the already published client
+    // Alpha.6 acceptance specifically proves the already published client
     // can manage these runtime bytes; no candidate tools are installed or used.
-    const newTools = localCandidate
+    const newTools = reusePublishedTools
       ? oldTools
       : await installTools(candidate, join(work, "new-tools"));
-    const newer = localCandidate ? old : await toolApi(newTools);
+    const newer = reusePublishedTools ? old : await toolApi(newTools);
     result.managerTools = {
-      version: localCandidate ? baselineVersion : candidateVersion,
-      source: (localCandidate ? legacy : candidate).toolsReceipt.source,
-      archive: (localCandidate ? legacy : candidate).toolsReceipt.archive,
-      reusedPublishedTools: localCandidate,
+      version: reusePublishedTools ? baselineVersion : candidateVersion,
+      source: (reusePublishedTools ? legacy : candidate).toolsReceipt.source,
+      archive: (reusePublishedTools ? legacy : candidate).toolsReceipt.archive,
+      reusedPublishedTools: reusePublishedTools,
     };
     await open(newer);
     assert.deepEqual((await readJson(statePath)).checkpoint, checkpoint);
@@ -952,9 +968,11 @@ try {
       (await active.supervisor.status()).running.version,
       baselineVersion,
     );
-    await managedFlow("legacy-new-tools");
+    await managedFlow(
+      reusePublishedTools ? "baseline-reopened" : "legacy-new-tools",
+    );
     await record(
-      localCandidate
+      reusePublishedTools
         ? "Unchanged published alpha.5 tools reopen the accepted slot with config/trust/store/checkpoint preserved"
         : "Verified new tools bootstrap preserves config/trust/store/checkpoint and runs accepted legacy slot",
       { toolsFiles: Object.keys(newTools.inventory).length },
@@ -1037,7 +1055,7 @@ try {
       (await readJson(statePath)).checkpoint,
       acceptedCheckpoint,
     );
-    if (localCandidate)
+    if (reusePublishedTools)
       await assert.rejects(fs.stat(join(work, "new-tools")), {
         code: "ENOENT",
       });
@@ -1045,7 +1063,7 @@ try {
     const reports = await fs.readdir(join(config.store, "reports"));
     assert.ok(
       reports.length >= 4,
-      "Durable lifecycle reports retained across tools replacement, upgrade, rollback and relaunch",
+      "Durable lifecycle reports retained across manager reopen, upgrade, rollback and relaunch",
     );
     await writeJson(
       join(output, "project-after.json"),
@@ -1056,7 +1074,7 @@ try {
       await notes(application.url),
     );
     await record(
-      localCandidate
+      reusePublishedTools
         ? "States/flows/adapter source, exact published tools, config/trust/checkpoint preserved; durable reports and relaunch pass"
         : "States/flows/adapter source, both tools packages, config/trust/checkpoint preserved; durable reports and relaunch pass",
       { lifecycleReports: reports.length },

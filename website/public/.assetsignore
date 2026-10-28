@@ -57,3 +57,9 @@
 !/downloads/0.1.4-alpha.5/daedlo-0.1.4-alpha.5.zip
 !/downloads/0.1.4-alpha.5/SHA256SUMS
 !/downloads/0.1.4-alpha.5/release.json
+
+# Exact shared recipe paths release.
+!/downloads/0.1.4-alpha.6/
+!/downloads/0.1.4-alpha.6/daedlo-0.1.4-alpha.6.zip
+!/downloads/0.1.4-alpha.6/SHA256SUMS
+!/downloads/0.1.4-alpha.6/release.json

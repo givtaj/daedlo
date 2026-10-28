@@ -52,20 +52,22 @@ Worker or domain permission is required. See verification for provisioning statu
 
 ## Explicit release promotion
 
-Alpha.4 and alpha.5 use separate reviewed promotion selections in the existing
-renewal workflow. After exact-package acceptance, pin the candidate's clean
+Alpha.4, alpha.5 and alpha.6 use separate reviewed promotion selections in the
+existing renewal workflow. After exact-package acceptance, pin the candidate's clean
 source commit and its complete three-file public inventory in
 `scripts/release/ninja-renew.mjs`. Retain all previous identities. Publish the
 matching GitHub prerelease, merge reviewed publisher policy, then dispatch
-`promote_alpha5=true` on the default branch for alpha.5. Never select both inputs
-or use ordinary renewal to introduce an unpinned release.
+`promote_alpha5=true` on the default branch for alpha.5, or
+`promote_alpha6=true` for alpha.6. Select at most one promotion input; ordinary
+renewal cannot introduce an unpinned release.
 
-The alpha.5 path requires the retained alpha.4 entry, the same authenticated
-high-water checkpoint and signing identity, and manager contract 2. It preserves
-all earlier releases exactly. After successful promotion, ordinary renewal must
-retain alpha.5; a higher generation cannot remove it. These workflow capabilities
-do not establish publication until the live gates pass and verification records
-the actual result.
+The alpha.5 path requires the retained alpha.4 entry; alpha.6 requires the complete
+retained alpha.5 inventory. Both require the same authenticated high-water
+checkpoint and signing identity, and manager contract 2. They preserve all earlier
+releases exactly. After successful promotion, ordinary renewal must retain the
+complete inventory including alpha.6; a higher generation cannot remove it.
+These workflow capabilities do not establish publication until the live gates
+pass and verification records the actual result.
 
 ## Automatic renewal
 

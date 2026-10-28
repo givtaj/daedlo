@@ -99,6 +99,34 @@ for (const [label, args, baseline, candidate, pattern] of [
     "0.1.4-alpha.6",
     /Only the reviewed renamed candidate release may be selected/,
   ],
+  [
+    "alpha.6 release mixed with local candidate mode",
+    ["--alpha6-upgrade", "--local-candidate"],
+    "0.1.4-alpha.5",
+    "0.1.4-alpha.6",
+    /Alpha.6 upgrade mode cannot use local-candidate or legacy-only/,
+  ],
+  [
+    "partial alpha.6 release run",
+    ["--alpha6-upgrade", "--legacy-only"],
+    "0.1.4-alpha.5",
+    "0.1.4-alpha.6",
+    /Alpha.6 upgrade mode cannot use local-candidate or legacy-only/,
+  ],
+  [
+    "unreviewed alpha.6 release baseline",
+    ["--alpha6-upgrade"],
+    "0.1.4-alpha.4",
+    "0.1.4-alpha.6",
+    /Alpha.6 upgrade mode requires the published alpha.5 baseline/,
+  ],
+  [
+    "unreviewed alpha.6 release candidate",
+    ["--alpha6-upgrade", "--production-https"],
+    "0.1.4-alpha.5",
+    "0.1.4-alpha.7",
+    /Alpha.6 upgrade mode requires exactly 0.1.4-alpha.6/,
+  ],
 ]) {
   test(`upgrade mode rejects ${label} before acquiring resources`, async (t) => {
     const root = await fs.mkdtemp(join(tmpdir(), "alpha4-local-mode-test-"));
@@ -125,47 +153,106 @@ for (const [label, args, baseline, candidate, pattern] of [
   });
 }
 
-test("local candidate retains the independent published alpha.5 ZIP pin before any installation", async (t) => {
-  const root = await fs.mkdtemp(join(tmpdir(), "alpha5-pin-test-"));
-  t.after(() => fs.rm(root, { recursive: true, force: true }));
-  const baseline = join(root, "baseline"),
-    output = join(root, "output");
-  await fs.mkdir(baseline);
-  await fs.writeFile(
-    join(baseline, "release.json"),
-    JSON.stringify({
-      version: "0.1.4-alpha.5",
-      source: { dirty: false },
-      archive: {
-        file: "daedlo-0.1.4-alpha.5.zip",
-        sha256: "a".repeat(64),
-        bytes: 0,
+for (const [label, args] of [
+  ["local candidate", ["--local-candidate"]],
+  ["alpha.6 release", ["--alpha6-upgrade"]],
+]) {
+  test(`${label} retains the independent published alpha.5 ZIP pin before any installation`, async (t) => {
+    const root = await fs.mkdtemp(join(tmpdir(), "alpha5-pin-test-"));
+    t.after(() => fs.rm(root, { recursive: true, force: true }));
+    const baseline = join(root, "baseline"),
+      output = join(root, "output");
+    await fs.mkdir(baseline);
+    await fs.writeFile(
+      join(baseline, "release.json"),
+      JSON.stringify({
+        version: "0.1.4-alpha.5",
+        source: { dirty: false },
+        archive: {
+          file: "daedlo-0.1.4-alpha.5.zip",
+          sha256: "a".repeat(64),
+          bytes: 0,
+        },
+      }),
+    );
+    await fs.writeFile(join(baseline, "daedlo-0.1.4-alpha.5.zip"), "");
+    await assert.rejects(
+      execute(process.execPath, [harness, ...args], {
+        env: {
+          ...process.env,
+          DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.5",
+          DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.6",
+          ALPHA4_LEGACY_KIT: baseline,
+          ALPHA4_LEGACY_SHA256: "a".repeat(64),
+          ALPHA4_CANDIDATE_KIT: join(root, "candidate-must-not-read"),
+          ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
+          ALPHA4_UPGRADE_OUTPUT: output,
+        },
+      }),
+    );
+    const runs = await fs.readdir(output);
+    assert.equal(runs.length, 1);
+    const receipt = JSON.parse(
+      await fs.readFile(join(output, runs[0], "result.json"), "utf8"),
+    );
+    assert.equal(receipt.status, "FAIL");
+    assert.equal(receipt.transport, "ephemeral-signed-feed");
+    assert.equal(receipt.localCandidate, label === "local candidate");
+    assert.equal(receipt.reusePublishedTools, true);
+    assert.equal(
+      receipt.toolsPolicy,
+      "Keep exact published alpha.5 tools for baseline, upgrade, restart and rollback",
+    );
+    assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
+    assert.deepEqual(receipt.checks, []);
+    assert.deepEqual(receipt.cleanup, []);
+    assert.deepEqual(await fs.readdir(join(output, runs[0], "work")), []);
+  });
+}
+
+for (const [label, args, baseline, candidate] of [
+  ["alpha.3 to alpha.4", [], "0.1.4-alpha.3", "0.1.4-alpha.4"],
+  ["alpha.3 to alpha.5", [], "0.1.4-alpha.3", "0.1.4-alpha.5"],
+  ["alpha.4 to alpha.5", [], "0.1.4-alpha.4", "0.1.4-alpha.5"],
+  ["legacy-only", ["--legacy-only"], "0.1.4-alpha.3", "0.1.4-alpha.5"],
+  [
+    "production alpha.3 to alpha.4",
+    ["--production-https"],
+    "0.1.4-alpha.3",
+    "0.1.4-alpha.4",
+  ],
+  [
+    "production alpha.4 to alpha.5",
+    ["--production-https"],
+    "0.1.4-alpha.4",
+    "0.1.4-alpha.5",
+  ],
+  [
+    "explicit alpha.6 production upgrade",
+    ["--alpha6-upgrade", "--production-https"],
+    "0.1.4-alpha.5",
+    "0.1.4-alpha.6",
+  ],
+]) {
+  test(`${label} reaches the required kit gate without acquiring resources`, async (t) => {
+    const root = await fs.mkdtemp(join(tmpdir(), "alpha-upgrade-mode-test-"));
+    t.after(() => fs.rm(root, { recursive: true, force: true }));
+    const output = join(root, "must-not-create");
+    await assert.rejects(
+      execute(process.execPath, [harness, ...args], {
+        env: {
+          ...process.env,
+          DAEDLO_UPGRADE_BASELINE: baseline,
+          DAEDLO_UPGRADE_CANDIDATE_VERSION: candidate,
+          ALPHA4_LEGACY_KIT: "",
+          ALPHA4_UPGRADE_OUTPUT: output,
+        },
+      }),
+      (error) => {
+        assert.match(error.stderr, /Set ALPHA4_LEGACY_KIT/);
+        return true;
       },
-    }),
-  );
-  await fs.writeFile(join(baseline, "daedlo-0.1.4-alpha.5.zip"), "");
-  await assert.rejects(
-    execute(process.execPath, [harness, "--local-candidate"], {
-      env: {
-        ...process.env,
-        DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.5",
-        DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.6",
-        ALPHA4_LEGACY_KIT: baseline,
-        ALPHA4_LEGACY_SHA256: "a".repeat(64),
-        ALPHA4_CANDIDATE_KIT: join(root, "candidate-must-not-read"),
-        ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
-        ALPHA4_UPGRADE_OUTPUT: output,
-      },
-    }),
-  );
-  const runs = await fs.readdir(output);
-  assert.equal(runs.length, 1);
-  const receipt = JSON.parse(
-    await fs.readFile(join(output, runs[0], "result.json"), "utf8"),
-  );
-  assert.equal(receipt.status, "FAIL");
-  assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
-  assert.deepEqual(receipt.checks, []);
-  assert.deepEqual(receipt.cleanup, []);
-  assert.deepEqual(await fs.readdir(join(output, runs[0], "work")), []);
-});
+    );
+    await assert.rejects(fs.stat(output), { code: "ENOENT" });
+  });
+}

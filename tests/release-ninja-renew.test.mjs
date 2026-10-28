@@ -167,8 +167,11 @@ async function fixture(
     promoted = alpha4,
     alpha5 = false,
     promoted5 = alpha5,
+    alpha6 = false,
+    promoted6 = alpha6,
   } = {},
 ) {
+  alpha5 ||= alpha6;
   alpha4 ||= alpha5;
   const root = await fs.realpath(
     await fs.mkdtemp(join(tmpdir(), "ninja-renew-test-")),
@@ -207,12 +210,13 @@ async function fixture(
     "0.1.4-alpha.3",
     ...(alpha4 ? ["0.1.4-alpha.4"] : []),
     ...(alpha5 ? ["0.1.4-alpha.5"] : []),
+    ...(alpha6 ? ["0.1.4-alpha.6"] : []),
   ];
   for (const version of versions) {
     const files = kit(
       version,
       () => {},
-      ["0.1.4-alpha.4", "0.1.4-alpha.5"].includes(version)
+      ["0.1.4-alpha.4", "0.1.4-alpha.5", "0.1.4-alpha.6"].includes(version)
         ? "daedlo"
         : "browser-driver",
     );
@@ -230,7 +234,8 @@ async function fixture(
     if (
       version === "0.1.2-rc.1" ||
       (version === "0.1.4-alpha.4" && !promoted) ||
-      (version === "0.1.4-alpha.5" && !promoted5)
+      (version === "0.1.4-alpha.5" && !promoted5) ||
+      (version === "0.1.4-alpha.6" && !promoted6)
     )
       continue;
     const asset = (name) => ({
@@ -241,7 +246,9 @@ async function fixture(
       version,
       channel: "preview",
       platforms: [{ os: "darwin", arch: "arm64" }],
-      contracts: ["0.1.4-alpha.4", "0.1.4-alpha.5"].includes(version)
+      contracts: ["0.1.4-alpha.4", "0.1.4-alpha.5", "0.1.4-alpha.6"].includes(
+        version,
+      )
         ? { ...contracts, manager: 2 }
         : contracts,
       notesUrl: origin + "/updates.html",
@@ -283,6 +290,7 @@ async function fixture(
     releaseContracts: {
       ...(alpha4 ? { "0.1.4-alpha.4": { ...contracts, manager: 2 } } : {}),
       ...(alpha5 ? { "0.1.4-alpha.5": { ...contracts, manager: 2 } } : {}),
+      ...(alpha6 ? { "0.1.4-alpha.6": { ...contracts, manager: 2 } } : {}),
     },
     initialCheckpoint: {
       generation: 1,
@@ -796,7 +804,10 @@ test("workflow limits events, credentials, concurrency and deployed configuratio
     text,
     /elif test "\$NINJA_PROMOTE_ALPHA5" = "true"; then\n\s+node scripts\/release\/ninja-promotion\.mjs --release 0\.1\.4-alpha\.5/,
   );
-  assert.match(text, /test "\$PROMOTE_ALPHA4:\$PROMOTE_ALPHA5" != "true:true"/);
+  assert.match(
+    text,
+    /case "\$PROMOTE_ALPHA4:\$PROMOTE_ALPHA5:\$PROMOTE_ALPHA6" in/,
+  );
   assert.ok(
     text.indexOf("Validate one explicit promotion selection") <
       text.indexOf("secrets.DAEDLO_UPDATE_SIGNING_KEY"),
@@ -1057,4 +1068,178 @@ test("alpha5 promotion refuses a later live generation that dropped a retained r
     /retained release/i,
   );
   await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+});
+
+test("only explicit alpha6 promotion extends alpha5 and preserves every immutable entry", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    promoted6: false,
+  });
+  await assert.rejects(prep(f), /inventory|promotion/i);
+  for (const selector of ["promoteAlpha4", "promoteAlpha5"])
+    await assert.rejects(
+      prepareNinjaRenewal({ ...f.options, [selector]: true }, f.dependencies),
+      /inventory|promotion/i,
+    );
+  const result = await prepareNinjaRenewal(
+    { ...f.options, promoteAlpha6: true },
+    f.dependencies,
+  );
+  const envelope = JSON.parse(
+    await fs.readFile(join(result.sitePath, "public/updates/preview.json")),
+  );
+  assert.deepEqual(envelope.signed.releases.slice(0, 4), f.signed.releases);
+  assert.equal(envelope.signed.releases.at(-1).version, "0.1.4-alpha.6");
+  assert.equal(envelope.signed.releases.at(-1).contracts.manager, 2);
+  assert.equal(
+    (await verifyNinjaRenewal({ output: f.options.output }, f.dependencies))
+      .status,
+    "PASS",
+  );
+  const receiptPath = join(f.options.output, "renewal-receipt.json");
+  const receipt = JSON.parse(await fs.readFile(receiptPath));
+  assert.equal(receipt.promoteAlpha6, true);
+  receipt.promoteAlpha6 = false;
+  await fs.writeFile(receiptPath, JSON.stringify(receipt));
+  await assert.rejects(
+    verifyNinjaRenewal({ output: f.options.output }, f.dependencies),
+    /inventory|promotion/i,
+  );
+});
+
+test("alpha6 ordinary renewal retains all releases and authenticates alpha5 high-water history", async (t) => {
+  const f = await fixture(t, { alpha4: true, alpha5: true, alpha6: true });
+  const finalReleases = f.signed.releases;
+  f.signed.releases = finalReleases.slice(0, 4);
+  const checkpointPath = join(f.root, "alpha5-checkpoint.json");
+  await fs.writeFile(checkpointPath, f.envelope());
+  f.signed.releases = finalReleases;
+  f.signed.generation = 2;
+  f.bodies.set(feed, f.envelope());
+  const result = await prepareNinjaRenewal(
+    { ...f.options, checkpointPath },
+    f.dependencies,
+  );
+  assert.equal(result.generation, 3);
+  const envelope = JSON.parse(
+    await fs.readFile(join(result.sitePath, "public/updates/preview.json")),
+  );
+  assert.deepEqual(envelope.signed.releases, finalReleases);
+  assert.equal(
+    (await verifyNinjaRenewal({ output: f.options.output }, f.dependencies))
+      .status,
+    "PASS",
+  );
+});
+
+test("alpha6 cannot skip alpha5, combine any selectors, or use absent historical pins", async (t) => {
+  const skipped = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    promoted5: false,
+    promoted6: false,
+  });
+  await assert.rejects(
+    prepareNinjaRenewal(
+      { ...skipped.options, promoteAlpha6: true },
+      skipped.dependencies,
+    ),
+    /inventory|promotion/i,
+  );
+  for (const selected of [
+    { promoteAlpha4: true, promoteAlpha5: true },
+    { promoteAlpha4: true, promoteAlpha6: true },
+    { promoteAlpha5: true, promoteAlpha6: true },
+    { promoteAlpha4: true, promoteAlpha5: true, promoteAlpha6: true },
+  ]) {
+    const f = await fixture(t, {
+      alpha4: true,
+      alpha5: true,
+      alpha6: true,
+      promoted6: false,
+    });
+    await assert.rejects(
+      prepareNinjaRenewal({ ...f.options, ...selected }, f.dependencies),
+      /Only one explicit release promotion/,
+    );
+    await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+  }
+  for (const version of ["0.1.4-alpha.4", "0.1.4-alpha.5"]) {
+    const f = await fixture(t, { alpha4: true, alpha5: true, alpha6: true });
+    delete f.policy.assets[version];
+    await assert.rejects(prep(f), /inventory/i);
+  }
+});
+
+test("alpha6 refuses a later generation that omits or changes authenticated retained entries", async (t) => {
+  for (const change of [
+    (f) => f.signed.releases.pop(),
+    (f) => {
+      f.signed.releases[0].kit.sha256 = "f".repeat(64);
+    },
+  ]) {
+    const f = await fixture(t, { alpha4: true, alpha5: true, alpha6: true });
+    const checkpointPath = join(f.root, "alpha6-checkpoint.json");
+    await fs.writeFile(checkpointPath, f.envelope());
+    change(f);
+    f.signed.generation = 2;
+    f.bodies.set(feed, f.envelope());
+    await assert.rejects(
+      prepareNinjaRenewal(
+        { ...f.options, checkpointPath, promoteAlpha6: true },
+        f.dependencies,
+      ),
+      /retained release|immutable asset/i,
+    );
+    await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+  }
+});
+
+test("alpha6 workflow selection refuses every combined promotion before credential scope", async () => {
+  const text = await fs.readFile(
+    join(repo, ".github/workflows/ninja-renew.yml"),
+    "utf8",
+  );
+  assert.match(
+    text,
+    /promote_alpha6:\n\s+description:[^\n]+\n\s+type: boolean\n\s+default: false/,
+  );
+  assert.match(
+    text,
+    /NINJA_PROMOTE_ALPHA6:.*github.event_name == 'workflow_dispatch'.*inputs.promote_alpha6/,
+  );
+  assert.match(
+    text,
+    /elif test "\$NINJA_PROMOTE_ALPHA6" = "true"; then\n\s+node scripts\/release\/ninja-promotion\.mjs --release 0\.1\.4-alpha\.6/,
+  );
+  const section = text
+    .split("- name: Validate one explicit promotion selection")[1]
+    .split("- name: Set up Node")[0];
+  const body = section.split("run: |\n")[1];
+  assert.ok(
+    body,
+    "Promotion guard must be inspectable before secrets are in scope",
+  );
+  const script = body
+    .split("\n")
+    .map((line) => line.replace(/^          /, ""))
+    .join("\n");
+  for (const a of ["false", "true"])
+    for (const b of ["false", "true"])
+      for (const c of ["false", "true"]) {
+        const env = {
+          ...process.env,
+          PROMOTE_ALPHA4: a,
+          PROMOTE_ALPHA5: b,
+          PROMOTE_ALPHA6: c,
+        };
+        const run = () =>
+          execFileSync("bash", ["-c", script], { env, stdio: "pipe" });
+        if ([a, b, c].filter((v) => v === "true").length > 1)
+          assert.throws(run);
+        else assert.doesNotThrow(run);
+      }
 });

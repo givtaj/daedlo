@@ -1,5 +1,17 @@
 # Implementation plan
 
+## Alpha.6 publication — 2026-10-28
+
+The owner authorized merging PR #16, publishing the shared-path viewer, verifying
+production Ninja updates and replying in the existing WBF conversation afterward.
+
+- [x] Merge the reviewed feature after checking its current head and required CI.
+- [x] Freeze the versioned source and pass exact installed runtime/tools/references.
+- [x] Verify published alpha.5 tools update, restart and roll back the candidate.
+- [ ] Review immutable publisher pins, complete CI and publish through the existing workflow.
+- [ ] Verify actual production HTTPS discovery, installation, restart and rollback.
+- [ ] Send the scoped post-publication WBF reply and record delivery privately.
+
 ## Shared recipe paths — 2026-10-26
 
 Approved UI direction: show a common authored entry path once, branch into its
