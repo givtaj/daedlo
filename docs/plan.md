@@ -6,8 +6,8 @@ The owner authorized merging PR #16, publishing the shared-path viewer, verifyin
 production Ninja updates and replying in the existing WBF conversation afterward.
 
 - [x] Merge the reviewed feature after checking its current head and required CI.
-- [ ] Freeze the versioned source and pass exact installed runtime/tools/references.
-- [ ] Verify published alpha.5 tools update, restart and roll back the candidate.
+- [x] Freeze the versioned source and pass exact installed runtime/tools/references.
+- [x] Verify published alpha.5 tools update, restart and roll back the candidate.
 - [ ] Review immutable publisher pins, complete CI and publish through the existing workflow.
 - [ ] Verify actual production HTTPS discovery, installation, restart and rollback.
 - [ ] Send the scoped post-publication WBF reply and record delivery privately.
