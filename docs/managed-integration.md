@@ -108,3 +108,51 @@ receipt; it does not prove installation. Exact-installed mode accepts the select
 tools/runtime/examples plus a verified bundle and performs real installation and
 verification. Publication, customer registration, customer update/rollback and
 customer acceptance remain separate gates in the verification record.
+
+## Customer-run acceptance
+
+Run this checklist in your own disposable application environment, using your
+existing model, adapter and agreed flows. Keep private code, catalogs, data,
+credentials and raw evidence with your team. Daedlo's reference results do not
+establish acceptance for your application.
+
+Record each applicable gate as **PASS**, **FAIL**, **BLOCKED** or **NOT RUN**.
+An unavailable fixture, authentication prerequisite or dependency is **BLOCKED**;
+use **FAIL** for an exercised check whose observed result violates its assertion.
+Keep earlier results bound to their tested versions and record skipped cases
+explicitly. Preserve your accepted installation while testing the candidate.
+
+| Gate | Required evidence in your environment |
+| --- | --- |
+| Prerequisites | Record exact tools/runtime/crate, model, Node, Rust and browser versions; identify the isolated application source, disposable data, readiness checks and owned/attached resources in your private record. Both frontend fixtures must be ready before an isolation check. |
+| Model and native startup | Run the real engine `hello` and disposable installation hooks. Verify the launcher creates its session through the injected runtime, passes that exact session to the viewer and returns it unchanged. Inspect startup progress, frontend/target/model identity and zero unexpected startup writes. |
+| Independent frontends | Start two distinct configurations and stores simultaneously. Safely stop one; prove the other remains usable and both attached applications survive. Reconnect and restart without replaying a flow. Record owned cleanup and any retained failure handles. |
+| Existing business outcomes | Run the agreed positive and negative cases with independent, operation-specific readback. Collect proof before result finalization through the adapter hooks; keep unavailable proof `uncertain`. Where retry is supported, verify the original operation is retained and produces no duplicate write. |
+| Navigation and request faults | Exercise the application's redirects, aborts and detached-document cases. Verify terminal-event accounting; missing terminal evidence must remain unresolved and must not become success merely because navigation completed. |
+| Managed update and rollback | Use two reviewed compatible versions and a retained predecessor. Verify update, fresh-manager restart, rollback and relaunch preserve authored source, configuration, publisher trust/checkpoint continuity, application data and reports. Confirm the expected selected/running version and owned cleanup at each boundary. Missing predecessor or fixture evidence leaves this gate BLOCKED or NOT RUN. |
+| Canonical run archives | Verify each completed run is archived immediately with execution, outcome and effect unchanged. Preserve the 16-report in-memory and 200-event bounds and truncation disclosure. Exercise storage failure and evidence-only retry with no extra application write; verify earlier archives survive later runs and lifecycle changes. |
+
+Use the [native lifecycle](native-setup.md) and
+[evidence acceptance guidance](evidence-reporting.md#verify-an-adapted-integration)
+for the existing commands and detailed assertions. A busy run, dirty/unknown draft
+or incomplete cleanup must still prevent unsafe replacement; do not bypass those
+guards to finish the checklist.
+
+### Sanitized result and support handoff
+
+Keep the complete acceptance record private. For support, provide only the
+following summary and a minimal sanitized reproduction using synthetic data:
+
+```text
+Environment: OS/architecture; tools/runtime/crate/model versions; Node/Rust/browser versions
+Gate and step: checklist gate plus the action that was attempted
+Result: PASS / FAIL / BLOCKED / NOT RUN
+Expected: observable outcome and relevant assertion
+Observed: actual outcome or prerequisite blocker; distinguish execution/outcome/effect
+Reproduction: minimal synthetic steps or example; state what it does and does not reproduce
+Cleanup: owned resources closed, attached resources preserved, or incomplete cleanup
+```
+
+Do not include private source, catalogs, credentials, cookies, operation keys,
+customer data or raw session reports. A sanitized reproduction or reported pass
+does not imply that upstream has independently verified your full integration.

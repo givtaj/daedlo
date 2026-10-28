@@ -208,17 +208,68 @@ const HTTP_DIAGNOSTIC_PATHS = new Set([
   ),
   ...PRIVATE_PATHS,
 ]);
-function httpStatusFailure(url, response, expected) {
+function diagnosticPath(url) {
   const parsed = new URL(url);
-  const path =
-    parsed.origin === ORIGIN &&
+  return parsed.origin === ORIGIN &&
     !parsed.username &&
     !parsed.password &&
     !parsed.search &&
     !parsed.hash &&
     HTTP_DIAGNOSTIC_PATHS.has(parsed.pathname)
-      ? parsed.pathname
-      : "[unreviewed-path]";
+    ? parsed.pathname
+    : "[unreviewed-path]";
+}
+// A closed set of categories is useful without exposing error messages, peer
+// addresses, URLs, response bodies or arbitrary transport codes. Causes are
+// inspected only to a bounded depth and never attached to the reported error.
+const NETWORK_CODES = new Map([
+  ...[
+    "ETIMEDOUT",
+    "UND_ERR_CONNECT_TIMEOUT",
+    "UND_ERR_HEADERS_TIMEOUT",
+    "UND_ERR_BODY_TIMEOUT",
+  ].map((code) => [code, "timeout"]),
+  ...["ENOTFOUND", "EAI_AGAIN"].map((code) => [code, "dns"]),
+  ...[
+    "ECONNREFUSED",
+    "ECONNRESET",
+    "EHOSTUNREACH",
+    "ENETUNREACH",
+    "EPIPE",
+    "UND_ERR_SOCKET",
+  ].map((code) => [code, "connection"]),
+  ...[
+    "CERT_HAS_EXPIRED",
+    "CERT_NOT_YET_VALID",
+    "DEPTH_ZERO_SELF_SIGNED_CERT",
+    "SELF_SIGNED_CERT_IN_CHAIN",
+    "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+    "ERR_TLS_CERT_ALTNAME_INVALID",
+    "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+  ].map((code) => [code, "tls"]),
+  ["ABORT_ERR", "aborted"],
+]);
+function networkCategory(error, signal) {
+  if (signal.aborted) return "timeout";
+  try {
+    for (let depth = 0; depth < 4 && error; depth++, error = error.cause) {
+      if (error.name === "TimeoutError") return "timeout";
+      if (error.name === "AbortError") return "aborted";
+      const category = NETWORK_CODES.get(error.code);
+      if (category) return category;
+    }
+  } catch {
+    // An unexpected error shape must not leak or replace the safe diagnostic.
+  }
+  return "network";
+}
+function networkFailure(url, stage, phase, error, signal) {
+  return Error(
+    `Renewal network failure: stage=${stage} path=${diagnosticPath(url)} phase=${phase} category=${networkCategory(error, signal)}`,
+  );
+}
+function httpStatusFailure(url, response, expected) {
+  const path = diagnosticPath(url);
   const status =
     Number.isInteger(response.status) &&
     response.status >= 100 &&
@@ -285,7 +336,7 @@ async function read(path, max = 4 * 1024 * 1024) {
     await h.close();
   }
 }
-function settings(deps = {}) {
+function settings(deps = {}, stage) {
   const policy = deps.policy ?? PRODUCTION_RENEWAL_POLICY;
   const versions = [
     ...VERSIONS,
@@ -318,6 +369,7 @@ function settings(deps = {}) {
       fail("Unsupported pinned release contracts");
   }
   return {
+    stage,
     versions,
     releaseContracts,
     fetchImpl: deps.fetchImpl ?? globalThis.fetch,
@@ -351,11 +403,17 @@ async function fetchBytes(
 ) {
   if (!url.startsWith(ORIGIN + "/") || new URL(url).origin !== ORIGIN)
     fail("Unsupported renewal origin");
-  const response = await s.fetchImpl(url, {
-    redirect: htmlRedirect ? "manual" : "error",
-    headers: { "Cache-Control": "no-cache" },
-    signal: AbortSignal.timeout(30000),
-  });
+  const signal = AbortSignal.timeout(30000);
+  let response;
+  try {
+    response = await s.fetchImpl(url, {
+      redirect: htmlRedirect ? "manual" : "error",
+      headers: { "Cache-Control": "no-cache" },
+      signal,
+    });
+  } catch (error) {
+    throw networkFailure(url, s.stage, "headers", error, signal);
+  }
   if (response.redirected || (response.url && response.url !== url))
     fail("Renewal response changed origin or URL");
   if (htmlRedirect && [301, 302, 307, 308].includes(response.status)) {
@@ -382,7 +440,13 @@ async function fetchBytes(
   let total = 0;
   try {
     for (;;) {
-      const { done, value } = await reader.read();
+      let chunk;
+      try {
+        chunk = await reader.read();
+      } catch (error) {
+        throw networkFailure(url, s.stage, "body", error, signal);
+      }
+      const { done, value } = chunk;
       if (done) break;
       total += value.length;
       if (total > maximum) fail("Renewal response exceeds bounded size");
@@ -566,7 +630,7 @@ export async function prepareNinjaRenewal(
   } = {},
   deps = {},
 ) {
-  const s = settings(deps),
+  const s = settings(deps, "prepare"),
     t = await trust(s);
   output = await pathInfo(output, { fresh: true });
   const inspected = await inspectPublisherKey({ privateKeyPath, keyId: KEY });
@@ -792,7 +856,7 @@ async function prepared(output, s, t) {
 }
 /** Read-only predeployment gate; has no approval/deployment side effect. */
 export async function verifyNinjaRenewal({ output } = {}, deps = {}) {
-  const s = settings(deps),
+  const s = settings(deps, "verify"),
     t = await trust(s),
     p = await prepared(output, s, t);
   await assertBaseline(p.prior, s, t);
@@ -805,7 +869,7 @@ export async function verifyNinjaRenewal({ output } = {}, deps = {}) {
 }
 /** Verify the exact newly deployed static tree and signed feed over real HTTPS. */
 export async function verifyLiveNinjaRenewal({ output } = {}, deps = {}) {
-  const s = settings(deps),
+  const s = settings(deps, "live"),
     t = await trust(s),
     p = await prepared(output, s, t);
   const checked = [];

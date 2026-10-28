@@ -1,5 +1,48 @@
 # Verification record
 
+## Renewal diagnostics and external customer acceptance guidance — 2026-10-28
+
+**PASS — local regression, release safeguards and source quality.** The renewal
+transport now replaces connection/header and response-body exceptions with a
+bounded diagnostic: prepare/verify/live stage, reviewed request path, headers/body
+phase and a closed failure category (DNS, connection, TLS, timeout, abort or
+unclassified network). Raw messages, causes, peer addresses and query values are
+not included. Existing HTTP-status checks, deadlines, reader cleanup, immutable
+asset checks and checkpoint rules remain unchanged; no automatic retry was added.
+
+- Five genuine failing regression tests were recorded before implementation;
+  the final renewal suite passes **40/40**. It exercises the three public renewal
+  entrypoints, canonical redirects, private-boundary checks, body failures,
+  category/redaction behavior, one request per failure, cleanup and preserved
+  prepared checkpoints.
+- Renewal/checkpoint/publisher/promotion safeguards pass **148/148**. Additional
+  catalog and portable-tools packaging checks pass. Source syntax, strict types,
+  formatting, public-metadata and diff-whitespace checks pass. Independent review
+  found no actionable defect.
+- Website unit checks pass **68/68** against the retained verified alpha.6 staged
+  website. The initial broader run had three missing-generated-input errors in
+  the fresh checkout (historical downloads and rendered installation page); those
+  were setup failures, not behavioral regressions. Selecting the documented staged
+  website resolved them without changing assertions or website assets.
+- The [customer-run checklist](managed-integration.md#customer-run-acceptance) and
+  sanitized result template have valid local links and describe the existing
+  managed/session/evidence contracts. This is documentation verification, not
+  execution against an external customer's application.
+
+Private local regression receipts are under
+`artifacts/release-network-diagnostics/{red-confirmed.tap,green.tap,related-green.tap}`.
+The earlier exploratory `red.tap` also contains a corrected fixture setup failure;
+only `red-confirmed.tap` is the five-test behavioral baseline.
+
+**NOT RUN:** deployment of this diagnostics change, a new kit release, and customer
+application acceptance. No runtime, Rust, browser UI or application behavior changed,
+so no new browser/Rust acceptance is claimed. WBF owns its private application and
+runs its registration, business, frontend-isolation, navigation-fault and managed
+update/rollback checks; upstream conformance and support guidance do not close those
+gates. No customer source access, installation or support message was performed.
+The original production failure below remains unexplained; this change improves
+future diagnostics and does not retroactively identify its cause.
+
 ## Alpha.6 released and production-verified — 2026-10-28
 
 **PASS — immutable package, signed publication and production acceptance.** Shared recipe paths merged in
