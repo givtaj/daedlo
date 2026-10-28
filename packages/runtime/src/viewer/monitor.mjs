@@ -90,6 +90,63 @@ function displayResult(result) {
   $("last-result").dataset.outcome = outcome?.kind || "unknown";
 }
 
+// Render ownership from one snapshot. A command response can arrive after a
+// different client starts the next run, so it must not replace this view.
+function renderResults(driver) {
+  const result = driver.lastResult;
+  const active = Boolean(driver.busy);
+  const sameRun = Boolean(driver.runId && result?.runId === driver.runId);
+  $("active-result").hidden = !active;
+  $("active-result").dataset.runId = driver.runId || "";
+  $("active-run-identity").textContent = driver.runId
+    ? `Run ${text(driver.runId)}`
+    : "Run identity unavailable";
+  $("active-outcome-label").textContent = sameRun
+    ? "Finalizing this run; final application outcome pending"
+    : "Run in progress; final application outcome pending";
+
+  // lastResult can already refer to this run while endRun is still pending.
+  // Wait for finalization, including cleanup, before presenting its final result.
+  $("last-result").hidden = active && (!result || sameRun);
+  if (result && !(active && sameRun)) {
+    const attribution = !result.runId
+      ? "unattributed"
+      : sameRun
+        ? "current"
+        : driver.runId
+          ? "previous"
+          : "recorded";
+    $("last-result").dataset.attribution = attribution;
+    $("result-heading").textContent = {
+      current: "Current run result",
+      previous: "Previous run result",
+      recorded: "Recorded run result",
+      unattributed: "Retained result",
+    }[attribution];
+    $("result-identity").textContent = [
+      result.runId ? `Run ${text(result.runId)}` : "Run identity unavailable",
+      result.finishedAt
+        ? `Finished ${text(result.finishedAt)}`
+        : "Completion time unavailable",
+    ].join(" · ");
+    displayResult(result);
+  } else {
+    delete $("last-result").dataset.attribution;
+    delete $("last-result").dataset.outcome;
+    $("result-heading").textContent = "Application outcome";
+    $("result-identity").textContent = "";
+    $("outcome-label").textContent = active
+      ? "Run in progress; final application outcome pending"
+      : "No action has run yet";
+    $("effect-label").textContent =
+      "Results appear after the application is observed.";
+    $("outcome-kind").hidden = true;
+    $("outcome-kind").className = "pill";
+    $("effect-operations").replaceChildren();
+    $("effect-operations").hidden = true;
+  }
+}
+
 async function run(id, params, recipe = false) {
   if (
     !latest?.driver?.revision ||
@@ -107,7 +164,6 @@ async function run(id, params, recipe = false) {
       ? { id, revision, recipe: true }
       : { id, params, revision };
     const result = await mutate("/command", body);
-    displayResult(result);
     message(
       result.execution === "failed"
         ? result.error || "Execution failed; inspect the observed outcome."
@@ -138,7 +194,6 @@ async function present(id) {
   updateAvailability();
   try {
     const result = await mutate("/presentation", { id, revision });
-    displayResult(result);
     message(
       result.execution === "failed"
         ? result.error ||
@@ -644,14 +699,7 @@ function render(snapshot) {
       : driver.busy
         ? "Executing and observing the application…"
         : "Ready for a command");
-  if (driver.lastResult) displayResult(driver.lastResult);
-  else if (driver.busy) {
-    $("outcome-label").textContent =
-      "Run in progress; final application outcome pending";
-    $("effect-label").textContent =
-      "Execution is active. The finished run's observed outcome will appear here.";
-    $("outcome-kind").hidden = true;
-  }
+  renderResults(driver);
   updateAvailability();
   if (
     streamFailed &&

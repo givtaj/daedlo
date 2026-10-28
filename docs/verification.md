@@ -1,5 +1,72 @@
 # Verification record
 
+## A2 viewer result attribution — 2026-10-28
+
+**PASS — isolated source fix and Chromium conformance.** Starting source:
+`d32c5f0091827c96a7a82e09799c0d5b89dc759b`, in a dedicated managed worktree.
+The preserved primary checkout was not used as implementation source or edited
+by this task. Environment: macOS arm64, Node `v22.20.0`, Playwright `1.62.1`,
+Cargo `1.96.0`; locked Node dependencies installed locally with `npm ci --offline`.
+
+Two genuine pre-fix browser assertions failed: the report-presentation fixture
+found no pending outcome for active run B (`0 !== 1`), and the real-session
+fixture found its pending row invisible (`false !== true`) after a guarded save A.
+The original failures are retained in `artifacts/result-attribution/before.log`
+and `session-before.log`. These are application/viewer assertions, not setup
+failures. Their initial filenames ended in `.test.mjs`; the final dedicated
+`viewer-result-*-browser.mjs` tests are registered by the existing presentation
+browser suite so the ordinary runtime tests still need no Chromium.
+
+The viewer now separates the active run's pending outcome from the retained
+result, labeling each with its own full run identity. Retained results show their
+completion timestamp; missing identity/time is explicit. A matching result still
+undergoing `endRun` remains pending until finalization. Result rendering uses one
+canonical snapshot instead of painting asynchronous command responses over it.
+No session/report history, effect interpretation or runtime contract changed.
+
+| Check | Measured result | Local evidence under `artifacts/result-attribution/` |
+| --- | --- | --- |
+| Source syntax, public TypeScript declarations, formatting | PASS | `check-final.log` |
+| Runtime Node suite, serial | PASS, 138/138 | `runtime-final.log` |
+| Rust workspace tests, locked/offline compact build | PASS, 26 tests; one subprocess fixture intentionally ignored by the direct runner and exercised by its parent | `rust-tests.log`, `rust-build.log` |
+| Existing viewer suite plus two new attribution regressions | PASS, 9/9 | `viewer-final.log`, `browser/`, `session/` |
+| Independent notebook Chromium acceptance | PASS, 8/8 groups | `notebook.log`, `notebook/results.json` |
+| Chromium motion / control boundaries / CLI / Ninja UI | PASS, 4/4, 9/9, 10/10, 2/2 | `motion.log`, `controls.log`, `cli.log`, `ninja-ui.log` |
+| Public metadata and diff whitespace | PASS | `public-metadata.log`; `git diff --check` |
+
+The dedicated browser fixtures cover success A → running B → success, rejected,
+failed and stopped B; ordinary polling/reload; active, paused and stopped
+presentation display; missing identity/time; unknown/validation outcomes;
+missing persistence evidence; mixed saved/uncertain/not-attempted operations;
+and cleanup-incomplete disclosure. The real-session fixture additionally proves
+guarded Chromium writes, the matching-result finalization interval, retained
+failed-cleanup ownership, no replay on refresh, and unchanged detached A reports
+after B finishes. A paused but finished direct action retains its completed result.
+
+Desktop (1440×1000) and narrow (390×844) screenshots were inspected, including
+presentation and cleanup states. Full actual session UUIDs fit at narrow width;
+DOM text and glyph bounds and zero horizontal overflow are asserted. No page
+errors occurred in the attribution fixtures. All owned fixture viewers, sessions,
+browsers and servers closed; attached controlled pages survived viewer close.
+The deliberately failed transient cleanup was retained until explicit session
+close, which cleared it. The notebook receipt records all four owned resources
+closed. Logs and screenshots remain ignored; only this task's compact 70 MB Cargo
+target was removed after validation.
+
+Reproduce the compact build with `CARGO_BUILD_JOBS=1 CARGO_INCREMENTAL=0
+CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0
+CARGO_TARGET_DIR=artifacts/result-attribution/target` and
+`cargo test --workspace --locked --offline`, then `cargo build --workspace
+--locked --offline` with the same environment. Notebook acceptance selects
+`BROWSER_DRIVER_ACCEPTANCE_ENGINE=artifacts/result-attribution/target/debug/notebook-engine`
+and `BROWSER_DRIVER_ACCEPTANCE_OUTPUT=artifacts/result-attribution/notebook`.
+The viewer checks run through `npm run test:viewer`.
+
+**Limits:** synthetic viewer and independent notebook conformance, not Roots or
+other customer acceptance. No release package, remote CI, deployment, product
+publication, ordinary Roots promotion or cross-platform UI acceptance was run.
+The public alpha.6 release remains a separate immutable artifact.
+
 ## Renewal diagnostics merged and production-verified — 2026-10-28
 
 **PASS — merge, signed renewal and live verification.**

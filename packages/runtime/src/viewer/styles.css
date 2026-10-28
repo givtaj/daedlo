@@ -921,7 +921,8 @@ main {
 #progress-label {
   font-size: 9px;
 }
-.last-result {
+.last-result,
+.active-result {
   display: flex;
   gap: 12px;
   align-items: center;
@@ -941,10 +942,46 @@ main {
   border-radius: 8px;
   font-size: 19px;
 }
-.last-result .eyebrow {
-  font-size: 7px;
-  letter-spacing: 1.1px;
-  color: #a3af94;
+.result-copy {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.result-copy h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.result-identity {
+  font-size: 10px;
+  color: #526469;
+  line-height: 1.6;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+.last-result[data-attribution="previous"],
+.last-result[data-attribution="unattributed"] {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8faf9;
+}
+.active-result {
+  align-items: flex-start;
+}
+#active-outcome-label {
+  margin: 7px 0 4px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.active-result .subtle {
+  color: #526469;
+}
+.outcome-pending {
+  color: #526469;
+  background: #f2f5f3;
+  border-color: var(--line);
+  flex: none;
 }
 #outcome-label {
   font-size: 11px;

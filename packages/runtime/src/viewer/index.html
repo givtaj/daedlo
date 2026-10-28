@@ -191,10 +191,24 @@
           </div>
           <div class="progress-track"><div id="progress-bar"></div></div>
           <p id="progress-label" class="subtle">Ready for a command</p>
+          <div id="active-result" class="active-result" role="status" hidden>
+            <div class="result-copy">
+              <h3>Current run</h3>
+              <p id="active-run-identity" class="result-identity"></p>
+              <p id="active-outcome-label">
+                Run in progress; final application outcome pending
+              </p>
+              <p class="subtle">
+                Persistence and cleanup are not final until this run finishes.
+              </p>
+            </div>
+            <span class="pill outcome-pending">Pending</span>
+          </div>
           <div id="last-result" class="last-result" aria-live="polite">
             <div class="result-icon" aria-hidden="true">↗</div>
-            <div>
-              <span class="eyebrow">APPLICATION OUTCOME</span>
+            <div class="result-copy">
+              <h3 id="result-heading">Application outcome</h3>
+              <p id="result-identity" class="result-identity"></p>
               <p id="outcome-label">No action has run yet</p>
               <p id="effect-label" class="subtle">
                 Results appear after the application is observed.
