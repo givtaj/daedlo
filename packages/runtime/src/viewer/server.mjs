@@ -90,6 +90,11 @@ export async function createViewer({
       [
         ["/", "index.html", "text/html; charset=utf-8"],
         ["/monitor.mjs", "monitor.mjs", "text/javascript; charset=utf-8"],
+        [
+          "/recipe-paths.mjs",
+          "recipe-paths.mjs",
+          "text/javascript; charset=utf-8",
+        ],
         ["/styles.css", "styles.css", "text/css; charset=utf-8"],
       ].map(async ([path, file, type]) => [
         path,

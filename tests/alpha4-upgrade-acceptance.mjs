@@ -22,7 +22,7 @@ const writeJson = (path, value) =>
 const args = process.argv.slice(2);
 for (const arg of args)
   assert.ok(
-    ["--legacy-only", "--production-https"].includes(arg),
+    ["--legacy-only", "--production-https", "--local-candidate"].includes(arg),
     "Unsupported upgrade acceptance argument",
   );
 assert.equal(
@@ -32,6 +32,11 @@ assert.equal(
 );
 const legacyOnly = args.includes("--legacy-only");
 const productionHttps = args.includes("--production-https");
+const localCandidate = args.includes("--local-candidate");
+assert.ok(
+  !(localCandidate && (productionHttps || legacyOnly)),
+  "Local candidate mode cannot use production HTTPS or legacy-only",
+);
 assert.ok(
   !(productionHttps && legacyOnly),
   "Production HTTPS acceptance requires the complete upgrade drill",
@@ -50,6 +55,8 @@ const baselinePins = {
     "f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190",
   "0.1.4-alpha.4":
     "3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75",
+  "0.1.4-alpha.5":
+    "2d9cbae796edd4cd5967b76458020e3366fa9d33cc1eed65a3e1d523eb65122f",
 };
 assert.ok(
   Object.hasOwn(baselinePins, baselineVersion),
@@ -62,11 +69,24 @@ const candidateVersion =
   JSON.parse(
     await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
   ).version;
-assert.match(
-  candidateVersion,
-  /^0\.1\.4-alpha\.[45]$/,
-  "Only the reviewed renamed candidate release may be selected",
-);
+if (localCandidate) {
+  assert.equal(
+    baselineVersion,
+    "0.1.4-alpha.5",
+    "Local candidate mode requires the published alpha.5 baseline",
+  );
+  assert.equal(
+    candidateVersion,
+    "0.1.4-alpha.6",
+    "Local candidate mode requires exactly 0.1.4-alpha.6",
+  );
+} else {
+  assert.match(
+    candidateVersion,
+    /^0\.1\.4-alpha\.[45]$/,
+    "Only the reviewed renamed candidate release may be selected",
+  );
+}
 assert.ok(
   process.env.ALPHA4_LEGACY_KIT,
   "Set ALPHA4_LEGACY_KIT to the selected immutable baseline public kit directory",
@@ -115,6 +135,10 @@ const result = {
     ? "legacy fixture preparation only"
     : "exact installed tools bootstrap, upgrade and rollback",
   transport: productionHttps ? "production-https" : "ephemeral-signed-feed",
+  localCandidate,
+  toolsPolicy: localCandidate
+    ? "Keep exact published alpha.5 tools for baseline, upgrade, restart and rollback"
+    : "Verify candidate tools bootstrap before upgrading the accepted installation",
   ...(productionHttps
     ? {
         feed: {
@@ -431,6 +455,21 @@ async function managedFlow(label, { durable = true } = {}) {
   });
   await view.goto(live.running.viewerUrl);
   await view.locator('[data-command="edit"]').waitFor();
+  if (localCandidate) {
+    const recipe = view.locator('button[data-recipe="save_example"]');
+    assert.equal(await recipe.isVisible(), true);
+    assert.equal(await view.locator(".recipe-path-group").count(), 0);
+    const previews = view.locator("#recipes .recipe-step-preview");
+    assert.equal(
+      await previews.count(),
+      receipt.version === candidateVersion ? 1 : 0,
+      "The unchanged legacy model uses the selected runtime viewer",
+    );
+    if (receipt.version === candidateVersion) {
+      await previews.locator("summary").click();
+      assert.equal(await previews.locator("li").count(), 2);
+    }
+  }
   const command = async (id, params) => {
     const revision = (await observe()).revision;
     const response = await fetch(base + "/command", {
@@ -884,8 +923,18 @@ try {
     const ownerBytes = await fs.readFile(
       join(config.store, ".ninja-project.json"),
     );
-    const newTools = await installTools(candidate, join(work, "new-tools"));
-    const newer = await toolApi(newTools);
+    // Local feature acceptance specifically proves the already published client
+    // can manage these runtime bytes; no candidate tools are installed or used.
+    const newTools = localCandidate
+      ? oldTools
+      : await installTools(candidate, join(work, "new-tools"));
+    const newer = localCandidate ? old : await toolApi(newTools);
+    result.managerTools = {
+      version: localCandidate ? baselineVersion : candidateVersion,
+      source: (localCandidate ? legacy : candidate).toolsReceipt.source,
+      archive: (localCandidate ? legacy : candidate).toolsReceipt.archive,
+      reusedPublishedTools: localCandidate,
+    };
     await open(newer);
     assert.deepEqual((await readJson(statePath)).checkpoint, checkpoint);
     assert.deepEqual(
@@ -905,7 +954,9 @@ try {
     );
     await managedFlow("legacy-new-tools");
     await record(
-      "Verified new tools bootstrap preserves config/trust/store/checkpoint and runs accepted legacy slot",
+      localCandidate
+        ? "Unchanged published alpha.5 tools reopen the accepted slot with config/trust/store/checkpoint preserved"
+        : "Verified new tools bootstrap preserves config/trust/store/checkpoint and runs accepted legacy slot",
       { toolsFiles: Object.keys(newTools.inventory).length },
     );
     const beforeUpgrade = await notes(application.url);
@@ -986,6 +1037,10 @@ try {
       (await readJson(statePath)).checkpoint,
       acceptedCheckpoint,
     );
+    if (localCandidate)
+      await assert.rejects(fs.stat(join(work, "new-tools")), {
+        code: "ENOENT",
+      });
     result.finalCheckpoint = acceptedCheckpoint;
     const reports = await fs.readdir(join(config.store, "reports"));
     assert.ok(
@@ -1001,7 +1056,9 @@ try {
       await notes(application.url),
     );
     await record(
-      "States/flows/adapter source, both tools packages, config/trust/checkpoint preserved; durable reports and relaunch pass",
+      localCandidate
+        ? "States/flows/adapter source, exact published tools, config/trust/checkpoint preserved; durable reports and relaunch pass"
+        : "States/flows/adapter source, both tools packages, config/trust/checkpoint preserved; durable reports and relaunch pass",
       { lifecycleReports: reports.length },
     );
   }

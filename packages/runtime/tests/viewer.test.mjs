@@ -174,7 +174,7 @@ test("serves a generic descriptor-driven viewer and a fresh snapshot without inl
   const state = JSON.parse((await request(`${viewer.url}/status`)).body);
   assert.equal(state.driver.descriptor.id, "notebook");
   assert.equal(state.connected, true);
-  for (const asset of ["monitor.mjs", "styles.css"])
+  for (const asset of ["monitor.mjs", "styles.css", "recipe-paths.mjs"])
     assert.equal((await request(`${viewer.url}/${asset}`)).status, 200);
   const client = (await request(`${viewer.url}/monitor.mjs`)).body;
   assert.doesNotMatch(
