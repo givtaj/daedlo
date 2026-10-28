@@ -1,5 +1,41 @@
 # Verification record
 
+## Renewal diagnostics merged and production-verified — 2026-10-28
+
+**PASS — merge, signed renewal and live verification.**
+[PR #18](https://github.com/givtaj/daedlo/pull/18) merged as
+`bc99a27133e4f9cc5e6e366007048ee3386020b7`. Its Git tree matches reviewed
+`f46bf4f1c848d4c1217ec68999a59cf747192dda`. Both
+[branch CI](https://github.com/givtaj/daedlo/actions/runs/40712467992) and
+[PR CI](https://github.com/givtaj/daedlo/actions/runs/40712580550) pass Node 22/24
+source, Rust, browser, packaging, exact-installed/native/starter and public
+metadata/secrets checks.
+
+The ordinary [production renewal](https://github.com/givtaj/daedlo/actions/runs/40714913288)
+ran from the merge commit with all release-promotion options false. Every gate
+passed: restored authenticated generation 18, prepared and persisted generation 19,
+validated the staged website, activated the exact existing-worker version, checked
+39 live public assets and nine private-path boundaries, and removed the temporary
+signing key.
+Worker version `ca5bd1a0-8ca9-43ad-96ac-faf55fbf9a31` was verified active at 100%
+in deployment `9217b0fc-9c51-41a8-aaa5-b1781fa1aceb`.
+
+Independent HTTPS checks before and after renewal authenticated both catalogs with
+the unchanged pinned public key. Generation advanced exactly **18 → 19**, and all
+five alpha.2–alpha.6 release entries remained identical. Generation 19 expires
+`2026-11-04T15:21:09.458Z`; its signed-payload SHA-256 is
+`ab326aaa0398cdd09e770ebc7df71b13391aa1aa9631c4ff9f837b448b108a70`.
+The retained signed checkpoint is workflow artifact `12826119975`.
+Private local readback receipts are
+`artifacts/release-network-diagnostics/production-{before,after}.json`.
+
+This closes deployment verification for the diagnostics change below. It does not
+identify the historical network failure's cause or inject a production fault.
+No release kit was rebuilt or republished. The customer-run checklist is merged
+in source for future tools distributions; the published alpha.6 kit is unchanged.
+External customer execution and support correspondence remain separate; no WBF
+application access, installation or new support message was performed.
+
 ## Renewal diagnostics and external customer acceptance guidance — 2026-10-28
 
 **PASS — local regression, release safeguards and source quality.** The renewal

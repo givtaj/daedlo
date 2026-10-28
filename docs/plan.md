@@ -1,5 +1,17 @@
 # Implementation plan
 
+## Diagnostics rollout closure — 2026-10-28
+
+[PR #18](https://github.com/givtaj/daedlo/pull/18) is merged after complete Node
+22/24 branch and PR CI. The ordinary signed renewal from the tested merge commit
+passed all production gates, advancing generation 18 to 19 with unchanged release
+entries. Independent HTTPS signature/inventory readback passed. See the
+[deployment record](verification.md#renewal-diagnostics-merged-and-production-verified--2026-10-28).
+
+The customer acceptance checklist is merged in source for future tools releases.
+Alpha.6 remains unchanged; customer-run acceptance and any support message remain
+separate. This supersedes the local-only rollout status in the next section.
+
 ## Release diagnostics and customer acceptance guidance — 2026-10-28
 
 - [x] Reproduce the renewal network-diagnostic gap, then report a reviewed request
