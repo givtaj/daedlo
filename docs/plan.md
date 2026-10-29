@@ -1,5 +1,22 @@
 # Implementation plan
 
+## CI efficiency and stalled finalization — 2026-10-29
+
+Work is isolated from the preserved dirty primary checkout, starting at merged
+main `16d050c8`. This is source development; the alpha.6 release is unchanged.
+
+- [x] Restrict full CI to pull requests, main pushes and manual dispatch while
+  preserving every job, platform and acceptance check.
+- [x] Expose pending/stalled effect evidence and run cleanup, with cooperative
+  Stop context and a bounded close wait that retains the original work.
+- [x] Preserve dependencies through CLI and nested/managed resource cleanup when
+  an unresolved close returns its pending marker; retry explicitly without replay.
+
+Actual regressions, browser observations and remaining validation are recorded in
+[verification](verification.md). A hook that never cooperates remains pending;
+elapsed waiting never becomes successful cleanup. Hosted CI, release publication,
+customer adoption and ordinary Roots promotion remain separate gates.
+
 ## Diagnostics rollout closure — 2026-10-28
 
 [PR #18](https://github.com/givtaj/daedlo/pull/18) is merged after complete Node

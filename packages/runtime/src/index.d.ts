@@ -68,6 +68,19 @@ export interface EffectReport {
   /** At most 16 operations. Malformed metadata makes the entire effect report uncertain. */
   operations?: OperationEffect[];
 }
+export interface FinalizationContext {
+  runId: string;
+  command: string;
+  recipe: boolean;
+  /** Runtime always supplies this; optional for legacy direct hook callers. Abort requests cooperation, not proof of completion. */
+  signal?: AbortSignal;
+}
+export interface Finalization {
+  runId: string;
+  phase: "effect_evidence" | "run_cleanup";
+  status: "pending" | "stalled";
+  stopRequested: boolean;
+}
 export interface BrowserAdapter<F = Record<string, unknown>> {
   model: { id: string; version: string };
   observe(): Promise<Observation<F>>;
@@ -84,18 +97,16 @@ export interface BrowserAdapter<F = Record<string, unknown>> {
     recipe: boolean;
   }): void | Promise<void>;
   /** Always awaited after an active run, including rejection/stop/failure; only clean owned transient resources, never replay application actions. */
-  endRun?(context: {
-    runId: string;
-    command: string;
-    recipe: boolean;
-  }): void | Promise<void>;
+  endRun?(context: FinalizationContext): void | Promise<void>;
   settle?(): Promise<unknown>;
   evidence?(
     command: string,
     before: Observation<F>,
     after: Observation<F>,
   ): Promise<Record<string, unknown>>;
-  effectStatus?(): EffectReport | Promise<EffectReport>;
+  effectStatus?(
+    context?: FinalizationContext,
+  ): EffectReport | Promise<EffectReport>;
   close?(): void | Promise<void>;
 }
 export interface PresentationStage {
@@ -171,6 +182,7 @@ export interface DriverEvent {
   presentationId?: string;
   stage?: number;
   status?: string;
+  phase?: Finalization["phase"];
 }
 export interface ReportResource {
   label: string;
@@ -185,9 +197,10 @@ export interface DriverReport {
   events: DriverEvent[];
   resources: ReportResource[];
   completedRunIds: string[];
+  finalization?: Finalization | null;
 }
 export interface CompletedRunReport
-  extends Omit<DriverReport, "completedRunIds"> {
+  extends Omit<DriverReport, "completedRunIds" | "finalization"> {
   runId: string;
   lastResult: Result;
   eventRange: {
@@ -207,6 +220,7 @@ export interface Snapshot {
   display: Array<{ label: string; value: unknown }>;
   execution: string;
   busy: boolean;
+  finalization?: Finalization | null;
   paused: boolean;
   speed: string;
   runId: string | null;
@@ -250,7 +264,8 @@ export interface DriverSession {
   report(): DriverReport;
   /** A detached snapshot of one of the latest 16 completed runs; null if absent or expired. */
   report(options: { runId: string }): CompletedRunReport | null;
-  close(): Promise<void>;
+  /** Default 5000ms total wait; timeout retains active work/cleanup for explicit retry. */
+  close(options?: { timeoutMs?: number }): Promise<void>;
 }
 export interface ResourceScope {
   own<T>(
@@ -304,6 +319,8 @@ export function createDriverSession<F>(options: {
   identity?: Record<string, unknown>;
   resources?: ResourceScope;
   presentations?: Presentation[];
+  /** 1..60000ms, default 5000; marks finalization stalled without abandoning its hook. */
+  finalizationWaitMs?: number;
 }): Promise<DriverSession>;
 export interface FrontendIdentity {
   name: string;
@@ -335,5 +352,7 @@ export function createEngineClient(
 };
 export class DriverError extends Error {
   code: string;
+  /** An unfinished operation still owns dependent resources; retain them until explicit cleanup retry. */
+  cleanupPending?: true;
   constructor(code: string, message: string);
 }

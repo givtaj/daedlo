@@ -7,6 +7,7 @@ import { chromium } from "playwright";
 import { createViewer } from "../src/viewer/server.mjs";
 import "./viewer-result-attribution-browser.mjs";
 import "./viewer-result-session-browser.mjs";
+import "./viewer-finalization-browser.mjs";
 
 test("presentation viewer renders human pacing and operates controls without replay", async () => {
   const browser = await chromium.launch({ headless: true });

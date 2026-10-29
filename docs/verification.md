@@ -1,5 +1,71 @@
 # Verification record
 
+## CI efficiency and stalled finalization — 2026-10-29
+
+**PASS — isolated source, lifecycle and browser verification.** Work started from
+merged main `16d050c8b4965ecd7e2acd52bf8d052b911866c4` in the separate
+`codex/ci-stalled-hooks` worktree. The dirty primary checkout and everyday Roots
+resources were not used as fixtures or edited. The released alpha.6 kit is unchanged.
+
+Full CI now runs on pull requests, main pushes and manual dispatch. Permissions,
+concurrency, Node 22/24 jobs and all check bodies remain unchanged. A genuine
+trigger-policy assertion failed before the workflow edit; the existing repository
+guardrails suite passed 16/16 afterward. Hosted event execution was not run.
+
+The runtime and viewer distinguish pending effect evidence from pending run
+cleanup. The default five-second threshold marks a hook stalled without finishing
+its run. Stop/close supplies cooperative cancellation context, and a bounded
+close wait rejects with `cleanup_incomplete` plus `cleanupPending:true` while
+retaining the original work for retry. CLI and nested resource owners preserve
+earlier browser/fixture dependencies. See the
+[implemented contract](contracts.md#pending-finalization-and-bounded-close).
+
+Regression-first evidence, retained under ignored `artifacts/ci-stalled-hooks/`:
+
+- Runtime baseline: **7 failing assertions / 2 passes**. Missing phase/signal
+  reporting and unbounded close were actual assertions, not setup failures.
+- Viewer baseline: the real Chromium UI displayed Completed while current-run
+  cleanup was pending; the expected Finalizing assertion failed.
+- CLI baseline: **2 failing assertions** showed owned browser teardown while
+  evidence or run cleanup remained pending. Additional adapter-close coverage
+  verifies dependency retention when finalization itself is null.
+- Outer-scope baseline: **3 failing assertions / 2 existing passes** exposed
+  teardown through direct/nested ownership and a missing pending-error barrier.
+  Review then found setup error wrapping dropped that barrier; a separate
+  pending-setup assertion failed before its repair while settled cleanup passed.
+
+Final measured checks on macOS arm64, Node 22.20.0, Rust 1.96.0 and locked
+Playwright 1.62.1:
+
+| Check | Result | Local receipt |
+| --- | --- | --- |
+| Source syntax, strict declarations and formatting | PASS | `runtime/source-final.log` |
+| Runtime regressions, including CLI and nested ownership | PASS, 181/181 | `runtime/runtime-final.tap` |
+| Full affected Chromium groups | PASS, 55 TAP tests including wrappers | `runtime/browser-final.tap` |
+| Independent notebook acceptance | PASS, 8/8 groups; all four owned resources closed | `runtime/notebook.log`, `artifacts/notebook/results.json` |
+| Rust workspace contracts | PASS, 26; one subprocess helper intentionally ignored directly and exercised by its parent | `runtime/rust-test.log` |
+| Rust build, formatting and Clippy with warnings denied | PASS | `runtime/rust-build.log`, `runtime/rust-format.log`, `runtime/rust-clippy.log` |
+| Native/managed owner contracts, repository guards and public-metadata regressions | PASS, 63/63 | `runtime/owner-contracts.tap` |
+| Current-tree public metadata and diff whitespace | PASS | `runtime/public-metadata.log` |
+| Dirty primary checkout preservation | PASS, same HEAD/status and all 306 tracked/untracked contents and modes | `preservation.json` |
+
+Real-browser tests cover both finalization phases, stalled/Stop disclosure,
+continued viewer polling after close expiry, absence of a completed report while
+pending, rejection of overlapping commands, and late settlement followed by an
+explicit successful close retry. Each case retains one real save and one hook
+invocation. Attached browser/page resources survive session close and are closed
+only by the owning test. Desktop and 390px screenshots were inspected; evidence
+and cleanup receipts are under `viewer/` in the same ignored artifact directory.
+CLI signal tests use the actual launcher/session/protocol/resource-scope code with
+controlled browser/viewer boundaries; those tests are distinct from Chromium
+acceptance. Independent reviews found and closed both ownership propagation gaps.
+
+This does not establish customer application acceptance, installed-kit acceptance,
+hosted CI or a new release. No package versions, dependency pins or lockfiles
+changed. Ordinary observation/handler waits retain their previous semantics. A
+hook that never settles keeps its run and owned dependencies pending; elapsed
+waiting is never reported as cancellation, persistence proof or successful cleanup.
+
 ## Combined A1, A2 and A3 acceptance — 2026-10-29
 
 **PASS — independently reviewed combined source and local conformance.**
