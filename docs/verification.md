@@ -1,5 +1,52 @@
 # Verification record
 
+## Combined A1, A2 and A3 acceptance — 2026-10-29
+
+**PASS — independently reviewed combined source and local conformance.**
+[Control authorization #19](https://github.com/givtaj/daedlo/pull/19),
+[result attribution #20](https://github.com/givtaj/daedlo/pull/20) and
+[viewer cleanup #21](https://github.com/givtaj/daedlo/pull/21) were combined in
+an isolated managed worktree from main `d32c5f0`. Tested source is `4662180`;
+this verification-only follow-up changes no executable source. The three original
+fixes remain `69061e7`, `a2a7eba` and `7353206`.
+
+Three independent reviews found no blocking defect. A separate integration review
+confirmed all 13 non-verification files from the fixes match their reviewed bytes,
+and all three verification sections and the complete shared history are retained.
+The only added implementation-support change registers the dedicated control and
+cleanup browser suites in both Node 22/24 CI jobs. No dependency, lockfile or
+customer entrypoint changes were made.
+
+Measured on macOS arm64, Node 22.20.0, Rust 1.96.0 and locked Playwright 1.62.1:
+
+| Check | Result |
+| --- | --- |
+| Source syntax, strict declarations and formatting | PASS |
+| Runtime Node regressions, serial | PASS, 163/163 |
+| Rust workspace tests, locked/offline | PASS, 26; one subprocess helper intentionally ignored directly and exercised by its parent |
+| Rust build, formatting and Clippy with warnings denied | PASS |
+| All existing browser groups plus new attribution, control and cleanup suites | PASS, 52 TAP tests (including the control suite's parent wrapper) |
+| Independent notebook browser acceptance | PASS, all eight groups; owned cleanup PASS |
+| Public metadata and diff whitespace | PASS |
+| Primary checkout preservation | PASS, unchanged HEAD/status and all 306 tracked/untracked file contents and modes |
+
+The browser command uses `node --test --test-concurrency=1` with motion,
+control-boundary, cli-factory, viewer-presentation, viewer-frontend,
+viewer-recipe-paths and viewer-cleanup browser files, plus
+`tests/ninja-ui-browser.mjs` and `tests/control-authorization-acceptance.mjs`.
+Attribution suites are imported by viewer-presentation. Desktop and 390px
+screenshots were inspected for pending/current/previous-run attribution, full run
+identities and separate cleanup/persistence disclosures. The new suites assert
+owned-resource cleanup and attached-resource preservation.
+
+Logs and screenshots are retained locally under `artifacts/combined-fixes/`.
+The existing primary checkout, original fix worktrees and everyday Roots files,
+services, sessions and dependencies were not used as test fixtures or edited.
+These are source conformance results. Hosted final-commit CI and exact installed
+checks are merge gates reported on the linked PRs; no new release, deployment or
+customer acceptance is established by this local record. The released alpha.6 kit
+remains unchanged. Unsettled-hook deadlines remain separate work.
+
 ## A3 viewer capture cleanup failure and retry — 2026-10-28
 
 **PASS — local source regression and Chromium lifecycle conformance.** This fix
