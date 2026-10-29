@@ -194,3 +194,30 @@ omits that option. Launch failure does not retry with the default executable.
 The CLI retains `handleSIGINT:false` and `handleSIGTERM:false` so its existing
 shutdown settles active actions, reports results and cleans owned resources.
 These overrides select trusted local code/executables, not a sandbox.
+
+## Viewer capture cleanup and startup retry — A3
+
+`viewer.close()` shuts down its HTTP listener and streams even if CDP capture
+cleanup rejects. Unresolved live-target capture cleanup rejects with an
+`AggregateError` whose `error_code` is `cleanup_incomplete`; messages and nested
+errors contain static cleanup labels, never raw CDP messages or causes. Retain
+the viewer and call `close()` again to retry unfinished cleanup. Concurrent calls
+share an attempt. Successful cleanup steps are not repeated. Successful detach,
+confirmed page closure or the CDP session's close event disposes capture ownership;
+a failed frame acknowledgement alone does not prove disconnection.
+
+Capture failures triggered by background events stop streaming and disable the
+viewer. While HTTP is still open, `/status` includes a safe
+`cleanupError:{error_code:"cleanup_incomplete",error:string}` until ownership is
+resolved. Explicit `close()` retries the retained handles. Cleanup never closes
+the attached application, browser, context, page or driver session, and does not
+change application execution, outcome or persistence evidence.
+
+If viewer startup fails and capture cleanup also remains incomplete,
+`createViewer()` rejects with a sanitized `AggregateError` carrying the same code
+and an additive `close():Promise<void>` retry handle on the error itself. There
+is no returned viewer in this case: callers must retain this error for retry or
+register its `close` with their resource scope. Once cleanup succeeds, repeated
+calls are harmless. If startup cleanup succeeds immediately, the original startup
+error is preserved. These semantics cover rejected cleanup operations; they do
+not introduce a deadline or abandon a CDP operation that has not settled.
