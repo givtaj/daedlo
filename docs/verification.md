@@ -1,5 +1,77 @@
 # Verification record
 
+## A3 viewer capture cleanup failure and retry — 2026-10-28
+
+**PASS — local source regression and Chromium lifecycle conformance.** This fix
+uses isolated branch `codex/viewer-cleanup-a3`, based on
+`d32c5f0091827c96a7a82e09799c0d5b89dc759b`. The preserved dirty primary checkout
+and everyday Roots resources were not modified. No release, merge, deployment or
+customer dependency promotion is claimed.
+
+Viewer close now tears down HTTP even when capture cleanup fails, rejects with
+safe `cleanup_incomplete` errors while ownership remains unresolved, and retries
+only unfinished cleanup on a later close. Confirmed page/CDP closure or successful
+detach resolves capture ownership. Acknowledgement failure alone does not.
+Playwright 1.62.1's actual CDP `close` event is handled alongside the existing
+`Disconnected` seam. Background failures are disclosed in `/status.cleanupError`.
+Failed startup with incomplete cleanup exposes a sanitized error with a `close()`
+retry handle; see [the additive contract](contracts.md#viewer-capture-cleanup-and-startup-retry--a3).
+Attached browser, context, page, application and session remain preserved.
+
+Regression evidence was recorded before each correction:
+
+- The original source produced **7 genuine failing assertions / 1 pass** in the
+  synthetic suite, including fulfilled close where rejection was required and
+  missing retry authority after startup failure.
+- Corrected real-Chromium baseline probes produced **5 genuine failures / 2
+  passes**. A separate actual CDP-detach probe failed because the original viewer
+  still reported connected. The baseline server/assets came directly from the
+  selected Git commit, avoiding concurrent implementation changes.
+- The first implementation failed an explicit no-rejection assertion for the
+  real CDP close event. Independent review then found a cleanup-settlement race;
+  a deterministic microtask test failed because a confirmed-disposed session
+  retained its failure diagnostic. Both failures were recorded before repair.
+- The initial Chromium test instrumentation incorrectly expected `Disconnected`
+  from Playwright; its log is retained but is not counted as product evidence.
+  The corrected event assertion uses the pinned dependency's public `close` event.
+
+Final measurements on macOS arm64, Node 22.20.0, Rust 1.96.0 and existing pinned
+Playwright 1.62.1 / Chromium revision 1234:
+
+| Check | Actual result | Local ignored receipt |
+| --- | --- | --- |
+| Dedicated cleanup synthetic and real-Chromium regressions | PASS, 12 + 8 | `cleanup-final.log` |
+| Entire runtime unit/contract suite, serial | PASS, 150/150 | `runtime-final.log` |
+| Rust workspace, locked/offline compact build | PASS, 26; one subprocess helper intentionally ignored by the direct runner and exercised by its parent | `rust.log` |
+| Independent notebook Chromium acceptance | PASS, 8/8; all four owned resources closed | `notebook.log`, `notebook/results.json` |
+| Existing motion, controls, CLI, viewer presentation/frontend/recipe and Ninja UI browser groups | PASS, 32/32 | `browser-groups.log` |
+| Source syntax, declarations, formatting and public metadata | PASS | `check-final.log`, `public-metadata.log` |
+
+All receipts are under `artifacts/viewer-cleanup-a3/`. Dedicated probes verify
+HTTP refusal and stream closure after failed cleanup, actual CDP disposal after
+recovery, successful-step preservation, concurrent closes, page/browser/CDP loss,
+late closure during cleanup, startup screenshot/start/bind failures, recursive
+error sanitization and retained resource-scope ownership. Every probe releases
+its owned resources, including baseline failures. The notebook monitor screenshot
+was inspected: controlled-page stream and command controls render legibly. This
+change does not redesign the viewer or fix the separate result-attribution issue.
+
+Run the dedicated regressions explicitly (the existing `test:viewer` script's
+file list is unchanged):
+
+```sh
+node --test packages/runtime/tests/viewer-cleanup.test.mjs packages/runtime/tests/viewer-cleanup-browser.mjs
+```
+
+The task-owned compact build and dependency symlink were removed after checks;
+logs, source baselines and screenshots remain. Dependencies/lockfiles, entrypoints,
+shared session code and viewer UI files were unchanged. Independent lifecycle
+review found no remaining blocking issue after the settlement correction.
+These are source and disposable conformance checks, not Roots acceptance or an
+installed release check. No browser leak in production was established. A CDP
+operation that never settles has no new deadline; stalled-hook policy remains
+separate work. Remote CI and Linux/Windows checks were not run.
+
 ## A2 viewer result attribution — 2026-10-28
 
 **PASS — isolated source fix and Chromium conformance.** Starting source:

@@ -61,6 +61,7 @@ jobs:
           npm run test:controls
           npm run test:cli
           npm run test:viewer
+          node --test tests/control-authorization-acceptance.mjs packages/runtime/tests/viewer-cleanup-browser.mjs
           npm run test:ninja:ui
           npm run test:starter:unit
           npm run test:starter
