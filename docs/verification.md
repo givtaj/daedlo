@@ -67,6 +67,61 @@ other customer acceptance. No release package, remote CI, deployment, product
 publication, ordinary Roots promotion or cross-platform UI acceptance was run.
 The public alpha.6 release remains a separate immutable artifact.
 
+## A1 final authorization control dispatch — 2026-10-28
+
+**PASS — isolated source fix and conformance.** Selected base:
+`d32c5f0091827c96a7a82e09799c0d5b89dc759b`, branch
+`codex/control-authorization`. The preserved primary checkout was not edited.
+The defect was reproduced on this selected source before changing the runtime;
+no conclusion about exact published package bytes is inferred.
+
+The final guarded-effect dispatch now checks Stop synchronously after awaited
+observation/engine authorization. Pause invalidates that authorization even if
+Resume arrives before its response: the runtime waits as needed and obtains a
+fresh authorization against the expected revision/session. There is no await
+between the final control decision and effect invocation. This does not replay
+an effect or cancel a write already dispatched; independent saved/stopped evidence
+remains intact. No protocol, dependency, lockfile or public API change was needed.
+
+- **Before repair:** 12 Node assertions and eight Chromium scenarios genuinely
+  failed with one effect/write where zero was required. The already-dispatched
+  saved/stopped control passed in both suites. Setup failures were not counted.
+- **After repair:** all **13/13** dedicated Node regressions and **9/9** dedicated
+  Chromium scenarios pass (the browser TAP count is 10 including its parent).
+  Coverage includes Stop/Close during final observation and engine response,
+  paused dispatch, changed draft/session on Resume, Pause/Resume before a pending
+  response returns, and preservation of one already-dispatched saved write.
+- **Broader checks:** runtime **151/151** (including the 13 new regressions);
+  existing motion, control, CLI, viewer and Ninja UI Chromium tests **32/32**;
+  notebook Chromium **8/8**; Rust workspace **26 passed**, plus one intentionally
+  ignored child-process fixture invoked by its parent. `npm run check`, Rust
+  formatting and Clippy with warnings denied pass. Independent code review found
+  no blocking issue.
+
+Reproduction commands: `node --test packages/runtime/tests/control-authorization.test.mjs`
+and `node --test tests/control-authorization-acceptance.mjs`. Full runtime used
+`node --test --test-concurrency=1 packages/runtime/tests/*.test.mjs`. Browser
+acceptance used the freshly built notebook engine through
+`BROWSER_DRIVER_ACCEPTANCE_ENGINE`; compact Rust builds used one job, incremental
+compilation disabled, dev/test debug info disabled and
+`CARGO_TARGET_DIR=artifacts/a1-control-authorization/compact-target`.
+Environment: macOS arm64, Node 22.20.0, Rust 1.96.0, locked Playwright 1.62.1;
+dependencies were installed offline from the unchanged lockfile.
+
+Logs and the local handoff are in ignored `artifacts/a1-control-authorization/`,
+including `node-before.log`, `node-after.log`, `browser/pristine.log`,
+`browser/fixed.log`, `runtime-tests.log`, `existing-browser-tests.log`,
+`rust-tests.log` and `notebook/results.json`. Owned engine processes, browsers,
+contexts and HTTP fixtures closed; attached pages survived driver close. Notebook
+cleanup confirms all four owned resources closed. Only this task's compact build
+output was removed after verification; evidence and the reviewable worktree remain.
+
+These are shared-core conformance checks, not Roots/customer acceptance or a new
+presentation assessment. Stalled-hook/finalization redesign (A4), exact installed
+package acceptance, remote CI, release, deployment and everyday Roots promotion
+were not performed. Existing Roots services, data, sessions, pins and binaries
+were not used or changed.
+
 ## Renewal diagnostics merged and production-verified — 2026-10-28
 
 **PASS — merge, signed renewal and live verification.**

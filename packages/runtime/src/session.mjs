@@ -73,6 +73,7 @@ export async function createDriverSession({
   const cursor = createVisibleCursor(page);
   let busy = false,
     paused = false,
+    pauseGeneration = 0,
     stopping = false,
     closed = false,
     closing = false,
@@ -277,8 +278,17 @@ export async function createDriverSession({
         recipeContext,
       );
     async function effect(fn) {
-      await boundary();
-      await currentCheck();
+      while (true) {
+        await boundary();
+        const generation = pauseGeneration;
+        await currentCheck();
+        // Observation and engine authorization both yield to controls. Pause
+        // invalidates this authorization even if Resume already arrived.
+        if (stopping || closed)
+          reject("stopped", "Stopped at an action boundary.");
+        if (!paused && generation === pauseGeneration) break;
+      }
+      // Keep the final control decision and dispatch in one synchronous turn.
       onEffect();
       emit("effect_started", { command: id });
       await fn();
@@ -821,6 +831,7 @@ export async function createDriverSession({
       if (closed) return { ok: false };
       tickHold();
       paused = true;
+      pauseGeneration++;
       wake();
       if (busy) execution = "paused";
       emit("paused");
