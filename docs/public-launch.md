@@ -1,116 +1,137 @@
 # Public launch controls
 
-Daedlo remains **private**. The owner chose to prepare branch protections for a
-later approved public switch, with no paid-plan change. Neither these files nor a
-passing CI run authorize changing repository visibility, publishing a package or
-deploying the website.
+Daedlo is preparing to open the existing `givtaj/daedlo` repository, stable ID
+`1391092739`, on `github.com`. It remains **private** until the owner approves
+the visibility switch. Preparation does not publish another kit, deploy the
+website or promote customer dependencies. Current release and licensing records
+are [alpha delivery](alpha-release.md) and [licensing scope](licensing.md).
 
-## Current source safeguards
+The [30 October verification checkpoint](verification.md#open-source-preparation--2026-10-30)
+records actual checks, source identity and unresolved gates. Earlier dated
+verification sections retain their original observations; they are not the
+current launch checklist.
 
-The `Public metadata and secrets` CI job tests the repository-management tool,
-checks the current tracked files for private conversation links and customer
-material, and runs pinned Gitleaks 8.30.1 across fetched Git history. The scanner
-archive is verified against its pinned SHA-256 before execution. The workflow has
-a read-only token and does not upload scan logs or findings.
+## Retain history and published identities
 
-Run the metadata guard and its regression checks locally:
+The owner decided **against rewriting Git history**. The earlier local rewrite
+candidate was a preparation experiment, not an approved prerequisite. Do not
+force-push, recreate the repository, retarget tags or remove signatures to open
+access. Existing commits, release artifacts, checksums, notices, publisher trust
+and verification identities retain their original meaning.
+
+The reviewed history contains two historical private-chat identifiers in old
+documentation blobs. The review did not identify a conversation transcript or
+credential associated with them. Retain the recorded limitation without copying
+the identifiers into a new report. Recheck newly added material before launch;
+an unexpected credential or customer-data finding needs its own resolution.
+Keep the old rewrite preparation and local preservation bundles private. Local
+preservation is not an off-host backup. No history rewrite or GitHub Support
+request is part of this launch plan.
+
+## Source and exposure checks before the decision
+
+Use a clean, isolated checkout of the selected current source. Preserve the
+ordinary checkout's dirty drafts; its older evaluation-license candidate does
+not describe the Apache-2.0 current core. Do not publish that mixed working tree.
+
+Run the focused checks:
 
 ```sh
 node scripts/check-public-metadata.mjs
-node --test tests/public-metadata.test.mjs tests/repository-guardrails.test.mjs
-```
-
-The metadata guard reports paths and rule names without echoing matched private
-text. It does not inspect untracked customer data or follow tracked symlinks.
-`customers/` is ignored, and the guard rejects that directory if force-added.
-The URL patterns are a focused guard, not a general personal-data detector.
-Current-tree checks do not establish that old Git objects are clean. Review
-screenshots, release assets, Actions artifacts/logs, PR content and source history
-before a visibility change. Do not replace a privacy review with a secret scan.
-
-## Private repository settings
-
-The management tool is read-only by default, fixes the GitHub host and repository
-identity (`givtaj/daedlo`, ID `1391092739`), and refuses mutations unless the repo
-is private with the expected default branch. It never changes visibility, billing,
-Git refs, security subscriptions or branch protections:
-
-```sh
+node --test tests/public-metadata.test.mjs tests/repository-guardrails.test.mjs tests/release-public-licensing.test.mjs
 node scripts/repository-guardrails.mjs
 ```
 
-Its explicit `--apply-safe-actions` mode permits only the two documented Actions
-settings writes: select GitHub-owned actions with full commit-SHA pinning, without
-allowing verified third-party actions or wildcard exceptions. It reads back the
-result and refuses to widen an already more restrictive policy. Workflow tokens
-must remain read-only and must not approve PRs; private-fork workflows, write
-tokens and secret sharing remain disabled. Dependency vulnerability alerts remain
-enabled. Read the tool's result as observed state: unavailable controls are
-reported as blocked, not passed.
+The metadata guard inspects tracked working-tree bytes. It rejects direct
+private-conversation links and customer path segments without printing matched
+content or opening customer material. It does not inspect untracked files,
+compressed archives, image text, Git history or external GitHub surfaces.
 
-GitHub currently returns a plan restriction for private personal-repository branch
-protection and rulesets. The owner explicitly declined a paid-plan change. The
-pending [main ruleset](../.github/main-ruleset.json) is **not applied**. It requires:
+The `Public metadata and secrets` CI job also runs pinned Gitleaks 8.30.1 over
+fetched history, using its verified archive and the exact reviewed checksum
+exceptions. The scan invocation is:
+
+```sh
+gitleaks git . --log-opts="--all --full-history -m" --redact=100 --no-banner
+```
+
+Before opening access, review the current remote heads/tags, retained PR content,
+release assets and available Actions logs/artifacts. Include nested archive
+contents and retained screenshots where applicable. Keep raw responses, matches
+and private evidence outside tracked files. Record scope, dates, counts,
+unavailable items and actual findings in verification. A secret scan alone does
+not establish privacy clearance. The known historical metadata limitation above
+does not authorize publishing newly discovered private material.
+
+Confirm contributor setup, local links, Apache-2.0 terms, legacy grants and
+third-party notices. Public-core use has no seat-payment or hosted-account
+requirement. Customer applications and their separately authored integrations
+remain separate. Broad customer adoption, teaching mode, billing and wider
+platform support are not prerequisites for opening this source.
+
+## Read-only audit and current private controls
+
+The repository audit is read-only by default and fixes the GitHub host,
+repository ID/name and default branch. It supports the same repository while
+private or public, and refuses an identity or visibility change during a run.
+Its public mode checks effective main rules and approval of workflows from all
+external contributors; private-fork controls are then inapplicable.
+
+The explicit `--apply-safe-actions` mode remains **private-only**. It permits only
+the reviewed GitHub-owned Actions allowlist and full-SHA-pinning settings, reads
+them back and refuses to broaden a stricter policy. It cannot change visibility,
+history, billing, branch rules, releases, credentials or security products.
+
+Retain read-only workflow tokens, disabled workflow PR approvals, no third-party
+or wildcard Actions exceptions, and dependency vulnerability alerts. While
+private, fork workflows, write tokens and secret sharing remain disabled.
+
+The prepared [main ruleset](../.github/main-ruleset.json) is not enforcement.
+Private personal-repository protections are currently blocked by GitHub's plan;
+the owner declined a paid-plan change. The ruleset requires:
 
 - Pull requests, resolved review conversations and an up-to-date branch.
-- Both Node 22/24 source-and-package CI jobs and `Public metadata and secrets`,
-  bound to GitHub Actions as the check producer.
+- `Source and packaged consumer (Node 22)`, `Source and packaged consumer (Node 24)`
+  and `Public metadata and secrets`, bound to the GitHub Actions check producer.
 - No branch deletion or force-push, with no bypass actor.
 
-Approval count is zero because the repository currently has one maintainer; a
-maintainer cannot approve their own PR. Revisit reviewer requirements when a
-second maintainer joins. A JSON policy file does not enforce these controls.
+The approval count remains zero for the single-maintainer repository; a maintainer
+cannot approve their own PR. Revisit this when another maintainer joins.
 
-## Historical privacy cleanup
+Hosted CI must pass on the selected launch source. The 30 October readback found
+the main jobs prevented from starting by GitHub's account payment/spending-limit
+gate. No test steps ran in those jobs. Local passes and earlier release CI do not
+clear this gate; resolve the account restriction and rerun the required jobs.
+Do not weaken the checks, change billing or claim green CI to bypass it.
 
-A separate, ignored local preparation contains the complete Git bundle, verified
-restore, exact replacement rules, ref/commit maps and a candidate history. Keep
-those artifacts private: the original bundle contains the identifiers being
-removed. A local bundle is not an off-host backup.
+## Final owner decision and public-switch sequence
 
-At the preparation cutoff, the candidate removes two historical chat identifiers
-from ten blob versions. All 53 commits are rewritten, including nine commit
-signatures; eight merge topologies and all 21 advertised ref tips retain their
-original content. Release-tag targets change even though the tip trees do not.
-No remote history was replaced by that preparation.
+1. Review the exact source/PR and current verification. Resolve unexpected
+   exposure findings and required CI failures or unavailable evidence. Retain
+   the explicit no-rewrite decision and known historical limitation.
+2. Obtain the owner's explicit approval to change **this existing repository**
+   from private to public. Until then, keep it private.
+3. During that approved operation, apply `.github/main-ruleset.json` as soon as
+   visibility supports it. Read back the effective main rules, required contexts,
+   producer binding, deletion/force-push protections and absence of bypasses.
+4. Require workflow approval for **all external contributors**. Recheck the
+   Actions allowlist, SHA pinning, read-only workflow defaults and dependency
+   alerts; do not expose secrets or write tokens to fork workflows.
+5. Inspect available public-repository secret scanning, push protection and
+   private vulnerability reporting. Configure the supported controls during the
+   approved switch and record their actual readback. The audit script does not
+   enable or establish these controls. Keep [SECURITY.md](../SECURITY.md) as the
+   documented private reporting route.
+6. Rerun the read-only audit against the public repository and verify anonymous
+   source/contributor links. Record the visibility change, effective settings,
+   exact-source CI and any unavailable feature. Update the current access text
+   in README, CONTRIBUTING, ROADMAP and the naming guide from that observation.
 
-Before any approved rewrite, refresh the snapshot against every current remote
-ref, coordinate all local checkouts and paused work, and verify unpublished local
-commits have a migration path. Preserve dirty and ignored work. Use explicit
-expected-old ref leases and an audited ref list; never a blind mirror push.
-GitHub pull-request refs cannot be force-updated by a client. GitHub Support may
-need to remove retained PR references/cached views, and may decline removal of
-non-sensitive identifiers. A force-push alone cannot establish complete removal.
-Any Support message requires the owner's authorization.
+Only claim the public launch complete after the actual switch and readbacks.
+Source access, already published alpha releases, website deployment and customer
+acceptance are separate milestones; opening source does not require another
+alpha.4 migration or rewrite of historical receipts.
 
-After a rewrite, re-scan all reachable objects, update only the exact reviewed
-Gitleaks fingerprint using the verified commit map, and repeat the secret scan.
-Do not mechanically replace old SHA values in manifests, legal attribution,
-verification receipts or `scripts/release/ninja-checkpoint.mjs`: those identify
-immutable original bytes or GitHub workflow executions. Preserve their original
-identity and explain the verified old/new commit mapping. Existing signed release
-assets and published website/feed bytes are not republished by a Git cleanup.
-
-## Owner approval before public access
-
-Finish and verify the historical cleanup, review any retained GitHub objects, and
-refresh source and external-artifact exposure checks. Record unresolved limits in
-[verification](verification.md), then ask the owner for explicit public-access
-approval. **Keep the repository private while that approval is pending.**
-
-After that approval, apply `.github/main-ruleset.json` through GitHub's ruleset API
-as soon as the repository's plan/visibility supports it. Read back the effective
-`main` rules and all required check contexts; a successful request alone is not
-verification. Also configure approval of workflows from all external contributors
-and inspect available public-repository secret scanning, push protection and
-private vulnerability reporting. Record the actual settings and any unsupported
-features. The current audit tool deliberately refuses to manage a public repo;
-review and extend its identity/visibility contract before that later step.
-
-Only claim the launch ready after these checks and the owner decision. Source
-community access is separate from the unreleased alpha.4 package migration and
-its customer acceptance gates in [the rename guide](rename.md).
-
-Primary references: [GitHub history removal](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository),
+Primary references: [GitHub repository visibility](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility),
 [repository rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets)
 and [Actions permissions](https://docs.github.com/en/rest/actions/permissions).

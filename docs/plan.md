@@ -1,5 +1,25 @@
 # Implementation plan
 
+## Open-source preparation — 2026-10-30
+
+Prepare the existing repository for public access while preserving its history,
+published identities, the ordinary dirty checkout and customer installations.
+The owner rejected the earlier history-rewrite proposal. It is not a launch gate.
+
+- [x] Replace stale rewrite/release prerequisites in the [public-launch checklist](public-launch.md).
+- [x] Allow the existing repository audit to inspect this same repository after
+  a public switch, retaining private-only safe settings writes and explicit
+  effective-rule and external-contributor checks.
+- [x] Complete the selected-source exposure and regression checks; record actual
+  results in [verification](verification.md#open-source-preparation--2026-10-30).
+- [ ] Resolve the GitHub account payment/spending-limit restriction and obtain
+  passing required hosted CI for the launch source.
+- [ ] Obtain the final public-access decision, then apply/read back public-only
+  controls and verify anonymous contributor access during that approved switch.
+
+Alpha.6 is already published. No package release, website deployment, history
+rewrite or everyday Roots promotion is required by this preparation.
+
 ## Diagnostics rollout closure — 2026-10-28
 
 [PR #18](https://github.com/givtaj/daedlo/pull/18) is merged after complete Node

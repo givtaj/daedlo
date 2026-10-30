@@ -121,6 +121,130 @@ function fixture(overrides = {}) {
   };
 }
 
+function publicFixture(
+  approval = {
+    status: 200,
+    data: { approval_policy: "all_external_contributors" },
+  },
+) {
+  const expected = JSON.parse(
+    readFileSync(new URL("../.github/main-ruleset.json", import.meta.url)),
+  );
+  return fixture({
+    [root]: {
+      status: 200,
+      data: {
+        id: 1391092739,
+        full_name: "givtaj/daedlo",
+        private: false,
+        visibility: "public",
+        default_branch: "main",
+      },
+    },
+    [`${root}/branches/main/protection`]: { status: 404 },
+    [`${root}/rulesets?includes_parents=true&per_page=100`]: {
+      status: 200,
+      data: [{ name: expected.name, id: 42 }],
+    },
+    [`${root}/rulesets/42`]: { status: 200, data: expected },
+    [`${root}/rules/branches/main?per_page=100`]: {
+      status: 200,
+      data: expected.rules.map((rule) => ({ ...rule, ruleset_id: 42 })),
+    },
+    [`${root}/actions/permissions/fork-pr-contributor-approval`]: approval,
+  });
+}
+
+test("public repository read-only audit verifies effective controls without private-fork requests", async () => {
+  const f = publicFixture();
+  const report = await runGuardrails(f);
+  assert.equal(report.visibility, "public");
+  assert.equal(report.mode, "read-only");
+  assert.equal(report.status, "PASS");
+  assert.equal(report.controls.privateForks.status, "NOT_APPLICABLE");
+  assert.equal(report.controls.publicForkApproval.status, "PASS");
+  assert.equal(report.controls.mainProtection.status, "PASS");
+  assert.deepEqual(report.mutations, []);
+  assert.ok(f.calls.every((call) => call.method === "GET"));
+  assert.ok(
+    !f.calls.some((call) =>
+      call.path.endsWith("fork-pr-workflows-private-repos"),
+    ),
+  );
+});
+
+test("public audit refuses weaker or unobserved external-contributor approval", async () => {
+  for (const [response, status] of [
+    [
+      { status: 200, data: { approval_policy: "first_time_contributors" } },
+      "FAIL",
+    ],
+    [
+      { status: 403, data: { message: "PRIVATE_RESPONSE_SENTINEL" } },
+      "UNAVAILABLE",
+    ],
+  ]) {
+    const report = await runGuardrails(publicFixture(response));
+    assert.equal(report.controls.publicForkApproval.status, status);
+    assert.equal(report.status, "NOT_READY");
+    assert.doesNotMatch(JSON.stringify(report), /PRIVATE_RESPONSE_SENTINEL/);
+  }
+});
+
+test("read-only audit refuses a visibility change during readback", async () => {
+  const f = publicFixture();
+  let identityReads = 0;
+  await assert.rejects(
+    runGuardrails({
+      request: async (call) => {
+        const reply = await f.request(call);
+        if (call.path === root && ++identityReads === 2) {
+          reply.data.private = true;
+          reply.data.visibility = "private";
+        }
+        return reply;
+      },
+    }),
+    /visibility changed/i,
+  );
+});
+
+test("read-only audit refuses an inconsistent visibility response", async () => {
+  const f = publicFixture();
+  f.replies[root].data.private = true;
+  await assert.rejects(runGuardrails(f), /visibility could not be verified/i);
+  assert.equal(f.calls.length, 1);
+});
+
+test("safe apply rechecks private visibility before its first write", async () => {
+  const f = fixture({
+    [`${root}/actions/permissions`]: {
+      status: 200,
+      data: {
+        enabled: true,
+        allowed_actions: "all",
+        sha_pinning_required: false,
+      },
+    },
+  });
+  let identityReads = 0;
+  await assert.rejects(
+    runGuardrails({
+      applySafeActions: true,
+      request: async (call) => {
+        const reply = await f.request(call);
+        if (call.path === root && ++identityReads === 2) {
+          reply.data.private = false;
+          reply.data.visibility = "public";
+        }
+        return reply;
+      },
+    }),
+    /remain private/i,
+  );
+  assert.ok(f.calls.every((call) => call.method === "GET"));
+});
+
 test("read-only audit reports the genuine plan blocker instead of protection success", async () => {
   const f = fixture();
   const report = await runGuardrails(f);

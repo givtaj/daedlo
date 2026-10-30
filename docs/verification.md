@@ -1,5 +1,92 @@
 # Verification record
 
+## Open-source preparation — 2026-10-30
+
+**Source preparation complete locally; public launch remains blocked.** Work is
+based on shared main `16d050c8b4965ecd7e2acd52bf8d052b911866c4` in an isolated
+checkout. The ordinary checkout remains on its preserved older source; its
+evaluation-license draft is not the current release or public-core policy.
+
+The public-launch guide now records the owner's **no-history-rewrite** decision,
+current Apache-2.0 licensing and already published alpha.6. It removes the stale
+requirement to finish a rewrite or release alpha.4 before opening source. The
+naming guide records the completed primary-folder rename. Earlier dated launch
+sections retain their original observations with an explicit supersession note.
+
+The repository audit now supports read-only inspection of the same repository
+after a public switch. Exact host, repository ID/name and default-branch checks
+remain mandatory. Public audits verify effective main rules and
+`all_external_contributors` approval, treat private-fork settings as inapplicable
+and reject visibility drift. Explicit Actions writes remain private-only, checked
+again before each exact allowlisted write. No new mutation endpoint was added.
+Three genuine public-read regression assertions failed with `PRIVATE_REQUIRED`
+before implementation; the original failure log is retained privately.
+Independent review found no blocking defect.
+
+Measured with Node 22.20.0 and the matching existing locked dependency
+installation; no new dependency or lockfile changes:
+
+| Check | Actual result |
+| --- | --- |
+| Source syntax, public types and configured formatting | PASS, `npm run check` |
+| Repository audit, metadata and public-licensing regressions | PASS, 53/53 |
+| Actual source-license validation | PASS, 373 tracked files; Apache-2.0 with complete legacy and third-party notices |
+| Full refreshed Git-history secret scan | PASS, pinned Gitleaks 8.30.1, 95 commits; exact CI flags and two existing reviewed checksum exceptions unchanged |
+| Focused historical privacy review | Same two historical private-chat references across ten old blob versions; no newly identified credential or transcript. Retained under the recorded no-rewrite decision |
+| Tracked images | All 12 inspected: nine historical Roots fixture screenshots, two synthetic Architecture Studio screenshots and one architecture figure; no visible credentials or private conversation content found |
+| External exposure review | PASS within the declared refresh: all 32 release assets match GitHub digests; 120 newer Actions artifacts and 88 newer workflow-log archives downloaded and screened without findings |
+| Local documentation links, focused formatting and diff whitespace | PASS, 80 local targets across ten selected entry/launch documents; focused script/test formatting and diff whitespace clean |
+| Ordinary checkout preservation | PASS, unchanged HEAD/status and all 306 tracked/untracked file contents and modes |
+
+The external inventory was fully paginated: seven releases, 186 artifacts, 139
+workflow runs, 18 PRs and 22 issue records (including PRs). No issue comments,
+review comments or reviews were returned. All current issue/PR and release bodies
+were screened. The refreshed Actions scope begins after the prior review cutoff,
+23 October 2026 at 18:03 UTC; the 66 older artifacts and 51 older runs were not
+rescanned and retain their earlier dated review scope. No selected download was
+unavailable or expired. Safe recursive inspection covered 859 containers and
+16,430 archive entries, with no unsafe paths, links, special files, encrypted
+entries or oversized-member skips. The 1,210 unique decoded files and discussion
+prose passed focused privacy/path screening and Gitleaks 8.30.1. No additional
+media leaf required visual review. These are exposure checks, not execution or
+customer acceptance of those historical artifacts.
+
+The history scan covers the refreshed remote branches and tags available in this
+checkout, not every GitHub-retained PR ref/cache. Source metadata, secret scanning,
+image review and external-surface screening have different scopes; none is a
+universal privacy guarantee. Raw matches, screenshots, API responses and audit
+receipts stay outside tracked source.
+
+Live read-only settings inspection verified repository `givtaj/daedlo`, stable
+ID `1391092739`, default branch `main`, visibility **private**:
+
+- **PASS:** GitHub-owned Actions only, full-SHA pinning, read-only workflow tokens,
+  workflow PR approvals disabled, private-fork workflows/write tokens/secret
+  sharing disabled, and dependency vulnerability alerts enabled.
+- **BLOCKED_BY_PLAN:** main branch protection and rulesets both return the
+  existing private-plan restriction. The prepared ruleset is not applied.
+  Public-contributor workflow approval is unavailable while private (HTTP 422).
+- **BLOCKED / no CI steps ran:** main [run 40884518820](https://github.com/givtaj/daedlo/actions/runs/40884518820)
+  has three failed jobs. The GitHub check annotation explicitly says jobs were
+  not started because account payments failed or the spending limit must be
+  increased. This is not a failing test assertion. Passing local checks and prior
+  alpha.6 release CI do not establish passing hosted CI on this source.
+- **NOT ESTABLISHED:** public-repository native secret scanning, push protection
+  and private vulnerability reporting. The API did not expose a current security
+  feature configuration; the audit tool explicitly does not establish these.
+  Inspect and read back supported controls during the separately approved switch.
+
+The [launch checklist](public-launch.md#final-owner-decision-and-public-switch-sequence)
+owns the final sequence. Hosted CI and public-only enforcement remain open;
+**no launch-ready or public-access claim is made**. No visibility, ruleset,
+billing, credentials, history, release, website or customer dependency was changed.
+No new browser/Rust application behavior was introduced or reaccepted by this
+repository-audit change. Existing release and customer evidence retains its scope.
+
+Private evidence is retained in the isolated preparation directory, including
+the pre-fix assertions, sanitized private-settings audit and separate exposure
+receipts. No raw audit content or local preservation bundle belongs in Git.
+
 ## Combined A1, A2 and A3 acceptance — 2026-10-29
 
 **PASS — independently reviewed combined source and local conformance.**
@@ -913,6 +1000,11 @@ customer dependency pin was changed. Existing release/history entries below reta
 their original scope and exact identities.
 
 ## Private launch controls and primary-folder rename — 2026-10-23
+
+This is the original dated checkpoint. The [30 October preparation](#open-source-preparation--2026-10-30)
+supersedes its pending CI and rewrite-preparation status as current launch
+guidance. The old local app-registration observation is not a public-source gate.
+Historical receipts and identities below are retained.
 
 The same GitHub repository is now `givtaj/daedlo`, stable ID `1391092739`, and
 remains **PRIVATE**. [PR #8](https://github.com/givtaj/daedlo/pull/8) merged as

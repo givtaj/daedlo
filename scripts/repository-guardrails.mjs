@@ -152,7 +152,7 @@ export function githubRequest({ method, path, body }) {
   return { status, data };
 }
 
-async function identify(request) {
+async function identify(request, { requirePrivate = false } = {}) {
   const response = await request({ method: "GET", path: base });
   if (response.status !== 200)
     fail(
@@ -165,7 +165,18 @@ async function identify(request) {
       "IDENTITY_MISMATCH",
       "Repository identity mismatch; no mutations permitted.",
     );
-  if (repo.private !== true || repo.visibility !== "private")
+  const visibility =
+    repo.private === true && repo.visibility === "private"
+      ? "private"
+      : repo.private === false && repo.visibility === "public"
+        ? "public"
+        : null;
+  if (!visibility)
+    fail(
+      "VISIBILITY_UNVERIFIED",
+      "Repository visibility could not be verified; no mutations permitted.",
+    );
+  if (requirePrivate && visibility !== "private")
     fail(
       "PRIVATE_REQUIRED",
       "This command requires the repository to remain private; no mutations permitted.",
@@ -175,6 +186,7 @@ async function identify(request) {
       "BRANCH_MISMATCH",
       "Default branch differs from the reviewed policy; no mutations permitted.",
     );
+  return visibility;
 }
 async function readActions(request) {
   const policy = await request({ method: "GET", path: actionsPath });
@@ -220,7 +232,7 @@ async function applyActions(request, current) {
     ],
   ]) {
     if (matches) continue;
-    await identify(request);
+    await identify(request, { requirePrivate: true });
     const response = await request({
       method: "PUT",
       path,
@@ -302,7 +314,9 @@ export async function runGuardrails({
 } = {}) {
   if (typeof applySafeActions !== "boolean")
     fail("ARGUMENT_REFUSED", "Apply mode must be explicitly selected.");
-  await identify(request);
+  const visibility = await identify(request, {
+    requirePrivate: applySafeActions,
+  });
   const expected = JSON.parse(
     await readFile(
       new URL("../.github/main-ruleset.json", import.meta.url),
@@ -319,19 +333,27 @@ export async function runGuardrails({
     `${base}/branches/main/protection`,
     rulesetsPath,
     `${actionsPath}/workflow`,
-    `${actionsPath}/fork-pr-workflows-private-repos`,
+    ...(visibility === "private"
+      ? [`${actionsPath}/fork-pr-workflows-private-repos`]
+      : []),
     `${base}/vulnerability-alerts`,
     `${actionsPath}/fork-pr-contributor-approval`,
   ];
-  const [
-    branch,
-    protection,
-    rulesets,
-    workflow,
-    forks,
-    alerts,
-    contributorApproval,
-  ] = await Promise.all(paths.map((path) => request({ method: "GET", path })));
+  const responses = await Promise.all(
+    paths.map((path) => request({ method: "GET", path })),
+  );
+  const observed = new Map(
+    paths.map((path, index) => [path, responses[index]]),
+  );
+  const branch = observed.get(`${base}/branches/main`);
+  const protection = observed.get(`${base}/branches/main/protection`);
+  const rulesets = observed.get(rulesetsPath);
+  const workflow = observed.get(`${actionsPath}/workflow`);
+  const forks = observed.get(`${actionsPath}/fork-pr-workflows-private-repos`);
+  const alerts = observed.get(`${base}/vulnerability-alerts`);
+  const contributorApproval = observed.get(
+    `${actionsPath}/fork-pr-contributor-approval`,
+  );
   const sha =
     branch.status === 200 &&
     /^[a-f0-9]{40}$/.test(branch.data?.commit?.sha ?? "")
@@ -382,14 +404,26 @@ export async function runGuardrails({
       }),
       workflow,
     ),
-    privateForks: control(
-      matchesFields(forks.data, {
-        run_workflows_from_fork_pull_requests: false,
-        send_write_tokens_to_workflows: false,
-        send_secrets_and_variables: false,
-      }),
-      forks,
-    ),
+    privateForks:
+      visibility === "private"
+        ? control(
+            matchesFields(forks.data, {
+              run_workflows_from_fork_pull_requests: false,
+              send_write_tokens_to_workflows: false,
+              send_secrets_and_variables: false,
+            }),
+            forks,
+          )
+        : { status: "NOT_APPLICABLE" },
+    ...(visibility === "public"
+      ? {
+          publicForkApproval: control(
+            contributorApproval.data?.approval_policy ===
+              "all_external_contributors",
+            contributorApproval,
+          ),
+        }
+      : {}),
     vulnerabilityAlerts: {
       status:
         alerts.status === 204
@@ -406,8 +440,17 @@ export async function runGuardrails({
       required: requiredChecks,
     },
   };
-  await identify(request);
-  const statuses = Object.values(controls).map((item) => item.status);
+  const finalVisibility = await identify(request, {
+    requirePrivate: applySafeActions,
+  });
+  if (finalVisibility !== visibility)
+    fail(
+      "VISIBILITY_CHANGED",
+      "Repository visibility changed during the audit; rerun read-only verification.",
+    );
+  const statuses = Object.values(controls)
+    .map((item) => item.status)
+    .filter((status) => status !== "NOT_APPLICABLE");
   const status = statuses.every((value) => value === "PASS")
     ? "PASS"
     : statuses.every((value) => ["PASS", "BLOCKED_BY_PLAN"].includes(value))
@@ -422,7 +465,7 @@ export async function runGuardrails({
     schemaVersion: 1,
     repository: TARGET.repository,
     repositoryId: TARGET.id,
-    visibility: "private",
+    visibility,
     mode: applySafeActions ? "apply-safe-actions" : "read-only",
     status,
     controls,
@@ -457,7 +500,7 @@ if (
     const args = process.argv.slice(2);
     if (args.length === 1 && args[0] === "--help") {
       console.log(
-        "Usage: node scripts/repository-guardrails.mjs [--apply-safe-actions]\nDefault: read-only audit of private givtaj/daedlo (ID 1391092739).\nThe explicit apply flag changes only the reviewed Actions allowlist and SHA pinning.\nExit: 0 all audited controls pass; 1 gaps/plan blockers; 2 refusal or transport error.",
+        "Usage: node scripts/repository-guardrails.mjs [--apply-safe-actions]\nDefault: read-only audit of private or public givtaj/daedlo (ID 1391092739).\nThe explicit apply flag requires a private repository and changes only the reviewed Actions allowlist and SHA pinning.\nExit: 0 all audited controls pass; 1 gaps/plan blockers; 2 refusal or transport error.",
       );
     } else {
       if (
