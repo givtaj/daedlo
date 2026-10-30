@@ -1,5 +1,84 @@
 # Verification record
 
+## PR #22 review and installed safety replay — 2026-10-30
+
+**PASS — independent source review and local exact-installed engineering checks.**
+Reviewed [PR #22](https://github.com/givtaj/daedlo/pull/22) at
+`19f9caeca5aa6d50e45e6bd4cc9c9ebcdab65b50` against `16d050c8`. No blocking
+runtime, ownership, public-type or CI-trigger finding remained. This is a local
+review, not a submitted GitHub approval. Current PR metadata still shows it open
+at that head; no review threads or submitted reviews were present. Hosted run
+`40933635218` remains the old account-blocked result; no CI rerun was attempted.
+
+The isolated checkout now uses local branch `codex/installed-package-safety`,
+based directly on #22, with the earlier November planning sections preserved.
+No merge, push, publication, version/dependency change or Roots promotion occurred.
+The harness/test implementation and retained planning were frozen at clean source
+`d8bc681b183e02943940099264f71a2a9bd94e71`. This later verification update changes
+only planning/evidence; the tested executable source and harness remain identical.
+
+### Regression and repair
+
+Before repair, three meaningful harness assertions failed: required safety suites
+were omitted, skipping a new suite could still leave acceptance passing, and public
+package exports could resolve another runtime entry without detection. The new
+`tests/release-installed-controls.test.mjs` records those requirements. Review
+then exposed an ESM/require resolver mismatch in the initial patch; an explicit
+conditional-exports assertion failed before switching to Node ESM resolution from
+the actual consumer. A further omitted-resource-suite assertion failed before
+adding failed-setup propagation coverage. These were harness assertion failures,
+not reproduced browser defects. Original failing logs are retained privately at
+`artifacts/installed-safety/{harness-before,esm-resolution-before,setup-coverage-before}.tap`.
+
+The existing `runInstalledControls` now replays A1 authorization, both A2 result
+attribution suites, A3 unit/Chromium cleanup, and #22 stalled hooks, CLI/nested
+ownership, failed setup and finalization UI against the installed public package.
+Behavioral assertions remain unchanged; only explicit import, fake-engine and
+installed-CLI locations are substituted. Each source/copied file and substitution
+is receipted. ESM resolution, installed entry/version/file digests and unchanged
+installed bytes are checked. Every expected case must execute and pass, with zero
+failed, skipped, cancelled or todo cases. Existing CI already invokes this harness
+and includes the new release-contract test; no CI job body was removed or weakened.
+Independent rereview confirmed both review findings were resolved.
+
+### Measured checks and artifact boundary
+
+Environment: macOS arm64, Node 22.20.0, Rust 1.96.0, Playwright 1.62.1;
+installed native acceptance measured Chromium `151.0.7922.34`. This is a warm
+machine with disposable integration directories, not a fresh-machine claim.
+
+| Check | Actual result / private receipt under `artifacts/installed-safety/` |
+| --- | --- |
+| Source syntax, strict declarations and formatting | PASS, `source-check.log` |
+| Focused source safety suites | PASS, 68 cases across authorization, attribution, cleanup, stalled/CLI/scoped finalization and resource setup; source TAP logs and `release-contracts.tap` |
+| Acceptance/provenance contracts, including four new harness tests | PASS, 16; `release-contracts.tap` also contains the five source resource cases, 21 total |
+| Locked/offline Rust build and tests | PASS, 26 tests; one subprocess helper intentionally ignored directly and exercised by its parent; `rust-tests.log` |
+| Clean bundle, portable tools and local public-kit construction | PASS, `build.json`, `bundle/`, `tools/`, `kit/`; `allowDirty:false` |
+| Exact installed safety replay | PASS, 112 cases in 14 groups: existing CLI/publication 44, A1 23, A2 2, A3 20, #22 finalization/ownership 23; `acceptance/installed-controls/results.json` |
+| Exact installed independent fixture and viewer | PASS, eight notebook groups, frontend and recipe-path browser checks; `acceptance/results.json` |
+| Exact installed native startup/ownership | PASS, 13 checks; measured 69 tools and 23 runtime files; owned cleanup PASS; `acceptance/results.json` |
+| Exact shipped starter, managed reference and evidence | PASS, 16 starter browser groups, eight managed checks, nine evidence checks; owned cleanup PASS; `starter/` and `exact-installed.log` |
+| Visible installed viewer inspection | PASS for reviewed desktop stalled effect-evidence and narrow pending-cleanup screenshots; `acceptance/installed-controls/finalization-viewer/` |
+| Dirty primary preservation | PASS, same HEAD/index/status and all 306 tracked/untracked contents and modes; private preservation receipt |
+
+The local artifacts retain source version `0.1.4-alpha.6` solely for engineering
+tests. They are different bytes from public alpha.6, are not a replacement release
+and must not be distributed under its public identity. Final pilot version selection,
+current-head hosted CI and any release decision remain open. Recorded digests:
+
+- Source inventory: `b36577030cdfb456dae12ea4d5fe580034cb813d4dca45231440604cc2c7fd00`.
+- Manifest: `63720cb689b5815e93d8914c36a3717870f77709f4686f22f5ce647def6a8d35`.
+- Runtime archive: `533765e8865c3b4aba8865a71de5a6edbebd5556e08c077b5baf2936cc5e05d7`.
+- Shared crate: `e4376f2e8de86b88c3112e902f74457cb0a7d19b397258af9c8873b5d5b865fb`.
+- Tools archive: `5cb4df47045ef9de3e65defc13c0aefd864bf27697bc05d739010c11f832244a`.
+- Measured runtime build: `ceefb3994ce6773c18f45cf26d3bc12744af072822cb819504f2c680824cf0d6`.
+
+Full local receipts retain compiled model/engine, package and actual browser
+identities and per-group logs. They contain only disposable conformance fixtures,
+not WBF source or business data. WBF site/flow permission, selected positive/negative
+rehearsal and both participant sessions remain BLOCKED/NOT RUN. No customer acceptance,
+new managed upgrade/rollback drill or complete package-release gate is established.
+
 ## November pilot current-state reconciliation — 2026-10-30
 
 **PASS — read-only reconciliation and planning preparation, not product or user

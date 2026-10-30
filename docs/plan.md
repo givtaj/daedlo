@@ -23,6 +23,8 @@ stable, pinned Roots fixture only if useful for internal verification, in isolat
 
 ### Current state and prioritized fix backlog
 
+The [installed replay follow-up](verification.md#pr-22-review-and-installed-safety-replay--2026-10-30) closes F2 locally and records the independent #22 review. Hosted CI, final pilot packaging and WBF acceptance remain open.
+
 The [October 30 reconciliation](verification.md#november-pilot-current-state-reconciliation--2026-10-30)
 is the evidence checkpoint. Main is `16d050c8`; #19–#21 are merged. #22 is
 implemented at `19f9cae`, open, with historical local passes and blocked hosted CI.
@@ -34,8 +36,8 @@ current execution. Historical source PASS does not pass a new package or user ga
 | Priority / item | Owner | Evidence/source | Dependency | Status | Verification and finish condition |
 | --- | --- | --- | --- | --- | --- |
 | P0 / F1: bring accepted safety fixes into the pilot kit | Codex integration owner; Aidin decides merge/release | [#19](https://github.com/givtaj/daedlo/pull/19), [#20](https://github.com/givtaj/daedlo/pull/20), [#21](https://github.com/givtaj/daedlo/pull/21), [#22](https://github.com/givtaj/daedlo/pull/22), [alpha.6](alpha-release.md) | F2, B2–B3; explicit integration decision | BLOCKED — alpha.6 lacks required fixes | Freeze a new candidate containing Stop/Close dispatch protection and Pause reauthorization (#19), current/retained run attribution (#20), retryable viewer capture cleanup/startup handle (#21), and pending/stalled evidence/cleanup, cooperative Stop, bounded close and retained dependencies (#22). Finish only after exact-package gate P passes; alpha.6 stays immutable. |
-| P0 / F2: replay new safety checks against installed bytes | Codex; same integration owner for harness/CI edits | `tests/installed-controls-acceptance.mjs`, `tests/release-acceptance.mjs`, `packages/runtime/tests/viewer-finalization-browser.mjs` | Choose reviewed #22-based candidate; see proposed fix below | BLOCKED — confirmed static coverage gap; replay NOT RUN | Add narrow installed-consumer coverage for A1/A2/A3/#22 using existing import-only substitution/public entry patterns. Record original/copied check hashes and measured installed runtime provenance. First show a meaningful failing harness assertion that catches omitted suites or source-byte fallback; then preserve all behavior assertions and pass exact installed checks. |
-| P0 / F3: review #22 and obtain actual hosted CI | Codex reviewer/integration owner; Aidin for account/merge decisions | [PR #22](https://github.com/givtaj/daedlo/pull/22), [blocked run](https://github.com/givtaj/daedlo/actions/runs/40933635218), `.github/workflows/ci.yml` | Actions availability; any review/harness changes at final head | BLOCKED — account gate; formal PR reviews absent | Independent current-head review plus successful Node 22, Node 24 and metadata/secrets jobs, with test steps/logs. Recheck head/base before explicit merge decision, then require resulting main CI. Keep all existing checks and #22 trigger policy. |
+| P0 / F2: replay new safety checks against installed bytes | Codex; same integration owner for harness/CI edits | `tests/installed-controls-acceptance.mjs`, `tests/release-acceptance.mjs`, `packages/runtime/tests/viewer-finalization-browser.mjs` | Choose reviewed #22-based candidate; see proposed fix below | PASS — local replay at `d8bc681`; final pilot gate remains open | Add narrow installed-consumer coverage for A1/A2/A3/#22 using existing import-only substitution/public entry patterns. Record original/copied check hashes and measured installed runtime provenance. First show a meaningful failing harness assertion that catches omitted suites or source-byte fallback; then preserve all behavior assertions and pass exact installed checks. |
+| P0 / F3: review #22 and obtain actual hosted CI | Codex reviewer/integration owner; Aidin for account/merge decisions | [PR #22](https://github.com/givtaj/daedlo/pull/22), [blocked run](https://github.com/givtaj/daedlo/actions/runs/40933635218), `.github/workflows/ci.yml` | Actions availability; any review/harness changes at final head | BLOCKED — local source review PASS; hosted account gate persists | Independent current-head review plus successful Node 22, Node 24 and metadata/secrets jobs, with test steps/logs. Recheck head/base before explicit merge decision, then require resulting main CI. Keep all existing checks and #22 trigger policy. |
 | P1 / F4: installation, recovery and delivery rehearsal | Codex | [native setup](native-setup.md), [managed acceptance](managed-integration.md#customer-run-acceptance), [evidence guide](evidence-reporting.md) | Frozen candidate containing F1's code, F2/F3 and disposable integration | NOT RUN — new candidate | Pass B3 against installed tools/runtime/crate/model/browser, with visible UI inspection, reports, cleanup, restart and applicable update/rollback. Fresh integration on a warm machine is not fresh-machine evidence. |
 | P1 / F5: fix observed WBF pilot friction | WBF QA participant and Codex; WBF owns app/model policy | B4–B5 observations, WBF QA setup/records where available and prior feedback | Confirm B1; observe actual sessions | BLOCKED — no observed pilot | Capture reproduction, expected/observed behavior and owner; rank by preventing useful completion, false evidence, setup effort and repeat use. Only demonstrated blockers receive minimal regression-first fixes and rerun. No invented application faults or broad feature cycle. |
 
@@ -143,11 +145,12 @@ report and upstream independent verification remain distinguishable. Repeat use
 supports further investment; specific friction supports bounded fixes. Neither
 synthetic passes nor lack of an available tester establishes WBF acceptance.
 
-**Next executable step:** independently review current #22 and prepare F2's
-regression/harness patch in an owned isolated checkout; this deliverable contains
-the proposed fix, not implementation. In parallel Aidin confirms WBF's exact
-website/flow/negative case, disposable test permission, macOS arm64/Codex and both
-session dates. Inspect CI availability when relevant; do not wait by changing billing.
+**Next executable step:** when Actions is available, refresh #22/main and run all
+three required jobs on the chosen final head, including the installed replay fix.
+F2 is implemented and locally verified; do not merge or publish without the next
+explicit instruction. In parallel Aidin confirms WBF's exact website/flow/negative
+case, disposable test permission, macOS arm64/Codex and both session dates. Then
+prepare the selected application handoff and internal rehearsal. Do not change billing.
 
 ## CI efficiency and stalled finalization — 2026-10-29
 
