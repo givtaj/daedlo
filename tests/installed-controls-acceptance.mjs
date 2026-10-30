@@ -4,10 +4,89 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const sha256 = (path) =>
   createHash("sha256").update(fs.readFileSync(path)).digest("hex");
+
+// Reuse the source assertions verbatim, changing only their runtime/fixture
+// locations. Counts include Node's parent test wrappers, and forbid silent skips.
+const suites = [
+  ["installed-cli", "cli-factory-browser.mjs", 10, []],
+  [
+    "installed-publication-unit",
+    "recipe-finalization.test.mjs",
+    25,
+    ["../src/session.mjs"],
+  ],
+  [
+    "installed-publication-browser",
+    "control-boundary-browser.mjs",
+    9,
+    ["../src/index.mjs"],
+  ],
+  [
+    "installed-authorization-unit",
+    "control-authorization.test.mjs",
+    13,
+    ["../src/session.mjs"],
+  ],
+  [
+    "installed-authorization-browser",
+    "control-authorization-acceptance.mjs",
+    10,
+    ["../packages/runtime/src/session.mjs"],
+  ],
+  [
+    "installed-result-attribution",
+    "viewer-result-attribution-browser.mjs",
+    1,
+    ["../src/viewer/server.mjs"],
+  ],
+  [
+    "installed-result-session",
+    "viewer-result-session-browser.mjs",
+    1,
+    ["../src/index.mjs"],
+  ],
+  [
+    "installed-viewer-cleanup-unit",
+    "viewer-cleanup.test.mjs",
+    12,
+    ["../src/viewer/server.mjs", "../src/resources.mjs"],
+  ],
+  ["installed-viewer-cleanup-browser", "viewer-cleanup-browser.mjs", 8, []],
+  [
+    "installed-stalled-finalization",
+    "stalled-finalization.test.mjs",
+    9,
+    ["../src/session.mjs"],
+  ],
+  [
+    "installed-cli-stalled-finalization",
+    "cli-stalled-finalization.test.mjs",
+    3,
+    ["../src/index.mjs"],
+  ],
+  [
+    "installed-scoped-finalization",
+    "scoped-finalization.test.mjs",
+    3,
+    ["../src/session.mjs", "../src/resources.mjs"],
+  ],
+  [
+    "installed-viewer-finalization",
+    "viewer-finalization-browser.mjs",
+    3,
+    ["../src/index.mjs"],
+  ],
+  [
+    "installed-resource-ownership",
+    "resources.test.mjs",
+    5,
+    ["../src/resources.mjs"],
+  ],
+];
 
 export async function runInstalledControls({
   repoRoot,
@@ -45,6 +124,28 @@ export async function runInstalledControls({
     },
   };
   try {
+    const manifest = JSON.parse(
+      fs.readFileSync(join(installed, "package.json")),
+    );
+    // The runtime exports an ESM import target, not a require target. Resolve
+    // from the actual consumer, using the same conditions as the copied suites.
+    receipt.provenance.resolvedPublicRuntimeEntry = (
+      await run(
+        "installed-public-runtime-resolution",
+        process.execPath,
+        [
+          "--input-type=module",
+          "-e",
+          `console.log(import.meta.resolve(${JSON.stringify(manifest.name)}));`,
+        ],
+        { cwd: work },
+      )
+    ).trim();
+    assert.equal(
+      receipt.provenance.resolvedPublicRuntimeEntry,
+      entry,
+      "Public runtime package must resolve to the exact installed entry",
+    );
     const engine = join(work, "tests/fake-engine.mjs");
     fs.copyFileSync(
       join(repoRoot, "packages/runtime/tests/fake-engine.mjs"),
@@ -53,25 +154,39 @@ export async function runInstalledControls({
     );
     fs.chmodSync(engine, 0o755);
     receipt.provenance.fakeEngineSha256 = sha256(engine);
-    for (const [name, sourceImport] of [
-      ["cli-factory-browser.mjs", null],
-      ["recipe-finalization.test.mjs", '"../src/session.mjs"'],
-      ["control-boundary-browser.mjs", '"../src/index.mjs"'],
-    ]) {
-      const original = join(repoRoot, "packages/runtime/tests", name);
+    for (const [, name, , imports] of suites) {
+      const original = join(
+        repoRoot,
+        name === "control-authorization-acceptance.mjs"
+          ? "tests"
+          : "packages/runtime/tests",
+        name,
+      );
       let text = fs.readFileSync(original, "utf8");
-      if (sourceImport) {
+      const substitutions = imports.map((specifier) => ({
+        kind: "public-runtime-import",
+        from: JSON.stringify(specifier),
+        to: JSON.stringify(manifest.name),
+      }));
+      if (name === "control-authorization-acceptance.mjs")
+        substitutions.push({
+          kind: "fixture-location",
+          from: '"../packages/runtime/tests/fake-engine.mjs"',
+          to: '"./fake-engine.mjs"',
+        });
+      if (name === "cli-stalled-finalization.test.mjs")
+        substitutions.push({
+          kind: "installed-cli-location",
+          from: 'new URL("../src/cli.mjs", import.meta.url)',
+          to: `new URL(${JSON.stringify(pathToFileURL(join(installed, "src/cli.mjs")).href)})`,
+        });
+      for (const { from, to, kind } of substitutions) {
         assert.equal(
-          text.split(sourceImport).length,
+          text.split(from).length,
           2,
-          `${name}: exactly one public runtime import substitution`,
+          `${name}: exactly one ${kind} substitution`,
         );
-        text = text.replace(
-          sourceImport,
-          JSON.stringify(
-            JSON.parse(fs.readFileSync(join(installed, "package.json"))).name,
-          ),
-        );
+        text = text.replace(from, to);
       }
       const destination = join(work, "tests", name);
       fs.writeFileSync(destination, text, { flag: "wx" });
@@ -84,14 +199,15 @@ export async function runInstalledControls({
         name,
         sourceSha256: sha256(original),
         consumerSha256: sha256(destination),
-        importOnlySubstitution: sourceImport !== null,
+        importOnlySubstitution:
+          substitutions.length > 0 &&
+          substitutions.every(
+            (value) => value.kind === "public-runtime-import",
+          ),
+        substitutions,
       });
     }
-    for (const [name, file, expected] of [
-      ["installed-cli", "cli-factory-browser.mjs", 10],
-      ["installed-publication-unit", "recipe-finalization.test.mjs", 25],
-      ["installed-publication-browser", "control-boundary-browser.mjs", 9],
-    ]) {
+    for (const [name, file, expected] of suites) {
       const log = await run(
         name,
         process.execPath,
@@ -99,10 +215,17 @@ export async function runInstalledControls({
         {
           cwd: work,
           env: {
-            CLI_TEST_RUNTIME: entry,
+            CLI_TEST_RUNTIME:
+              file === "viewer-cleanup-browser.mjs"
+                ? fileURLToPath(entry)
+                : entry,
             CLI_TEST_BINARY: join(installed, "src/cli.mjs"),
             CLI_TEST_ENGINE: engine,
             CLI_TEST_EVIDENCE: join(evidence, "cli"),
+            BROWSER_DRIVER_CONTROL_OUTPUT: join(evidence, "authorization"),
+            RESULT_ATTRIBUTION_OUTPUT: join(evidence, "attribution"),
+            RESULT_SESSION_OUTPUT: join(evidence, "attribution-session"),
+            FINALIZATION_VIEWER_OUTPUT: join(evidence, "finalization-viewer"),
           },
         },
       );

@@ -1,5 +1,76 @@
 # Verification record
 
+## November pilot current-state reconciliation — 2026-10-30
+
+**PASS — read-only reconciliation and planning preparation, not product or user
+acceptance.** The [first-week checklist](plan.md#november-1-7-pilot-checklist--prepared-2026-10-30)
+owns the work queue. This section records the evidence boundary without replacing
+the historical records below or any existing WBF acceptance ledger.
+
+The monthly focus was checked against the owner's October 30 agreed review and
+project/account/CI handoff records. Private page/chat references stay out of shared
+artifacts; the repository PRs, runs and source paths below identify technical evidence.
+Aidin nominated a QA teammate from WBF to review QA of WBF websites. No external
+session, outreach, private application access or application fault scenario was
+performed or inferred. Exact website/flow, environment, data permission and dates
+remain unconfirmed. Existing WBF integration/model/records must be inspected and
+reused where available; prior feedback does not prove installation or acceptance.
+
+| Evidence boundary | Status | Actual October 30 observation / limitation |
+| --- | --- | --- |
+| Canonical source | PASS | GitHub `main` is `16d050c8b4965ecd7e2acd52bf8d052b911866c4`; tree `ea9b59c73d0106b27e3964e5329cfd9e5e9a70de`. #19/#20/#21 are merged, with merge commits `284d6d8`, `fa51fdf` and `16d050c8`. No new merge performed. |
+| Historical combined CI | PASS, historical | [PR run 40882393846](https://github.com/givtaj/daedlo/actions/runs/40882393846) and [push run 40882385093](https://github.com/givtaj/daedlo/actions/runs/40882385093) still show success at `6a8f979829d1082474ef94d96c9494e9e028bc67`. Local Git confirms its tree equals current main. This is not a successful run on the main commit itself. |
+| Current main CI | BLOCKED | [Run 40884518820](https://github.com/givtaj/daedlo/actions/runs/40884518820), attempt 1, is marked failure. All three current check annotations say the job was not started because of account payments/spending limits. These are unavailable test results, not exercised assertion failures. |
+| #22 source/review | PASS for implementation identity; NOT RUN for formal review | [PR #22](https://github.com/givtaj/daedlo/pull/22) remains open, mergeable, at `19f9caeca5aa6d50e45e6bd4cc9c9ebcdab65b50`, based on current main; no submitted PR reviews. A bounded read-only source/harness review found no additional demonstrated runtime defect; this does not replace independent current-head review. |
+| #22 hosted CI | BLOCKED | [Run 40933635218](https://github.com/givtaj/daedlo/actions/runs/40933635218) still shows all three jobs marked failure with no test steps. Current annotations confirm the same account gate prevented start. No rerun or billing change made. |
+| Actions renewal | NOT RUN for renewed availability | The Oct 29 account review reported included compute renewal Nov 1 at 01:00 Europe/Madrid. This date is historical account evidence, not proof future jobs will start; recheck after that time. |
+| #22 local checks | PASS, historical source only | PR body and its branch's dated verification record report 181 runtime tests, 55 browser TAP tests, 26 Rust tests, eight notebook groups and 63 owner/guard contracts, plus source/lint/metadata checks. No product checks rerun in this planning task; no installed-kit or WBF acceptance inferred. |
+| Public installer | PASS for visible offered version only | Browser read of [Get started](https://daedlo.com/install) still offers `0.1.4-alpha.6` for macOS arm64/Codex and lists ZIP digest `536476e8a3f160d58b269873ffb6da55820e804357a95aa0f4358c9d5a515123`. No ZIP downloaded or bytes reverified here. [Alpha.6 record](alpha-release.md) identifies source `9f1210053c09ead91e0e71c3b3423c560a818ca1`, predating #19–#22. |
+| Installed safety-suite replay (F2) | BLOCKED — confirmed static gap; replay NOT RUN | At reviewed #22, `tests/installed-controls-acceptance.mjs` copies older CLI/finalization/control suites; `tests/release-acceptance.mjs` adds frontend/recipe-paths browser checks. A1-specific, A2, A3 and new stalled-hook suites are not all replayed against installed bytes. `viewer-finalization-browser.mjs` directly imports source. No new runtime failure or failing executable assertion is claimed; the plan requires a regression before the proposed harness fix. |
+| Source safety-suite registration | PASS — static inspection | CI explicitly runs A1/A3, and `viewer-presentation-browser.mjs` imports the finalization browser suite, reached by `test:viewer`. #22 retains all job bodies while restricting duplicate triggers. Static inspection does not establish hosted execution. |
+| Candidate packaging/lifecycle (P) | NOT RUN | No candidate version chosen, bundle built, package installed, browser flow exercised or new UI presentation verified. Exact runtime/tools/crate/model/browser receipts and lifecycle rehearsals remain required. |
+| WBF participant gate (U) | BLOCKED | Participant context nominated; availability, macOS arm64/Codex, website/flow/negative case, authorized disposable environment and first/repeat dates outstanding. Every unobserved participant result remains NOT RUN. |
+
+The required pilot kit includes #19 control authorization, #20 run attribution,
+#21 retryable viewer cleanup and #22 stalled finalization/ownership. A successful
+future source run or immutable build alone does not complete the package gate.
+Linux CI does not establish macOS package acceptance or a fresh-machine claim.
+
+### Participant observations to retain in WBF's designated private record
+
+This is a record schema, not a second WBF results ledger. Owner is the WBF QA
+participant with Codex observing; every row depends on the confirmed scope and
+technically verified package. Evidence/source is the actual session observation,
+canonical reports and WBF's independent assertions. Fill the corresponding private
+record after observation; share only a sanitized gate summary here.
+
+| Observation | Status | Verification / finish condition |
+| --- | --- | --- |
+| First session and time to useful result | NOT RUN | Actual start/end and milestone times, time to independently verified flow after reload, exact installed environment/package combination. |
+| Dependencies, permissions and assistance | NOT RUN | Every setup problem, agent/human intervention, changed instruction and confusion recorded with elapsed time and resolution/blocker. |
+| Positive business result | NOT RUN | Correct execution/outcome and operation-specific independent persistence/readback after reload; unavailable proof remains uncertain. |
+| Safe negative case | NOT RUN | Agreed rejection plus independent no-write assertion; no unagreed application fault injection. |
+| Evidence and cleanup | NOT RUN | Participant finds/understands useful current-run report, distinguishes previous/pending evidence, reads durable archive and truncation; owned cleanup verified and attached resources preserved or incomplete handles retained. |
+| Later-day repeat and handoff | NOT RUN | Actual later date, reconnect without replay, intended repeat, duplicate rules, retained prior evidence and another chat resuming from the handoff verified. |
+| Usefulness/reuse and decision | NOT RUN | Participant's own trust/usefulness assessment and intended reuse; Aidin's week-one decision linked to observed results or exact unmet gates. |
+
+Preparation used an isolated owned clone on `codex/november-week-one`, based on
+the verified main commit, at
+`/Users/aidin/.codex/worktrees/november-week-one/daedlo`. It does not share the
+primary checkout's index. The primary remains at `7e3e48dd`, 82 commits behind
+verified main, with its dirty work preserved. Existing worktrees and all Roots
+installations/services/sessions were left alone. Current onboarding source uses
+`skills/daedlo/SKILL.md`; the primary's `skills/browser-driver/SKILL.md` is older.
+Both instruction versions were read; no old kit or customized skill was rewritten.
+
+Planning validation: **PASS** for final public-metadata scan, whitespace, new local
+link targets and preservation of every prior plan/verification section. An initial
+metadata check rejected private chat links; those references were removed before
+the passing scan. Independent plan review corrected unsupported WBF installation
+assumptions and the rehearsal dependency. Primary preservation: **PASS**, same
+HEAD, index, Git status and all 306 tracked/untracked file contents and modes.
+No runtime, Rust, browser, installed-kit or participant tests were rerun.
+
 ## CI efficiency and stalled finalization — 2026-10-29
 
 **PASS — isolated source, lifecycle and browser verification.** Work started from
