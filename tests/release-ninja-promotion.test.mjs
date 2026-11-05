@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { sha256 } from "../scripts/release/manifest.mjs";
 import { prepareNinjaPromotion } from "../scripts/release/ninja-promotion.mjs";
+import { PRODUCTION_RENEWAL_POLICY } from "../scripts/release/ninja-renew.mjs";
 
 const version = "0.1.4-alpha.4";
 const commit = "a".repeat(40);
@@ -12,6 +13,42 @@ const args = {
   output: "/private/fresh-promotion",
   checkpointPath: "/private/checkpoint/catalog.json",
 };
+
+test("production alpha7 promotion binds the accepted clean source and complete immutable inventory", () => {
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.alpha7Promotion, {
+    version: "0.1.4-alpha.7",
+    sourceCommit: "9cbff73ad1b8d5e64b11c7358050eebc3cd1d392",
+  });
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.assets["0.1.4-alpha.7"], {
+    "daedlo-0.1.4-alpha.7.zip": {
+      bytes: 311661,
+      sha256:
+        "cb56901e85572c73dbbeb2c2566c97db31608fa15dd861704b674ef84ba1fd5e",
+    },
+    "release.json": {
+      bytes: 8752,
+      sha256:
+        "ec13bf2656751996b335805f3950ac29a97bbf6785d21a3a88fd283ee064ded0",
+    },
+    SHA256SUMS: {
+      bytes: 91,
+      sha256:
+        "b3666e5be14f8542ceba3084086b0f6a57a0e4a266d58099bce158ff249b6c9f",
+    },
+  });
+  assert.deepEqual(
+    PRODUCTION_RENEWAL_POLICY.releaseContracts["0.1.4-alpha.7"],
+    {
+      manager: 2,
+      launcher: 1,
+      nodeAdapter: 1,
+      rustModel: 1,
+      protocol: 1,
+      capabilities: ["recipeContext:1"],
+    },
+  );
+});
+
 function fixture(candidateVersion = version) {
   const version = candidateVersion;
   const publicBase = `https://daedlo.com/downloads/${version}/`;

@@ -71,12 +71,34 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
     version: ALPHA6,
     sourceCommit: "9f1210053c09ead91e0e71c3b3423c560a818ca1",
   },
+  alpha7Promotion: {
+    version: ALPHA7,
+    sourceCommit: "9cbff73ad1b8d5e64b11c7358050eebc3cd1d392",
+  },
   releaseContracts: {
     "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.5": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.6": { ...CONTRACTS, manager: 2 },
+    "0.1.4-alpha.7": { ...CONTRACTS, manager: 2 },
   },
   assets: {
+    "0.1.4-alpha.7": {
+      "daedlo-0.1.4-alpha.7.zip": {
+        bytes: 311661,
+        sha256:
+          "cb56901e85572c73dbbeb2c2566c97db31608fa15dd861704b674ef84ba1fd5e",
+      },
+      "release.json": {
+        bytes: 8752,
+        sha256:
+          "ec13bf2656751996b335805f3950ac29a97bbf6785d21a3a88fd283ee064ded0",
+      },
+      SHA256SUMS: {
+        bytes: 91,
+        sha256:
+          "b3666e5be14f8542ceba3084086b0f6a57a0e4a266d58099bce158ff249b6c9f",
+      },
+    },
     "0.1.4-alpha.6": {
       "daedlo-0.1.4-alpha.6.zip": {
         bytes: 301268,

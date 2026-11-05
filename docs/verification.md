@@ -1,5 +1,59 @@
 # Verification record
 
+## Alpha.7 frozen package and publication preflight — 2026-11-05
+
+**PASS — exact package, compatibility, source CI and staged website; delivery pending.**
+Frozen clean package source is `9cbff73ad1b8d5e64b11c7358050eebc3cd1d392`.
+[Exact-source CI](https://github.com/givtaj/daedlo/actions/runs/42037389097)
+passed both Node 22/24 jobs and public metadata/secrets. [PR #24](https://github.com/givtaj/daedlo/pull/24)
+owns source integration and the separately reviewed production inventory.
+
+The release was built once from this frozen source. The earlier `126fa9e`
+engineering candidate remains unpublished; its runtime/crate bytes match, but
+its source/tool receipt is not this delivery. No published historical file changed.
+
+| Frozen file | Bytes | SHA-256 |
+| --- | --- | --- |
+| `daedlo-0.1.4-alpha.7.zip` | 311661 | `cb56901e85572c73dbbeb2c2566c97db31608fa15dd861704b674ef84ba1fd5e` |
+| `release.json` | 8752 | `ec13bf2656751996b335805f3950ac29a97bbf6785d21a3a88fd283ee064ded0` |
+| `SHA256SUMS` | 91 | `b3666e5be14f8542ceba3084086b0f6a57a0e4a266d58099bce158ff249b6c9f` |
+
+The tools archive is SHA-256
+`2acbd2cc1fa16e7cd30c3d63e085fab2cc00e3caeb3ae3cdf84130dd4f6e673a`;
+bundle manifest is `0c4e98fe62235f29f09990e005c0a494a3d5ab36093548096922e1a07a954ba9`.
+
+Measured on macOS arm64 with Node 22.20.0, Rust 1.96.0 and Playwright 1.62.1:
+
+| Gate | Actual result |
+| --- | --- |
+| Exact installed runtime/tools/crate | PASS: 23 runtime files and 69 tools files verified before/after; eight notebook browser groups, CLI 10, finalization 25, controls nine, frontend and recipe-path viewers |
+| Required installed native suites | PASS: startup TAP 1/1 with 13 lifecycle assertions; observation TAP 2/2 with five recovery checks; exact paths and engine digest bound, zero skipped tests |
+| Merged runtime safety replay | PASS: 45 original assertions in six groups, authorization 23 / attribution two / cleanup 20; consumer public ESM resolution and import-only copies verified, no source product fallback |
+| Shipped references | PASS: starter 16 browser groups, evidence nine, managed eight including real installation and disposable hooks |
+| Immutable alpha.6 → alpha.7 → alpha.6 | PASS: seven ephemeral-signed-feed checkpoints, verified new-tools bootstrap, fresh-manager restart, rollback/relaunch, source/data/configuration/trust/checkpoint preservation and owned cleanup |
+| Final-metadata website | PASS: 69 units, eight pages, seven archives, 44 public entries, 14 onboarding checks and two native-tools layouts; all 18 historical files verified and nine private/build boundaries returned 404 |
+| Actual DOM-copied installer | PASS: offline tools install with a fresh npm cache in a nested workspace, ancestor manifests/lock preserved and all 69 installed tools files exact |
+| Publisher safeguards | PASS: 221 precredential/catalog/checkpoint/promotion/renewal/staging checks; independent review confirms exact three new pins and unchanged prior policy |
+
+Native failure/recovered screens and desktop/390px bootstrap guidance were visually
+inspected. Browsers, servers and disposable consumers closed; attached-resource
+assertions passed. The website uses an explicit ephemeral test pin and is never
+the production deployment. Production trust rejects that test pin. Final staged
+metadata is bound to the exact `ec13bf…ded0` file; unchanged ZIP and historical
+assets were reverified after stamping the measured verification record.
+
+A GitHub draft contains exactly the three frozen files. Their API digests match;
+independent asset-body readback is a separate retained receipt. Production pins
+add only alpha.7; removing those additions reproduces the prior policy exactly,
+including publisher key, initial checkpoint, six historical inventories, contracts
+and source pins. Publisher source CI, merge, public release/feed activation and
+actual HTTPS install/update/rollback remain pending at this checkpoint. The
+customer's live-session recovery and business acceptance remain unconfirmed.
+
+Ignored evidence roots: `artifacts/alpha7-*` in the frozen checkout and
+`artifacts/wbf-delivery/` in the integration checkout. Raw receipts and private
+browser/consumer paths are not included in shared records.
+
 ## Alpha.7 release preparation — 2026-11-05
 
 **IN PROGRESS — owner-authorized merge and public publication.** Alpha.7 prepares
