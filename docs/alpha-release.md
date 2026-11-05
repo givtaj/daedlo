@@ -1,9 +1,11 @@
 # Daedlo alpha delivery — 5 November 2026
 
-Release candidate: **0.1.4-alpha.7**. Status: **preparation and acceptance in progress**.
-The owner authorized merging and public delivery of the native observation and
-guarded-recovery fix. Alpha.6 remains the published installation until delivery
-and production verification complete. Exact results belong in [verification](verification.md).
+Release: **0.1.4-alpha.7**. Status: **published assisted alpha; production acceptance passed**.
+[Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·
+[Exact verification metadata](https://daedlo.com/downloads/0.1.4-alpha.7/release.json) ·
+[Versioned release](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.7)
+(source access required). [PR #24](https://github.com/givtaj/daedlo/pull/24) is merged;
+the repository remains private. Exact results belong in [verification](verification.md).
 
 Alpha.7 distinguishes failed/unreachable observation from stopped ownership,
 keeps unknown draft safety explicit and preserves sanitized reasons, run reports
@@ -21,6 +23,24 @@ See [native recovery and bootstrap](native-setup.md).
 The assisted macOS arm64/Codex scope, protocol, model and managed configuration
 contracts remain unchanged. Synthetic conformance does not establish a customer's
 incident cause, application recovery, host-sleep durability or business acceptance.
+
+| Gate | Observed result |
+| --- | --- |
+| Exact-source and publisher CI | PASS on Node 22/24 and metadata/secrets; merged tree equals the reviewed publisher head |
+| Exact installed kit and references | PASS: runtime/tools/crate, both required native suites, 45 merged safety assertions and starter/evidence/managed references |
+| Production tools bootstrap and upgrade | PASS: seven actual HTTPS alpha.6 → alpha.7 → alpha.6 checkpoints, fresh-manager restart, retained-slot rollback, source/configuration/trust/checkpoint/data preservation and owned cleanup |
+| Public website and fresh installer | PASS: 36 HTTPS checks, 18 unchanged historical files, nine protected-path 404s, desktop/narrow browser and native clipboard, exact DOM-copied offline installer and 69 tools files |
+| Ordinary signed-feed renewal | PASS: generation 27 retains every alpha.2–alpha.7 release entry and the existing publisher key; installer/update pages match the current signed catalog |
+| Customer application acceptance | UNCONFIRMED: tracked separately in [acceptance #25](https://github.com/givtaj/daedlo/issues/25); publication does not complete customer retesting |
+
+Immutable package source is `9cbff73ad1b8d5e64b11c7358050eebc3cd1d392`.
+The ZIP is **311661 bytes**, SHA-256
+`cb56901e85572c73dbbeb2c2566c97db31608fa15dd861704b674ef84ba1fd5e`.
+The private GitHub prerelease and public download path hold the same three frozen
+files. Publisher/status commits do not change them. All historical releases and
+the existing publisher key remain intact. The independent notebook retained its
+data across driver/manager changes; application-process restart durability and
+customer fault recovery were not tested.
 
 ## Historical alpha.6 delivery — 28 October 2026
 

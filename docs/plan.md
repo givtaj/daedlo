@@ -11,9 +11,13 @@ publisher trust/checkpoint. Customer incident recovery remains separate.
 - [x] Extend the isolated alpha.6 → alpha.7 → alpha.6 drill with new tools.
 - [x] Freeze clean source; pass exact installed, upgrade/rollback and current-source CI.
 - [x] Pin reviewed immutable assets in the existing publisher workflow.
-- [ ] Merge, publish and verify actual public download/install/update/rollback.
+- [x] Merge, publish and verify actual public download/install/tools bootstrap/update/rollback.
 
-Actual results belong in [verification](verification.md#alpha7-release-preparation--2026-11-05).
+Actual results belong in [verification](verification.md#alpha7-production-delivery--2026-11-05).
+Customer acceptance remains open in [#25](https://github.com/givtaj/daedlo/issues/25):
+native observation/recovery, frontend stop isolation, managed upgrade/rollback,
+detached-document faults and effect-status/report integration. A named-session
+picker remains triage only. No customer acceptance is inferred from publication.
 
 ## Native observation recovery — 2026-11-05
 
@@ -26,9 +30,11 @@ Actual results belong in [verification](verification.md#alpha7-release-preparati
 - [x] Document current-session recovery, hard-owner-loss limits and the public
   synthetic reproduction contract.
 
-This is a local source candidate. [Actual results](verification.md#native-observation-status-and-guarded-recovery--2026-11-05)
-do not establish a published tools update, a repair of an already loaded customer
-adapter, the cause of a customer application error or customer acceptance.
+The local source checkpoint below is historical. Alpha.7 now delivers the reviewed
+fix; [actual source results](verification.md#native-observation-status-and-guarded-recovery--2026-11-05)
+and [production verification](verification.md#alpha7-production-delivery--2026-11-05)
+remain distinct. Publication does not repair an already loaded customer adapter,
+establish the cause of an application error or complete customer acceptance.
 
 ## Diagnostics rollout closure — 2026-10-28
 
@@ -111,19 +117,21 @@ Product delivery and the authorized post-publication support reply are complete.
 Actual results and remaining customer acceptance belong in docs/verification.md.
 
 
-Current release: [Daedlo alpha delivery — 28 October 2026](alpha-release.md),
-published assisted **0.1.4-alpha.6**. Shared recipe paths join the managed runner
-and reporting guidance. Exact installed runtime/tools/references, source and
-publisher CI, the actual public installer and HTTPS upgrade/restart/rollback
-passed. Published alpha.5 tools remain unchanged through the update drill. The
-signed feed preserves every previous release and the existing publisher trust.
+Current release: [Daedlo alpha delivery — 5 November 2026](alpha-release.md),
+published assisted **0.1.4-alpha.7**. Native observation/recovery joins the managed
+runner and reporting guidance. Exact installed runtime/tools/references, source
+and publisher CI, the actual public installer and HTTPS tools bootstrap/upgrade/
+restart/rollback passed. Published alpha.6 tools and installations remain intact;
+the supervisor fix uses separately verified alpha.7 tools. The signed feed
+preserves every previous release and the existing publisher trust.
 
 The [verification record](verification.md) owns exact identities and scoped
 results. Customer native registration, business-flow and full fault coverage,
 customer upgrade/rollback and ordinary dependency promotion remain separate.
 The original native setup worktree and everyday Roots dependencies are unchanged.
-Daily renewal remains active at 04:23 UTC. Earlier milestones below retain their
-historical scope and do not establish additional current customer acceptance.
+Daily renewal remains scheduled at 04:23 UTC; execution can be delayed. Earlier
+milestones below retain their historical scope and do not establish additional
+current customer acceptance.
 
 ## Goal and approved constraints
 
