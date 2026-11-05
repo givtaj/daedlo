@@ -167,6 +167,8 @@
         target_attachment: "Target attachment",
         ready: "Ready",
         failed: "Startup failed",
+        observation_failed: "Observation failed",
+        unreachable: "Child unreachable",
         cleanup: "Owned cleanup",
         stopped: "Stopped",
       };
@@ -176,6 +178,8 @@
         target_attachment: "Attaching the controlled target",
         ready: "This frontend is ready",
         failed: "Startup did not establish readiness",
+        observation_failed: "Current application safety is unconfirmed",
+        unreachable: "The owned child cannot currently be reached",
         cleanup: "Closing owned resources",
         stopped: "Frontend stopped",
       };
@@ -200,12 +204,26 @@
                 : "stopped",
             cleanup: "pending",
           };
-        const phase = n.recovery ? "failed" : s.phase;
+        const observation = n.observation || v.status.observation;
+        const startupFailure = n.recovery || s.phase === "failed";
+        const phase = startupFailure
+          ? "failed"
+          : observation?.status === "failed"
+            ? "observation_failed"
+            : observation?.status === "unreachable"
+              ? "unreachable"
+              : s.phase;
         $("name").textContent = f?.name || v.status.project.label;
         $("phase").textContent = labels[phase] || "Status unconfirmed";
-        $("phase").className = "phase" + (phase === "failed" ? " failed" : "");
+        $("phase").className =
+          "phase" +
+          (["failed", "observation_failed", "unreachable"].includes(phase)
+            ? " failed"
+            : "");
         $("summary").textContent = summaries[phase] || "Status unconfirmed";
-        $("error").textContent = s.error?.message || "";
+        $("error").textContent = startupFailure
+          ? s.error?.message || observation?.error?.message || ""
+          : observation?.error?.message || s.error?.message || "";
         $("target").textContent =
           f?.targetOrigin || "Not configured (legacy frontend)";
         $("model").textContent = f
@@ -224,7 +242,7 @@
               ? "Incomplete — retained handles require recovery"
               : "Pending";
         for (const p of n.startup?.history || []) observe(p);
-        observe(phase);
+        observe(s.phase);
         $("connection").textContent = "";
         $("viewer").hidden = phase !== "ready" || !n.viewerUrl;
         if (!$("viewer").hidden) $("viewer").href = n.viewerUrl;

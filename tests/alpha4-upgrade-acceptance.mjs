@@ -4,6 +4,8 @@
 // HTTPS. Neither mode mutates production or establishes customer acceptance.
 // --alpha6-upgrade keeps published alpha.5 tools for the full alpha.6 lifecycle,
 // using the synthetic feed by default or production HTTPS when explicitly selected.
+// --alpha7-upgrade instead verifies a new-tools bootstrap from immutable alpha.6;
+// the status/supervisor fix cannot be delivered by a runtime-only update.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
@@ -29,6 +31,7 @@ for (const arg of args)
       "--production-https",
       "--local-candidate",
       "--alpha6-upgrade",
+      "--alpha7-upgrade",
     ].includes(arg),
     "Unsupported upgrade acceptance argument",
   );
@@ -41,6 +44,11 @@ const legacyOnly = args.includes("--legacy-only");
 const productionHttps = args.includes("--production-https");
 const localCandidate = args.includes("--local-candidate");
 const alpha6Upgrade = args.includes("--alpha6-upgrade");
+const alpha7Upgrade = args.includes("--alpha7-upgrade");
+assert.ok(
+  !(alpha7Upgrade && (localCandidate || alpha6Upgrade || legacyOnly)),
+  "Alpha.7 upgrade mode cannot use local-candidate, alpha6-upgrade or legacy-only",
+);
 assert.ok(
   !(alpha6Upgrade && (localCandidate || legacyOnly)),
   "Alpha.6 upgrade mode cannot use local-candidate or legacy-only",
@@ -69,6 +77,8 @@ const baselinePins = {
     "3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75",
   "0.1.4-alpha.5":
     "2d9cbae796edd4cd5967b76458020e3366fa9d33cc1eed65a3e1d523eb65122f",
+  "0.1.4-alpha.6":
+    "536476e8a3f160d58b269873ffb6da55820e804357a95aa0f4358c9d5a515123",
 };
 assert.ok(
   Object.hasOwn(baselinePins, baselineVersion),
@@ -76,12 +86,27 @@ assert.ok(
 );
 const LEGACY_SHA = baselinePins[baselineVersion];
 const legacyNames = baselineVersion === "0.1.4-alpha.3";
+assert.ok(
+  baselineVersion !== "0.1.4-alpha.6" || alpha7Upgrade,
+  "Published alpha.6 baseline requires explicit alpha.7 upgrade mode",
+);
 const candidateVersion =
   process.env.DAEDLO_UPGRADE_CANDIDATE_VERSION ??
   JSON.parse(
     await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
   ).version;
-if (localCandidate || alpha6Upgrade) {
+if (alpha7Upgrade) {
+  assert.equal(
+    baselineVersion,
+    "0.1.4-alpha.6",
+    "Alpha.7 upgrade mode requires the published alpha.6 baseline",
+  );
+  assert.equal(
+    candidateVersion,
+    "0.1.4-alpha.7",
+    "Alpha.7 upgrade mode requires exactly 0.1.4-alpha.7",
+  );
+} else if (localCandidate || alpha6Upgrade) {
   const mode = localCandidate ? "Local candidate" : "Alpha.6 upgrade";
   assert.equal(
     baselineVersion,
@@ -151,6 +176,7 @@ const result = {
   transport: productionHttps ? "production-https" : "ephemeral-signed-feed",
   localCandidate,
   alpha6Upgrade,
+  alpha7Upgrade,
   reusePublishedTools,
   toolsPolicy: reusePublishedTools
     ? "Keep exact published alpha.5 tools for baseline, upgrade, restart and rollback"

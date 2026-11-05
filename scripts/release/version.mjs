@@ -8,6 +8,7 @@ const files = [
   "package-lock.json",
   "Cargo.toml",
   "examples/notebook-engine/Cargo.toml",
+  "examples/starter/model/Cargo.toml",
   "integrations/roots/engine/Cargo.toml",
   "integrations/roots/edit/engine/Cargo.toml",
   "Cargo.lock",

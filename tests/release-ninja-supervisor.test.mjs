@@ -168,3 +168,221 @@ test("changed browser identity blocks managed session creation", async (t) => {
   await assert.rejects(supervisor.start(receipt), /browser|changed/i);
   assert.equal((await supervisor.status()).running, null);
 });
+
+test("failed draft observation retains accepted ownership and a sanitized reason, then recovers without replay", async (t) => {
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `import fs from 'node:fs/promises'; import {join} from 'node:path';
+    export async function createManagedLaunch({runtime,sourceRoot}){return {session:await runtime.createDriverSession({}),draftState:async()=>{try{await fs.access(join(sourceRoot,'observation-fault'))}catch(error){if(error.code==='ENOENT')return false;throw error}throw Object.assign(Error('private-page-content-and-path'),{code:'private-failure-code'})}}}`,
+  );
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  const fault = join(root, "observation-fault");
+  await fs.writeFile(fault, "synthetic fault");
+  const failed = await supervisor.status();
+  assert.equal(failed.observation?.status, "failed");
+  assert.equal(failed.observation.error.code, "draft_observation_failed");
+  assert.equal(failed.running?.id, receipt.id);
+  assert.equal(failed.dirty, null);
+  assert.equal(failed.ready, false);
+  assert.equal(JSON.stringify(failed).includes("private-"), false);
+  await assert.rejects(supervisor.quiesce(), { code: "observation_failed" });
+  assert.notEqual(
+    JSON.parse(await fs.readFile(join(root, "supervisor/child.json"))).status,
+    "closed",
+  );
+  await fs.unlink(fault);
+  const recovered = await supervisor.status();
+  assert.equal(recovered.observation.status, "available");
+  assert.equal(recovered.dirty, false);
+  assert.equal(recovered.ready, true);
+  assert.equal(recovered.startup.phase, "ready");
+  await supervisor.quiesce();
+  await supervisor.close({ requireSafe: true });
+});
+
+test("a disconnected snapshot cannot use a clean draft hook as shutdown proof or latch startup failure", async (t) => {
+  const runtimeSource = `import fs from 'node:fs/promises';
+    export {createResourceScope} from ${JSON.stringify(new URL("../packages/runtime/src/resources.mjs", import.meta.url).href)};
+    export async function createDriverSession({resources}){let paused=false;return {snapshot:async()=>{let connected=true;try{await fs.access(new URL('../../observation-fault',import.meta.url));connected=false}catch(error){if(error.code!=='ENOENT')throw error}return {busy:false,paused,connected,error_code:connected?undefined:'disconnected',error:'private-observation-detail',descriptor:{id:'test',version:'1'},identity:{runtime:'@browser-driver/runtime@1.0.0'}}},observe:async()=>({connected:true}),pause:()=>paused=true,resume:()=>paused=false,report:()=>({format:'browser-driver-report/1'}),close:async()=>resources.close()}};`;
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `export async function createManagedLaunch({runtime}){return {session:await runtime.createDriverSession({}),draftState:async()=>false}}`,
+    runtimeSource,
+  );
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  const fault = join(root, "observation-fault");
+  await fs.writeFile(fault, "synthetic fault");
+  try {
+    const failed = await supervisor.status();
+    assert.equal(failed.observation?.status, "failed");
+    assert.equal(failed.observation.error.code, "disconnected");
+    assert.equal(failed.dirty, null);
+    await assert.rejects(supervisor.quiesce(), { code: "observation_failed" });
+    await assert.rejects(supervisor.close({ requireSafe: true }), {
+      code: "observation_failed",
+    });
+    assert.equal((await supervisor.status()).running?.id, receipt.id);
+  } finally {
+    await fs.unlink(fault);
+  }
+  const recovered = await supervisor.status();
+  assert.equal(recovered.observation.status, "available");
+  assert.equal(recovered.startup.phase, "ready");
+  assert.equal(recovered.startup.error, undefined);
+  await supervisor.quiesce();
+  await supervisor.close({ requireSafe: true });
+});
+
+test("timed out child observation is unreachable with retained ownership until a fresh explicit read", async (t) => {
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `import fs from 'node:fs/promises'; import {join} from 'node:path';
+    export async function createManagedLaunch({runtime,sourceRoot}){return {session:await runtime.createDriverSession({}),draftState:async()=>{for(;;){try{await fs.access(join(sourceRoot,'hold-observation'))}catch(error){if(error.code==='ENOENT')return false;throw error}await new Promise(done=>setTimeout(done,20))}}}}`,
+  );
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  const flag = join(root, "hold-observation");
+  await fs.writeFile(flag, "test-owned observation gate");
+  try {
+    const state = await supervisor.status();
+    assert.equal(state.observation.status, "unreachable");
+    assert.equal(state.observation.error.code, "child_timeout");
+    assert.equal(state.running.id, receipt.id);
+    assert.equal(state.running.viewerUrl, null);
+    assert.equal(state.busy, null);
+    assert.equal(state.paused, null);
+    assert.equal(state.dirty, null);
+    assert.equal(state.cleanupPending, true);
+  } finally {
+    await fs.unlink(flag);
+  }
+  const fresh = await supervisor.status();
+  assert.equal(fresh.observation.status, "available");
+  assert.equal(fresh.running.id, receipt.id);
+});
+
+test("a retained child record alone is unreachable rather than stopped or clean", async (t) => {
+  const root = await fs.mkdtemp(
+    join(await fs.realpath(os.tmpdir()), "retained-child-"),
+  );
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const marker = join(root, "child.json");
+  const record = {
+    status: "running",
+    installationId: "synthetic-retained-owner",
+  };
+  await fs.writeFile(marker, JSON.stringify(record));
+  const supervisor = await createNinjaSupervisor({ root });
+  const state = await supervisor.status();
+  assert.equal(state.observation.status, "unreachable");
+  assert.equal(state.observation.error.code, "child_unreachable");
+  assert.equal(state.dirty, null);
+  assert.equal(state.cleanupPending, true);
+  await assert.rejects(supervisor.close(), /not owned/);
+  assert.deepEqual(JSON.parse(await fs.readFile(marker)), record);
+});
+
+test("observation lost after pausing retains the owned gate and permits a fresh safe stop", async (t) => {
+  const runtimeSource = `import fs from 'node:fs/promises';
+    export {createResourceScope} from ${JSON.stringify(new URL("../packages/runtime/src/resources.mjs", import.meta.url).href)};
+    export async function createDriverSession({resources}){let paused=false;return {snapshot:async()=>{let connected=true;if(paused){try{await fs.access(new URL('../../observation-fault',import.meta.url));connected=false}catch(error){if(error.code!=='ENOENT')throw error}}return {busy:false,paused,connected,descriptor:{id:'test',version:'1'},identity:{runtime:'@browser-driver/runtime@1.0.0'}}},observe:async()=>({connected:true}),pause:()=>paused=true,resume:()=>{throw Error('must-not-resume-effects')},report:()=>({format:'browser-driver-report/1'}),close:async()=>resources.close()}};`;
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `export async function createManagedLaunch({runtime}){return {session:await runtime.createDriverSession({}),draftState:async()=>false}}`,
+    runtimeSource,
+  );
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  const fault = join(root, "observation-fault");
+  await fs.writeFile(fault, "fault at paused observation boundary");
+  try {
+    await assert.rejects(supervisor.quiesce(), { code: "observation_failed" });
+    const retained = await supervisor.status();
+    assert.equal(retained.quiesced, true);
+    assert.equal(retained.paused, true);
+    assert.equal(retained.running.id, receipt.id);
+  } finally {
+    await fs.unlink(fault);
+  }
+  await supervisor.quiesce();
+  await supervisor.close({ requireSafe: true });
+});
+
+test("failed unquiesce preserves ownership of its pause for later guarded cleanup", async (t) => {
+  const runtimeSource = `import fs from 'node:fs/promises';
+    export {createResourceScope} from ${JSON.stringify(new URL("../packages/runtime/src/resources.mjs", import.meta.url).href)};
+    export async function createDriverSession({resources}){let paused=false;return {snapshot:async()=>{let connected=true;try{await fs.access(new URL('../../observation-fault',import.meta.url));connected=false}catch(error){if(error.code!=='ENOENT')throw error}return {busy:false,paused,connected,descriptor:{id:'test',version:'1'},identity:{runtime:'@browser-driver/runtime@1.0.0'}}},observe:async()=>({connected:true}),pause:()=>paused=true,resume:()=>paused=false,report:()=>({format:'browser-driver-report/1'}),close:async()=>resources.close()}};`;
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `export async function createManagedLaunch({runtime}){return {session:await runtime.createDriverSession({}),draftState:async()=>false}}`,
+    runtimeSource,
+  );
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  await supervisor.quiesce();
+  const fault = join(root, "observation-fault");
+  await fs.writeFile(
+    fault,
+    "observation lost while undoing a failed archive boundary",
+  );
+  try {
+    await assert.rejects(supervisor.unquiesce());
+    const retained = await supervisor.status();
+    assert.equal(retained.quiesced, true);
+    assert.equal(retained.paused, true);
+  } finally {
+    await fs.unlink(fault);
+  }
+  await supervisor.quiesce();
+  await supervisor.close({ requireSafe: true });
+});
+
+test("cleanup exceptions cannot masquerade as observation-boundary refusals", async (t) => {
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `import fs from 'node:fs/promises'; import {join} from 'node:path';
+    export async function createManagedLaunch({runtime,sourceRoot}){return {session:await runtime.createDriverSession({}),draftState:async()=>false,close:async()=>{try{await fs.access(join(sourceRoot,'cleanup-repaired'))}catch(error){if(error.code!=='ENOENT')throw error;throw Object.assign(Error('private-cleanup-detail'),{code:'engine_timeout'})}}}}`,
+  );
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  try {
+    await assert.rejects(supervisor.close({ requireSafe: true }), {
+      code: "cleanup_incomplete",
+    });
+    assert.equal((await supervisor.status()).startup.cleanup, "incomplete");
+    assert.notEqual(
+      JSON.parse(await fs.readFile(join(root, "supervisor/child.json"))).status,
+      "closed",
+    );
+  } finally {
+    await fs.writeFile(join(root, "cleanup-repaired"), "explicit repair");
+  }
+});
+
+test("missing execution safety facts remain unknown and block guarded cleanup", async (t) => {
+  const runtimeSource = `import fs from 'node:fs/promises';
+    export {createResourceScope} from ${JSON.stringify(new URL("../packages/runtime/src/resources.mjs", import.meta.url).href)};
+    export async function createDriverSession({resources}){let paused=false;return {snapshot:async()=>{let malformed=false;try{await fs.access(new URL('../../malformed-snapshot',import.meta.url));malformed=true}catch(error){if(error.code!=='ENOENT')throw error}return {busy:malformed?undefined:false,paused,connected:true,descriptor:{id:'test',version:'1'},identity:{runtime:'@browser-driver/runtime@1.0.0'}}},observe:async()=>({connected:true}),pause:()=>paused=true,resume:()=>paused=false,report:()=>({format:'browser-driver-report/1'}),close:async()=>resources.close()}};`;
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `export async function createManagedLaunch({runtime}){return {session:await runtime.createDriverSession({}),draftState:async()=>false}}`,
+    runtimeSource,
+  );
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  const fault = join(root, "malformed-snapshot");
+  await fs.writeFile(fault, "missing busy evidence");
+  try {
+    const current = await supervisor.status();
+    assert.equal(current.observation.status, "failed");
+    assert.equal(current.observation.error.code, "invalid_observation");
+    assert.equal(current.busy, null);
+    await assert.rejects(supervisor.close({ requireSafe: true }), {
+      code: "observation_failed",
+    });
+  } finally {
+    await fs.unlink(fault);
+  }
+});

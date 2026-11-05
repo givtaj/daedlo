@@ -52,22 +52,31 @@ Worker or domain permission is required. See verification for provisioning statu
 
 ## Explicit release promotion
 
-Alpha.4, alpha.5 and alpha.6 use separate reviewed promotion selections in the
+Alpha.4, alpha.5, alpha.6 and alpha.7 use separate reviewed promotion selections in the
 existing renewal workflow. After exact-package acceptance, pin the candidate's clean
 source commit and its complete three-file public inventory in
 `scripts/release/ninja-renew.mjs`. Retain all previous identities. Publish the
 matching GitHub prerelease, merge reviewed publisher policy, then dispatch
-`promote_alpha5=true` on the default branch for alpha.5, or
-`promote_alpha6=true` for alpha.6. Select at most one promotion input; ordinary
+`promote_alpha5=true` on the default branch for alpha.5,
+`promote_alpha6=true` for alpha.6, or `promote_alpha7=true` for alpha.7. Select at most one promotion input; ordinary
 renewal cannot introduce an unpinned release.
 
 The alpha.5 path requires the retained alpha.4 entry; alpha.6 requires the complete
-retained alpha.5 inventory. Both require the same authenticated high-water
+retained alpha.5 inventory; alpha.7 requires the complete retained alpha.6 inventory.
+Each requires the same authenticated high-water
 checkpoint and signing identity, and manager contract 2. They preserve all earlier
 releases exactly. After successful promotion, ordinary renewal must retain the
-complete inventory including alpha.6; a higher generation cannot remove it.
+complete inventory including alpha.7; a higher generation cannot remove it.
 These workflow capabilities do not establish publication until the live gates
 pass and verification records the actual result.
+
+Alpha.7's native observation/supervisor fix is delivered in release-tools. A
+runtime update through an existing alpha.6 manager keeps that manager's tools and
+cannot apply the supervisor fix. Verify the separately versioned tools archive,
+safely stop the authenticated old owner, then bootstrap the new tools against the
+same configuration, registration, store, publisher trust and high-water checkpoint.
+Retain accepted tools/installations for recovery. No tools bootstrap hot-reloads
+an already running adapter or bypasses unknown draft/pending-operation guards.
 
 ## Automatic renewal
 

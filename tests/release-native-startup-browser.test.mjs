@@ -544,7 +544,7 @@ export async function createManagedLaunch({runtime,resources,settings,installati
           disconnected.deps,
         )
       ).result;
-      return s.status === "failed" ? s : null;
+      return s.status === "observation_failed" ? s : null;
     });
     assert.equal(
       disconnectedState.viewerUrl,
@@ -555,6 +555,29 @@ export async function createManagedLaunch({runtime,resources,settings,installati
       disconnectedState.running,
       "accepted failed frontend remains owned and reportable",
     );
+    assert.equal(disconnectedState.observation.status, "failed");
+    const disconnectedPage = await controller.newPage();
+    await disconnectedPage.goto(disconnectHandle.result.startupUrl);
+    await disconnectedPage
+      .getByText("Current application safety is unconfirmed", { exact: true })
+      .waitFor();
+    assert.equal(
+      await disconnectedPage.locator("#phase").textContent(),
+      "Observation failed",
+    );
+    assert.equal(await disconnectedPage.locator("#viewer").isVisible(), false);
+    await disconnectedPage.screenshot({
+      path: join(output, "startup-observation-failed.png"),
+      fullPage: true,
+    });
+    await assert.rejects(
+      nativeCommand("stop", disconnected.configPath, disconnected.deps),
+      /page|connection|observation|target|unavailable/i,
+      "Lost observation must preserve the owner instead of passing safe cleanup",
+    );
+    // Fixture teardown owns these disposable resources. This direct cleanup is
+    // not a supported customer recovery command or evidence of a safe boundary.
+    await disconnected.supervisor.close();
     await nativeCommand("stop", disconnected.configPath, disconnected.deps);
     await nativeCommand("stop", second.configPath, second.deps);
     await secondHandle.closed;
@@ -585,7 +608,7 @@ export async function createManagedLaunch({runtime,resources,settings,installati
             "wrong target rejected",
             "startup stop aborts cooperative launcher and cleans owned browser",
             "ignored cancellation retains owned resources until acknowledged",
-            "lost target clears readiness while retaining reportable ownership",
+            "lost target reports observation failure and blocks guarded stop while retaining ownership",
             "second stop preserves attached app",
           ],
         },
