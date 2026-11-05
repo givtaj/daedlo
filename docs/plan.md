@@ -1,5 +1,20 @@
 # Implementation plan
 
+## Alpha.7 delivery — 2026-11-05
+
+The owner explicitly authorized merging and publishing alpha.7 after the native
+status/recovery source fix. Preserve every previous release, source record and
+publisher trust/checkpoint. Customer incident recovery remains separate.
+
+- [x] Prepare coherent alpha.7 versions and tools-bootstrap guidance.
+- [x] Require exact installed observation coverage and retain shipped reference gates.
+- [x] Extend the isolated alpha.6 → alpha.7 → alpha.6 drill with new tools.
+- [ ] Freeze clean source; pass exact installed, upgrade/rollback and current-source CI.
+- [ ] Pin reviewed immutable assets in the existing publisher workflow.
+- [ ] Merge, publish and verify actual public download/install/update/rollback.
+
+Actual results belong in [verification](verification.md#alpha7-release-preparation--2026-11-05).
+
 ## Native observation recovery — 2026-11-05
 
 - [x] Reproduce misleading stopped/dirty status with regression-first assertions

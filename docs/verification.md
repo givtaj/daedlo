@@ -1,5 +1,34 @@
 # Verification record
 
+## Alpha.7 release preparation — 2026-11-05
+
+**IN PROGRESS — owner-authorized merge and public publication.** Alpha.7 prepares
+the reviewed native observation/recovery change plus coherent version fields and
+selected-release instructions. Existing public alpha.6 bytes, publisher trust,
+historical receipts and everyday customer dependencies are preserved.
+
+The native installed-package dispatcher previously omitted the observation suite
+and accepted a successful recovery receipt even if the separate startup-diagnostic
+test was skipped. Regression-first checks now require the selected installed
+tools/runtime/engine paths and binary digest, startup TAP 1/1 and observation TAP
+2/2, with zero failed/cancelled/skipped/todo cases. Alpha.7 explicitly exercises
+the shipped evidence and managed references; its upgrade drill requires the pinned
+alpha.6 baseline and a separately verified new-tools bootstrap.
+
+Measured preparation checks: 43 harness/reference contracts, 32 upgrade-mode
+contracts and eight licensing/version contracts passed. A nondefault-path browser
+probe passed both observation tests with selected runtime/engine path and digest
+binding; it is a conformance copy, not an exact-installed artifact claim. Earlier
+source-fix checks below retain their own revision and version. Exact package,
+upgrade/rollback, current candidate CI, website and live publication results remain
+pending and must be recorded from actual execution before declaring delivery.
+
+Independent preparation review caught the starter model's exact engine pin outside
+the nine-path version command. Its meaningful regression failed `9 !== 10` before
+the command was extended to update all ten release-owned manifests/locks,
+including the shipped starter. The starter pin and active guide now match alpha.7;
+customer application pins remain outside the command.
+
 ## Native observation status and guarded recovery — 2026-11-05
 
 **PASS — local source regressions, independent review and Chromium conformance.**

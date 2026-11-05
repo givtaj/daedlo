@@ -1,4 +1,28 @@
-# Daedlo alpha delivery — 28 October 2026
+# Daedlo alpha delivery — 5 November 2026
+
+Release candidate: **0.1.4-alpha.7**. Status: **preparation and acceptance in progress**.
+The owner authorized merging and public delivery of the native observation and
+guarded-recovery fix. Alpha.6 remains the published installation until delivery
+and production verification complete. Exact results belong in [verification](verification.md).
+
+Alpha.7 distinguishes failed/unreachable observation from stopped ownership,
+keeps unknown draft safety explicit and preserves sanitized reasons, run reports
+and resource ownership. Fresh reads restore readiness without replay. Shutdown
+still requires current execution, draft, archive and cleanup proof; the supervisor
+can drain its own retained pause after fresh proof without resuming effects.
+
+This is a **release-tools bootstrap**, not just a managed runtime update. Use a
+separate verified tools directory with the same registration, configuration,
+store, publisher trust and checkpoint after safely stopping the authenticated old
+owner. Keep the old tools and installations for recovery. A new kit does not
+hot-reload an already loaded adapter or bypass an unobservable session's guards.
+See [native recovery and bootstrap](native-setup.md).
+
+The assisted macOS arm64/Codex scope, protocol, model and managed configuration
+contracts remain unchanged. Synthetic conformance does not establish a customer's
+incident cause, application recovery, host-sleep durability or business acceptance.
+
+## Historical alpha.6 delivery — 28 October 2026
 
 Release: **0.1.4-alpha.6**. Status: **published assisted alpha; production acceptance passed**.
 [Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·

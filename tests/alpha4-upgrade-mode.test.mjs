@@ -127,6 +127,48 @@ for (const [label, args, baseline, candidate, pattern] of [
     "0.1.4-alpha.7",
     /Alpha.6 upgrade mode requires exactly 0.1.4-alpha.6/,
   ],
+  [
+    "alpha.7 release mixed with local candidate mode",
+    ["--alpha7-upgrade", "--local-candidate"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.7",
+    /Alpha.7 upgrade mode cannot use local-candidate, alpha6-upgrade or legacy-only/,
+  ],
+  [
+    "alpha.7 release mixed with alpha.6 mode",
+    ["--alpha7-upgrade", "--alpha6-upgrade"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.7",
+    /Alpha.7 upgrade mode cannot use local-candidate, alpha6-upgrade or legacy-only/,
+  ],
+  [
+    "partial alpha.7 release run",
+    ["--alpha7-upgrade", "--legacy-only"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.7",
+    /Alpha.7 upgrade mode cannot use local-candidate, alpha6-upgrade or legacy-only/,
+  ],
+  [
+    "unreviewed alpha.7 release baseline",
+    ["--alpha7-upgrade"],
+    "0.1.4-alpha.5",
+    "0.1.4-alpha.7",
+    /Alpha.7 upgrade mode requires the published alpha.6 baseline/,
+  ],
+  [
+    "unreviewed alpha.7 release candidate",
+    ["--alpha7-upgrade", "--production-https"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.8",
+    /Alpha.7 upgrade mode requires exactly 0.1.4-alpha.7/,
+  ],
+  [
+    "implicit alpha.6 baseline tools policy",
+    [],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.4",
+    /Published alpha.6 baseline requires explicit alpha.7 upgrade mode/,
+  ],
 ]) {
   test(`upgrade mode rejects ${label} before acquiring resources`, async (t) => {
     const root = await fs.mkdtemp(join(tmpdir(), "alpha4-local-mode-test-"));
@@ -210,6 +252,58 @@ for (const [label, args] of [
   });
 }
 
+test("alpha.7 pins immutable alpha.6 and requires a separately verified new tools bootstrap", async (t) => {
+  const root = await fs.mkdtemp(join(tmpdir(), "alpha7-pin-test-"));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const baseline = join(root, "baseline"),
+    output = join(root, "output");
+  await fs.mkdir(baseline);
+  await fs.writeFile(
+    join(baseline, "release.json"),
+    JSON.stringify({
+      version: "0.1.4-alpha.6",
+      source: { dirty: false },
+      archive: {
+        file: "daedlo-0.1.4-alpha.6.zip",
+        sha256: "a".repeat(64),
+        bytes: 0,
+      },
+    }),
+  );
+  await fs.writeFile(join(baseline, "daedlo-0.1.4-alpha.6.zip"), "");
+  await assert.rejects(
+    execute(process.execPath, [harness, "--alpha7-upgrade"], {
+      env: {
+        ...process.env,
+        DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.6",
+        DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.7",
+        ALPHA4_LEGACY_KIT: baseline,
+        ALPHA4_LEGACY_SHA256: "a".repeat(64),
+        ALPHA4_CANDIDATE_KIT: join(root, "candidate-must-not-read"),
+        ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
+        ALPHA4_UPGRADE_OUTPUT: output,
+      },
+    }),
+  );
+  const runs = await fs.readdir(output);
+  assert.equal(runs.length, 1);
+  const receipt = JSON.parse(
+    await fs.readFile(join(output, runs[0], "result.json"), "utf8"),
+  );
+  assert.equal(receipt.status, "FAIL");
+  assert.equal(receipt.transport, "ephemeral-signed-feed");
+  assert.equal(receipt.alpha7Upgrade, true);
+  assert.equal(receipt.reusePublishedTools, false);
+  assert.equal(
+    receipt.toolsPolicy,
+    "Verify candidate tools bootstrap before upgrading the accepted installation",
+  );
+  assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
+  assert.deepEqual(receipt.checks, []);
+  assert.deepEqual(receipt.cleanup, []);
+  assert.deepEqual(await fs.readdir(join(output, runs[0], "work")), []);
+});
+
 for (const [label, args, baseline, candidate] of [
   ["alpha.3 to alpha.4", [], "0.1.4-alpha.3", "0.1.4-alpha.4"],
   ["alpha.3 to alpha.5", [], "0.1.4-alpha.3", "0.1.4-alpha.5"],
@@ -232,6 +326,18 @@ for (const [label, args, baseline, candidate] of [
     ["--alpha6-upgrade", "--production-https"],
     "0.1.4-alpha.5",
     "0.1.4-alpha.6",
+  ],
+  [
+    "explicit alpha.7 tools bootstrap",
+    ["--alpha7-upgrade"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.7",
+  ],
+  [
+    "explicit alpha.7 production upgrade",
+    ["--alpha7-upgrade", "--production-https"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.7",
   ],
 ]) {
   test(`${label} reaches the required kit gate without acquiring resources`, async (t) => {

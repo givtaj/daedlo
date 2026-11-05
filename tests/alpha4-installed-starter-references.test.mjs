@@ -43,7 +43,7 @@ function references() {
     },
   };
 }
-for (const version of ["0.1.4-alpha.5", "0.1.4-alpha.6"]) {
+for (const version of ["0.1.4-alpha.5", "0.1.4-alpha.6", "0.1.4-alpha.7"]) {
   test(`${version} runs both installed references and retains their receipts`, async () => {
     const fixture = references();
     const result = { version };

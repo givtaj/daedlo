@@ -11,6 +11,11 @@ application outcome. Authored flows run without an AI agent or model API key.
 [Contribute](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Get help](SUPPORT.md) ·
 [Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
+**0.1.4-alpha.7 is a release candidate.** It separates native observation failures
+from stopped ownership and documents guarded recovery. The supervisor fix requires
+a separately verified tools bootstrap; a runtime-only update retains the old tools.
+Publication and exact acceptance are tracked in [verification](docs/verification.md).
+
 **0.1.4-alpha.6 is released: assisted macOS arm64 onboarding with Codex.**
 [Start with one Codex prompt](https://daedlo.com/install) or read the
 [versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.6).

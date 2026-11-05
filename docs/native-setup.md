@@ -153,6 +153,16 @@ itself is a separate verified bootstrap: stop, install a new tools directory,
 check its contracts, run doctor, then start against the same configuration/store.
 Keep the previous tools directory for recovery. There is no background updater.
 
+Native observation/status and supervisor fixes are tools changes. An ordinary
+Ninja runtime update keeps the existing tools and foreground owner, so it cannot
+deliver such a fix by itself. Verify the replacement tools archive independently
+and install it into a separate versioned directory. Safely stop the authenticated
+old owner before starting the replacement against the same configuration,
+registration, store, publisher trust and high-water checkpoint. Preserve authored
+source, custom instructions, retained installations and reports. If the old owner
+still cannot establish current safety, follow the recovery procedure below;
+downloading new tools neither hot-reloads the old adapter nor bypasses shutdown.
+
 ## Existing custom runners
 
 Use the [managed integration reference](managed-integration.md) for separate model

@@ -132,7 +132,9 @@ export async function runInstalledStarterReferences(
     managedRunner = runManagedStarterAcceptance,
   } = {},
 ) {
-  if (["0.1.4-alpha.5", "0.1.4-alpha.6"].includes(result.version)) {
+  if (
+    ["0.1.4-alpha.5", "0.1.4-alpha.6", "0.1.4-alpha.7"].includes(result.version)
+  ) {
     result.evidenceReference = await evidenceRunner({
       runtimePath,
       enginePath,

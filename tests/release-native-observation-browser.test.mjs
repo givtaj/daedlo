@@ -15,8 +15,14 @@ const repo = fileURLToPath(new URL("../", import.meta.url));
 const toolsRoot = resolve(
   process.env.DAEDLO_NATIVE_TOOLS_ROOT ?? join(repo, "scripts/release"),
 );
-const runtimePath = join(repo, "packages/runtime/src/index.mjs");
-const enginePath = join(repo, "target/debug/notebook-engine");
+const runtimePath = resolve(
+  process.env.DAEDLO_NATIVE_RUNTIME_PATH ??
+    join(repo, "packages/runtime/src/index.mjs"),
+);
+const enginePath = resolve(
+  process.env.DAEDLO_NATIVE_ENGINE_PATH ??
+    join(repo, "target/debug/notebook-engine"),
+);
 const output = resolve(
   process.env.DAEDLO_OBSERVATION_OUTPUT ??
     join(repo, "artifacts/wbf-observation"),
@@ -176,7 +182,7 @@ test(
     const result = {
       status: "RUNNING",
       scope:
-        "Source native tools with seeded installation receipt; synthetic notebook integration, no customer or host-sleep acceptance",
+        "Selected native tools/runtime/engine with seeded installation receipt; installation provenance is verified by the caller; synthetic notebook integration, no customer or host-sleep acceptance",
       cleanup: "PENDING",
     };
     const control = async (action) => {
@@ -496,6 +502,10 @@ export async function createManagedLaunch({runtime,resources,settings,installati
     assert.equal(await fs.readFile(archivePath, "utf8"), archivedBytes);
     Object.assign(result, {
       status: "PASS",
+      toolsRoot,
+      runtimePath,
+      enginePath,
+      engineSha256: hash(await fs.readFile(enginePath)),
       runtime: { name: runtimePackage.name, version: runtimePackage.version },
       browser: { version: browser.version, sha256: browser.sha256 },
       checks: [
