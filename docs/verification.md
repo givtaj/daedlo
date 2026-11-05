@@ -1,5 +1,86 @@
 # Verification record
 
+## Native observation status and guarded recovery — 2026-11-05
+
+**PASS — local source regressions, independent review and Chromium conformance.**
+Work is isolated on `codex/wbf-observation-recovery`, based on shared main
+`16d050c8b4965ecd7e2acd52bf8d052b911866c4`. The preserved primary checkout and
+customer applications, installations, dependencies and live sessions were not
+used as fixtures or edited. Runtime/crate versions remain `0.1.4-alpha.6`;
+the release tools have local source changes and are not a published replacement.
+
+Native status now separates failed observation and unreachable child communication
+from stopped ownership. Unknown draft safety is reported as `draft_unknown`,
+not as a confirmed dirty form. Reasons use static allowlisted categories, while
+accepted ownership and completed reports remain retained. Transient page faults
+no longer latch startup as failed. Fresh status reads restore readiness using
+the same loaded adapter, without replaying commands or changing earlier effects.
+
+Guarded cleanup still requires current known execution and draft facts. If
+observation fails after the supervisor acquires its own pause, that gate remains
+owned; a later explicit stop can drain it after fresh clean, idle proof. An
+independent user pause remains blocking. Failed resume preserves gate ownership,
+and actual cleanup exceptions remain `cleanup_incomplete`, never safe refusals.
+See [the supported recovery procedure](native-setup.md#recover-observation-in-the-existing-owned-session)
+and [the public synthetic reproduction contract](managed-integration.md#observation-and-interruption-reproduction).
+
+Regression evidence was captured before the corresponding fixes:
+
+- Both supervisor observation regressions failed with missing failed-observation
+  status. The real-browser test, run with archived baseline tools from `16d050c`,
+  reached an actual unrecognized page and failed: expected `observation_failed`,
+  received `stopped`. Baseline fixture cleanup passed.
+- An observation lost after pause incorrectly fulfilled quiesce; a failed
+  unquiesce lost its owned gate (`false` instead of `true`). Both now pass.
+- Review regressions exposed cleanup exceptions retaining `engine_timeout`
+  instead of `cleanup_incomplete`, cleanup failure being misclassified as a safe
+  refusal, and missing execution facts being reported `available`. Each now passes.
+  Setup/import/permission failures were not counted as behavioral regressions.
+- A browser assertion also caught a secondary unavailable-observation diagnostic
+  hiding the original failed-startup reason. Failed startup now retains its
+  primary sanitized reason; ordinary post-ready observation failures keep their
+  observation diagnostic. Both browser assertions pass.
+
+Measured on macOS arm64, Node 22.20.0, Rust 1.96.0, locked Playwright 1.62.1 and
+Chromium 151.0.7922.34:
+
+| Check | Result |
+| --- | --- |
+| Source syntax, strict declarations, formatting and diff whitespace | PASS |
+| Runtime Node regressions | PASS, 163/163 |
+| Native and Ninja regressions, serial | PASS, 318/318, including both real-browser native suites |
+| Rust workspace tests, locked/offline | PASS, 26; one subprocess helper intentionally ignored directly and exercised by its parent |
+| Release build, portable tools, public kit and evidence-guidance regressions | PASS, 56/56 |
+| Independent review after corrections | PASS, no remaining actionable findings |
+| Visible native failed/recovered screens | PASS, screenshots inspected |
+| Owned fixture cleanup and attached application preservation | PASS |
+
+The native/Ninja command was
+`node --test --test-concurrency=1 tests/release-native-*.test.mjs tests/release-ninja-*.test.mjs`.
+A prior concurrent run had one three-second fixture IPC timeout while packaging
+checks also ran; no failing assertion was suppressed and no deadline or retry
+was added. The complete final serial run passed all 318 tests. Other commands
+were `npm run check`, `npm test`, `cargo test --locked --offline --workspace`,
+and `node --test tests/release-tools.test.mjs tests/release-build.test.mjs tests/release-public-kit.test.mjs tests/release-evidence-guidance.test.mjs`.
+
+The new browser fixture uses the unchanged notebook adapter, a same-origin
+synthetic error page and its actual read-only Overview link. It proves retained
+owner identity, disabled commands during failed page observation, refusal before
+cleanup, fresh recovery in the same session, byte-identical prior archives and
+zero application writes. Separate known-dirty, unknown-draft and synthetic
+pending-journal controls each block shutdown until their own current measurement
+is resolved. These are synthetic safety controls, not reproduction of a private
+application journal, a real uncertain save or operating-system sleep. Child-status
+timeout and retained orphan records are covered independently by supervisor tests.
+
+Local evidence is ignored under `artifacts/wbf-observation/`,
+`artifacts/alpha4-native/` and `artifacts/wbf-native-ninja-serial.tap`.
+Actual customer incident cause, customer recovery/acceptance, hard-host-loss
+durability, complete exact-installed candidate acceptance, Node 24/remote CI,
+merge, publication and deployment are **NOT RUN** by this change. The published
+alpha.6 installation is unchanged, and replacing tools does not hot-reload an
+already running customer adapter.
+
 ## Combined A1, A2 and A3 acceptance — 2026-10-29
 
 **PASS — independently reviewed combined source and local conformance.**

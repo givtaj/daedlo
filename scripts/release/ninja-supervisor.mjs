@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { ninjaDirectory, ninjaRead, ninjaWrite } from "./ninja-manager.mjs";
 
-import { safeFrontend, safeStartup } from "./native-session.mjs";
+import {
+  safeFrontend,
+  safeObservation,
+  safeStartup,
+} from "./native-session.mjs";
 
 /** A stable owner outside the selected runtime. The child drains on IPC disconnect. */
 export async function createNinjaSupervisor({
@@ -20,6 +24,7 @@ export async function createNinjaSupervisor({
     installation = null,
     sequence = 0,
     exited = null,
+    accepted = false,
     launching = false,
     startup = { phase: "stopped", cleanup: "complete" },
     frontendStatus = frontend;
@@ -30,7 +35,9 @@ export async function createNinjaSupervisor({
   }
   async function request(action, payload = {}) {
     if (!child || child.exitCode !== null || !child.connected)
-      throw Error("Managed driver is unavailable.");
+      throw Object.assign(Error("Managed driver is unavailable."), {
+        code: "child_unreachable",
+      });
     const id = ++sequence;
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -38,7 +45,7 @@ export async function createNinjaSupervisor({
         const e = Error(
           "Managed driver timed out; retained owned child requires cleanup.",
         );
-        e.code = "cleanup_incomplete";
+        e.code = action === "status" ? "child_timeout" : "cleanup_incomplete";
         reject(e);
       }, timeoutMs);
       pending.set(id, { resolve, reject, timer });
@@ -46,7 +53,11 @@ export async function createNinjaSupervisor({
         if (e) {
           clearTimeout(timer);
           pending.delete(id);
-          reject(e);
+          reject(
+            Object.assign(Error("Managed child communication failed."), {
+              code: "child_unreachable",
+            }),
+          );
         }
       });
     });
@@ -55,9 +66,15 @@ export async function createNinjaSupervisor({
     const retained = await orphan();
     return {
       running: null,
-      busy: false,
-      paused: false,
-      dirty: false,
+      busy: retained ? null : false,
+      paused: retained ? null : false,
+      dirty: retained ? null : false,
+      observation: safeObservation({
+        status: retained ? "unreachable" : "not_running",
+        ...(retained
+          ? { error: { code: child ? "child_exited" : "child_unreachable" } }
+          : {}),
+      }),
       cleanupPending: !!retained,
       startup,
       frontend: frontendStatus,
@@ -72,6 +89,7 @@ export async function createNinjaSupervisor({
           busy: true,
           paused: false,
           dirty: null,
+          observation: { status: "starting" },
           cleanupPending: true,
           startup,
           frontend: frontendStatus,
@@ -81,6 +99,7 @@ export async function createNinjaSupervisor({
         const s = await request("status");
         return {
           ...s,
+          observation: safeObservation(s.observation),
           startup,
           frontend: frontendStatus,
           running:
@@ -93,12 +112,25 @@ export async function createNinjaSupervisor({
                 }
               : null,
         };
-      } catch {
+      } catch (error) {
         return {
-          running: null,
-          busy: false,
-          paused: false,
+          running:
+            accepted && installation
+              ? {
+                  id: installation.id,
+                  version: installation.version,
+                  sourceSha256: installation.sourceSha256,
+                  viewerUrl: null,
+                }
+              : null,
+          ready: false,
+          busy: null,
+          paused: null,
           dirty: null,
+          observation: safeObservation({
+            status: "unreachable",
+            error: { code: error.code },
+          }),
           cleanupPending: true,
           startup,
           frontend: frontendStatus,
@@ -112,6 +144,7 @@ export async function createNinjaSupervisor({
         );
       await ninjaDirectory(root, { create: true });
       installation = receipt;
+      accepted = false;
       frontendStatus = frontend;
       launching = true;
       startup = {
@@ -148,7 +181,12 @@ export async function createNinjaSupervisor({
           for (const p of pending.values()) {
             clearTimeout(p.timer);
             p.reject(
-              Error("Managed driver exited before completing its request."),
+              Object.assign(
+                Error("Managed driver exited before completing its request."),
+                {
+                  code: "child_exited",
+                },
+              ),
             );
           }
           pending.clear();
@@ -206,6 +244,7 @@ export async function createNinjaSupervisor({
     },
     async accept() {
       await request("accept");
+      accepted = true;
     },
     async report() {
       return request("report");
@@ -251,6 +290,7 @@ export async function createNinjaSupervisor({
         );
       child = null;
       installation = null;
+      accepted = false;
       exited = null;
       launching = false;
       startup = {

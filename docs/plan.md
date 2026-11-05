@@ -1,5 +1,20 @@
 # Implementation plan
 
+## Native observation recovery — 2026-11-05
+
+- [x] Reproduce misleading stopped/dirty status with regression-first assertions
+  and an independent real-browser fixture.
+- [x] Separate observation failure/unreachable child state from ownership, preserve
+  sanitized reasons and restore readiness through fresh reads without replay.
+- [x] Preserve unknown-safety guards, cleanup failures and supervisor-owned pause
+  recovery; pass affected Node/Rust, packaging and browser checks and independent review.
+- [x] Document current-session recovery, hard-owner-loss limits and the public
+  synthetic reproduction contract.
+
+This is a local source candidate. [Actual results](verification.md#native-observation-status-and-guarded-recovery--2026-11-05)
+do not establish a published tools update, a repair of an already loaded customer
+adapter, the cause of a customer application error or customer acceptance.
+
 ## Diagnostics rollout closure — 2026-10-28
 
 [PR #18](https://github.com/givtaj/daedlo/pull/18) is merged after complete Node
