@@ -55,6 +55,17 @@ test("alpha install explains concrete changes and remaining onboarding limits", 
   assert.match(html, /dated verification record/i);
 });
 
+test("native supervisor fixes require a separate tools bootstrap and current safety proof", async () => {
+  const updates = flat(await read("templates/updates.html"));
+  assert.match(updates, /observation failure/i);
+  assert.match(updates, /runtime update[^.]*keeps[^.]*tools/i);
+  assert.match(updates, /safely stop[^.]*authenticated[^.]*owner/i);
+  assert.match(updates, /same configuration[^.]*store[^.]*trust[^.]*checkpoint/i);
+  assert.match(updates, /cannot[^.]*hot-reload[^.]*adapter/i);
+  const install = flat(await read("templates/install.html"));
+  assert.match(install, /failed observation[^.]*stopped ownership/i);
+});
+
 test("recorded demo and prior preview keep their copied bytes", async () => {
   const baseline = JSON.parse(
     await readFile(

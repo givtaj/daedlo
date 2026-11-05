@@ -40,6 +40,7 @@ const VERSIONS = ["0.1.2-rc.1", "0.1.4-alpha.2", "0.1.4-alpha.3"];
 const ALPHA4 = "0.1.4-alpha.4",
   ALPHA5 = "0.1.4-alpha.5",
   ALPHA6 = "0.1.4-alpha.6",
+  ALPHA7 = "0.1.4-alpha.7",
   DAY = 86400000;
 const CONTRACTS = {
   manager: 1,
@@ -201,7 +202,7 @@ const HTTP_DIAGNOSTIC_PATHS = new Set([
   ),
   "/updates/preview.json",
   `/updates/keys/${KEY}.pem`,
-  ...[...VERSIONS, ALPHA4, ALPHA5, ALPHA6].flatMap((version) =>
+  ...[...VERSIONS, ALPHA4, ALPHA5, ALPHA6, ALPHA7].flatMap((version) =>
     [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"].map(
       (name) => `/downloads/${version}/${name}`,
     ),
@@ -343,12 +344,15 @@ function settings(deps = {}, stage) {
     ...(Object.hasOwn(policy.assets, ALPHA4) ? [ALPHA4] : []),
     ...(Object.hasOwn(policy.assets, ALPHA5) ? [ALPHA5] : []),
     ...(Object.hasOwn(policy.assets, ALPHA6) ? [ALPHA6] : []),
+    ...(Object.hasOwn(policy.assets, ALPHA7) ? [ALPHA7] : []),
   ];
   if (
     (Object.hasOwn(policy.assets, ALPHA5) &&
       !Object.hasOwn(policy.assets, ALPHA4)) ||
     (Object.hasOwn(policy.assets, ALPHA6) &&
       !Object.hasOwn(policy.assets, ALPHA5)) ||
+    (Object.hasOwn(policy.assets, ALPHA7) &&
+      !Object.hasOwn(policy.assets, ALPHA6)) ||
     !isDeepStrictEqual(Object.keys(policy.assets).sort(), [...versions].sort())
   )
     fail("Unsupported pinned renewal release inventory");
@@ -363,7 +367,7 @@ function settings(deps = {}, stage) {
   for (const version of versions.slice(1)) {
     const expected = {
       ...CONTRACTS,
-      manager: [ALPHA4, ALPHA5, ALPHA6].includes(version) ? 2 : 1,
+      manager: [ALPHA4, ALPHA5, ALPHA6, ALPHA7].includes(version) ? 2 : 1,
     };
     if (!isDeepStrictEqual(releaseContracts[version] ?? CONTRACTS, expected))
       fail("Unsupported pinned release contracts");
@@ -525,21 +529,26 @@ function requireBaselineInventory(
   promoteAlpha4,
   promoteAlpha5 = false,
   promoteAlpha6 = false,
+  promoteAlpha7 = false,
 ) {
   if (
     typeof promoteAlpha4 !== "boolean" ||
     typeof promoteAlpha5 !== "boolean" ||
     typeof promoteAlpha6 !== "boolean" ||
-    [promoteAlpha4, promoteAlpha5, promoteAlpha6].filter(Boolean).length > 1
+    typeof promoteAlpha7 !== "boolean" ||
+    [promoteAlpha4, promoteAlpha5, promoteAlpha6, promoteAlpha7].filter(Boolean)
+      .length > 1
   )
     fail("Only one explicit release promotion may be selected");
-  const selected = promoteAlpha6
-    ? ALPHA6
-    : promoteAlpha5
-      ? ALPHA5
-      : promoteAlpha4
-        ? ALPHA4
-        : null;
+  const selected = promoteAlpha7
+    ? ALPHA7
+    : promoteAlpha6
+      ? ALPHA6
+      : promoteAlpha5
+        ? ALPHA5
+        : promoteAlpha4
+          ? ALPHA4
+          : null;
   if (
     selected &&
     (!s.versions.includes(selected) || s.versions.at(-1) !== selected)
@@ -562,6 +571,7 @@ async function baseline(
   promoteAlpha4,
   promoteAlpha5,
   promoteAlpha6,
+  promoteAlpha7,
 ) {
   const response = await fetchBytes(FEED, s, { date: true });
   const retained = checkpointPath
@@ -574,6 +584,7 @@ async function baseline(
     promoteAlpha4,
     promoteAlpha5,
     promoteAlpha6,
+    promoteAlpha7,
   );
   if (retained) {
     for (const release of retained.catalog.releases)
@@ -627,6 +638,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha4 = false,
     promoteAlpha5 = false,
     promoteAlpha6 = false,
+    promoteAlpha7 = false,
   } = {},
   deps = {},
 ) {
@@ -643,6 +655,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha4,
     promoteAlpha5,
     promoteAlpha6,
+    promoteAlpha7,
   );
   const sourceBefore = await inventory(s.sourceRoot, SOURCE_FILES);
   await fs.mkdir(output, { mode: 0o700 });
@@ -743,6 +756,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha4,
     promoteAlpha5,
     promoteAlpha6,
+    promoteAlpha7,
     status: "PREPARED",
     generation: pub.generation,
     baselineGeneration: prior.catalog.generation,
@@ -802,6 +816,7 @@ async function prepared(output, s, t) {
     receipt.promoteAlpha4 ?? false,
     receipt.promoteAlpha5 ?? false,
     receipt.promoteAlpha6 ?? false,
+    receipt.promoteAlpha7 ?? false,
   );
   const next = history(catalog, s, t, old.checkpoint);
   requireBaselineInventory(next, s, false);
