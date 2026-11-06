@@ -1,5 +1,30 @@
 # Implementation plan
 
+## PR #23 private preparation integration — 2026-11-06
+
+Reconcile [PR #23](https://github.com/givtaj/daedlo/pull/23) with merged main
+`b3d4e575`, preserving the retained-history decision and all dated verification
+records. The owner authorized finishing and merging this preparation while
+keeping the repository **private**. No visibility or settings change, release,
+website deployment or customer dependency promotion is part of this integration.
+
+- [x] Preserve alpha.7 delivery and PR #22's runtime changes and CI-trigger regression.
+- [x] Refresh launch guidance to require passing checks on the exact selected source;
+  the October 30 account blocker is historical, superseded by passing #22 main CI.
+- [x] Verify source quality and 54 focused audit, metadata and licensing regressions;
+  read back current private settings without mutations.
+- [x] Fix the installed naming-guide link after CI and local reproduction; all eight
+  release-tools archive/consumer checks pass with unchanged assertions.
+- [ ] Complete exact-head PR CI, merge and resulting main CI, tracked on #23.
+- [ ] For any future public launch, obtain separate visibility authorization,
+  refresh the exposure inventory and verify the public-only controls after switching.
+
+See [measured results and limits](verification.md#pr-23-private-preparation-integration--2026-11-06).
+The October 30 image/history/external-asset audit is retained as dated evidence,
+not a November 6 refresh. Independent dependency and viewer-grid work remains in
+its owners' separate checkouts. Customer acceptance remains open in
+[#25](https://github.com/givtaj/daedlo/issues/25).
+
 ## PR #22 integration checkpoint — 2026-11-06
 
 The owner authorized reconciliation and merge of [PR #22](https://github.com/givtaj/daedlo/pull/22)
@@ -210,6 +235,26 @@ F2 is implemented and locally verified; do not merge or publish without the next
 explicit instruction. In parallel Aidin confirms WBF's exact website/flow/negative
 case, disposable test permission, macOS arm64/Codex and both session dates. Then
 prepare the selected application handoff and internal rehearsal. Do not change billing.
+
+## Open-source preparation — 2026-10-30
+
+Prepare the existing repository for public access while preserving its history,
+published identities, the ordinary dirty checkout and customer installations.
+The owner rejected the earlier history-rewrite proposal. It is not a launch gate.
+
+- [x] Replace stale rewrite/release prerequisites in the [public-launch checklist](public-launch.md).
+- [x] Allow the existing repository audit to inspect this same repository after
+  a public switch, retaining private-only safe settings writes and explicit
+  effective-rule and external-contributor checks.
+- [x] Complete the selected-source exposure and regression checks; record actual
+  results in [verification](verification.md#open-source-preparation--2026-10-30).
+- [ ] Resolve the GitHub account payment/spending-limit restriction and obtain
+  passing required hosted CI for the launch source.
+- [ ] Obtain the final public-access decision, then apply/read back public-only
+  controls and verify anonymous contributor access during that approved switch.
+
+Alpha.6 is already published. No package release, website deployment, history
+rewrite or everyday Roots promotion is required by this preparation.
 
 ## CI efficiency and stalled finalization — 2026-10-29
 
