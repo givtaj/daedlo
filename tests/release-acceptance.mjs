@@ -103,6 +103,148 @@ export function validatePackageArchive(archive, prefix) {
   return entries;
 }
 
+function nativeTapResult(log, name, expected) {
+  assert.equal(typeof log, "string", `${name}: TAP output is required`);
+  const totals = {};
+  for (const field of [
+    "tests",
+    "pass",
+    "fail",
+    "cancelled",
+    "skipped",
+    "todo",
+  ]) {
+    const matches = [...log.matchAll(new RegExp(`^# ${field} (\\d+)$`, "gm"))];
+    assert.equal(
+      matches.length,
+      1,
+      `${name}: exactly one ${field} total is required`,
+    );
+    totals[field] = Number(matches[0][1]);
+  }
+  assert.equal(
+    totals.tests,
+    expected,
+    `${name}: every selected test must execute`,
+  );
+  assert.equal(totals.pass, expected, `${name}: every selected test must pass`);
+  for (const field of ["fail", "cancelled", "skipped", "todo"])
+    assert.equal(totals[field], 0, `${name}: no ${field} tests`);
+  return totals;
+}
+
+// Trusted local runner/receipt seams let the dispatch contract be checked without
+// substituting source product code for the installed tools, runtime or engine.
+export function runInstalledNativeAcceptance(
+  {
+    repoRoot,
+    installedTools,
+    runtimePath,
+    enginePath,
+    engineCrate,
+    targetDir,
+    output,
+    runtimeName,
+    runtimeVersion,
+    engineSha256,
+  },
+  { run, readReceipt = (path) => JSON.parse(fs.readFileSync(path)) },
+) {
+  const nativeOutput = join(output, "native");
+  const startupLog = run(
+    "installed-native-startup",
+    process.execPath,
+    [
+      "--test",
+      "--test-reporter=tap",
+      join(repoRoot, "tests/release-native-startup-browser.test.mjs"),
+    ],
+    {
+      env: {
+        DAEDLO_NATIVE_TOOLS_ROOT: join(installedTools, "lib"),
+        DAEDLO_NATIVE_RUNTIME_PATH: runtimePath,
+        DAEDLO_NATIVE_ENGINE_PATH: enginePath,
+        DAEDLO_NATIVE_ENGINE_CRATE: engineCrate,
+        DAEDLO_NATIVE_TARGET_DIR: targetDir,
+        DAEDLO_NATIVE_OUTPUT: nativeOutput,
+      },
+      timeout: 180000,
+    },
+  );
+  const startupTap = nativeTapResult(startupLog, "installed-native-startup", 1);
+  const native = readReceipt(join(nativeOutput, "browser-result.json"));
+  assert.equal(native.status, "PASS");
+  assert.equal(native.toolsRoot, join(installedTools, "lib"));
+  assert.equal(native.runtimePath, runtimePath);
+  assert.equal(native.enginePath, enginePath);
+  assert.equal(native.engineCrate, engineCrate);
+  assert.equal(native.runtime.name, runtimeName);
+  assert.equal(native.runtime.version, runtimeVersion);
+  assert.ok(
+    Array.isArray(native.checks) && native.checks.length >= 13,
+    "All native frontend startup/lifecycle checks must run",
+  );
+  const observationOutput = join(output, "native-observation");
+  const observationLog = run(
+    "installed-native-observation",
+    process.execPath,
+    [
+      "--test",
+      "--test-reporter=tap",
+      join(repoRoot, "tests/release-native-observation-browser.test.mjs"),
+    ],
+    {
+      env: {
+        DAEDLO_NATIVE_TOOLS_ROOT: join(installedTools, "lib"),
+        DAEDLO_NATIVE_RUNTIME_PATH: runtimePath,
+        DAEDLO_NATIVE_ENGINE_PATH: enginePath,
+        DAEDLO_OBSERVATION_OUTPUT: observationOutput,
+      },
+      timeout: 180000,
+    },
+  );
+  const observationTap = nativeTapResult(
+    observationLog,
+    "installed-native-observation",
+    2,
+  );
+  const observation = readReceipt(
+    join(observationOutput, "browser-result.json"),
+  );
+  assert.equal(observation.status, "PASS");
+  assert.equal(observation.cleanup, "PASS");
+  assert.equal(observation.toolsRoot, join(installedTools, "lib"));
+  assert.equal(observation.runtimePath, runtimePath);
+  assert.equal(observation.enginePath, enginePath);
+  assert.equal(observation.runtime.name, runtimeName);
+  assert.equal(observation.runtime.version, runtimeVersion);
+  assert.match(
+    engineSha256 ?? "",
+    /^[a-f0-9]{64}$/,
+    "Compiled engine digest must be recorded",
+  );
+  assert.equal(observation.engineSha256, engineSha256);
+  assert.ok(
+    Array.isArray(observation.checks) && observation.checks.length >= 5,
+    "All native observation recovery checks must run",
+  );
+  return {
+    nativeStartup: {
+      status: "PASS",
+      checks: native.checks,
+      browser: native.browser,
+      tap: startupTap,
+    },
+    nativeObservation: {
+      status: "PASS",
+      checks: observation.checks,
+      browser: observation.browser,
+      engineSha256: observation.engineSha256,
+      tap: observationTap,
+    },
+  };
+}
+
 export async function runReleaseAcceptance({
   bundle,
   output,
@@ -543,45 +685,24 @@ export async function runReleaseAcceptance({
     );
     result.recipePathsViewer = "PASS";
     if (installedTools) {
-      const nativeOutput = join(output, "native");
-      run(
-        "installed-native-startup",
-        process.execPath,
-        [
-          "--test",
-          join(repoRoot, "tests/release-native-startup-browser.test.mjs"),
-        ],
-        {
-          env: {
-            DAEDLO_NATIVE_TOOLS_ROOT: join(installedTools, "lib"),
-            DAEDLO_NATIVE_RUNTIME_PATH: fileURLToPath(entry),
-            DAEDLO_NATIVE_ENGINE_PATH: enginePath,
-            DAEDLO_NATIVE_ENGINE_CRATE: crateRoot,
-            DAEDLO_NATIVE_TARGET_DIR: join(temporary, "native-target"),
-            DAEDLO_NATIVE_OUTPUT: nativeOutput,
+      Object.assign(
+        result,
+        runInstalledNativeAcceptance(
+          {
+            repoRoot,
+            installedTools,
+            runtimePath: fileURLToPath(entry),
+            enginePath,
+            engineCrate: crateRoot,
+            targetDir: join(temporary, "native-target"),
+            output,
+            runtimeName: pkg.name,
+            runtimeVersion: pkg.version,
+            engineSha256: result.engineExecutableSha256,
           },
-          timeout: 180000,
-        },
+          { run },
+        ),
       );
-      const native = JSON.parse(
-        fs.readFileSync(join(nativeOutput, "browser-result.json")),
-      );
-      assert.equal(native.status, "PASS");
-      assert.equal(native.toolsRoot, join(installedTools, "lib"));
-      assert.equal(native.runtimePath, fileURLToPath(entry));
-      assert.equal(native.enginePath, enginePath);
-      assert.equal(native.engineCrate, crateRoot);
-      assert.equal(native.runtime.name, pkg.name);
-      assert.equal(native.runtime.version, pkg.version);
-      assert.ok(
-        Array.isArray(native.checks) && native.checks.length >= 13,
-        "All native frontend startup/lifecycle checks must run",
-      );
-      result.nativeStartup = {
-        status: "PASS",
-        checks: native.checks,
-        browser: native.browser,
-      };
       result.installedNativeTools.inventory = verifyInstalledRuntime(
         toolsExpected,
         installedTools,

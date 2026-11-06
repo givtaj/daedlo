@@ -5,6 +5,7 @@ import { hostname } from "node:os";
 import { isDeepStrictEqual } from "node:util";
 import { join, resolve, parse, sep } from "node:path";
 import { verifyBundle } from "./manifest.mjs";
+import { safeObservation } from "./native-session.mjs";
 
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 function fail(code, message) {
@@ -121,6 +122,14 @@ function publicReceipt(r) {
         ...(r.historicalSnapshot ? { historicalSnapshot: true } : {}),
       }
     : null;
+}
+function retainsOwnPause(live, observation) {
+  return (
+    live.quiesced === true &&
+    observation?.status === "available" &&
+    live.busy === false &&
+    live.dirty === false
+  );
 }
 
 /** Trusted local dependencies are injected by the bootstrap CLI, never by HTTP input. */
@@ -249,15 +258,20 @@ export async function createNinjaManager({
     const selected = s.current ? publicReceipt(await receipt(s.current)) : null;
     if (selected && s.historicalSnapshot) selected.historicalSnapshot = true;
     const blockers = [];
-    if (live.busy || live.paused)
+    const observation = safeObservation(live.observation);
+    if (observation?.error) blockers.push(observation.error);
+    if (live.busy || (live.paused && !retainsOwnPause(live, observation)))
       blockers.push({
         code: "busy",
         message: "Finish the active or paused run before restarting.",
       });
     if (live.dirty !== false)
       blockers.push({
-        code: "dirty_draft",
-        message: "Save or discard browser drafts before restarting.",
+        code: live.dirty === true ? "dirty_draft" : "draft_unknown",
+        message:
+          live.dirty === true
+            ? "Save or discard browser drafts before restarting."
+            : "Current draft safety is unknown. Obtain a fresh measurement before restarting.",
       });
     if (live.cleanupPending)
       blockers.push({
@@ -272,6 +286,8 @@ export async function createNinjaManager({
       generation: s.generation,
       selected,
       running: publicReceipt(live.running),
+      dirty: typeof live.dirty === "boolean" ? live.dirty : null,
+      ...(observation ? { observation } : {}),
       phase: s.phase,
       available: s.available
         ? { id: s.available.id, version: s.available.version }
@@ -450,12 +466,17 @@ export async function createNinjaManager({
       fail("restart_required", "Explicit restart acknowledgment is required.");
     const candidate = await receipt(target, !rollback);
     const live = await supervisor.status();
-    if (live.busy || live.paused)
+    const observation = safeObservation(live.observation);
+    if (observation?.error)
+      fail(observation.error.code, observation.error.message);
+    if (live.busy || (live.paused && !retainsOwnPause(live, observation)))
       fail("busy", "Active or paused run blocks the safe boundary.");
     if (live.dirty !== false)
       fail(
-        "dirty_draft",
-        "Unsaved or unknown draft state blocks the safe boundary.",
+        live.dirty === true ? "dirty_draft" : "draft_unknown",
+        live.dirty === true
+          ? "Unsaved draft state blocks the safe boundary."
+          : "Unknown draft state blocks the safe boundary.",
       );
     if (live.cleanupPending)
       fail("cleanup_incomplete", "Owned resource cleanup is incomplete.");
@@ -488,7 +509,12 @@ export async function createNinjaManager({
       if (live.running && cleanup?.report)
         await ninjaWrite(join(root, "reports", id + ".json"), cleanup.report);
     } catch (e) {
-      e.cleanupFailed = e.code !== "dirty_draft" && e.code !== "busy";
+      e.cleanupFailed = ![
+        "dirty_draft",
+        "draft_unknown",
+        "busy",
+        "observation_failed",
+      ].includes(e.code);
       if (e.cleanupFailed) await recordError(s, e);
       throw e;
     }
@@ -693,7 +719,15 @@ export async function createNinjaManager({
     async close() {
       return mutate(async () => {
         const live = await supervisor.status();
-        if (live.busy || live.paused || live.dirty !== false)
+        const observation = safeObservation(live.observation);
+        if (observation?.error)
+          fail(observation.error.code, observation.error.message);
+        if (live.dirty !== false)
+          fail(
+            live.dirty === true ? "dirty_draft" : "draft_unknown",
+            "Current draft state blocks safe cleanup.",
+          );
+        if (live.busy || (live.paused && !retainsOwnPause(live, observation)))
           fail("busy", "Finish runs and drafts before closing the manager.");
         await supervisor.quiesce();
         const reportPath = join(root, "reports", randomUUID() + ".json");

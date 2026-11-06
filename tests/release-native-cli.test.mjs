@@ -159,6 +159,66 @@ test("start twice reconnects to one owner; stop honors safe boundaries and remov
   );
 });
 
+test("native status reports observation failure and unreachable child instead of stopped", async (t) => {
+  const f = await fixture(t);
+  let observation;
+  const baseStatus = f.manager.status;
+  f.manager.status = async () => ({
+    ...(await baseStatus()),
+    ...(observation ? { observation, dirty: null } : {}),
+  });
+  const open = f.deps.open;
+  f.deps.open = async (...args) => {
+    const value = await open(...args);
+    const status = value.supervisor.status;
+    value.supervisor.status = async () => {
+      const current = await status();
+      return observation
+        ? {
+            ...current,
+            observation,
+            running: { ...current.running, viewerUrl: null },
+          }
+        : current;
+    };
+    return value;
+  };
+  const first = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    for (const [kind, expected] of [
+      ["failed", "observation_failed"],
+      ["unreachable", "unreachable"],
+    ]) {
+      observation = {
+        status: kind,
+        error: {
+          code: "observation_failed",
+          message: "private-observation-error",
+        },
+      };
+      const { result } = await nativeCommand("status", f.configPath, f.deps);
+      assert.equal(result.status, expected);
+      assert.equal(result.ok, false);
+      assert.equal(result.observation.status, kind);
+      assert.equal(result.running.id, "installed");
+      assert.equal(result.viewerUrl, null);
+      assert.equal(result.dirty, null);
+      assert.equal(
+        JSON.stringify(result).includes("private-observation-error"),
+        false,
+      );
+    }
+    observation = undefined;
+    assert.equal(
+      (await nativeCommand("status", f.configPath, f.deps)).result.status,
+      "running",
+    );
+  } finally {
+    observation = undefined;
+    await first.close();
+  }
+});
+
 test("setup resumes a prepared first installation and never upgrades a selected installation", async (t) => {
   const f = await fixture(t);
   await nativeCommand("setup", f.configPath, { ...f.deps, version: "1.0.0" });

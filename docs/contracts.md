@@ -119,6 +119,37 @@ These visuals do not authorize actions or establish application outcomes.
 
 Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runRecipe(id,revision)`; compatibility `command({id,params,revision,recipe})`; `pause()`, `resume()`, `stop()`, `setSpeed("slow"|"normal"|"fast")`, `report()`, `report({runId})`, `close()`. Snapshot includes `connected,descriptor,state,revision,commands,recipes,display,execution,busy,paused,speed,runId,progress,lastResult,identity`. Result separates `execution` (`completed|rejected|failed|stopped`) from `outcome` and `effect`. It also contains the descriptor command or recipe ID in `command`, a boolean `recipe`, and ISO `startedAt`/`finishedAt` timestamps. Unknown requested IDs are recorded as `command:null`; arbitrary identifiers, parameters and facts are not copied into these result fields. Only an active run receives a `runId`. `ok:true` or `execution:"completed"` alone does not establish a successful application outcome or persistence.
 
+Every `snapshot()` / `observe()` attempts a fresh read. Observation failure returns
+`connected:false`, no state/revision or enabled commands, and a sanitized error;
+it does not replay an action or rewrite completed results/effect evidence. A later
+successful read restores current observation using the same adapter/session.
+It does not establish that a previously submitted operation was reconciled.
+
+Native managed status separately reports
+`observation:{status,error?:{code,message}}`, where status is
+`available|failed|unreachable|not_running|starting`. Failure reasons use static,
+allowlisted public categories; adapter text, paths and transport error strings
+are not exposed. A failed/unreachable native handoff has `ok:false` and top-level
+`status:"observation_failed"` / `status:"unreachable"`. `running` retains the
+accepted owned installation while its child remains retained after observation
+failure; hard child loss may leave only a recovery record. It is not proof of
+readiness. Viewer readiness requires fresh
+connection/model/target checks. Fresh native status also calls the launcher's
+read-only `draftState()` hook: only a current measured `false` establishes clean
+draft/session state. `true` is known dirty; absent, throwing or indeterminate
+evidence is unknown and still blocks unsafe shutdown/replacement. Readiness
+recovery does not remove independent pending-operation, archive or cleanup guards.
+An observation failure after the supervisor acquired its own quiesce pause retains
+that gate. A later explicit safe stop may drain only that owned pause after fresh
+available, idle, clean and complete-evidence checks; user pauses still block and
+application effects are not resumed. Child IPC disconnection triggers best-effort
+owned cleanup, not a guarantee that unsaved drafts or in-memory pending evidence
+survive owner/process/host loss. Durable archives and recovery records must be
+retained until cleanup is established.
+The [recovery procedure](native-setup.md#recover-observation-in-the-existing-owned-session)
+preserves the original owner and attached resources; it adds no force-stop,
+automatic command retry or live adapter replacement.
+
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
 
 The alpha.6 viewer also previews each recipe's ordered command labels and

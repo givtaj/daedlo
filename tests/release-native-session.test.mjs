@@ -198,6 +198,56 @@ test("a native handoff never combines a viewer with a different or unavailable r
   );
 });
 
+test("native handoff preserves failed observations and sanitizes their reasons", async (t) => {
+  const f = await nativeFixture(t);
+  const observation = {
+    status: "failed",
+    error: {
+      code: "observation_failed",
+      message: "private-observation-detail",
+    },
+  };
+  f.state.observation = observation;
+  f.state.dirty = null;
+  f.state.blockers = [
+    { code: "draft_unknown" },
+    { code: "observation_failed" },
+  ];
+  f.view.observation = observation;
+  f.view.viewerUrl = null;
+  const failed = await f.request();
+  assert.equal(failed.status, 200);
+  assert.equal(failed.body.status.observation?.status, "failed");
+  assert.equal(failed.body.native.observation?.status, "failed");
+  assert.equal(failed.body.status.dirty, null);
+  assert.equal(failed.body.native.viewerUrl, null);
+  assert.equal(failed.body.status.blockers[0].code, "draft_unknown");
+  assert.equal(
+    JSON.stringify(failed.body).includes("private-observation-detail"),
+    false,
+  );
+  f.state.observation = { status: "available" };
+  f.view.observation = { status: "available" };
+  f.state.dirty = false;
+  f.state.blockers = [];
+  f.view.viewerUrl = "http://127.0.0.1:12345/";
+  const recovered = await f.request();
+  assert.equal(recovered.body.native.observation.status, "available");
+  assert.equal(recovered.body.native.viewerUrl, f.view.viewerUrl);
+});
+
+test("native handoff rejects observation state changing across its two reads", async (t) => {
+  const f = await nativeFixture(t);
+  f.state.observation = {
+    status: "failed",
+    error: { code: "observation_failed" },
+  };
+  f.view.observation = { status: "available" };
+  const result = await f.request();
+  assert.equal(result.status, 503);
+  assert.equal(result.body.native, undefined);
+});
+
 test("native handoff rejects unsafe or noncanonical owned viewer URLs", async (t) => {
   const f = await nativeFixture(t);
   for (const viewerUrl of [

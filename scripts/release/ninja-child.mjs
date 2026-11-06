@@ -4,7 +4,11 @@ import { ninjaWrite } from "./ninja-manager.mjs";
 import { verifyBrowserIdentity } from "./ninja-installation.mjs";
 import { createNinjaEvidence } from "./ninja-evidence.mjs";
 
-import { safeFrontend, startupError } from "./native-session.mjs";
+import {
+  safeFrontend,
+  safeObservation,
+  startupError,
+} from "./native-session.mjs";
 
 let frontend,
   registeredBrowserObject,
@@ -68,8 +72,26 @@ const runMethods = new Set([
   "startPresentation",
 ]);
 async function status() {
-  const s = await session?.snapshot();
-  const dirty = handle?.draftState ? await handle.draftState() : null;
+  let s,
+    dirty = null,
+    failure;
+  try {
+    s = await session?.snapshot();
+  } catch (error) {
+    failure = error?.code ?? "observation_failed";
+  }
+  if (!failure && s?.connected !== true)
+    failure = s?.error_code ?? "observation_failed";
+  if (
+    !failure &&
+    (typeof s?.busy !== "boolean" || typeof s?.paused !== "boolean")
+  )
+    failure = "invalid_observation";
+  try {
+    dirty = handle?.draftState ? await handle.draftState() : null;
+  } catch {
+    failure ??= "draft_observation_failed";
+  }
   let matchingTarget = true;
   if (targetPage) {
     try {
@@ -81,22 +103,25 @@ async function status() {
       matchingTarget = false;
     }
   }
-  const observedReady = ready && s?.connected === true && matchingTarget;
-  if (accepted && ready && !observedReady)
-    progress("failed", {
-      error: startupError({
-        code: matchingTarget ? "boot_failed" : "target_mismatch",
-      }),
-    });
+  if (!matchingTarget) failure = "target_mismatch";
+  if (typeof dirty !== "boolean") failure ??= "draft_unknown";
+  const observation = safeObservation({
+    status: failure ? "failed" : "available",
+    ...(failure ? { error: { code: failure } } : {}),
+  });
+  // A runtime observation failure is recoverable by a fresh read. Startup
+  // history describes startup only; it must not latch a later page fault.
+  const observedReady = ready && observation.status === "available";
   return {
     ready: observedReady,
     accepted,
+    observation,
     startup,
     frontend,
     quiesced,
-    busy: s?.busy !== false,
-    paused: s?.paused !== false,
-    dirty: typeof dirty === "boolean" ? dirty : null,
+    busy: typeof s?.busy === "boolean" ? s.busy : null,
+    paused: typeof s?.paused === "boolean" ? s.paused : null,
+    dirty: observation.status === "available" ? dirty : null,
     cleanupPending:
       resources?.snapshot().some((r) => r.status === "cleanup_failed") ||
       (evidence?.status().failed ?? 0) > 0 ||
@@ -115,12 +140,15 @@ async function close() {
     try {
       await resources?.close();
       await handle?.close?.();
-    } catch (e) {
+    } catch {
       progress("failed", {
         cleanup: "incomplete",
         error: startup.error ?? startupError({ code: "cleanup_incomplete" }),
       });
-      throw e;
+      error(
+        "cleanup_incomplete",
+        "Owned cleanup is incomplete; retained handles require repair.",
+      );
     }
     progress(failed ? "failed" : "stopped", { cleanup: "complete" });
     if (marker)
@@ -134,6 +162,18 @@ async function close() {
     closing = null;
   });
   return closing;
+}
+async function releasePause() {
+  const ownedGate = quiesced;
+  quiesced = false;
+  try {
+    await session.resume();
+  } catch (error) {
+    // Failed fresh observation must not turn our retained pause into an
+    // unrelated user pause that no subsequent guarded stop can drain.
+    quiesced = ownedGate;
+    throw error;
+  }
 }
 async function perform(m) {
   if (m.action === "start") {
@@ -423,7 +463,17 @@ async function perform(m) {
   }
   if (m.action === "quiesce") {
     const s = await status();
-    if (s.busy || s.paused || s.dirty !== false || s.cleanupPending)
+    if (s.observation.status !== "available")
+      error(
+        "observation_failed",
+        "Current application and draft observations are unavailable; session remains owned.",
+      );
+    if (
+      s.busy !== false ||
+      (s.paused !== false && !quiesced) ||
+      s.dirty !== false ||
+      s.cleanupPending
+    )
       error(
         s.dirty !== false ? "dirty_draft" : "busy",
         "Run or draft state is not safe for restart.",
@@ -432,9 +482,17 @@ async function perform(m) {
     quiesced = true;
     session.pause();
     const after = await session.snapshot();
-    if (after.busy) {
-      quiesced = false;
-      await session.resume();
+    if (
+      after.connected !== true ||
+      typeof after.busy !== "boolean" ||
+      after.paused !== true
+    )
+      error(
+        "observation_failed",
+        "Observation failed at the paused boundary; the owned gate and resources are retained.",
+      );
+    if (after.busy !== false) {
+      await releasePause();
       error("busy", "A run started before the restart boundary.");
     }
     return { quiesced: true };
@@ -446,21 +504,24 @@ async function perform(m) {
   }
   if (m.action === "unquiesce") {
     if (!ready) error("not_ready", "Closed or unready session cannot resume.");
-    quiesced = false;
-    await session.resume();
+    await releasePause();
     return { quiesced: false };
   }
   if (m.action === "close") {
     if (m.requireSafe && ready) {
       const s = await status();
+      if (s.observation.status !== "available")
+        error(
+          "observation_failed",
+          "Current application and draft observations are unavailable; session remains owned.",
+        );
       if (s.evidence?.failed || s.evidence?.pending)
         error(
           "evidence_incomplete",
           "Completed-run evidence is not saved; repair the local archive and retry evidence before cleanup.",
         );
-      if (s.busy || s.dirty !== false) {
-        quiesced = false;
-        await session.resume();
+      if (s.busy !== false || s.dirty !== false) {
+        await releasePause();
         error(
           s.dirty !== false ? "dirty_draft" : "busy",
           "Run or draft changed before cleanup; session remains open.",

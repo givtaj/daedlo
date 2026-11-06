@@ -94,9 +94,15 @@ async function request(record, action, generation) {
   return value;
 }
 function handoff(value, record, reused) {
+  const observation = value.native.observation ?? value.status.observation;
+  const observationFailure = ["failed", "unreachable"].includes(
+    observation?.status,
+  );
   return {
     schemaVersion: 1,
-    ...(value.native.recovery || value.native.startup?.phase === "failed"
+    ...(value.native.recovery ||
+    value.native.startup?.phase === "failed" ||
+    observationFailure
       ? { ok: false }
       : {}),
     status: value.native.recovery
@@ -105,13 +111,19 @@ function handoff(value, record, reused) {
         ? "failed"
         : value.native.starting
           ? "starting"
-          : value.status.running
-            ? "running"
-            : "stopped",
+          : observation?.status === "failed"
+            ? "observation_failed"
+            : observation?.status === "unreachable"
+              ? "unreachable"
+              : value.status.running
+                ? "running"
+                : "stopped",
     reused,
     project: value.status.project,
     selected: value.status.selected,
     running: value.status.running,
+    dirty: value.status.dirty,
+    ...(observation ? { observation } : {}),
     viewerUrl: value.native.viewerUrl,
     startupUrl: record.controlUrl.replace("/#", "/session#"),
     startup: value.native.startup,
@@ -354,6 +366,7 @@ export async function nativeCommand(
             recovery,
             runningId: s.running?.id ?? null,
             viewerUrl: s.running?.viewerUrl ?? null,
+            ...(s.observation ? { observation: s.observation } : {}),
             evidence: s.evidence ?? null,
             frontend: s.frontend ?? frontend,
             startup:

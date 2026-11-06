@@ -1,5 +1,246 @@
 # Verification record
 
+## Alpha.7 production delivery — 2026-11-05
+
+**PASS — merged source, immutable publication and actual public HTTPS acceptance.**
+[PR #24](https://github.com/givtaj/daedlo/pull/24) merged as
+`e6e448ef7c7738efe1e3bd1a25d3945f1fc1c6de`; its tree exactly matches reviewed
+publisher head `07e55169aed462655b3cb563c57bf84fb2cfc0b9`.
+[Publisher CI](https://github.com/givtaj/daedlo/actions/runs/42040100747) passed
+Node 22/24 source and packaged-consumer jobs plus metadata/secrets. The separately
+frozen package source remains `9cbff73ad1b8d5e64b11c7358050eebc3cd1d392`, with the
+three immutable byte identities recorded in the prepublication checkpoint below.
+Published artifacts were built only from that frozen source; merge and
+documentation commits do not replace them.
+
+The [GitHub prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.7)
+is published, contains exactly those three files and points to the frozen package
+source. Independent GitHub asset-body and canonical HTTPS download readbacks
+match the frozen bytes. The repository remains private; customer installation
+uses [daedlo.com/install](https://daedlo.com/install),
+[managed-update guidance](https://daedlo.com/updates) and the public downloads.
+
+[Production promotion](https://github.com/givtaj/daedlo/actions/runs/42042552705)
+completed successfully from merged main. Independently verified signed generation
+**26** expires `2026-11-12T14:11:51.462Z`; all prior signed entries remain unchanged.
+The existing `daedlo-release-2026-10` publisher key remains pinned, PEM SHA-256
+`df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297`.
+
+The subsequent [ordinary renewal](https://github.com/givtaj/daedlo/actions/runs/42044070917)
+also passed from the same merged source without promotion flags. Independent
+readback verified signed generation **27**, expiring `2026-11-12T14:21:17.077Z`,
+with every alpha.2–alpha.7 release entry identical to generation 26 and the same
+publisher key. The served installer and update pages matched their rendered
+source and current signed catalog. Renewal changes catalog freshness, not the
+immutable release bytes or the customer acceptance status.
+
+Measured on the existing macOS arm64/Node 22.20.0/Rust 1.96.0 host with matching
+Playwright Chromium, independently of customer applications:
+
+| Production gate | Actual result |
+| --- | --- |
+| Signed HTTPS delivery | PASS: production trust/signature, unexpired increasing generation, all retained entries and exact current ZIP/metadata/checksums |
+| Actual website | PASS: 36 canonical HTTPS checks, all 18 historical asset bodies unchanged, nine private/build paths return 404, cache/security headers and bounded same-origin HTML canonical redirects |
+| Visible public onboarding | PASS: actual desktop 1280px/narrow 390px install/update/tools guidance and native clipboard; inspected screenshots, no browser script errors or external requests |
+| Fresh production installer | PASS: actual DOM block matches downloaded ZIP `START_HERE`; offline installation with fresh npm cache in a nested workspace, ancestor manifest/lock unchanged, all 69 tools files exact |
+| Alpha.6 → alpha.7 → alpha.6 | PASS: seven actual HTTPS checkpoints, separately verified tools bootstrap, accepted-slot discovery, real negative/save flow, fresh-manager restart, retained-slot rollback and relaunch |
+| Preservation and cleanup | PASS: application states/flows/adapter source, both tools packages, configuration/store/trust/checkpoint and notebook data preserved; six lifecycle reports, owned resources closed and attached application preserved until owned fixture cleanup |
+
+The upgrade drill used actual public downloads and the production provider with
+the bundled trust pin. Only the initial alpha.6 fixture selection was explicit
+and authenticated; subsequent discovery used normal provider selection. No
+private signing key, injected fetch transport, customer fixture or application
+dependency promotion was used. Notebook records remained in a separate in-memory
+application process: this proves preservation across the tested driver/manager
+changes, not database recovery or application-process restart durability.
+
+The live website verifier retained two failed attempts caused by harness-only
+assumptions before browser acceptance: the extensionless checksum response omits
+Content-Type identically to alpha.6, and the publisher already permits bounded
+same-origin `/install.html` and `/updates.html` canonical redirects. Final checks
+follow that existing contract; download/key/feed redirects remain forbidden and
+byte integrity, CSP, nosniff and cache checks remain enforced. These were not
+native/browser regressions. The provider hostname was not tested by this canonical
+website run.
+
+Production-upgrade, live-website, publication and ordinary-renewal receipts remain
+in ignored local evidence storage. Raw private fixture paths, browser records and
+support conversation identifiers remain out of shared records.
+
+Customer incident cause and recovery, frontend stop isolation, customer-managed
+upgrade/rollback, detached-document faults and effect-status/report integration
+remain **UNCONFIRMED** in [acceptance #25](https://github.com/givtaj/daedlo/issues/25).
+A named-session picker is triage only. Publication and synthetic conformance do
+not complete customer acceptance, hot-reload an existing owner or establish
+host-sleep/hard-owner-loss durability.
+
+## Alpha.7 frozen package and publication preflight — 2026-11-05
+
+**PASS — historical prepublication checkpoint: exact package, compatibility, source
+CI and staged website; delivery was pending.**
+Frozen clean package source is `9cbff73ad1b8d5e64b11c7358050eebc3cd1d392`.
+[Exact-source CI](https://github.com/givtaj/daedlo/actions/runs/42037389097)
+passed both Node 22/24 jobs and public metadata/secrets. [PR #24](https://github.com/givtaj/daedlo/pull/24)
+owns source integration and the separately reviewed production inventory.
+
+The release was built once from this frozen source. The earlier `126fa9e`
+engineering candidate remains unpublished; its runtime/crate bytes match, but
+its source/tool receipt is not this delivery. No published historical file changed.
+
+| Frozen file | Bytes | SHA-256 |
+| --- | --- | --- |
+| `daedlo-0.1.4-alpha.7.zip` | 311661 | `cb56901e85572c73dbbeb2c2566c97db31608fa15dd861704b674ef84ba1fd5e` |
+| `release.json` | 8752 | `ec13bf2656751996b335805f3950ac29a97bbf6785d21a3a88fd283ee064ded0` |
+| `SHA256SUMS` | 91 | `b3666e5be14f8542ceba3084086b0f6a57a0e4a266d58099bce158ff249b6c9f` |
+
+The tools archive is SHA-256
+`2acbd2cc1fa16e7cd30c3d63e085fab2cc00e3caeb3ae3cdf84130dd4f6e673a`;
+bundle manifest is `0c4e98fe62235f29f09990e005c0a494a3d5ab36093548096922e1a07a954ba9`.
+
+Measured on macOS arm64 with Node 22.20.0, Rust 1.96.0 and Playwright 1.62.1:
+
+| Gate | Actual result |
+| --- | --- |
+| Exact installed runtime/tools/crate | PASS: 23 runtime files and 69 tools files verified before/after; eight notebook browser groups, CLI 10, finalization 25, controls nine, frontend and recipe-path viewers |
+| Required installed native suites | PASS: startup TAP 1/1 with 13 lifecycle assertions; observation TAP 2/2 with five recovery checks; exact paths and engine digest bound, zero skipped tests |
+| Merged runtime safety replay | PASS: 45 original assertions in six groups, authorization 23 / attribution two / cleanup 20; consumer public ESM resolution and import-only copies verified, no source product fallback |
+| Shipped references | PASS: starter 16 browser groups, evidence nine, managed eight including real installation and disposable hooks |
+| Immutable alpha.6 → alpha.7 → alpha.6 | PASS: seven ephemeral-signed-feed checkpoints, verified new-tools bootstrap, fresh-manager restart, rollback/relaunch, source/data/configuration/trust/checkpoint preservation and owned cleanup |
+| Final-metadata website | PASS: 69 units, eight pages, seven archives, 44 public entries, 14 onboarding checks and two native-tools layouts; all 18 historical files verified and nine private/build boundaries returned 404 |
+| Actual DOM-copied installer | PASS: offline tools install with a fresh npm cache in a nested workspace, ancestor manifests/lock preserved and all 69 installed tools files exact |
+| Publisher safeguards | PASS: 221 precredential/catalog/checkpoint/promotion/renewal/staging checks; independent review confirms exact three new pins and unchanged prior policy |
+
+Native failure/recovered screens and desktop/390px bootstrap guidance were visually
+inspected. Browsers, servers and disposable consumers closed; attached-resource
+assertions passed. The website uses an explicit ephemeral test pin and is never
+the production deployment. Production trust rejects that test pin. Final staged
+metadata is bound to the exact `ec13bf…ded0` file; unchanged ZIP and historical
+assets were reverified after stamping the measured verification record.
+
+A GitHub draft contains exactly the three frozen files. Their API digests match;
+independent asset-body readback is a separate retained receipt. Production pins
+add only alpha.7; removing those additions reproduces the prior policy exactly,
+including publisher key, initial checkpoint, six historical inventories, contracts
+and source pins. Publisher source CI, merge, public release/feed activation and
+actual HTTPS install/update/rollback remain pending at this checkpoint. The
+customer's live-session recovery and business acceptance remain unconfirmed.
+
+Ignored evidence roots: `artifacts/alpha7-*` in the frozen checkout and
+`artifacts/wbf-delivery/` in the integration checkout. Raw receipts and private
+browser/consumer paths are not included in shared records.
+
+## Alpha.7 release preparation — 2026-11-05
+
+**PASS — preparation checkpoint; production delivery is recorded above.** Alpha.7 prepares
+the reviewed native observation/recovery change plus coherent version fields and
+selected-release instructions. Existing public alpha.6 bytes, publisher trust,
+historical receipts and everyday customer dependencies are preserved.
+
+The native installed-package dispatcher previously omitted the observation suite
+and accepted a successful recovery receipt even if the separate startup-diagnostic
+test was skipped. Regression-first checks now require the selected installed
+tools/runtime/engine paths and binary digest, startup TAP 1/1 and observation TAP
+2/2, with zero failed/cancelled/skipped/todo cases. Alpha.7 explicitly exercises
+the shipped evidence and managed references; its upgrade drill requires the pinned
+alpha.6 baseline and a separately verified new-tools bootstrap.
+
+Measured preparation checks: 43 harness/reference contracts, 32 upgrade-mode
+contracts and eight licensing/version contracts passed. A nondefault-path browser
+probe passed both observation tests with selected runtime/engine path and digest
+binding; it is a conformance copy, not an exact-installed artifact claim. Earlier
+source-fix checks below retain their own revision and version. Exact package,
+upgrade/rollback, current candidate CI, website and live publication results remain
+pending at this checkpoint; the later production record above supplies actual
+execution results without changing the frozen package.
+
+Independent preparation review caught the starter model's exact engine pin outside
+the nine-path version command. Its meaningful regression failed `9 !== 10` before
+the command was extended to update all ten release-owned manifests/locks,
+including the shipped starter. The starter pin and active guide now match alpha.7;
+customer application pins remain outside the command.
+
+## Native observation status and guarded recovery — 2026-11-05
+
+**PASS — local source regressions, independent review and Chromium conformance.**
+Work is isolated on `codex/wbf-observation-recovery`, based on shared main
+`16d050c8b4965ecd7e2acd52bf8d052b911866c4`. The preserved primary checkout and
+customer applications, installations, dependencies and live sessions were not
+used as fixtures or edited. At this historical source-only checkpoint,
+runtime/crate versions remained `0.1.4-alpha.6`; the release tools had local source
+changes and were not a published replacement. The alpha.7 delivery above is a
+separate frozen package and production-verification record.
+
+Native status now separates failed observation and unreachable child communication
+from stopped ownership. Unknown draft safety is reported as `draft_unknown`,
+not as a confirmed dirty form. Reasons use static allowlisted categories, while
+accepted ownership and completed reports remain retained. Transient page faults
+no longer latch startup as failed. Fresh status reads restore readiness using
+the same loaded adapter, without replaying commands or changing earlier effects.
+
+Guarded cleanup still requires current known execution and draft facts. If
+observation fails after the supervisor acquires its own pause, that gate remains
+owned; a later explicit stop can drain it after fresh clean, idle proof. An
+independent user pause remains blocking. Failed resume preserves gate ownership,
+and actual cleanup exceptions remain `cleanup_incomplete`, never safe refusals.
+See [the supported recovery procedure](native-setup.md#recover-observation-in-the-existing-owned-session)
+and [the public synthetic reproduction contract](managed-integration.md#observation-and-interruption-reproduction).
+
+Regression evidence was captured before the corresponding fixes:
+
+- Both supervisor observation regressions failed with missing failed-observation
+  status. The real-browser test, run with archived baseline tools from `16d050c`,
+  reached an actual unrecognized page and failed: expected `observation_failed`,
+  received `stopped`. Baseline fixture cleanup passed.
+- An observation lost after pause incorrectly fulfilled quiesce; a failed
+  unquiesce lost its owned gate (`false` instead of `true`). Both now pass.
+- Review regressions exposed cleanup exceptions retaining `engine_timeout`
+  instead of `cleanup_incomplete`, cleanup failure being misclassified as a safe
+  refusal, and missing execution facts being reported `available`. Each now passes.
+  Setup/import/permission failures were not counted as behavioral regressions.
+- A browser assertion also caught a secondary unavailable-observation diagnostic
+  hiding the original failed-startup reason. Failed startup now retains its
+  primary sanitized reason; ordinary post-ready observation failures keep their
+  observation diagnostic. Both browser assertions pass.
+
+Measured on macOS arm64, Node 22.20.0, Rust 1.96.0, locked Playwright 1.62.1 and
+Chromium 151.0.7922.34:
+
+| Check | Result |
+| --- | --- |
+| Source syntax, strict declarations, formatting and diff whitespace | PASS |
+| Runtime Node regressions | PASS, 163/163 |
+| Native and Ninja regressions, serial | PASS, 318/318, including both real-browser native suites |
+| Rust workspace tests, locked/offline | PASS, 26; one subprocess helper intentionally ignored directly and exercised by its parent |
+| Release build, portable tools, public kit and evidence-guidance regressions | PASS, 56/56 |
+| Independent review after corrections | PASS, no remaining actionable findings |
+| Visible native failed/recovered screens | PASS, screenshots inspected |
+| Owned fixture cleanup and attached application preservation | PASS |
+
+The native/Ninja command was
+`node --test --test-concurrency=1 tests/release-native-*.test.mjs tests/release-ninja-*.test.mjs`.
+A prior concurrent run had one three-second fixture IPC timeout while packaging
+checks also ran; no failing assertion was suppressed and no deadline or retry
+was added. The complete final serial run passed all 318 tests. Other commands
+were `npm run check`, `npm test`, `cargo test --locked --offline --workspace`,
+and `node --test tests/release-tools.test.mjs tests/release-build.test.mjs tests/release-public-kit.test.mjs tests/release-evidence-guidance.test.mjs`.
+
+The new browser fixture uses the unchanged notebook adapter, a same-origin
+synthetic error page and its actual read-only Overview link. It proves retained
+owner identity, disabled commands during failed page observation, refusal before
+cleanup, fresh recovery in the same session, byte-identical prior archives and
+zero application writes. Separate known-dirty, unknown-draft and synthetic
+pending-journal controls each block shutdown until their own current measurement
+is resolved. These are synthetic safety controls, not reproduction of a private
+application journal, a real uncertain save or operating-system sleep. Child-status
+timeout and retained orphan records are covered independently by supervisor tests.
+
+Local evidence is ignored under `artifacts/wbf-observation/`,
+`artifacts/alpha4-native/` and `artifacts/wbf-native-ninja-serial.tap`.
+Actual customer incident cause, customer recovery/acceptance, hard-host-loss
+durability, complete exact-installed candidate acceptance, Node 24/remote CI,
+merge, publication and deployment were **NOT RUN** at this source checkpoint.
+The published alpha.6 installation is unchanged, and replacing tools does not hot-reload an
+already running customer adapter.
 ## PR #22 review and installed safety replay — 2026-10-30
 
 **PASS — independent source review and local exact-installed engineering checks.**
