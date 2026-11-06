@@ -1,5 +1,62 @@
 # Verification record
 
+## Prepared alpha.8 exact kit and same-fixture Roots acceptance — 2026-11-06
+
+**PASS for the frozen candidate; publication and default selection remain pending.**
+The grid and PR #22 finalization changes were packaged from clean source
+`e878a30de41d996330af70e09723be23dc3d9609`. The exact public-kit ZIP is 318,158 bytes,
+SHA-256 `be7bc8c7228f445d1e659bbededdcd0d452110501b0edae72ed8ada2d57fd51a`.
+Its runtime build is `94156b5a2ddce0ce3b93b83be6243dbcb8cffe091c9e23b76671594d7f2549b1`.
+PR #28 merged as `06331d7d237794801711dd66a3babe991622168e`; its Git tree exactly
+matches the frozen source. Publisher preparation and this record do not rebuild
+that accepted ZIP. The
+canonical local acceptance receipt is
+`artifacts/grid-alpha8-release-2026-11-06/acceptance-receipt.json`; the final
+three-file inventory is `final-public-kit-pins.json` in that evidence directory.
+
+- **Hosted source CI PASS:** [run 42196994326](https://github.com/givtaj/daedlo/actions/runs/42196994326)
+  tested the exact source on Node 22 and 24, including installed packages and
+  artifact retention; metadata/secrets also passed. The earlier section records
+  the separate local source and regression-first checks.
+- **Exact installation PASS:** the 23 runtime files, 69 portable tools files and
+  extracted crate match their immutable archives. Eight browser groups and all
+  16 extended groups/136 checks pass, including grid 18, active-run five and
+  pending/stalled finalization. Native startup/observation, frontend and recipe
+  viewers pass. The shipped starter passes 16 browser groups, nine evidence
+  reference checks and eight managed reference checks. Owned cleanup passes.
+- **Same Roots pairing PASS:** the accepted model and guarded adapter were copied
+  into a separate integration using the same pinned Roots source and disposable
+  fixture as the earlier grid run. The model was rebuilt against the exact
+  alpha.8 crate with separate Cargo output; 108 model checks and two privacy
+  checks pass. No application behavior or everyday dependency was changed.
+- **Save and grid acceptance PASS:** four checks cover no-write attachment,
+  stale-save refusal with retained draft and unchanged rows, one intended save,
+  and same-record reload readback. Eleven grid checks cover a real viewer-clicked
+  ten-step `keyboard-saved` recipe, active progress and previous/current results,
+  desktop 1440/1280px, tablets 732/747/920px, mobile 390px, and monitor recovery
+  without replay. Each save adds exactly one row and preserves prior rows; both
+  canonical reports were captured before independent readback. Screenshots were
+  inspected. Tablet panels stack vertically; simultaneous above-fold visibility
+  of every panel is not claimed. Viewer contract and CLI identity/startup/shutdown
+  pass; all coordinating-owner resources closed. Two synthetic rows remain.
+- **Recovery PASS:** seven lifecycle gates and five save flows/25 commands cover
+  immutable public alpha.7 install/discovery, a separately verified alpha.8 tools
+  bootstrap, exact alpha.8 update, fresh-manager restart, retained alpha.7 rollback
+  and relaunch. Synthetic data, configuration, trust and checkpoints survive.
+  All five owned cleanup handles closed. This uses an ephemeral signed feed and
+  the independent notebook, not a public alpha.8 feed or Roots recovery drill.
+- **Preservation PASS:** all 111 official alpha.7 files, three links and launcher,
+  60 original integration files and model, and 306 primary-checkout files plus
+  HEAD/index/status are unchanged. The official viewer and attached Roots API
+  and frontend remain healthy. Alpha.7 remains the installed default.
+
+This is macOS arm64 acceptance with existing toolchains and Chromium. Public
+HTTPS delivery, production feed/signature promotion, fresh-machine onboarding,
+full Roots parity, API/database restart and everyday promotion are **NOT RUN**.
+The publisher branch is intentionally inactive: once its alpha.8 pins are active,
+ordinary renewal refuses an alpha.7-only catalog. Merge/activate that publisher
+policy only as part of the separately authorized publication sequence.
+
 ## Alpha.8 grid integration and acceptance-gate preparation — 2026-11-06
 
 The owner authorized merging the grid and preparing alpha.8 while keeping the

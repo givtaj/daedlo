@@ -21,6 +21,10 @@ on:
         description: Publish the reviewed and pinned alpha.7 kit
         type: boolean
         default: false
+      promote_alpha8:
+        description: Publish the reviewed and pinned alpha.8 kit
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -50,9 +54,10 @@ jobs:
           PROMOTE_ALPHA5: ${{ inputs.promote_alpha5 && 'true' || 'false' }}
           PROMOTE_ALPHA6: ${{ inputs.promote_alpha6 && 'true' || 'false' }}
           PROMOTE_ALPHA7: ${{ inputs.promote_alpha7 && 'true' || 'false' }}
+          PROMOTE_ALPHA8: ${{ inputs.promote_alpha8 && 'true' || 'false' }}
         run: |
-          case "$PROMOTE_ALPHA4:$PROMOTE_ALPHA5:$PROMOTE_ALPHA6:$PROMOTE_ALPHA7" in
-            false:false:false:false|true:false:false:false|false:true:false:false|false:false:true:false|false:false:false:true) ;;
+          case "$PROMOTE_ALPHA4:$PROMOTE_ALPHA5:$PROMOTE_ALPHA6:$PROMOTE_ALPHA7:$PROMOTE_ALPHA8" in
+            false:false:false:false:false|true:false:false:false:false|false:true:false:false:false|false:false:true:false:false|false:false:false:true:false|false:false:false:false:true) ;;
             *) exit 1 ;;
           esac
       - name: Set up Node
@@ -83,6 +88,7 @@ jobs:
           NINJA_PROMOTE_ALPHA5: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha5 && 'true' || 'false' }}
           NINJA_PROMOTE_ALPHA6: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha6 && 'true' || 'false' }}
           NINJA_PROMOTE_ALPHA7: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha7 && 'true' || 'false' }}
+          NINJA_PROMOTE_ALPHA8: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha8 && 'true' || 'false' }}
         run: |
           set -euo pipefail
           umask 077
@@ -105,6 +111,8 @@ jobs:
             node scripts/release/ninja-promotion.mjs --release 0.1.4-alpha.6 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           elif test "$NINJA_PROMOTE_ALPHA7" = "true"; then
             node scripts/release/ninja-promotion.mjs --release 0.1.4-alpha.7 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+          elif test "$NINJA_PROMOTE_ALPHA8" = "true"; then
+            node scripts/release/ninja-promotion.mjs --release 0.1.4-alpha.8 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           else
             node scripts/release/ninja-renew.mjs prepare --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           fi
