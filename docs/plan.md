@@ -1,5 +1,20 @@
 # Implementation plan
 
+## Alpha.8 preparation — 2026-11-06
+
+The owner authorized merging the new grid and preparing the next release while
+keeping verified alpha.7 intact until the exact replacement passes the same Roots
+acceptance checks. Publication, repository visibility and everyday Roots pins are
+outside this preparation.
+
+- [ ] Reconcile grid/state-map fixes with current main and preserve finalization.
+- [ ] Freeze coherent alpha.8 source and pass exact installed kit/reference checks.
+- [ ] Rebuild the isolated Roots model against the exact alpha.8 crate; rerun save,
+  stale no-write, keyboard flow, reload, responsive grid and connection recovery.
+- [ ] Verify the reviewed source and merge CI, record immutable artifact identities
+  and retain the accepted alpha.7 installation and live application services.
+
+
 ## PR #22 integration checkpoint — 2026-11-06
 
 The owner authorized reconciliation and merge of [PR #22](https://github.com/givtaj/daedlo/pull/22)

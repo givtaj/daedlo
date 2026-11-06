@@ -19,10 +19,12 @@ const safety = new Map([
   ["installed-cli-stalled-finalization", 3],
   ["installed-scoped-finalization", 3],
   ["installed-resource-ownership", 5],
-  ["installed-viewer-finalization", 3],
+  ["installed-viewer-finalization", 4],
+  ["installed-active-run", 5],
+  ["installed-viewer-grid", 18],
 ]);
 
-function fixture(t, { corrupt, skipped } = {}) {
+function fixture(t, { corrupt, skipped, omitted } = {}) {
   const root = fs.realpathSync(
     fs.mkdtempSync(join(tmpdir(), "daedlo-installed-safety-")),
   );
@@ -76,8 +78,9 @@ function fixture(t, { corrupt, skipped } = {}) {
         "installed-publication-browser": 9,
       }[name];
     assert.ok(total, `Unexpected installed acceptance group ${name}`);
+    const executed = total - (name === omitted ? 1 : 0);
     const skip = name === skipped ? 1 : 0;
-    const log = `# tests ${total}\n# pass ${total - skip}\n# fail 0\n# cancelled 0\n# skipped ${skip}\n# todo 0\n`;
+    const log = `# tests ${executed}\n# pass ${executed - skip}\n# fail 0\n# cancelled 0\n# skipped ${skip}\n# todo 0\n`;
     fs.writeFileSync(join(output, "logs", `${name}.log`), log);
     return log;
   };
@@ -148,6 +151,58 @@ test("an omitted or skipped installed safety case cannot pass its receipt", asyn
   );
   assert.equal(receipt.status, "FAIL");
 });
+
+test("installed grid and active-run checks preserve source assertions and bind output to the consumer receipt", async (t) => {
+  const { options, invocations } = fixture(t);
+  const result = await runInstalledControls(options);
+  for (const [name, file, specifier] of [
+    ["installed-active-run", "active-run.test.mjs", "../src/session.mjs"],
+    [
+      "installed-viewer-grid",
+      "viewer-grid-browser.mjs",
+      "../src/viewer/server.mjs",
+    ],
+  ]) {
+    const invocation = invocations.find((value) => value.name === name);
+    assert.ok(invocation, `${name}: required installed regression is absent`);
+    const original = fs.readFileSync(
+      join(options.repoRoot, "packages/runtime/tests", file),
+      "utf8",
+    );
+    const copied = fs.readFileSync(join(options.work, "tests", file), "utf8");
+    assert.equal(
+      copied,
+      original.replace(JSON.stringify(specifier), '"@daedlo/runtime"'),
+      `${name}: application assertions must be copied without changes`,
+    );
+    const provenance = result.extendedProvenance.copiedChecks.find(
+      (value) => value.name === file,
+    );
+    assert.equal(provenance.importOnlySubstitution, true);
+    assert.deepEqual(provenance.substitutions, [
+      {
+        kind: "public-runtime-import",
+        from: JSON.stringify(specifier),
+        to: '"@daedlo/runtime"',
+      },
+    ]);
+    if (name === "installed-viewer-grid")
+      assert.equal(
+        invocation.env.VIEWER_GRID_OUTPUT,
+        join(options.output, "installed-controls/viewer-grid"),
+      );
+  }
+});
+
+for (const failure of ["omitted", "skipped"])
+  test(`the ${failure} installed grid case cannot pass its receipt`, async (t) => {
+    const { options } = fixture(t, { [failure]: "installed-viewer-grid" });
+    await assert.rejects(runInstalledControls(options), /every case must/);
+    const receipt = JSON.parse(
+      fs.readFileSync(join(options.output, "installed-controls/results.json")),
+    );
+    assert.equal(receipt.status, "FAIL");
+  });
 
 test("public package resolution cannot silently select another runtime entry", async (t) => {
   const { options } = fixture(t, {

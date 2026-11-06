@@ -21,6 +21,9 @@
       </div>
       <section aria-labelledby="tree-heading">
         <h2 id="tree-heading">State map</h2>
+        <p id="observation-status" class="observation-status" role="status">
+          Waiting for observation
+        </p>
         <ul id="state-tree" class="state-tree"></ul>
       </section>
       <section aria-labelledby="facts-heading">
@@ -51,22 +54,23 @@
           ><span id="frame-status">Waiting for browser</span>
         </div>
       </header>
-      <section
-        id="frontend-identity"
-        class="frontend-identity"
-        aria-labelledby="frontend-name"
-        hidden
-      >
-        <div>
-          <span class="eyebrow">FRONTEND</span>
-          <h2 id="frontend-name"></h2>
+      <details id="frontend-identity" class="frontend-identity" hidden>
+        <summary>
+          <span id="frontend-name"></span>
+          <span class="session-summary-label">Session details</span>
+        </summary>
+        <div class="session-details-body">
+          <dl id="frontend-details" class="facts"></dl>
         </div>
-        <dl id="frontend-details" class="facts"></dl>
-        <p id="frontend-warning" class="notice" role="status" hidden></p>
-      </section>
+      </details>
+      <p id="frontend-warning" class="notice" role="status" hidden></p>
       <div id="connection-error" class="notice" role="status" hidden></div>
       <div class="workspace-grid">
-        <section class="browser-panel" aria-label="Live controlled browser">
+        <section
+          class="browser-panel"
+          aria-label="Controlled browser"
+          data-image-state="waiting"
+        >
           <div class="browser-chrome">
             <span class="window-dots" aria-hidden="true"
               ><i></i><i></i><i></i
@@ -74,17 +78,20 @@
             <div class="browser-address">
               <span aria-hidden="true">▣</span><span>Controlled browser</span>
             </div>
-            <span class="mirror-tag">LIVE MIRROR</span>
+            <span id="mirror-status" class="mirror-tag" role="status"
+              >Waiting for image</span
+            >
           </div>
           <div class="browser-screen">
             <img
               id="browser-image"
               src="/stream"
-              alt="Live mirror of the controlled browser; use the command panel to interact"
+              alt="Controlled browser image; waiting for connection"
             />
-            <div id="stream-error" class="stream-error" hidden>
-              Browser image unavailable<span
-                >Check the connection status before running a command.</span
+            <div id="stream-error" class="stream-error" role="status" hidden>
+              <strong id="stream-error-title">Browser image unavailable</strong>
+              <span id="stream-error-detail"
+                >Check the connection before running a command.</span
               >
             </div>
           </div>
@@ -95,80 +102,107 @@
             ><span id="frame-count">0 frames</span>
           </div>
         </section>
-        <aside class="action-panel" aria-label="Commands and recipes">
-          <section
-            id="presentation-catalog"
-            aria-labelledby="presentations-heading"
-            hidden
+        <aside class="action-panel" aria-label="Flow and actions">
+          <div class="flow-region">
+            <section
+              id="flow-panel"
+              class="flow-panel"
+              aria-labelledby="flow-title"
+            >
+              <span class="eyebrow">ACTIVE FLOW</span>
+              <h2 id="flow-title">Choose a flow</h2>
+              <p id="flow-run-identity" class="result-identity"></p>
+              <p id="flow-status" class="subtle" role="status">
+                No flow is running.
+              </p>
+              <ol id="flow-steps" tabindex="0" aria-label="Flow steps"></ol>
+            </section>
+            <section
+              id="presentation-panel"
+              class="presentation-panel"
+              aria-labelledby="presentation-title"
+              hidden
+            >
+              <div class="presentation-top">
+                <div>
+                  <span class="eyebrow">PRESENTATION</span>
+                  <h2 id="presentation-title"></h2>
+                </div>
+                <span id="presentation-phase" class="pill" role="status"></span>
+              </div>
+              <p id="presentation-progress" class="subtle"></p>
+              <progress
+                id="presentation-meter"
+                aria-label="Presentation stages"
+                max="1"
+                value="0"
+              ></progress>
+              <h3 id="presentation-stage"></h3>
+              <p id="presentation-explanation"></p>
+              <div class="presentation-pacing">
+                <p id="presentation-hold"></p>
+                <button id="advance" class="secondary" type="button">
+                  Advance
+                </button>
+              </div>
+              <p
+                id="presentation-reason"
+                class="notice"
+                role="status"
+                hidden
+              ></p>
+              <p class="subtle">
+                Stage captions describe the plan; application success requires
+                an observed outcome.
+              </p>
+              <p class="subtle">
+                Stage holds use their authored duration. Execution speed affects
+                browser actions. Driver pause holds this run, independently of
+                the application's state.
+              </p>
+            </section>
+          </div>
+          <div
+            class="action-catalog"
+            role="region"
+            aria-labelledby="commands-heading"
+            tabindex="0"
           >
+            <section
+              id="presentation-catalog"
+              aria-labelledby="presentations-heading"
+              hidden
+            >
+              <div class="panel-heading">
+                <div>
+                  <span class="eyebrow">PRESENT</span>
+                  <h2 id="presentations-heading">Presentations</h2>
+                </div>
+              </div>
+              <p class="panel-description">
+                Authored stages with time to explain the real application.
+              </p>
+              <div id="presentations" class="recipe-list"></div>
+            </section>
             <div class="panel-heading">
               <div>
-                <span class="eyebrow">PRESENT</span>
-                <h2 id="presentations-heading">Presentations</h2>
+                <span class="eyebrow">NEXT ACTION</span>
+                <h2 id="commands-heading">Commands</h2>
               </div>
+              <span id="command-count" class="count">0</span>
             </div>
             <p class="panel-description">
-              Authored stages with time to explain the real application.
+              Actions available in the observed state.
             </p>
-            <div id="presentations" class="recipe-list"></div>
-          </section>
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">NEXT ACTION</span>
-              <h2>Commands</h2>
+            <div id="commands" class="command-list"></div>
+            <div class="recipes-heading">
+              <h2>Recipes</h2>
+              <span class="subtle">Authored paths</span>
             </div>
-            <span id="command-count" class="count">0</span>
+            <div id="recipes" class="recipe-list"></div>
           </div>
-          <p class="panel-description">
-            Actions available in the observed state.
-          </p>
-          <div id="commands" class="command-list"></div>
-          <div class="recipes-heading">
-            <h2>Recipes</h2>
-            <span class="subtle">Authored paths</span>
-          </div>
-          <div id="recipes" class="recipe-list"></div>
         </aside>
         <section class="execution-panel" aria-labelledby="execution-heading">
-          <section
-            id="presentation-panel"
-            class="presentation-panel"
-            aria-labelledby="presentation-title"
-            hidden
-          >
-            <div class="presentation-top">
-              <div>
-                <span class="eyebrow">PRESENTATION</span>
-                <h2 id="presentation-title"></h2>
-              </div>
-              <span id="presentation-phase" class="pill" role="status"></span>
-            </div>
-            <p id="presentation-progress" class="subtle"></p>
-            <progress
-              id="presentation-meter"
-              aria-label="Presentation stages"
-              max="1"
-              value="0"
-            ></progress>
-            <h3 id="presentation-stage"></h3>
-            <p id="presentation-explanation"></p>
-            <div class="presentation-pacing">
-              <p id="presentation-hold"></p>
-              <button id="advance" class="secondary" type="button">
-                Advance
-              </button>
-            </div>
-            <p id="presentation-reason" class="notice" role="status" hidden></p>
-            <p class="subtle">
-              Stage captions describe the plan; application success requires an
-              observed outcome.
-            </p>
-            <p class="subtle">
-              Stage holds use their authored duration. Execution speed affects
-              browser actions. Driver pause holds this run, independently of the
-              application's state.
-            </p>
-          </section>
           <div class="execution-top">
             <div>
               <span class="eyebrow">EXECUTION</span>
@@ -191,32 +225,38 @@
           </div>
           <div class="progress-track"><div id="progress-bar"></div></div>
           <p id="progress-label" class="subtle">Ready for a command</p>
-          <div id="active-result" class="active-result" role="status" hidden>
-            <div class="result-copy">
-              <h3>Current run</h3>
-              <p id="active-run-identity" class="result-identity"></p>
-              <p id="active-outcome-label">
-                Run in progress; final application outcome pending
-              </p>
-              <p id="finalization-detail" class="subtle" hidden></p>
-              <p class="subtle">
-                Persistence and cleanup are not final until this run finishes.
-              </p>
+          <div class="results-grid">
+            <div id="active-result" class="active-result" role="status" hidden>
+              <div class="result-copy">
+                <h3>Current run</h3>
+                <p id="active-run-identity" class="result-identity"></p>
+                <p id="active-outcome-label">
+                  Run in progress; final application outcome pending
+                </p>
+                <p id="finalization-detail" class="subtle" hidden></p>
+                <p class="subtle">
+                  Persistence and cleanup are not final until this run finishes.
+                </p>
+              </div>
+              <span class="pill outcome-pending">Pending</span>
             </div>
-            <span class="pill outcome-pending">Pending</span>
-          </div>
-          <div id="last-result" class="last-result" aria-live="polite">
-            <div class="result-icon" aria-hidden="true">↗</div>
-            <div class="result-copy">
-              <h3 id="result-heading">Application outcome</h3>
-              <p id="result-identity" class="result-identity"></p>
-              <p id="outcome-label">No action has run yet</p>
-              <p id="effect-label" class="subtle">
-                Results appear after the application is observed.
-              </p>
-              <ul id="effect-operations" class="effect-operations" hidden></ul>
+            <div id="last-result" class="last-result" aria-live="polite">
+              <div class="result-icon" aria-hidden="true">↗</div>
+              <div class="result-copy">
+                <h3 id="result-heading">Application outcome</h3>
+                <p id="result-identity" class="result-identity"></p>
+                <p id="outcome-label">No action has run yet</p>
+                <p id="effect-label" class="subtle">
+                  Results appear after the application is observed.
+                </p>
+                <ul
+                  id="effect-operations"
+                  class="effect-operations"
+                  hidden
+                ></ul>
+              </div>
+              <span id="outcome-kind" class="pill" hidden></span>
             </div>
-            <span id="outcome-kind" class="pill" hidden></span>
           </div>
           <p
             id="action-message"

@@ -224,6 +224,8 @@ export interface Snapshot {
   paused: boolean;
   speed: string;
   runId: string | null;
+  /** Descriptor-owned flow identity, retained through cleanup; no command parameters. */
+  activeRun: { command: string | null; recipe: boolean } | null;
   progress: { step: number; total: number; lastAction: string | null };
   lastResult: Result | null;
   identity: Record<string, unknown>;

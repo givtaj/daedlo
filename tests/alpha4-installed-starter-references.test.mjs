@@ -43,7 +43,12 @@ function references() {
     },
   };
 }
-for (const version of ["0.1.4-alpha.5", "0.1.4-alpha.6", "0.1.4-alpha.7"]) {
+for (const version of [
+  "0.1.4-alpha.5",
+  "0.1.4-alpha.6",
+  "0.1.4-alpha.7",
+  "0.1.4-alpha.8",
+]) {
   test(`${version} runs both installed references and retains their receipts`, async () => {
     const fixture = references();
     const result = { version };
@@ -80,6 +85,23 @@ test("historical alpha.4 keeps its existing starter-only acceptance", async () =
   await runInstalledStarterReferences(result, options, fixture.runners);
   assert.deepEqual(fixture.calls, []);
   assert.deepEqual(result, { version: "0.1.4-alpha.4" });
+});
+
+test("alpha.8 cannot skip a failed installed evidence reference", async () => {
+  const fixture = references();
+  fixture.evidence.status = "FAIL";
+  const result = { version: "0.1.4-alpha.8" };
+  await assert.rejects(
+    runInstalledStarterReferences(result, options, fixture.runners),
+    {
+      code: "ERR_ASSERTION",
+    },
+  );
+  assert.deepEqual(
+    fixture.calls.map((call) => call.reference),
+    ["evidence"],
+  );
+  assert.equal(result.managedReference, undefined);
 });
 
 for (const [name, alter] of [

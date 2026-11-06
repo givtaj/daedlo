@@ -112,6 +112,7 @@ export async function createDriverSession({
     speed = "normal",
     execution = "idle",
     runId = null,
+    activeRun = null,
     lastResult = null,
     active = null,
     finalization = null,
@@ -204,6 +205,7 @@ export async function createDriverSession({
     paused,
     speed,
     runId,
+    activeRun: activeRun ? { ...activeRun } : null,
     progress: { ...progress },
     finalization: structuredClone(finalization),
     presentations: presentationCatalog.map((p) => {
@@ -653,6 +655,7 @@ export async function createDriverSession({
     stopping = false;
     execution = "running";
     runId = randomUUID();
+    activeRun = { command, recipe };
     progress = { step: 0, total: 1, lastAction: null };
     emit("run_started", { command, recipe });
     const firstEvent = events.at(-1).sequence;
@@ -841,6 +844,7 @@ export async function createDriverSession({
         if (completedRuns.size > 16)
           completedRuns.delete(completedRuns.keys().next().value);
         busy = false;
+        activeRun = null;
         active = null;
       }
       return structuredClone(lastResult);
