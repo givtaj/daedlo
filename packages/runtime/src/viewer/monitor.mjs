@@ -92,18 +92,47 @@ function displayResult(result) {
 
 // Render ownership from one snapshot. A command response can arrive after a
 // different client starts the next run, so it must not replace this view.
+function currentFinalization(driver) {
+  const finalization = driver.finalization;
+  return driver.busy &&
+    driver.runId &&
+    finalization?.runId === driver.runId &&
+    ["effect_evidence", "run_cleanup"].includes(finalization.phase) &&
+    ["pending", "stalled"].includes(finalization.status)
+    ? finalization
+    : null;
+}
+
 function renderResults(driver) {
   const result = driver.lastResult;
   const active = Boolean(driver.busy);
   const sameRun = Boolean(driver.runId && result?.runId === driver.runId);
+  const finalization = currentFinalization(driver);
   $("active-result").hidden = !active;
   $("active-result").dataset.runId = driver.runId || "";
   $("active-run-identity").textContent = driver.runId
     ? `Run ${text(driver.runId)}`
     : "Run identity unavailable";
-  $("active-outcome-label").textContent = sameRun
-    ? "Finalizing this run; final application outcome pending"
-    : "Run in progress; final application outcome pending";
+  $("active-outcome-label").textContent = finalization
+    ? `${finalization.phase === "effect_evidence" ? "Waiting for effect evidence" : "Waiting for run cleanup"}; final application outcome pending`
+    : sameRun
+      ? "Finalizing this run; final application outcome pending"
+      : "Run in progress; final application outcome pending";
+  const detail = $("finalization-detail");
+  detail.hidden = !finalization;
+  detail.classList.toggle("stalled", finalization?.status === "stalled");
+  detail.textContent = finalization
+    ? [
+        finalization.status === "stalled"
+          ? "Taking longer than expected. This run remains active; no new action can start."
+          : "This run stays active until evidence and cleanup finish.",
+        finalization.stopRequested
+          ? "Stop requested; waiting for this work to settle. Completed writes are not undone."
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : "";
 
   // lastResult can already refer to this run while endRun is still pending.
   // Wait for finalization, including cleanup, before presenting its final result.
@@ -678,13 +707,15 @@ function render(snapshot) {
       value,
     })),
   );
-  $("execution-state").textContent = driver.paused
-    ? "Driver paused"
-    : title(
-        typeof driver.execution === "object"
-          ? driver.execution.status
-          : driver.execution || "idle",
-      );
+  $("execution-state").textContent = currentFinalization(driver)
+    ? "Finalizing"
+    : driver.paused
+      ? "Driver paused"
+      : title(
+          typeof driver.execution === "object"
+            ? driver.execution.status
+            : driver.execution || "idle",
+        );
   $("run-id").textContent = driver.runId ? `Run ${text(driver.runId)}` : "";
   $("speed").value = driver.speed || "normal";
   const progress = driver.progress;

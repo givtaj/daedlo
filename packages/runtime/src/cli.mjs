@@ -230,12 +230,23 @@ async function main() {
       // Seal new commands and await the active run, including endRun. Share the
       // promise with the resource scope so failures are retried only on the next
       // shutdown attempt, never twice during this attempt.
-      if (session) await closeSession().catch(() => {});
       let cleanupError;
-      try {
-        await resources.close();
-      } catch (error) {
-        cleanupError = error;
+      if (session) {
+        try {
+          await closeSession();
+        } catch (error) {
+          // A bounded wait can expire while the original run or close hook
+          // still needs its browser and fixture. Retain those dependencies as
+          // well as the session; retry only after an explicit later signal.
+          if (error?.cleanupPending === true) cleanupError = error;
+        }
+      }
+      if (!cleanupError) {
+        try {
+          await resources.close();
+        } catch (error) {
+          cleanupError = error;
+        }
       }
       try {
         if (opt.report && session)

@@ -1,5 +1,68 @@
 # Verification record
 
+## PR #22 reconciliation and exact-installed verification — 2026-11-06
+
+**PASS — local integration and exact-installed conformance on macOS arm64.**
+[PR #22](https://github.com/givtaj/daedlo/pull/22)'s authoritative head
+`d4defb6e1e1f68853a06f4b62e8f01c7bc225886` was merged with main
+`04de789c2c83aba1717a21d950ef7570495107a0`, producing clean package source
+`0386f517c34c8fbdfa98f3df7e9d9332b1cc8019`. The two textual conflicts were in
+plan/verification histories; both sides were preserved, newest delivery first.
+The original regression-first records below remain the evidence for #22's
+behavioral changes. Reconciliation required no additional runtime behavior fix.
+
+The package contains #22's pending/stalled effect-evidence and run-cleanup
+states, cooperative Stop, bounded close and retained dependency ownership,
+while retaining alpha.7's truthful native observation and guarded recovery.
+CI runs on unfiltered pull requests, main pushes and manual dispatch; topic
+push duplication is removed without changing either Node job or its gates.
+
+| Check | Actual result |
+| --- | --- |
+| Source quality | PASS: syntax/source, TypeScript declarations, formatting and public metadata |
+| Shared runtime | PASS: 181 tests, zero failed/cancelled/skipped/todo |
+| Release and alpha contracts | PASS: 538 tests, including native/Ninja recovery and installed-harness provenance contracts; zero failed/cancelled/skipped/todo |
+| Repository safeguards | PASS: 36 metadata/guardrail checks, including CI trigger coverage |
+| Rust | PASS: locked/offline workspace build, fmt, clippy with warnings denied and 26 tests; one subprocess helper intentionally ignored directly and exercised by its parent |
+| Source browser | PASS: eight notebook groups; motion, controls, CLI, viewer, authorization/cleanup/finalization and Ninja UI; archive and published-configuration checks also pass |
+| Clean engineering package | PASS: immutable runtime/crate bundle, complete tools archive and local kit built with dirty-source rejection |
+| Exact installed safety | PASS: 112 assertions in 14 groups, public ESM consumer resolution, original/copied check digests, expected counts and zero skips; installed files remain unchanged |
+| Exact installed native | PASS: startup TAP 1/1 with 13 assertions; observation TAP 2/2 with five recovery assertions; selected tools/runtime/engine paths and compiled-engine digest match |
+| Exact installed references | PASS: starter 16 browser groups, evidence reference nine checks and managed reference eight checks, including real dependency installation/hooks |
+| Presentation and ownership | PASS: inspected installed stalled/close-pending desktop/narrow screenshots and native failed/recovered observation screens; both installed consumers report cleanup PASS, attached application preservation checked |
+
+Measured toolchains were Node 22.20.0, Rust 1.96.0 and Chromium 151.0.7922.34.
+Independent runtime/ownership and installed-harness reviews found no blocking
+regression in the reconciled source. Hosted current-head results and merge
+identity belong to the PR's checks and merge record; local passes do not substitute
+for those gates or customer acceptance.
+
+Exact local artifact identities:
+
+- Source tree SHA-256: `ecd0233ff9296511eb6b2cca1ce34babbe9f0d65d3d958f05a5551340d10119e`.
+- Bundle manifest SHA-256: `713976233b4b920d842b378bfeb3b6616e5ff0638c8e49060ba20f62398251a0`.
+- Runtime archive SHA-256: `9cb34711a6ad49d5d395f734ef1c1aaaabb3b5ce17cb59e9f54e3bb3cbec72c9`.
+- Engine crate SHA-256: `3aac47987cedfffba49e98c4c5bf7a73d9e3c18f4ed4a93da5edff021c2ee312`.
+- Tools archive SHA-256: `c0cf6fa9bf9850617f861250c6034e043db852d9de810a4124a48d28ebf281b7`.
+- Local kit SHA-256: `fa4ea5ec6f109f4819c984fa07cdf1a4db34c63cf94c38d7b31a9d40fc559539`.
+
+These unpublished engineering artifacts retain source version `0.1.4-alpha.7`;
+they differ from the public alpha.7 bytes and do not replace that release.
+The later record-only commit changes no executable or acceptance-harness bytes.
+Private local receipts retain package inventories, browser images, process cleanup
+and a launcher syntax failure that occurred before any package build or browser
+execution; the corrected launcher produced the separate passing receipts above.
+
+The preserved primary checkout, old recovery material and other tasks' worktrees,
+installed versions and live sessions were not used as candidates. Source and
+receipt preservation remains local; no off-host backup claim is made. Customer
+acceptance remains open in [#25](https://github.com/givtaj/daedlo/issues/25), with
+release publication, public visibility and everyday Roots promotion separate.
+The primary preservation comparison retained unchanged HEAD, index, Git status
+and 305 of 306 tracked/untracked file contents and modes. Its installation owner
+concurrently added the separate durable-alpha.7 verification record to the remaining
+file, `docs/verification.md`; that owner's update was left intact.
+
 ## Alpha.7 production delivery — 2026-11-05
 
 **PASS — merged source, immutable publication and actual public HTTPS acceptance.**
@@ -241,6 +304,221 @@ durability, complete exact-installed candidate acceptance, Node 24/remote CI,
 merge, publication and deployment were **NOT RUN** at this source checkpoint.
 The published alpha.6 installation is unchanged, and replacing tools does not hot-reload an
 already running customer adapter.
+## PR #22 review and installed safety replay — 2026-10-30
+
+**PASS — independent source review and local exact-installed engineering checks.**
+Reviewed [PR #22](https://github.com/givtaj/daedlo/pull/22) at
+`19f9caeca5aa6d50e45e6bd4cc9c9ebcdab65b50` against `16d050c8`. No blocking
+runtime, ownership, public-type or CI-trigger finding remained. This is a local
+review, not a submitted GitHub approval. Current PR metadata still shows it open
+at that head; no review threads or submitted reviews were present. Hosted run
+`40933635218` remains the old account-blocked result; no CI rerun was attempted.
+
+The isolated checkout now uses local branch `codex/installed-package-safety`,
+based directly on #22, with the earlier November planning sections preserved.
+No merge, push, publication, version/dependency change or Roots promotion occurred.
+The harness/test implementation and retained planning were frozen at clean source
+`d8bc681b183e02943940099264f71a2a9bd94e71`. This later verification update changes
+only planning/evidence; the tested executable source and harness remain identical.
+
+### Regression and repair
+
+Before repair, three meaningful harness assertions failed: required safety suites
+were omitted, skipping a new suite could still leave acceptance passing, and public
+package exports could resolve another runtime entry without detection. The new
+`tests/release-installed-controls.test.mjs` records those requirements. Review
+then exposed an ESM/require resolver mismatch in the initial patch; an explicit
+conditional-exports assertion failed before switching to Node ESM resolution from
+the actual consumer. A further omitted-resource-suite assertion failed before
+adding failed-setup propagation coverage. These were harness assertion failures,
+not reproduced browser defects. Original failing logs are retained privately at
+`artifacts/installed-safety/{harness-before,esm-resolution-before,setup-coverage-before}.tap`.
+
+The existing `runInstalledControls` now replays A1 authorization, both A2 result
+attribution suites, A3 unit/Chromium cleanup, and #22 stalled hooks, CLI/nested
+ownership, failed setup and finalization UI against the installed public package.
+Behavioral assertions remain unchanged; only explicit import, fake-engine and
+installed-CLI locations are substituted. Each source/copied file and substitution
+is receipted. ESM resolution, installed entry/version/file digests and unchanged
+installed bytes are checked. Every expected case must execute and pass, with zero
+failed, skipped, cancelled or todo cases. Existing CI already invokes this harness
+and includes the new release-contract test; no CI job body was removed or weakened.
+Independent rereview confirmed both review findings were resolved.
+
+### Measured checks and artifact boundary
+
+Environment: macOS arm64, Node 22.20.0, Rust 1.96.0, Playwright 1.62.1;
+installed native acceptance measured Chromium `151.0.7922.34`. This is a warm
+machine with disposable integration directories, not a fresh-machine claim.
+
+| Check | Actual result / private receipt under `artifacts/installed-safety/` |
+| --- | --- |
+| Source syntax, strict declarations and formatting | PASS, `source-check.log` |
+| Focused source safety suites | PASS, 68 cases across authorization, attribution, cleanup, stalled/CLI/scoped finalization and resource setup; source TAP logs and `release-contracts.tap` |
+| Acceptance/provenance contracts, including four new harness tests | PASS, 16; `release-contracts.tap` also contains the five source resource cases, 21 total |
+| Locked/offline Rust build and tests | PASS, 26 tests; one subprocess helper intentionally ignored directly and exercised by its parent; `rust-tests.log` |
+| Clean bundle, portable tools and local public-kit construction | PASS, `build.json`, `bundle/`, `tools/`, `kit/`; `allowDirty:false` |
+| Exact installed safety replay | PASS, 112 cases in 14 groups: existing CLI/publication 44, A1 23, A2 2, A3 20, #22 finalization/ownership 23; `acceptance/installed-controls/results.json` |
+| Exact installed independent fixture and viewer | PASS, eight notebook groups, frontend and recipe-path browser checks; `acceptance/results.json` |
+| Exact installed native startup/ownership | PASS, 13 checks; measured 69 tools and 23 runtime files; owned cleanup PASS; `acceptance/results.json` |
+| Exact shipped starter, managed reference and evidence | PASS, 16 starter browser groups, eight managed checks, nine evidence checks; owned cleanup PASS; `starter/` and `exact-installed.log` |
+| Visible installed viewer inspection | PASS for reviewed desktop stalled effect-evidence and narrow pending-cleanup screenshots; `acceptance/installed-controls/finalization-viewer/` |
+| Dirty primary preservation | PASS, same HEAD/index/status and all 306 tracked/untracked contents and modes; private preservation receipt |
+
+The local artifacts retain source version `0.1.4-alpha.6` solely for engineering
+tests. They are different bytes from public alpha.6, are not a replacement release
+and must not be distributed under its public identity. Final pilot version selection,
+current-head hosted CI and any release decision remain open. Recorded digests:
+
+- Source inventory: `b36577030cdfb456dae12ea4d5fe580034cb813d4dca45231440604cc2c7fd00`.
+- Manifest: `63720cb689b5815e93d8914c36a3717870f77709f4686f22f5ce647def6a8d35`.
+- Runtime archive: `533765e8865c3b4aba8865a71de5a6edbebd5556e08c077b5baf2936cc5e05d7`.
+- Shared crate: `e4376f2e8de86b88c3112e902f74457cb0a7d19b397258af9c8873b5d5b865fb`.
+- Tools archive: `5cb4df47045ef9de3e65defc13c0aefd864bf27697bc05d739010c11f832244a`.
+- Measured runtime build: `ceefb3994ce6773c18f45cf26d3bc12744af072822cb819504f2c680824cf0d6`.
+
+Full local receipts retain compiled model/engine, package and actual browser
+identities and per-group logs. They contain only disposable conformance fixtures,
+not WBF source or business data. WBF site/flow permission, selected positive/negative
+rehearsal and both participant sessions remain BLOCKED/NOT RUN. No customer acceptance,
+new managed upgrade/rollback drill or complete package-release gate is established.
+
+## November pilot current-state reconciliation — 2026-10-30
+
+**PASS — read-only reconciliation and planning preparation, not product or user
+acceptance.** The [first-week checklist](plan.md#november-1-7-pilot-checklist--prepared-2026-10-30)
+owns the work queue. This section records the evidence boundary without replacing
+the historical records below or any existing WBF acceptance ledger.
+
+The monthly focus was checked against the owner's October 30 agreed review and
+project/account/CI handoff records. Private page/chat references stay out of shared
+artifacts; the repository PRs, runs and source paths below identify technical evidence.
+Aidin nominated a QA teammate from WBF to review QA of WBF websites. No external
+session, outreach, private application access or application fault scenario was
+performed or inferred. Exact website/flow, environment, data permission and dates
+remain unconfirmed. Existing WBF integration/model/records must be inspected and
+reused where available; prior feedback does not prove installation or acceptance.
+
+| Evidence boundary | Status | Actual October 30 observation / limitation |
+| --- | --- | --- |
+| Canonical source | PASS | GitHub `main` is `16d050c8b4965ecd7e2acd52bf8d052b911866c4`; tree `ea9b59c73d0106b27e3964e5329cfd9e5e9a70de`. #19/#20/#21 are merged, with merge commits `284d6d8`, `fa51fdf` and `16d050c8`. No new merge performed. |
+| Historical combined CI | PASS, historical | [PR run 40882393846](https://github.com/givtaj/daedlo/actions/runs/40882393846) and [push run 40882385093](https://github.com/givtaj/daedlo/actions/runs/40882385093) still show success at `6a8f979829d1082474ef94d96c9494e9e028bc67`. Local Git confirms its tree equals current main. This is not a successful run on the main commit itself. |
+| Current main CI | BLOCKED | [Run 40884518820](https://github.com/givtaj/daedlo/actions/runs/40884518820), attempt 1, is marked failure. All three current check annotations say the job was not started because of account payments/spending limits. These are unavailable test results, not exercised assertion failures. |
+| #22 source/review | PASS for implementation identity; NOT RUN for formal review | [PR #22](https://github.com/givtaj/daedlo/pull/22) remains open, mergeable, at `19f9caeca5aa6d50e45e6bd4cc9c9ebcdab65b50`, based on current main; no submitted PR reviews. A bounded read-only source/harness review found no additional demonstrated runtime defect; this does not replace independent current-head review. |
+| #22 hosted CI | BLOCKED | [Run 40933635218](https://github.com/givtaj/daedlo/actions/runs/40933635218) still shows all three jobs marked failure with no test steps. Current annotations confirm the same account gate prevented start. No rerun or billing change made. |
+| Actions renewal | NOT RUN for renewed availability | The Oct 29 account review reported included compute renewal Nov 1 at 01:00 Europe/Madrid. This date is historical account evidence, not proof future jobs will start; recheck after that time. |
+| #22 local checks | PASS, historical source only | PR body and its branch's dated verification record report 181 runtime tests, 55 browser TAP tests, 26 Rust tests, eight notebook groups and 63 owner/guard contracts, plus source/lint/metadata checks. No product checks rerun in this planning task; no installed-kit or WBF acceptance inferred. |
+| Public installer | PASS for visible offered version only | Browser read of [Get started](https://daedlo.com/install) still offers `0.1.4-alpha.6` for macOS arm64/Codex and lists ZIP digest `536476e8a3f160d58b269873ffb6da55820e804357a95aa0f4358c9d5a515123`. No ZIP downloaded or bytes reverified here. [Alpha.6 record](alpha-release.md) identifies source `9f1210053c09ead91e0e71c3b3423c560a818ca1`, predating #19–#22. |
+| Installed safety-suite replay (F2) | BLOCKED — confirmed static gap; replay NOT RUN | At reviewed #22, `tests/installed-controls-acceptance.mjs` copies older CLI/finalization/control suites; `tests/release-acceptance.mjs` adds frontend/recipe-paths browser checks. A1-specific, A2, A3 and new stalled-hook suites are not all replayed against installed bytes. `viewer-finalization-browser.mjs` directly imports source. No new runtime failure or failing executable assertion is claimed; the plan requires a regression before the proposed harness fix. |
+| Source safety-suite registration | PASS — static inspection | CI explicitly runs A1/A3, and `viewer-presentation-browser.mjs` imports the finalization browser suite, reached by `test:viewer`. #22 retains all job bodies while restricting duplicate triggers. Static inspection does not establish hosted execution. |
+| Candidate packaging/lifecycle (P) | NOT RUN | No candidate version chosen, bundle built, package installed, browser flow exercised or new UI presentation verified. Exact runtime/tools/crate/model/browser receipts and lifecycle rehearsals remain required. |
+| WBF participant gate (U) | BLOCKED | Participant context nominated; availability, macOS arm64/Codex, website/flow/negative case, authorized disposable environment and first/repeat dates outstanding. Every unobserved participant result remains NOT RUN. |
+
+The required pilot kit includes #19 control authorization, #20 run attribution,
+#21 retryable viewer cleanup and #22 stalled finalization/ownership. A successful
+future source run or immutable build alone does not complete the package gate.
+Linux CI does not establish macOS package acceptance or a fresh-machine claim.
+
+### Participant observations to retain in WBF's designated private record
+
+This is a record schema, not a second WBF results ledger. Owner is the WBF QA
+participant with Codex observing; every row depends on the confirmed scope and
+technically verified package. Evidence/source is the actual session observation,
+canonical reports and WBF's independent assertions. Fill the corresponding private
+record after observation; share only a sanitized gate summary here.
+
+| Observation | Status | Verification / finish condition |
+| --- | --- | --- |
+| First session and time to useful result | NOT RUN | Actual start/end and milestone times, time to independently verified flow after reload, exact installed environment/package combination. |
+| Dependencies, permissions and assistance | NOT RUN | Every setup problem, agent/human intervention, changed instruction and confusion recorded with elapsed time and resolution/blocker. |
+| Positive business result | NOT RUN | Correct execution/outcome and operation-specific independent persistence/readback after reload; unavailable proof remains uncertain. |
+| Safe negative case | NOT RUN | Agreed rejection plus independent no-write assertion; no unagreed application fault injection. |
+| Evidence and cleanup | NOT RUN | Participant finds/understands useful current-run report, distinguishes previous/pending evidence, reads durable archive and truncation; owned cleanup verified and attached resources preserved or incomplete handles retained. |
+| Later-day repeat and handoff | NOT RUN | Actual later date, reconnect without replay, intended repeat, duplicate rules, retained prior evidence and another chat resuming from the handoff verified. |
+| Usefulness/reuse and decision | NOT RUN | Participant's own trust/usefulness assessment and intended reuse; Aidin's week-one decision linked to observed results or exact unmet gates. |
+
+Preparation used an isolated owned clone on `codex/november-week-one`, based on
+the verified main commit, at
+`/Users/aidin/.codex/worktrees/november-week-one/daedlo`. It does not share the
+primary checkout's index. The primary remains at `7e3e48dd`, 82 commits behind
+verified main, with its dirty work preserved. Existing worktrees and all Roots
+installations/services/sessions were left alone. Current onboarding source uses
+`skills/daedlo/SKILL.md`; the primary's `skills/browser-driver/SKILL.md` is older.
+Both instruction versions were read; no old kit or customized skill was rewritten.
+
+Planning validation: **PASS** for final public-metadata scan, whitespace, new local
+link targets and preservation of every prior plan/verification section. An initial
+metadata check rejected private chat links; those references were removed before
+the passing scan. Independent plan review corrected unsupported WBF installation
+assumptions and the rehearsal dependency. Primary preservation: **PASS**, same
+HEAD, index, Git status and all 306 tracked/untracked file contents and modes.
+No runtime, Rust, browser, installed-kit or participant tests were rerun.
+
+## CI efficiency and stalled finalization — 2026-10-29
+
+**PASS — isolated source, lifecycle and browser verification.** Work started from
+merged main `16d050c8b4965ecd7e2acd52bf8d052b911866c4` in the separate
+`codex/ci-stalled-hooks` worktree. The dirty primary checkout and everyday Roots
+resources were not used as fixtures or edited. The released alpha.6 kit is unchanged.
+
+Full CI now runs on pull requests, main pushes and manual dispatch. Permissions,
+concurrency, Node 22/24 jobs and all check bodies remain unchanged. A genuine
+trigger-policy assertion failed before the workflow edit; the existing repository
+guardrails suite passed 16/16 afterward. Hosted event execution was not run.
+
+The runtime and viewer distinguish pending effect evidence from pending run
+cleanup. The default five-second threshold marks a hook stalled without finishing
+its run. Stop/close supplies cooperative cancellation context, and a bounded
+close wait rejects with `cleanup_incomplete` plus `cleanupPending:true` while
+retaining the original work for retry. CLI and nested resource owners preserve
+earlier browser/fixture dependencies. See the
+[implemented contract](contracts.md#pending-finalization-and-bounded-close).
+
+Regression-first evidence, retained under ignored `artifacts/ci-stalled-hooks/`:
+
+- Runtime baseline: **7 failing assertions / 2 passes**. Missing phase/signal
+  reporting and unbounded close were actual assertions, not setup failures.
+- Viewer baseline: the real Chromium UI displayed Completed while current-run
+  cleanup was pending; the expected Finalizing assertion failed.
+- CLI baseline: **2 failing assertions** showed owned browser teardown while
+  evidence or run cleanup remained pending. Additional adapter-close coverage
+  verifies dependency retention when finalization itself is null.
+- Outer-scope baseline: **3 failing assertions / 2 existing passes** exposed
+  teardown through direct/nested ownership and a missing pending-error barrier.
+  Review then found setup error wrapping dropped that barrier; a separate
+  pending-setup assertion failed before its repair while settled cleanup passed.
+
+Final measured checks on macOS arm64, Node 22.20.0, Rust 1.96.0 and locked
+Playwright 1.62.1:
+
+| Check | Result | Local receipt |
+| --- | --- | --- |
+| Source syntax, strict declarations and formatting | PASS | `runtime/source-final.log` |
+| Runtime regressions, including CLI and nested ownership | PASS, 181/181 | `runtime/runtime-final.tap` |
+| Full affected Chromium groups | PASS, 55 TAP tests including wrappers | `runtime/browser-final.tap` |
+| Independent notebook acceptance | PASS, 8/8 groups; all four owned resources closed | `runtime/notebook.log`, `artifacts/notebook/results.json` |
+| Rust workspace contracts | PASS, 26; one subprocess helper intentionally ignored directly and exercised by its parent | `runtime/rust-test.log` |
+| Rust build, formatting and Clippy with warnings denied | PASS | `runtime/rust-build.log`, `runtime/rust-format.log`, `runtime/rust-clippy.log` |
+| Native/managed owner contracts, repository guards and public-metadata regressions | PASS, 63/63 | `runtime/owner-contracts.tap` |
+| Current-tree public metadata and diff whitespace | PASS | `runtime/public-metadata.log` |
+| Dirty primary checkout preservation | PASS, same HEAD/status and all 306 tracked/untracked contents and modes | `preservation.json` |
+
+Real-browser tests cover both finalization phases, stalled/Stop disclosure,
+continued viewer polling after close expiry, absence of a completed report while
+pending, rejection of overlapping commands, and late settlement followed by an
+explicit successful close retry. Each case retains one real save and one hook
+invocation. Attached browser/page resources survive session close and are closed
+only by the owning test. Desktop and 390px screenshots were inspected; evidence
+and cleanup receipts are under `viewer/` in the same ignored artifact directory.
+CLI signal tests use the actual launcher/session/protocol/resource-scope code with
+controlled browser/viewer boundaries; those tests are distinct from Chromium
+acceptance. Independent reviews found and closed both ownership propagation gaps.
+
+This does not establish customer application acceptance, installed-kit acceptance,
+hosted CI or a new release. No package versions, dependency pins or lockfiles
+changed. Ordinary observation/handler waits retain their previous semantics. A
+hook that never settles keeps its run and owned dependencies pending; elapsed
+waiting is never reported as cancellation, persistence proof or successful cleanup.
 
 ## Combined A1, A2 and A3 acceptance — 2026-10-29
 

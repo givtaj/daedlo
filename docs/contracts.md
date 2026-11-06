@@ -188,6 +188,58 @@ intent and never replays a command.
 
 Resource registry tracks explicit owned/attached handles; cleanup reverses acquisition, preserves attached resources, records failed cleanup and supports retry. Replacement processes must be registered before removing prior ownership records. No global process/container killing.
 
+### Pending finalization and bounded close
+
+`effectStatus` and `endRun` receive `{runId,command,recipe,signal}`. The runtime
+always supplies the context and `AbortSignal`; their TypeScript additions remain
+optional for legacy direct hook callers. Existing adapters that ignore these
+arguments continue to work. Stop and close abort the signal as a cooperative
+request. An aborted signal does not prove that evidence collection or cleanup
+finished, and does not undo a dispatched write. An `endRun` hook must still clean
+its owned resources or retain their handles and reject; it must not treat the
+signal alone as successful cleanup.
+
+Snapshots and current session reports add `finalization:null` or
+`{runId,phase,status,stopRequested}`. Phases are `effect_evidence` and
+`run_cleanup`. Status starts as `pending` and becomes `stalled` after
+`createDriverSession({finalizationWaitMs})` (default 5000 ms, integer 1–60000).
+This is a display threshold, not an operation deadline. The viewer shows
+Finalizing and the pending phase, including a Stop request and a longer wait.
+The fields are optional in public types so older custom session facades remain
+compatible. Ordinary observation and application-action waits do not acquire new
+timeouts or this finalization state.
+
+The original run remains busy until each original hook settles. New commands are
+refused, no completed-run report is published, and Stop does not fabricate an
+outcome or persistence status. Late settlement continues that same run exactly
+once; throwing effect evidence remains uncertain and throwing `endRun` retains
+the existing cleanup-failure result. Stop during effect evidence retains collected
+evidence with stopped execution. Stop during `endRun` does not rewrite the
+already observed application result; cleanup must finish before publication.
+Completed reports remain immutable. Bounded public `finalization_pending`,
+`finalization_stalled` and `finalization_settled` events identify only the phase.
+
+`session.close({timeoutMs})` bounds a caller's total wait (default 5000 ms,
+integer 1–60000). Concurrent callers share one close attempt and its budget.
+Expiry rejects with a sanitized `DriverError` having
+`code:"cleanup_incomplete"` and `cleanupPending:true`. It seals new commands but
+retains the active run or original pending cleanup promise. It does not invoke
+adapter close while an active run is unresolved, start the same pending cleanup
+twice, or abandon the engine and resource handles. Retain the session and retry
+`close()` explicitly after the work can settle. A hook that ignores cancellation
+and never settles continues to block complete cleanup; no forced completion is
+claimed. Settled cleanup failures can still be retried, and successful cleanup
+steps are not repeated.
+
+An owning resource scope propagates `cleanupPending:true` through its aggregate
+error and pauses reverse cleanup at that handle, including setup failures. Earlier acquisitions
+remain owned because pending work may depend on them; attached resources remain
+untouched. Ordinary settled cleanup failures still permit independent cleanup
+and retain their failed handles. The CLI keeps its browser, fixture and viewer
+alive after a pending close, writes the pending report when requested, and retains
+explicit signal retry. The managed runner uses the same scope rule. Callers must
+preserve this dependency boundary when nesting their own cleanup owners.
+
 `session.report()` returns a detached current session view with `format:"browser-driver-report/1"`, `identity`, `runId`, `lastResult`, the latest 200 session `events`, `resources`, and `completedRunIds`. During an active run, `lastResult` remains the prior result until the new result is available. The session view changes as work proceeds; it is not a frozen record of one run.
 
 Optional session `presentations` decorates an existing command or canonical recipe
