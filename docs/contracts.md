@@ -117,7 +117,14 @@ controlled page. The decoration survives that page's reload
 while the session is open; close removes its own overlay and reload listener.
 These visuals do not authorize actions or establish application outcomes.
 
-Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runRecipe(id,revision)`; compatibility `command({id,params,revision,recipe})`; `pause()`, `resume()`, `stop()`, `setSpeed("slow"|"normal"|"fast")`, `report()`, `report({runId})`, `close()`. Snapshot includes `connected,descriptor,state,revision,commands,recipes,display,execution,busy,paused,speed,runId,progress,lastResult,identity`. Result separates `execution` (`completed|rejected|failed|stopped`) from `outcome` and `effect`. It also contains the descriptor command or recipe ID in `command`, a boolean `recipe`, and ISO `startedAt`/`finishedAt` timestamps. Unknown requested IDs are recorded as `command:null`; arbitrary identifiers, parameters and facts are not copied into these result fields. Only an active run receives a `runId`. `ok:true` or `execution:"completed"` alone does not establish a successful application outcome or persistence.
+Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runRecipe(id,revision)`; compatibility `command({id,params,revision,recipe})`; `pause()`, `resume()`, `stop()`, `setSpeed("slow"|"normal"|"fast")`, `report()`, `report({runId})`, `close()`. Snapshot includes `connected,descriptor,state,revision,commands,recipes,display,execution,busy,paused,speed,runId,activeRun,progress,lastResult,identity`. Result separates `execution` (`completed|rejected|failed|stopped`) from `outcome` and `effect`. It also contains the descriptor command or recipe ID in `command`, a boolean `recipe`, and ISO `startedAt`/`finishedAt` timestamps. Unknown requested IDs are recorded as `command:null`; arbitrary identifiers, parameters and facts are not copied into these result fields. Only an active run receives a `runId`. `ok:true` or `execution:"completed"` alone does not establish a successful application outcome or persistence.
+
+`activeRun` is a detached `{command,recipe}` identity while a run is busy,
+including startup and final cleanup, or `null` otherwise. `command` is a declared
+command/recipe ID (or `null` for an unknown request); it contains no parameters.
+This lets a viewer joining an existing run display the authored flow without
+inferring identity from a local click or a previous result. Progress and the final
+result remain separate; an active identity does not establish execution success.
 
 Every `snapshot()` / `observe()` attempts a fresh read. Observation failure returns
 `connected:false`, no state/revision or enabled commands, and a sanitized error;

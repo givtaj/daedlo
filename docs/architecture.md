@@ -85,6 +85,26 @@ descriptors. Public wire IDs are explicit, never derived from Rust Debug strings
 Declaring a planned state does not make it implemented or reachable. Unknown
 facts, unsupported states and missing handlers must remain explicit failures.
 
+## Live workspace grid
+
+The desktop workspace gives the controlled application the largest panel, with
+the state hierarchy on the left, the active authored flow on the right and
+execution controls and results below. Session metadata is collapsed by default;
+target/model mismatch warnings remain visible outside that disclosure. Commands,
+flow steps and long results scroll within their own areas so a large catalog does
+not push the application or run controls below the viewport. Narrow screens stack
+these regions.
+
+The active flow comes from the session's descriptor-owned `activeRun` identity and
+observed progress, including after reload or when another client started it. Step
+labels are a projection of the canonical recipe, not a second transition graph.
+Finishing a step does not establish successful application persistence. Current
+pending results and attributed previous results remain separate.
+
+Disconnected status marks the image as the last captured frame and the state as
+last observed. An image-stream failure is displayed independently of driver
+connection status. Reconnection never replays application commands.
+
 ## One command
 
 1. Observe the existing page/session without changing it.

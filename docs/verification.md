@@ -1,5 +1,134 @@
 # Verification record
 
+## Alpha.8 grid integration and acceptance-gate preparation — 2026-11-06
+
+The owner authorized merging the grid and preparing alpha.8 while keeping the
+verified alpha.7 installation intact. Grid commits `714e856` and `7ab5717` are
+integrated with PR #22's finalization/ownership changes and PR #23's retained
+history documentation/audit changes. Both earlier verification histories remain.
+No public release, signed-feed promotion or default installation change follows
+from this source preparation.
+
+- A real combined-browser regression exposed active flow reporting Running while
+  effect evidence was pending. The flow now uses the same validated run/phase
+  finalization guard as the result panel. RED: one of four browser cases failed;
+  GREEN: four finalization, 17 affected runtime and 31 complete viewer cases pass.
+  Pending/stalled evidence, cleanup, cooperative Stop and prior-result attribution
+  remain explicit. Desktop and narrow screenshots were inspected.
+- All 186 shared runtime tests and 26 Rust checks pass; locked Rust build,
+  formatting and Clippy with warnings denied pass. The existing ignored
+  subprocess helper is exercised by its parent test.
+- Two new alpha.8 reference-dispatch assertions failed before extending the
+  installed gate; all 14 reference/licensing checks then pass. A separate
+  four-failure harness regression proves grid/active-run tests cannot be omitted
+  or skipped. Seven harness tests pass; exact installed acceptance now requires
+  16 groups and 136 checks, including grid 18 and active-run five.
+- Explicit alpha.8 recovery mode requires the pinned published alpha.7 baseline
+  and exact alpha.8 candidate. Eleven mode regressions failed before correction;
+  all 43 mode tests pass. The full recovery drill is a separate artifact gate.
+
+Additional local preflight passes all 554 release/alpha contract tests, 41
+metadata/repository safeguards and the public metadata scan. Syntax, types and
+formatting pass. Independent browser groups pass: notebook eight, motion four,
+controls nine, CLI ten, authorization/cleanup 18 and Ninja UI two.
+
+These are source/harness results. Exact installed alpha.8, rebuilt Roots pairing,
+update/rollback, hosted PR/main CI and artifact hashes are not inferred here;
+the release preparation receipt records those results as they are executed.
+Evidence is retained locally in `artifacts/grid-alpha8-release-2026-11-06/`.
+
+## Large-model tablet grid correction — 2026-11-06
+
+**PASS — source correction and read-only actual-Roots CSS preview.** The earlier
+candidate `714e856` passes the scoped checks below but has a newly reproduced
+layout defect at 641–920px when a large state map determines the page height.
+The sidebar stretches the body grid row, then the main flex container and its
+stacked panels absorb that height. The browser image can be thousands of pixels
+below the visible header. The original installed candidate and its earlier
+receipts remain unchanged; this record does not broaden their acceptance.
+
+- **RED before correction:** a large synthetic hierarchy reproduces the bug at
+  732, 747 and 920px; existing 390 and 1440px cases pass. At 747×888, the sidebar
+  is 18,243px tall and actual contained image pixels begin at y=2,897px.
+  Assertions measure the painted image area, not only the image element's box.
+- **Source fix:** tablet sidebar content scrolls within the viewport; stacked
+  panels use their content heights instead of inheriting the state-map height.
+  All states remain reachable. Desktop rules and mobile header behavior are
+  preserved. The tablet remains a vertically scrolling layout, with active flow
+  following results; simultaneous above-fold visibility of every panel is not
+  claimed at that width.
+- **GREEN:** all 18 grid cases and all 27 viewer Chromium tests pass, including
+  large hierarchies at 732/747/920/390/1440px, independent state/catalog scrolling,
+  image placement, no horizontal overflow, existing finalization/disconnection
+  cases, presentation, frontend isolation and result attribution. Syntax, public
+  types, formatting and `git diff --check` pass. No runtime or Rust behavior changed.
+- **Actual Roots preview, read-only:** a separate test browser loads the existing
+  installed candidate with 151 states and substitutes only the corrected CSS
+  response for that browser. At 747×888 the original browser panel is 3,501px tall
+  and image pixels start at y=1,663px. With source CSS the panel is 482px tall,
+  pixels start at y=154px, and the sidebar is bounded to 888px. Checks also pass
+  at 732/920/1280px. The 747px result was visually inspected; no preview request
+  used a method other than GET. This is rendering evidence, not a new installed
+  package or application business-flow acceptance.
+- **Review:** an independent source and screenshot review found no additional
+  layout defect. Both the original candidate dashboard and official alpha.7
+  session, package bytes, shared application API and frontend remain untouched.
+  Only the preview browser was started and closed.
+
+Evidence is under ignored `artifacts/viewer-grid-tablet-20261106/`:
+`baseline.tap`, `grid-green.log`, `viewer-final.log`, `source-checks.log`, and
+`roots-preview-CFyPOx/receipt.json` with before/after screenshots. The fixture
+baseline is `run-lKfDc0`. A new packaged candidate, installed acceptance,
+integration with later main changes and publication remain separate.
+
+## Live workspace grid candidate — 2026-11-06
+
+**PASS — isolated source implementation and synthetic browser conformance.**
+Implemented on `codex/viewer-flow-grid`, based on current main
+`04de789c2c83aba1717a21d950ef7570495107a0`, preserving the older dirty primary
+checkout and the separately managed official alpha.7 installation.
+
+The viewer collapses session details, enlarges the controlled application,
+keeps the active authored flow beside it and places controls/results in a bounded
+desktop footer. The action catalog scrolls independently. Target/model warnings
+remain visible when details are collapsed. Runtime snapshots expose only a
+detached descriptor-owned `activeRun` identity, allowing a viewer to join a flow
+started elsewhere without guessing its identity. Completed, current and upcoming
+steps follow observed progress; missing progress stays unknown. Pending cleanup
+is shown as finalization, and previous results retain their run attribution.
+
+Disconnected observations remove current-state highlighting and label the image
+as the last captured frame. Image failure is separate from driver connectivity;
+status recovery re-establishes the read-only image stream before restoring a live
+claim. No reconnect path replays application commands.
+
+| Check | Actual result |
+| --- | --- |
+| Regression-first evidence | Five runtime assertions failed before `activeRun` existed. Seven browser assertions reproduced expanded metadata, below-fold controls, absent flow details and false live-image labels. Five additional assertions reproduced premature finalization/live-recovery claims and invented progress. |
+| Source checks | PASS: JavaScript syntax, public TypeScript declarations and formatting; `git diff --check` |
+| Node runtime | PASS: 168 tests, including the five new metadata/lifecycle cases |
+| Rust | PASS: 26 tests, one existing ignored test; workspace build, formatting and Clippy with warnings denied |
+| Viewer browser suite | PASS: 22 Chromium tests, including 13 grid/disconnection/finalization/mobile cases and existing presentation, frontend isolation, recipe paths and result-attribution checks |
+| Independent application | PASS: eight real notebook browser/API groups, including save/readback, lost-response retry and no replay on reconnect |
+| Other required browser groups | PASS: four motion, nine control-boundary, ten CLI and two manager-UI tests |
+| Visual inspection | INSPECTED: 1440×900 and 1280×800 active-flow layouts, disconnected retained frame, and 390×844 stacked layout; app, controls and both result cards visible together on desktop; no sampled horizontal overflow |
+| Independent source review | PASS: canonical-plan projection, finalization, stale image/state treatment, result attribution and responsive scrolling; no remaining blocking findings |
+
+Logs, baseline failures, measured geometry and screenshots are under ignored
+`artifacts/viewer-grid-20261106/`. The final viewer screenshot set is
+`run-hMygQo`; final logs include `viewer-suite-final.log`,
+`browser-acceptance-final.log`, `runtime-tests.log` and `source-checks.log`.
+Initial Chromium/loopback sandbox failures were setup failures, and a superseded
+image-injection timeout was replaced by a genuine post-load stream-failure
+assertion; neither is counted as a failing product scenario. Only test-owned
+fixtures, browsers and viewers were started and closed.
+
+**NOT RUN / outside this candidate:** WBF or Roots business-flow acceptance,
+installed-package acceptance, release publication, ordinary dependency promotion
+and remote CI. This changes source only; official alpha.7 assets and the user's
+live application sessions are unchanged. Separate pending finalization work must
+retain its same-run, pending/stalled and stop-requested distinctions on integration.
+
 ## PR #23 private preparation integration — 2026-11-06
 
 **PASS — local preparation checks; repository remains private.**

@@ -98,6 +98,78 @@ test("viewer distinguishes pending finalization from a completed run", async () 
   }
 });
 
+test("grid flow ignores foreign and invalid finalization metadata", async () => {
+  const browser = await chromium.launch({ headless: true });
+  let viewer;
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.setContent("<h1>Synthetic flow attribution fixture</h1>");
+    const snapshot = {
+      connected: true,
+      descriptor: {
+        id: "flow-finalization-contract",
+        version: "1",
+        label: "Flow finalization contract",
+        states: [{ id: "ready", label: "Ready", support: "supported" }],
+        commands: [{ id: "save", label: "Save fixture", params: {} }],
+        recipes: [],
+      },
+      state: { id: "ready" },
+      revision: "r1",
+      commands: [{ id: "save", enabled: true }],
+      recipes: [],
+      display: [],
+      runId: "current-run",
+      activeRun: { command: "save", recipe: false },
+      progress: { step: 0, total: 1, lastAction: "save" },
+      busy: true,
+      paused: false,
+      execution: "running",
+      lastResult: {
+        runId: "previous-run",
+        command: "save",
+        recipe: false,
+        execution: "completed",
+        outcome: { kind: "success", label: "Prior save" },
+        effect: { status: "saved" },
+      },
+    };
+    viewer = await createViewer({
+      page,
+      context,
+      session: { snapshot: async () => structuredClone(snapshot) },
+    });
+    const ui = await context.newPage();
+    for (const invalid of [
+      { runId: "previous-run", phase: "effect_evidence", status: "pending" },
+      { runId: "current-run", phase: "unknown_phase", status: "pending" },
+      { runId: "current-run", phase: "effect_evidence", status: "unknown" },
+    ]) {
+      snapshot.finalization = { ...invalid, stopRequested: true };
+      await ui.goto(viewer.url);
+      await ui.waitForFunction(
+        () =>
+          document.querySelector("#flow-panel").dataset.runId === "current-run",
+      );
+      assert.equal(await ui.locator("#flow-title").innerText(), "Save fixture");
+      assert.match(await ui.locator("#flow-status").innerText(), /^Running/);
+      assert.equal(
+        await ui.locator('#flow-steps [aria-current="step"]').count(),
+        1,
+      );
+      assert.equal(
+        await ui.locator("#last-result").getAttribute("data-attribution"),
+        "previous",
+      );
+      assert.equal(await ui.locator("#finalization-detail").isVisible(), false);
+    }
+  } finally {
+    await viewer?.close();
+    await browser.close();
+  }
+});
+
 for (const phase of ["effect_evidence", "run_cleanup"]) {
   test(
     `real session shows stalled ${phase}, Stop, and late settlement without replay`,
@@ -181,6 +253,7 @@ for (const phase of ["effect_evidence", "run_cleanup"]) {
         const pending = await driver.snapshot();
         assert.equal(pending.finalization.phase, phase);
         assert.equal(pending.busy, true);
+        assert.deepEqual(pending.activeRun, { command: "save", recipe: false });
         assert.equal(driver.report({ runId }), null);
         // Reload reads the held phase immediately rather than depending on polling timing.
         await ui.reload();
@@ -199,6 +272,24 @@ for (const phase of ["effect_evidence", "run_cleanup"]) {
         assert.equal(
           await ui.locator("#execution-state").innerText(),
           "Finalizing",
+        );
+        assert.equal(
+          await ui.locator("#flow-panel").getAttribute("data-run-id"),
+          runId,
+        );
+        assert.equal(
+          await ui.locator("#flow-title").innerText(),
+          pending.descriptor.commands.find((command) => command.id === "save")
+            .label,
+        );
+        assert.match(
+          await ui.locator("#flow-status").innerText(),
+          /^Finalizing/,
+          "The authored flow must await same-run evidence and cleanup, not claim it is still running",
+        );
+        assert.equal(
+          await ui.locator('#flow-steps [aria-current="step"]').count(),
+          0,
         );
         assert.equal(await ui.locator("#last-result").isVisible(), false);
         await ui.waitForFunction(() =>
@@ -221,6 +312,14 @@ for (const phase of ["effect_evidence", "run_cleanup"]) {
           true,
         );
         assert.equal(hookCalls, 1);
+        assert.match(
+          await ui.locator("#flow-status").innerText(),
+          /^Finalizing/,
+        );
+        assert.equal(
+          await ui.locator("#flow-panel").getAttribute("data-run-id"),
+          runId,
+        );
         await ui.screenshot({
           path: join(output, "stalled-desktop.png"),
           fullPage: true,
@@ -313,7 +412,14 @@ for (const phase of ["effect_evidence", "run_cleanup"]) {
           false,
         );
         assert.equal((await driver.snapshot()).finalization, null);
+        assert.equal((await driver.snapshot()).activeRun, null);
         assert.equal(await ui.locator("#last-result").isVisible(), true);
+        assert.match(
+          await ui.locator("#flow-status").innerText(),
+          new RegExp(
+            `^${result.execution === "stopped" ? "Stopped" : "Completed"}`,
+          ),
+        );
         const completed = driver.report({ runId });
         await driver.close();
         assert.equal(browser.isConnected(), true);

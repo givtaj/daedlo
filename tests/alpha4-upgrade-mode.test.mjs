@@ -28,6 +28,11 @@ for (const [label, args, pattern] of [
     /Duplicate upgrade acceptance argument/,
   ],
   [
+    "duplicate alpha.8 flag",
+    ["--alpha8-upgrade", "--alpha8-upgrade"],
+    /Duplicate upgrade acceptance argument/,
+  ],
+  [
     "partial production run",
     ["--production-https", "--legacy-only"],
     /Production HTTPS acceptance requires the complete upgrade drill/,
@@ -162,6 +167,39 @@ for (const [label, args, baseline, candidate, pattern] of [
     "0.1.4-alpha.8",
     /Alpha.7 upgrade mode requires exactly 0.1.4-alpha.7/,
   ],
+  ...[
+    ["local candidate mode", "--local-candidate"],
+    ["alpha.6 mode", "--alpha6-upgrade"],
+    ["alpha.7 mode", "--alpha7-upgrade"],
+    ["legacy-only mode", "--legacy-only"],
+  ].map(([label, flag]) => [
+    `alpha.8 release mixed with ${label}`,
+    ["--alpha8-upgrade", flag],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.8",
+    /Alpha.8 upgrade mode cannot use local-candidate, alpha6-upgrade, alpha7-upgrade or legacy-only/,
+  ]),
+  [
+    "unreviewed alpha.8 release baseline",
+    ["--alpha8-upgrade"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.8",
+    /Alpha.8 upgrade mode requires the published alpha.7 baseline/,
+  ],
+  [
+    "unreviewed alpha.8 release candidate",
+    ["--alpha8-upgrade", "--production-https"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.9",
+    /Alpha.8 upgrade mode requires exactly 0.1.4-alpha.8/,
+  ],
+  [
+    "implicit alpha.7 baseline tools policy",
+    [],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.8",
+    /Published alpha.7 baseline requires explicit alpha.8 upgrade mode/,
+  ],
   [
     "implicit alpha.6 baseline tools policy",
     [],
@@ -252,57 +290,65 @@ for (const [label, args] of [
   });
 }
 
-test("alpha.7 pins immutable alpha.6 and requires a separately verified new tools bootstrap", async (t) => {
-  const root = await fs.mkdtemp(join(tmpdir(), "alpha7-pin-test-"));
-  t.after(() => fs.rm(root, { recursive: true, force: true }));
-  const baseline = join(root, "baseline"),
-    output = join(root, "output");
-  await fs.mkdir(baseline);
-  await fs.writeFile(
-    join(baseline, "release.json"),
-    JSON.stringify({
-      version: "0.1.4-alpha.6",
-      source: { dirty: false },
-      archive: {
-        file: "daedlo-0.1.4-alpha.6.zip",
-        sha256: "a".repeat(64),
-        bytes: 0,
-      },
-    }),
-  );
-  await fs.writeFile(join(baseline, "daedlo-0.1.4-alpha.6.zip"), "");
-  await assert.rejects(
-    execute(process.execPath, [harness, "--alpha7-upgrade"], {
-      env: {
-        ...process.env,
-        DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.6",
-        DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.7",
-        ALPHA4_LEGACY_KIT: baseline,
-        ALPHA4_LEGACY_SHA256: "a".repeat(64),
-        ALPHA4_CANDIDATE_KIT: join(root, "candidate-must-not-read"),
-        ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
-        ALPHA4_UPGRADE_OUTPUT: output,
-      },
-    }),
-  );
-  const runs = await fs.readdir(output);
-  assert.equal(runs.length, 1);
-  const receipt = JSON.parse(
-    await fs.readFile(join(output, runs[0], "result.json"), "utf8"),
-  );
-  assert.equal(receipt.status, "FAIL");
-  assert.equal(receipt.transport, "ephemeral-signed-feed");
-  assert.equal(receipt.alpha7Upgrade, true);
-  assert.equal(receipt.reusePublishedTools, false);
-  assert.equal(
-    receipt.toolsPolicy,
-    "Verify candidate tools bootstrap before upgrading the accepted installation",
-  );
-  assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
-  assert.deepEqual(receipt.checks, []);
-  assert.deepEqual(receipt.cleanup, []);
-  assert.deepEqual(await fs.readdir(join(output, runs[0], "work")), []);
-});
+for (const [version, baselineVersion] of [
+  ["7", "6"],
+  ["8", "7"],
+]) {
+  test(`alpha.${version} pins immutable alpha.${baselineVersion} and requires a separately verified new tools bootstrap`, async (t) => {
+    const root = await fs.mkdtemp(join(tmpdir(), `alpha${version}-pin-test-`));
+    t.after(() => fs.rm(root, { recursive: true, force: true }));
+    const baseline = join(root, "baseline"),
+      output = join(root, "output");
+    await fs.mkdir(baseline);
+    await fs.writeFile(
+      join(baseline, "release.json"),
+      JSON.stringify({
+        version: `0.1.4-alpha.${baselineVersion}`,
+        source: { dirty: false },
+        archive: {
+          file: `daedlo-0.1.4-alpha.${baselineVersion}.zip`,
+          sha256: "a".repeat(64),
+          bytes: 0,
+        },
+      }),
+    );
+    await fs.writeFile(
+      join(baseline, `daedlo-0.1.4-alpha.${baselineVersion}.zip`),
+      "",
+    );
+    await assert.rejects(
+      execute(process.execPath, [harness, `--alpha${version}-upgrade`], {
+        env: {
+          ...process.env,
+          DAEDLO_UPGRADE_BASELINE: `0.1.4-alpha.${baselineVersion}`,
+          DAEDLO_UPGRADE_CANDIDATE_VERSION: `0.1.4-alpha.${version}`,
+          ALPHA4_LEGACY_KIT: baseline,
+          ALPHA4_LEGACY_SHA256: "a".repeat(64),
+          ALPHA4_CANDIDATE_KIT: join(root, "candidate-must-not-read"),
+          ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
+          ALPHA4_UPGRADE_OUTPUT: output,
+        },
+      }),
+    );
+    const runs = await fs.readdir(output);
+    assert.equal(runs.length, 1);
+    const receipt = JSON.parse(
+      await fs.readFile(join(output, runs[0], "result.json"), "utf8"),
+    );
+    assert.equal(receipt.status, "FAIL");
+    assert.equal(receipt.transport, "ephemeral-signed-feed");
+    assert.equal(receipt[`alpha${version}Upgrade`], true);
+    assert.equal(receipt.reusePublishedTools, false);
+    assert.equal(
+      receipt.toolsPolicy,
+      "Verify candidate tools bootstrap before upgrading the accepted installation",
+    );
+    assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
+    assert.deepEqual(receipt.checks, []);
+    assert.deepEqual(receipt.cleanup, []);
+    assert.deepEqual(await fs.readdir(join(output, runs[0], "work")), []);
+  });
+}
 
 for (const [label, args, baseline, candidate] of [
   ["alpha.3 to alpha.4", [], "0.1.4-alpha.3", "0.1.4-alpha.4"],
@@ -326,6 +372,18 @@ for (const [label, args, baseline, candidate] of [
     ["--alpha6-upgrade", "--production-https"],
     "0.1.4-alpha.5",
     "0.1.4-alpha.6",
+  ],
+  [
+    "explicit alpha.8 tools bootstrap",
+    ["--alpha8-upgrade"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.8",
+  ],
+  [
+    "explicit alpha.8 production upgrade",
+    ["--alpha8-upgrade", "--production-https"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.8",
   ],
   [
     "explicit alpha.7 tools bootstrap",

@@ -6,11 +6,11 @@ evidence. The agent reads the application and does the integration work; the tea
 defines the intended behavior and what counts as success. Authored flows can then
 run without an AI agent or model API key.
 
-The alpha.7 kit uses the Daedlo package names, commands and skill paths below.
+The alpha.8 candidate kit uses the Daedlo package names, commands and skill paths below.
 Published alpha.3 and earlier kits retain their original `browser-driver` names;
 follow the instructions bundled with the selected version.
 
-This guide covers **0.1.4-alpha.7**, an assisted alpha for **macOS arm64 with
+This guide covers **0.1.4-alpha.8**, an assisted alpha for **macOS arm64 with
 Codex**, covering one agreed existing application flow and a relevant negative
 case. Exact package and representative-flow results belong to the selected kit's
 `release.json`; current publication status belongs in the
@@ -114,7 +114,7 @@ MCP server or registry installer. It is not included in the current runtime tarb
 ## Dependency preflight
 
 Read the selected kit's manifests before installing. The requirements below
-describe `0.1.4-alpha.7`; require its exact-package verification receipt before
+describe `0.1.4-alpha.8`; require its exact-package verification receipt before
 customer promotion. Use the selected kit and independently supplied verification
 values.
 The existing public `0.1.2-rc.1` download is a different package identity. Follow

@@ -92,10 +92,13 @@ test("viewer labels concurrent frontends and refuses a target mismatch without r
       .locator("#frontend-name")
       .filter({ hasText: "Settings portal" })
       .waitFor();
+    assert.equal(await ui.locator("#frontend-details").isVisible(), false);
+    await ui.locator("#frontend-identity > summary").click();
     assert.match(
       await ui.locator("#frontend-details").innerText(),
       /application: attached/,
     );
+    await ui.locator("#frontend-identity > summary").click();
     assert.equal(await ui.title(), "Settings portal · Daedlo");
     const out = resolve(
       process.env.FRONTEND_VIEWER_OUTPUT ?? "artifacts/alpha4-runtime/browser",

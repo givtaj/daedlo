@@ -1,4 +1,25 @@
-# Daedlo alpha delivery — 5 November 2026
+# Daedlo alpha delivery — 6 November 2026
+
+Release candidate: **0.1.4-alpha.8**. Status: **preparing; unpublished**.
+Alpha.7 remains the published release and accepted installation. This preparation
+merges the live workspace grid with the already merged finalization/ownership
+changes; it does not select a replacement installation or publish artifacts.
+
+The controlled application, authored flow and current/previous results share a
+bounded desktop layout. Large state maps scroll independently; narrow layouts
+keep the image near the header. Descriptor-owned run identity and canonical
+pending/stalled effect-evidence and cleanup states remain distinct from final
+success. Disconnection marks retained images and never replays an action.
+
+The assisted macOS arm64/Codex scope and existing model/protocol contracts remain.
+The exact runtime, crate, rebuilt customer model and adapter must pass the same
+isolated Roots save, stale refusal, keyboard flow and reload checks before any
+replacement is considered. Preserve alpha.7 files, launcher, live sessions and
+recovery evidence throughout. Actual identities and results belong in
+[verification](verification.md); public HTTPS installation and production
+promotion remain separate gates.
+
+## Historical alpha.7 delivery — 5 November 2026
 
 Release: **0.1.4-alpha.7**. Status: **published assisted alpha; production acceptance passed**.
 [Install](https://daedlo.com/install) · [Managed updates](https://daedlo.com/updates) ·

@@ -76,7 +76,7 @@ node /absolute/path/to/starter/build-model.mjs \
 
 The builder copies the model into that output, rewrites only the shared crate path
 in the copy, and creates a separate Cargo lockfile/target tree. The example pins
-`daedlo-engine = 0.1.4-alpha.7`; an incompatible selected crate fails rather than
+`daedlo-engine = 0.1.4-alpha.8`; an incompatible selected crate fails rather than
 silently upgrading. Preserve the generated lockfile, build log and selected
 release manifest for repeatable verification. No model lock or build output is
 written back into this starter directory.

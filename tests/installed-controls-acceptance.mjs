@@ -77,7 +77,7 @@ const suites = [
   [
     "installed-viewer-finalization",
     "viewer-finalization-browser.mjs",
-    3,
+    4,
     ["../src/index.mjs"],
   ],
   [
@@ -85,6 +85,13 @@ const suites = [
     "resources.test.mjs",
     5,
     ["../src/resources.mjs"],
+  ],
+  ["installed-active-run", "active-run.test.mjs", 5, ["../src/session.mjs"]],
+  [
+    "installed-viewer-grid",
+    "viewer-grid-browser.mjs",
+    18,
+    ["../src/viewer/server.mjs"],
   ],
 ];
 
@@ -226,6 +233,7 @@ export async function runInstalledControls({
             RESULT_ATTRIBUTION_OUTPUT: join(evidence, "attribution"),
             RESULT_SESSION_OUTPUT: join(evidence, "attribution-session"),
             FINALIZATION_VIEWER_OUTPUT: join(evidence, "finalization-viewer"),
+            VIEWER_GRID_OUTPUT: join(evidence, "viewer-grid"),
           },
         },
       );

@@ -20,6 +20,11 @@ production HTTPS tools bootstrap/upgrade/restart/rollback passed their scoped
 checks on 5 November 2026. The [verification record](docs/verification.md) owns measured results and
 limits; [alpha delivery](docs/alpha-release.md) owns the product scope.
 
+Source is preparing **0.1.4-alpha.8** with the live application/flow/results grid,
+bounded large state maps and explicit pending/stalled finalization. Alpha.7 remains
+the published and accepted installation while the exact replacement kit passes
+its installed and Roots checks. See [candidate delivery](docs/alpha-release.md).
+
 Alpha.7 separates native observation failures from stopped ownership, reports
 unknown draft safety explicitly and documents guarded recovery. The supervisor
 fix requires a separately verified tools bootstrap; a runtime-only update retains

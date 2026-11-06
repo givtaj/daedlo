@@ -1,6 +1,10 @@
-# Install Daedlo 0.1.4-alpha.7
+# Install the Daedlo 0.1.4-alpha.8 candidate
 
-This guide covers the Daedlo 0.1.4-alpha.7 kit. Its `release.json` records exact
+Alpha.8 is being prepared; alpha.7 remains the published release. Use the exact
+locally verified candidate kit and its receipt for isolated acceptance. Do not
+replace an accepted installation or infer publication from these instructions.
+
+This guide covers the Daedlo 0.1.4-alpha.8 kit. Its `release.json` records exact
 artifact identities and scoped verification. Consult the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 for publication status; a guide alone does not establish public availability or
@@ -43,10 +47,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `daedlo-runtime-0.1.4-alpha.7.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
-| `daedlo-engine-0.1.4-alpha.7.crate` | Rust library source for the customer's application model                                                                |
+| `daedlo-runtime-0.1.4-alpha.8.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
+| `daedlo-engine-0.1.4-alpha.8.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `daedlo-tools-0.1.4-alpha.7.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
+| `daedlo-tools-0.1.4-alpha.8.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
