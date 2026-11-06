@@ -6,10 +6,12 @@ the visibility switch. Preparation does not publish another kit, deploy the
 website or promote customer dependencies. Current release and licensing records
 are [alpha delivery](alpha-release.md) and [licensing scope](licensing.md).
 
-The [30 October verification checkpoint](verification.md#open-source-preparation--2026-10-30)
-records actual checks, source identity and unresolved gates. Earlier dated
-verification sections retain their original observations; they are not the
-current launch checklist.
+The [6 November integration checkpoint](verification.md#pr-23-private-preparation-integration--2026-11-06)
+records current source checks and the retained-private scope. The
+[30 October exposure audit](verification.md#open-source-preparation--2026-10-30)
+retains its original date, inventory and limitations; those external surfaces
+must be refreshed before any future public-access decision. Earlier dated
+verification sections are historical observations, not the current checklist.
 
 ## Retain history and published identities
 
@@ -98,11 +100,13 @@ the owner declined a paid-plan change. The ruleset requires:
 The approval count remains zero for the single-maintainer repository; a maintainer
 cannot approve their own PR. Revisit this when another maintainer joins.
 
-Hosted CI must pass on the selected launch source. The 30 October readback found
-the main jobs prevented from starting by GitHub's account payment/spending-limit
-gate. No test steps ran in those jobs. Local passes and earlier release CI do not
-clear this gate; resolve the account restriction and rerun the required jobs.
-Do not weaken the checks, change billing or claim green CI to bypass it.
+Hosted CI must pass on the exact selected source. The 30 October account
+payment/spending-limit block is historical: all three required jobs passed on
+PR #22's merged main source `b3d4e575` in
+[run 42190090935](https://github.com/givtaj/daedlo/actions/runs/42190090935).
+Each later source still needs its own passing required checks. Local passes or
+earlier release CI cannot substitute for them; retain every required job and
+assertion. No billing change is part of this preparation.
 
 ## Final owner decision and public-switch sequence
 

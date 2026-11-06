@@ -977,6 +977,15 @@ main {
 .active-result .subtle {
   color: #526469;
 }
+#finalization-detail {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+#finalization-detail.stalled {
+  padding-left: 10px;
+  border-left: 2px solid #9b731b;
+  color: #745514;
+}
 .outcome-pending {
   color: #526469;
   background: #f2f5f3;

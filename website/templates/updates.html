@@ -68,6 +68,31 @@
           the setup your agent leaves.
         </p>
       </section>
+      <section class="guide-block" aria-labelledby="native-tools-title">
+        <h2 id="native-tools-title">Alpha.7: update the native tools first</h2>
+        <p>
+          Native status now distinguishes observation failure, an unreachable
+          child and unknown draft safety from a stopped owner. A runtime update
+          keeps the existing tools, so this fix requires a separate tools
+          bootstrap using the verified kit on the
+          <a href="/install.html#manual">installation page</a>.
+        </p>
+        <p>
+          Safely stop the authenticated old owner, then start the separately
+          verified new tools with the same configuration, registration, store,
+          publisher trust and signed checkpoint. Keep the old tools and previous
+          installation available for recovery. Your authored model, adapter,
+          application data and reports remain in place.
+        </p>
+        <p>
+          If observation is unavailable, preserve the current owner and pending
+          evidence. Use only an application-approved read-only route back to a
+          measurable page, then request fresh status before normal guarded stop.
+          New tools cannot hot-reload an already loaded adapter or bypass an
+          unknown draft or unresolved save. The installed recovery guide explains
+          these cases; contact support when the loaded adapter cannot recover.
+        </p>
+      </section>
       <section class="guide-block" aria-labelledby="bootstrap-title">
         <h2 id="bootstrap-title">Moving from alpha.3 to alpha.4</h2>
         <p>

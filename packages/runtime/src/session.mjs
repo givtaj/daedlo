@@ -10,6 +10,32 @@ import { validatePresentations } from "./presentation.mjs";
 import { createVisibleCursor, supportsVisibleTyping } from "./motion.mjs";
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+const validWait = (value) =>
+  Number.isSafeInteger(value) && value > 0 && value <= 60000;
+const incompleteCleanup = () =>
+  Object.assign(
+    new DriverError(
+      "cleanup_incomplete",
+      "Driver cleanup is still pending. Retain this session and retry close after the pending work settles.",
+    ),
+    { cleanupPending: true },
+  );
+async function waitUntil(promise, deadline) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () => reject(incompleteCleanup()),
+          Math.max(0, deadline - performance.now()),
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 const speeds = {
   slow: { move: 18, key: 55, wait: 220 },
   normal: { move: 8, key: 22, wait: 65 },
@@ -32,7 +58,13 @@ export async function createDriverSession({
   identity = {},
   resources,
   presentations = [],
+  finalizationWaitMs = 5000,
 }) {
+  if (!validWait(finalizationWaitMs))
+    reject(
+      "invalid_wait",
+      "Finalization wait must be an integer from 1 to 60000 milliseconds.",
+    );
   if (!page || !adapter || typeof adapter.observe !== "function")
     reject(
       "invalid_adapter",
@@ -82,11 +114,14 @@ export async function createDriverSession({
     runId = null,
     lastResult = null,
     active = null,
+    finalization = null,
+    finalizationController = null,
     closePromise,
     presentation = null,
     advanceRequested = false,
     holdTick = null;
   const completedCleanup = new Set();
+  const pendingCleanup = new Map();
   let progress = { step: 0, total: 0, lastAction: null },
     lastState = null;
   const waiters = new Set(),
@@ -170,6 +205,7 @@ export async function createDriverSession({
     speed,
     runId,
     progress: { ...progress },
+    finalization: structuredClone(finalization),
     presentations: presentationCatalog.map((p) => {
       const choice = (
         p.recipe ? lastState?.recipes : lastState?.commands
@@ -534,11 +570,42 @@ export async function createDriverSession({
     if (reason) presentation.reason = reason;
     emit("presentation_finished", { presentationId: presentation.id, status });
   }
-  async function effectReport(attempted) {
+  async function finalize(phase, info, hook) {
+    const state = {
+      runId: info.runId,
+      phase,
+      status: "pending",
+      stopRequested: stopping || closing,
+    };
+    const controller = new AbortController();
+    finalization = state;
+    finalizationController = controller;
+    if (state.stopRequested) controller.abort();
+    emit("finalization_pending", { phase });
+    const timer = setTimeout(() => {
+      state.status = "stalled";
+      emit("finalization_stalled", { phase });
+    }, finalizationWaitMs);
+    try {
+      // A wait threshold is not proof of cancellation. Keep this exact hook and
+      // its run active until it settles; no later run may reuse adapter state.
+      return await hook({ ...info, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+      finalization = null;
+      finalizationController = null;
+      emit("finalization_settled", { phase });
+    }
+  }
+  async function effectReport(attempted, info) {
     if (!attempted) return { status: "not_attempted" };
     if (adapter.effectStatus) {
       try {
-        return publicEffectReport(await adapter.effectStatus());
+        return publicEffectReport(
+          await finalize("effect_evidence", info, (context) =>
+            adapter.effectStatus(context),
+          ),
+        );
       } catch {}
     }
     return { status: attempted ? "uncertain" : "not_attempted" };
@@ -591,6 +658,7 @@ export async function createDriverSession({
     const firstEvent = events.at(-1).sequence;
     stageStarted(profile, 0);
     const runIdentity = structuredClone(base().identity);
+    const runInfo = { runId, command: id, recipe };
     active = (async () => {
       let attempted = false,
         effect;
@@ -673,7 +741,7 @@ export async function createDriverSession({
           if (profile && outcome.kind === "success") await holdStage(result);
           else if (profile) finishPresentation("halted", outcome.label);
         }
-        effect = await effectReport(attempted);
+        effect = await effectReport(attempted, runInfo);
         // An awaited boundary can itself yield to Pause or Stop. Recheck each
         // return before publishing; no asynchronous work may separate these
         // final control checks from the result and per-run cleanup decision.
@@ -698,7 +766,7 @@ export async function createDriverSession({
       } catch (error) {
         // Retain evidence already collected on the success path; never rerun
         // the hook merely because Stop won the final publication decision.
-        effect ??= await effectReport(attempted);
+        effect ??= await effectReport(attempted, runInfo);
         const interrupted = stopping || closed || error?.code === "stopped";
         const failure = publicError(error);
         execution = interrupted ? "stopped" : attempted ? "failed" : "rejected";
@@ -727,7 +795,10 @@ export async function createDriverSession({
         try {
           // Release only owned transient fixture resources. Stop must not leave
           // a fault installed, and finalization must never replay app actions.
-          await adapter.endRun?.({ runId, command: id, recipe });
+          if (adapter.endRun)
+            await finalize("run_cleanup", runInfo, (context) =>
+              adapter.endRun(context),
+            );
         } catch {
           lastResult.ok = false;
           lastResult.cleanupFailed = true;
@@ -849,6 +920,8 @@ export async function createDriverSession({
     stop() {
       tickHold();
       stopping = true;
+      if (finalization) finalization.stopRequested = true;
+      finalizationController?.abort();
       paused = false;
       wake();
       if (!busy) execution = "stopped";
@@ -872,12 +945,23 @@ export async function createDriverSession({
             events: structuredClone(events),
             resources: resources?.snapshot?.() ?? [],
             completedRunIds: [...completedRuns.keys()],
+            finalization: structuredClone(finalization),
           }),
-    close() {
+    close({ timeoutMs = 5000 } = {}) {
+      if (!validWait(timeoutMs))
+        return Promise.reject(
+          new DriverError(
+            "invalid_wait",
+            "Close wait must be an integer from 1 to 60000 milliseconds.",
+          ),
+        );
       closing = true;
       return (closePromise ??= (async () => {
+        const deadline = performance.now() + timeoutMs;
         api.stop();
-        if (active) await active;
+        // Retain the original active promise on a deadline. In particular,
+        // never overlap adapter close with effect evidence or endRun.
+        if (active) await waitUntil(active, deadline);
         closed = true;
         const errors = [];
         for (const [name, cleanup] of [
@@ -887,18 +971,42 @@ export async function createDriverSession({
           ["resources", () => resources?.close()],
         ]) {
           if (completedCleanup.has(name)) continue;
-          try {
-            await cleanup();
+          let task = pendingCleanup.get(name);
+          if (!task) {
+            task = Promise.resolve()
+              .then(cleanup)
+              .then(
+                () => ({ ok: true }),
+                (error) => ({
+                  ok: false,
+                  pending: error?.cleanupPending === true,
+                }),
+              );
+            pendingCleanup.set(name, task);
+          }
+          // An unresolved cleanup is retained and not invoked a second time.
+          // A rejected cleanup can be retried on the next explicit close.
+          const result = await waitUntil(task, deadline);
+          pendingCleanup.delete(name);
+          if (result.pending) throw incompleteCleanup();
+          if (result.ok) {
             completedCleanup.add(name);
-          } catch (error) {
-            errors.push(error);
+          } else {
+            errors.push(
+              new DriverError(
+                "cleanup_incomplete",
+                `Driver ${name} cleanup is incomplete.`,
+              ),
+            );
           }
         }
         if (errors.length) {
-          closePromise = null;
           throw new AggregateError(errors, "Driver cleanup incomplete.");
         }
-      })());
+      })().catch((error) => {
+        closePromise = null;
+        throw error;
+      }));
     },
   };
   emit("attached");

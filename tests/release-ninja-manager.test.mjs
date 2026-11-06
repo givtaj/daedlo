@@ -137,6 +137,126 @@ test("upgrade and rollback select complete immutable installations and persist r
   assert.ok(reports.length >= 2);
   assert.ok(f.log.indexOf("report") < f.log.indexOf("close"));
 });
+test("status distinguishes unknown draft knowledge from a confirmed dirty draft", async (t) => {
+  const f = await fixture(t);
+  f.setDirty(null);
+  let state = await f.manager.status();
+  assert.equal(state.dirty, null);
+  assert.ok(state.blockers.some((item) => item.code === "draft_unknown"));
+  assert.equal(
+    state.blockers.some((item) => item.code === "dirty_draft"),
+    false,
+  );
+  f.setDirty(true);
+  state = await f.manager.status();
+  assert.equal(state.dirty, true);
+  assert.ok(state.blockers.some((item) => item.code === "dirty_draft"));
+  f.setDirty(false);
+  assert.equal((await f.manager.status()).blockers.length, 0);
+});
+
+test("manager status retains sanitized failed-observation knowledge", async (t) => {
+  const f = await fixture(t);
+  const status = f.options.supervisor.status;
+  f.options.supervisor.status = async () => ({
+    ...(await status()),
+    dirty: null,
+    observation: {
+      status: "failed",
+      error: {
+        code: "observation_failed",
+        message: "private-observation-path",
+      },
+    },
+  });
+  const state = await f.manager.status();
+  assert.equal(state.observation?.status, "failed");
+  assert.equal(state.observation.error.code, "observation_failed");
+  assert.ok(state.blockers.some((item) => item.code === "observation_failed"));
+  assert.equal(
+    JSON.stringify(state).includes("private-observation-path"),
+    false,
+  );
+});
+test("explicit close can finish its own retained quiesce after fresh observation recovers", async (t) => {
+  const f = await fixture(t);
+  await install(f, "1.0.0");
+  f.log.length = 0;
+  const status = f.options.supervisor.status;
+  const quiesce = f.options.supervisor.quiesce;
+  const close = f.options.supervisor.close;
+  let quiesced = false;
+  let observation = { status: "available" };
+  f.options.supervisor.status = async () => ({
+    ...(await status()),
+    quiesced,
+    paused: quiesced,
+    observation,
+  });
+  f.options.supervisor.quiesce = async () => {
+    await quiesce();
+    quiesced = true;
+  };
+  f.options.supervisor.close = async () => {
+    if (
+      observation.status === "available" &&
+      f.log.filter((x) => x === "quiesce").length === 1
+    ) {
+      observation = { status: "failed", error: { code: "observation_failed" } };
+      throw Object.assign(Error("Fresh observation unavailable before close"), {
+        code: "observation_failed",
+      });
+    }
+    return close();
+  };
+  await assert.rejects(f.manager.close(), { code: "observation_failed" });
+  await assert.rejects(f.manager.close(), { code: "observation_failed" });
+  assert.equal(f.log.filter((x) => x === "quiesce").length, 1);
+  observation = { status: "available" };
+  await assert.doesNotReject(f.manager.close());
+  assert.equal(f.log.at(-1), "close");
+  assert.equal((await f.manager.status()).running, null);
+});
+
+test("a retained own pause never waives user pause or unknown draft guards", async (t) => {
+  const f = await fixture(t);
+  const status = f.options.supervisor.status;
+  let quiesced = false;
+  f.options.supervisor.status = async () => ({
+    ...(await status()),
+    paused: true,
+    quiesced,
+    observation: { status: "available" },
+  });
+  await assert.rejects(f.manager.close(), { code: "busy" });
+  quiesced = true;
+  f.setDirty(null);
+  await assert.rejects(f.manager.close(), { code: "draft_unknown" });
+  f.setDirty(true);
+  await assert.rejects(f.manager.close(), { code: "dirty_draft" });
+  assert.deepEqual(f.log, []);
+});
+
+for (const code of ["engine_timeout", "child_unreachable"])
+  test(`cleanup failure ${code} retains recovery state instead of becoming a safe refusal`, async (t) => {
+    const f = await fixture(t);
+    const first = await install(f, "1.0.0");
+    f.setOffer("2.0.0");
+    await f.manager.check();
+    const candidate = await f.manager.prepare("2.0.0");
+    f.options.supervisor.close = async () => {
+      throw Object.assign(Error("Cleanup could not be established"), { code });
+    };
+    await assert.rejects(
+      f.manager.activate(candidate.operation.id, { acknowledgeRestart: true }),
+      { code, cleanupFailed: true },
+    );
+    const retained = await f.manager.status();
+    assert.equal(retained.phase, "recovery_required");
+    assert.equal(retained.selected.id, first.selected.id);
+    assert.equal(retained.running.id, first.running.id);
+  });
+
 test("failed build and stale authored input retain old runnable selection", async (t) => {
   const f = await fixture(t);
   const before = await install(f, "1.0.0");

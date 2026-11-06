@@ -153,6 +153,16 @@ itself is a separate verified bootstrap: stop, install a new tools directory,
 check its contracts, run doctor, then start against the same configuration/store.
 Keep the previous tools directory for recovery. There is no background updater.
 
+Native observation/status and supervisor fixes are tools changes. An ordinary
+Ninja runtime update keeps the existing tools and foreground owner, so it cannot
+deliver such a fix by itself. Verify the replacement tools archive independently
+and install it into a separate versioned directory. Safely stop the authenticated
+old owner before starting the replacement against the same configuration,
+registration, store, publisher trust and high-water checkpoint. Preserve authored
+source, custom instructions, retained installations and reports. If the old owner
+still cannot establish current safety, follow the recovery procedure below;
+downloading new tools neither hot-reloads the old adapter nor bypasses shutdown.
+
 ## Existing custom runners
 
 Use the [managed integration reference](managed-integration.md) for separate model
@@ -181,6 +191,78 @@ and does not start a second browser. Inspect that receipt, Ninja's transaction a
 repairing records. A dead parent PID alone is insufficient evidence of cleanup.
 No automatic retention deletion is installed. Unknown or failed cleanup remains
 visible and recoverable rather than being silently labeled stopped.
+
+### Recover observation in the existing owned session
+
+The explicit observation reporting below describes the current source change;
+publication and exact installed-kit verification remain separate. Published
+alpha.6 tools can report generic busy/draft blockers or `stopped` when child
+observation fails. Treat those fields conservatively and preserve the original
+owner; installing different tools does not change an already loaded adapter.
+
+Native status separates observation from ownership. `observation.status` is
+`available`, `failed`, `unreachable`, `starting` or `not_running`; failures include
+a bounded, static `{code,message}` reason. The native handoff reports
+`status:"observation_failed"` or `status:"unreachable"` with `ok:false` for these
+failures, rather than confirming a stopped owner. A retained running installation
+identifies the owned child. It does not establish a currently connected page,
+clean draft or safe shutdown. Unknown draft state remains unknown; it must not be
+presented as a confirmed dirty form. A successful status request alone does not
+establish any application outcome or persistence.
+
+Both the viewer's `/status` and public `session.observe()` / `session.snapshot()`
+perform fresh observation. Native `status --config FILE` also obtains fresh
+session and draft measurements from the same managed child. These reads do not
+execute a command, replay a save or reload the adapter. No separate reobserve
+command is required when the existing adapter can measure the current page again.
+
+1. Retain the original owner, configuration, selected installation, private
+   receipts and completed-run archives. Obtain status using that configuration;
+   reconnect only to the authenticated owner's returned URLs. Record the safe
+   failure category and distinguish failed observation from lost communication.
+2. Inspect the controlled application through its existing approved access path.
+   If the application provides an ordinary read-only route out of an error page,
+   use it only when the integration's draft and pending-operation contract permits
+   that navigation. Preserve pending request, journal and effect evidence. Do not
+   reload or navigate merely to discard an unresolved save.
+3. Request status again. Recovery requires fresh model/connection and draft
+   measurements, plus the existing run, pending-operation and archive checks.
+   Historical clean state is not a substitute. A successful observation restores
+   current readiness; earlier completed results and uncertain effects remain
+   unchanged. Review any remaining blockers before continuing.
+4. If closure is required, request normal `stop --config FILE` through the same
+   owner. A refusal retains its resources and evidence. Repair only the reported
+   prerequisite and request a new observation; do not bypass the safe boundary.
+
+If observation fails after the supervisor has acquired its own quiesce pause,
+that gate stays retained. A later explicit guarded stop may drain that same
+owned pause after fresh available observation, idle execution, clean draft and
+complete evidence establish the safe boundary. It does not resume application
+effects. A pause requested by the user remains a blocker; the supervisor cannot
+claim or release it as its own. Status reads alone never resume a paused run.
+
+| Fault | Supported action | Evidence that must remain intact |
+| --- | --- | --- |
+| Adapter cannot measure an error page, but child communication works | Restore a page recognized by the loaded adapter using an application-approved read-only path, then request status. An authored unavailable state may disable commands while the adapter independently measures safety. | Current draft, pending requests/journal, operation identity, run results and archive state; the unavailable state alone proves none of them clean. |
+| Document or frame detaches during requests | Retain the original request handles and await actual `requestfinished` / `requestfailed` terminal evidence using the integration's tested accounting. Missing terminal evidence remains unresolved. | Request identity and any submitted operation; navigation, a new document or removing a listener is not terminal evidence. |
+| Child status request times out while the owner remains alive | Keep the original supervisor and recovery records. Restore communication where possible, then request fresh status. A retained marker or PID is not a live observation or proof of cleanup. | Ownership handles, completed archives and any still-private in-memory pending evidence. Do not start a replacement owner or delete records to make startup pass. |
+| Owner exits or child IPC disconnects | The child attempts to drain its owned resources on IPC disconnection; a hard process/host failure may prevent this. Retain durable reports and recovery records, then establish actual cleanup before replacement. This is distinct from reconnecting to a surviving owner. | No guarantee covers unsaved drafts or in-memory pending evidence after process/host loss. A dead PID does not prove browser cleanup, application persistence or preservation of a draft. Attached application resources are not generic cleanup targets. |
+| Host interruption or laptop sleep | If the original owner survives, reconnect to it and inspect fresh status, application state and pending evidence. Classify the actual failed prerequisite rather than assigning a cause from elapsed time. If the owner is lost, use the owner-loss case above. | Original command/effect history and durable archives; reconnecting must not replay an action. Sleep alone does not establish whether drafts or in-memory pending evidence survived. |
+| Completed-run archive cannot be saved | Repair local storage and use `retry-evidence --config FILE`, then check status before guarded stop. | The retained canonical report and its original execution/outcome/effect; evidence retry performs no application command. |
+
+If the loaded adapter can no longer measure the page and no safe read-only route
+restores that measurement, there is no generic safe-stop shortcut. Keep the owner
+and evidence for integration-specific repair. `refresh` prepares a separate source
+snapshot; it does not hot-reload code into the existing session, and `restart`
+still requires the normal safe boundary. A corrected adapter or new tools release
+therefore does not by itself recover an already running old adapter. Lost
+communication or unreconciled effects may require the integration owner to
+establish cleanup explicitly before any record repair or replacement. Attached
+application services and resources remain outside generic cleanup authority.
+
+Use the [minimal synthetic reproduction contract](managed-integration.md#observation-and-interruption-reproduction)
+when upstream assistance is needed. The verification record distinguishes tested
+fixture faults from customer incidents and from actual operating-system sleep.
 
 Validation of these tools is separate from onboarding your application. Preserve
 PASS/FAIL/BLOCKED/NOT RUN, exact tools/runtime/browser identities, first success,

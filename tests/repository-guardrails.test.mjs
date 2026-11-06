@@ -18,6 +18,32 @@ import {
 
 const root = "repos/givtaj/daedlo";
 const mainSha = "a".repeat(40);
+
+test("CI covers PR updates, main pushes and manual runs without duplicate topic pushes", () => {
+  const workflow = readFileSync(
+    new URL("../.github/workflows/ci.yml", import.meta.url),
+    "utf8",
+  );
+  const triggers = workflow.match(/^on:\n((?:[ \t].*\n|\n)*)/m)?.[1];
+  assert.ok(triggers, "The CI workflow must declare its trigger policy");
+  assert.match(
+    triggers,
+    /^  push:\n    branches:\n      - main\n(?=  \w|\n|$)/m,
+    "Only main pushes should start CI; PR updates already cover topic branches",
+  );
+  assert.match(triggers, /^  pull_request:\n(?=  \w|\n|$)/m);
+  assert.match(triggers, /^  workflow_dispatch:\n(?=  \w|\n|$)/m);
+  assert.deepEqual(
+    [...triggers.matchAll(/^  (\w+):/gm)].map((match) => match[1]).sort(),
+    ["pull_request", "push", "workflow_dispatch"],
+  );
+  assert.doesNotMatch(
+    triggers,
+    /(?:branches-ignore|paths(?:-ignore)?|tags(?:-ignore)?|types|pull_request_target):/,
+    "CI must retain unfiltered PR checks and must not add tag or privileged triggers",
+  );
+});
+
 function fixture(overrides = {}) {
   const calls = [];
   const replies = {

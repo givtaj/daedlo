@@ -1,5 +1,239 @@
 # Implementation plan
 
+## PR #23 private preparation integration — 2026-11-06
+
+Reconcile [PR #23](https://github.com/givtaj/daedlo/pull/23) with merged main
+`b3d4e575`, preserving the retained-history decision and all dated verification
+records. The owner authorized finishing and merging this preparation while
+keeping the repository **private**. No visibility or settings change, release,
+website deployment or customer dependency promotion is part of this integration.
+
+- [x] Preserve alpha.7 delivery and PR #22's runtime changes and CI-trigger regression.
+- [x] Refresh launch guidance to require passing checks on the exact selected source;
+  the October 30 account blocker is historical, superseded by passing #22 main CI.
+- [x] Verify source quality and 54 focused audit, metadata and licensing regressions;
+  read back current private settings without mutations.
+- [ ] Complete exact-head PR CI, merge and resulting main CI, tracked on #23.
+- [ ] For any future public launch, obtain separate visibility authorization,
+  refresh the exposure inventory and verify the public-only controls after switching.
+
+See [measured results and limits](verification.md#pr-23-private-preparation-integration--2026-11-06).
+The October 30 image/history/external-asset audit is retained as dated evidence,
+not a November 6 refresh. Independent dependency and viewer-grid work remains in
+its owners' separate checkouts. Customer acceptance remains open in
+[#25](https://github.com/givtaj/daedlo/issues/25).
+
+## PR #22 integration checkpoint — 2026-11-06
+
+The owner authorized reconciliation and merge of [PR #22](https://github.com/givtaj/daedlo/pull/22)
+with current main. Isolated merge source `0386f517c34c8fbdfa98f3df7e9d9332b1cc8019`
+contains authoritative PR head `d4defb6` and main `04de789c`; both dated plan and
+verification histories are retained. The existing stalled-finalization, bounded
+close and resource-ownership changes remain scoped to #22. Alpha.7's native
+observation/recovery implementation and exact-installed checks are retained.
+
+Local source, Rust, real-browser and exact-installed package checks PASS; see
+[the measured checkpoint](verification.md#pr-22-reconciliation-and-exact-installed-verification--2026-11-06).
+Hosted checks, independent review and the merge identity are tracked on #22.
+The independently owned viewer-grid change follows #22 and must reconcile its
+active/finalized-run presentation against that merged source.
+
+Public alpha.7 already contains #19–#21. The October 30 pilot checklist below is
+a historical preparation record: its alpha.6 delivery state and Actions account
+blocker are not current evidence for main. The new local engineering package
+retains source version `0.1.4-alpha.7` but has different bytes from the immutable
+published release; it is not a customer distribution or update-feed entry.
+Customer acceptance remains open in [#25](https://github.com/givtaj/daedlo/issues/25).
+Normal Roots promotion, release publication and public repository visibility
+remain separate work.
+
+## Alpha.7 delivery — 2026-11-05
+
+The owner explicitly authorized merging and publishing alpha.7 after the native
+status/recovery source fix. Preserve every previous release, source record and
+publisher trust/checkpoint. Customer incident recovery remains separate.
+
+- [x] Prepare coherent alpha.7 versions and tools-bootstrap guidance.
+- [x] Require exact installed observation coverage and retain shipped reference gates.
+- [x] Extend the isolated alpha.6 → alpha.7 → alpha.6 drill with new tools.
+- [x] Freeze clean source; pass exact installed, upgrade/rollback and current-source CI.
+- [x] Pin reviewed immutable assets in the existing publisher workflow.
+- [x] Merge, publish and verify actual public download/install/tools bootstrap/update/rollback.
+
+Actual results belong in [verification](verification.md#alpha7-production-delivery--2026-11-05).
+Customer acceptance remains open in [#25](https://github.com/givtaj/daedlo/issues/25):
+native observation/recovery, frontend stop isolation, managed upgrade/rollback,
+detached-document faults and effect-status/report integration. A named-session
+picker remains triage only. No customer acceptance is inferred from publication.
+
+## Native observation recovery — 2026-11-05
+
+- [x] Reproduce misleading stopped/dirty status with regression-first assertions
+  and an independent real-browser fixture.
+- [x] Separate observation failure/unreachable child state from ownership, preserve
+  sanitized reasons and restore readiness through fresh reads without replay.
+- [x] Preserve unknown-safety guards, cleanup failures and supervisor-owned pause
+  recovery; pass affected Node/Rust, packaging and browser checks and independent review.
+- [x] Document current-session recovery, hard-owner-loss limits and the public
+  synthetic reproduction contract.
+
+The local source checkpoint below is historical. Alpha.7 now delivers the reviewed
+fix; [actual source results](verification.md#native-observation-status-and-guarded-recovery--2026-11-05)
+and [production verification](verification.md#alpha7-production-delivery--2026-11-05)
+remain distinct. Publication does not repair an already loaded customer adapter,
+establish the cause of an application error or complete customer acceptance.
+## November 1–7 pilot checklist — prepared 2026-10-30
+
+**Next result:** one WBF QA teammate completes one useful existing website flow,
+checks its business result independently, then repeats it on a later day.
+Aidin has nominated a WBF QA teammate; availability, macOS arm64/Codex access,
+the website, flow, negative case and disposable environment are not yet confirmed.
+Codex owns preparation, integration and evidence; Aidin owns participant coordination
+and merge/release decisions; WBF owns application permission, behavior and data.
+No outreach, merge, publication or everyday Roots promotion occurs under this plan.
+
+Inspect WBF's existing QA setup, integrations, models and records; reuse them where
+available. Prior feedback does not establish installation or acceptance. WBF must
+designate its private acceptance record, preserving existing team conventions.
+
+The owner's October 30 monthly-review handoff makes Daedlo primary and limits
+SeeRunTime to one colleague pilot. Teaching runtime,
+hosted billing, platform/framework expansion and unrelated integrations wait.
+Roots feature/D1 work and ordinary driver promotion stay separate; SleepAPI,
+rusta-pitest, eBPF and ileague feature expansion stays on hold. Use an existing
+stable, pinned Roots fixture only if useful for internal verification, in isolation.
+
+### Current state and prioritized fix backlog
+
+The [installed replay follow-up](verification.md#pr-22-review-and-installed-safety-replay--2026-10-30) closes F2 locally and records the independent #22 review. Hosted CI, final pilot packaging and WBF acceptance remain open.
+
+The [October 30 reconciliation](verification.md#november-pilot-current-state-reconciliation--2026-10-30)
+is the evidence checkpoint. Main is `16d050c8`; #19–#21 are merged. #22 is
+implemented at `19f9cae`, open, with historical local passes and blocked hosted CI.
+The public alpha.6 kit predates these fixes. Do not implement them again.
+Statuses below describe the named gate: FAIL means an exercised check violated
+its assertion, BLOCKED means a missing prerequisite, NOT RUN means no
+current execution. Historical source PASS does not pass a new package or user gate.
+
+| Priority / item | Owner | Evidence/source | Dependency | Status | Verification and finish condition |
+| --- | --- | --- | --- | --- | --- |
+| P0 / F1: bring accepted safety fixes into the pilot kit | Codex integration owner; Aidin decides merge/release | [#19](https://github.com/givtaj/daedlo/pull/19), [#20](https://github.com/givtaj/daedlo/pull/20), [#21](https://github.com/givtaj/daedlo/pull/21), [#22](https://github.com/givtaj/daedlo/pull/22), [alpha.6](alpha-release.md) | F2, B2–B3; explicit integration decision | BLOCKED — alpha.6 lacks required fixes | Freeze a new candidate containing Stop/Close dispatch protection and Pause reauthorization (#19), current/retained run attribution (#20), retryable viewer capture cleanup/startup handle (#21), and pending/stalled evidence/cleanup, cooperative Stop, bounded close and retained dependencies (#22). Finish only after exact-package gate P passes; alpha.6 stays immutable. |
+| P0 / F2: replay new safety checks against installed bytes | Codex; same integration owner for harness/CI edits | `tests/installed-controls-acceptance.mjs`, `tests/release-acceptance.mjs`, `packages/runtime/tests/viewer-finalization-browser.mjs` | Choose reviewed #22-based candidate; see proposed fix below | PASS — local replay at `d8bc681`; final pilot gate remains open | Add narrow installed-consumer coverage for A1/A2/A3/#22 using existing import-only substitution/public entry patterns. Record original/copied check hashes and measured installed runtime provenance. First show a meaningful failing harness assertion that catches omitted suites or source-byte fallback; then preserve all behavior assertions and pass exact installed checks. |
+| P0 / F3: review #22 and obtain actual hosted CI | Codex reviewer/integration owner; Aidin for account/merge decisions | [PR #22](https://github.com/givtaj/daedlo/pull/22), [blocked run](https://github.com/givtaj/daedlo/actions/runs/40933635218), `.github/workflows/ci.yml` | Actions availability; any review/harness changes at final head | BLOCKED — local source review PASS; hosted account gate persists | Independent current-head review plus successful Node 22, Node 24 and metadata/secrets jobs, with test steps/logs. Recheck head/base before explicit merge decision, then require resulting main CI. Keep all existing checks and #22 trigger policy. |
+| P1 / F4: installation, recovery and delivery rehearsal | Codex | [native setup](native-setup.md), [managed acceptance](managed-integration.md#customer-run-acceptance), [evidence guide](evidence-reporting.md) | Frozen candidate containing F1's code, F2/F3 and disposable integration | NOT RUN — new candidate | Pass B3 against installed tools/runtime/crate/model/browser, with visible UI inspection, reports, cleanup, restart and applicable update/rollback. Fresh integration on a warm machine is not fresh-machine evidence. |
+| P1 / F5: fix observed WBF pilot friction | WBF QA participant and Codex; WBF owns app/model policy | B4–B5 observations, WBF QA setup/records where available and prior feedback | Confirm B1; observe actual sessions | BLOCKED — no observed pilot | Capture reproduction, expected/observed behavior and owner; rank by preventing useful completion, false evidence, setup effort and repeat use. Only demonstrated blockers receive minimal regression-first fixes and rerun. No invented application faults or broad feature cycle. |
+
+F2 is a preparation gap found by reading the harness: its copied checks currently
+cover older CLI/finalization/control tests, and installed viewer checks cover
+frontend/recipe paths. The new finalization suite directly imports source; setting
+an environment variable alone cannot prove installed-byte coverage. Reuse the
+existing public import substitution and `CLI_TEST_RUNTIME` support, including
+imported helpers, rather than maintaining a second behavioral test implementation.
+This review found no additional demonstrated runtime defect. A new behavior fix
+must retain its genuine failing assertion before implementation.
+
+### Five work blocks (proposed dates, Europe/Madrid)
+
+| Block | Owner | Evidence/source | Dependency | Status | Verification method and finish condition |
+| --- | --- | --- | --- | --- | --- |
+| B1 / Nov 1: freeze participant and one workflow | Aidin + WBF QA participant; Codex prepares | User's WBF QA nomination; WBF model/flow records where available; [onboarding](agent-onboarding.md) | WBF permission and participant availability | BLOCKED | Confirm participant alias, macOS arm64 + Codex, website/environment, flow/command IDs, expected useful result and independent readback, safe negative case with no write, disposable data and cleanup owner. Reserve 45–60 minutes plus a short later-day repeat. Reuse prior agreements; do not infer permission for employer production writes. |
+| B2 / Nov 1–2: reconcile, review and choose integration | Codex; Aidin decides merge | October 30 checkpoint, F1–F3, exact workflow | Actions allowance and independent review | BLOCKED | After the historically reported Nov 1 01:00 reset, inspect actual job availability; one bounded rerun/current-head run, no retry loop or billing changes. Record head/run/attempt and all three job results. Review existing #22, prepare F2, then obtain an explicit merge decision and verify resulting main. |
+| B3 / Nov 2–3: freeze and rehearse unpublished kit | Codex integration owner | Existing release harness, native lifecycle and installed receipts | B2, F2; B1 for application-specific rehearsal | NOT RUN | Gate P below: clean source, exact artifacts, isolated install and browser/owner checks; write executable paths/commands into WBF's designated handoff. Internally rehearse the selected positive and safe negative flows with reload/readback after B1 and before B4. Keep candidate, test feed/trust and stores separate from production and retained accepted installations. |
+| B4 / Nov 3–5: observe first session | WBF QA participant operates; Codex observes/assists; Aidin coordinates | Shipped candidate instructions and WBF's designated acceptance record | B1 + P, permission for selected flow/data | BLOCKED | Follow protocol below; record actual timings, every human/agent intervention, reload readback, safe negative result, evidence comprehension and owned cleanup. No participant PASS from an internal fixture. |
+| B5 / later day, Nov 5–7: repeat and decide | Same participant; Codex records; Aidin decides | B4 record and preserved package/handoff | B4; separate-day availability | BLOCKED | Reconnect without replay, repeat using documented operation/duplicate rules, read durable evidence, and let a different chat resume the handoff. Record usefulness/reuse assessment and week-one go/no-go. On Nov 7, if no Daedlo tester is available, flag SeeRunTime as primary if its colleague is available. Reassess investment by Nov 14 from repeat use or specific friction. |
+
+### Gate P: technically verified pilot package, separate from publication
+
+**Current status: NOT RUN. Owner: Codex. Dependencies: B2/F2 and chosen candidate.**
+All applicable checks below, including internal rehearsal of B1's selected WBF
+positive/negative flows with independent reload/readback, must pass on the final
+frozen bytes before B4; link results in
+`docs/verification.md`, retaining earlier dated receipts. No gate is satisfied by
+planned counts or alpha.6/source-only passes. Aidin's explicit release/publication
+decision follows technical readiness; this plan keeps the candidate unpublished.
+
+1. **Source and hosted checks:** use the complete existing CI on the final head:
+   `npm run check`, runtime/release/owner/guard tests, locked Rust build/tests,
+   `cargo fmt --all -- --check`, Clippy with warnings denied, notebook/starter/
+   managed/evidence checks and all affected real-browser suites. Retain Node 22/24
+   and metadata/secrets jobs. For focused local runtime checks use
+   `node --test --test-concurrency=1 packages/runtime/tests/*.test.mjs`.
+   A1, attribution, A3 and #22 browser checks must remain in CI and installed replay.
+2. **Exact artifacts and install:** follow the existing `.github/workflows/ci.yml`
+   bundle/tools/public-kit steps with `allowDirty:false`, `runReleaseAcceptance`
+   with independently recorded manifest/tools digests and fresh output, plus
+   `tests/alpha4-installed-starter.mjs` with that same bundle/tools pair. Include F2.
+   Version selection is pending; do not reuse alpha.6's public identity for changed
+   bytes. Verify notices, portable skill/references and all retained inventories.
+3. **Identity receipt:** record clean source commit/tree/source inventory; version,
+   ZIP/manifest/runtime/crate/tools digests and tools `SOURCE.json`; installed
+   public runtime entry/version and measured `runtimeBuild`; model/adapter/source
+   and lock identities, compiled engine SHA-256; application revision and fixture;
+   macOS version/arm64, Codex version, Node/npm/Rust, Playwright and actual Chromium
+   version/executable identity. Keep WBF/private identities and reports private.
+4. **Guided lifecycle rehearsal:** use [native commands](native-setup.md) with the
+   exact installed tools path and reviewed registration: verify bundle, scoped npm
+   install with `--prefix` and `--workspaces=false`, doctor → setup → start → status
+   → returned startup/viewer URL → stop. Check ancestors' manifests/locks unchanged.
+   Record dependency/cache/permission/authentication needs. Use a headed controlled
+   browser from the outset for manual sign-in. Reopen/start/status must reuse the
+   owner without replay. Run safe restart; use compatible retained predecessor and
+   isolated test-catalog trust for candidate update/rollback, never alter production
+   feed or weaken signature/expiry checks. Missing prerequisites remain BLOCKED;
+   mark a drill NOT RUN with a reason if genuinely inapplicable to the chosen path.
+5. **Internal fault matrix:** separately cover Pause/Stop/Close before dispatch,
+   Pause/Resume reauthorization, current/previous result labels, both pending phases,
+   held and late-settling hooks, cleanup reject/retry, nested retained dependencies
+   and attached-resource survival. While a hook ignores cancellation, run remains
+   active/busy, no completed report appears, and overlapping writes are refused.
+   Stop is cooperative; close expiry returns incomplete/pending cleanup. Release
+   the same hook for fixture teardown, retry close explicitly and prove one effect/
+   hook invocation, no replay and eventual owned cleanup. Elapsed waiting proves
+   neither cancellation, persistence nor cleanup. Verify archive failure blocks
+   later runs/replacement and `retry-evidence` adds no application write. Faults
+   belong in disposable authorized fixtures; WBF-specific faults await agreement.
+
+For B3's WBF handoff, resolve all placeholders to actual installed paths, reviewed
+flow IDs and ownership before a session; the shipped native/managed guides remain
+the command reference. Record reset/readiness and operation-specific proof rules
+in WBF's designated acceptance record. Do not create a parallel customer ledger.
+
+### Gate U: observed WBF user acceptance
+
+**Current status: BLOCKED. Owner: WBF QA participant + Codex. Dependencies: B1/P.**
+Reuse [customer-run acceptance](managed-integration.md#customer-run-acceptance) in
+WBF's private record. Suggested first-session budget is 45–60 minutes; record
+actual elapsed time, including overruns and assistance, with no invented target pass.
+
+| Session step | Suggested budget | Required observation / finish condition |
+| --- | --- | --- |
+| Start and install | 0–15 min | Start clock when the participant receives the candidate/instructions. Participant uses shipped instructions and intended Codex assistance. Record first install, dependencies, permissions, errors, manual/agent edits and time until the correct live viewer is ready. |
+| Useful flow | 15–35 min | Participant selects/runs the agreed authored flow and independently checks its business result after reload. Record time to first independently verified useful flow, run ID and separate execution/outcome/persistence evidence. An agent assertion alone does not pass this step. |
+| Safe negative case | 35–45 min | Trigger only the agreed rejection; independently verify no write using the app's operation-specific readback/accounting. Missing proof remains uncertain. Record assertion, result, assistance and confusion. |
+| Evidence and close | 45–60 min | Participant locates a useful report, distinguishes current/previous runs and pending/uncertain outcomes, then stops safely. Inspect archive durability, truncation and owned cleanup/attached survival. Record what the evidence helped them trust. |
+| Later-day repeat | 15–30 min on another day | Reopen/reconnect without running a flow, inspect prior durable evidence, then repeat with agreed data. Check no reconnect/recovery replay and duplicate prevention for the same operation where supported; a new intended run may create a new intended result. A different chat follows the handoff. Ask whether the participant would use it again and for what QA task. |
+
+All participant observation rows start NOT RUN until observed; missing participant,
+permission, environment or data makes the dependent gate BLOCKED. Store timing,
+setup issues, interventions, first/negative/repeat results, evidence and cleanup,
+plus usefulness/reuse feedback in that designated private record; only sanitized
+summaries belong in this repository. Never commit employer URLs, credentials,
+private source, raw traces, capability URLs or private identifiers/digests.
+
+**Week-one decision:** GO only with P and both observed sessions supporting useful,
+repeatable use and trustworthy evidence. Otherwise record NO-GO for expansion with
+the exact failed/blocked/not-run gate and a short ranked fix list. A participant
+report and upstream independent verification remain distinguishable. Repeat use
+supports further investment; specific friction supports bounded fixes. Neither
+synthetic passes nor lack of an available tester establishes WBF acceptance.
+
+**Next executable step:** when Actions is available, refresh #22/main and run all
+three required jobs on the chosen final head, including the installed replay fix.
+F2 is implemented and locally verified; do not merge or publish without the next
+explicit instruction. In parallel Aidin confirms WBF's exact website/flow/negative
+case, disposable test permission, macOS arm64/Codex and both session dates. Then
+prepare the selected application handoff and internal rehearsal. Do not change billing.
+
 ## Open-source preparation — 2026-10-30
 
 Prepare the existing repository for public access while preserving its history,
@@ -19,6 +253,23 @@ The owner rejected the earlier history-rewrite proposal. It is not a launch gate
 
 Alpha.6 is already published. No package release, website deployment, history
 rewrite or everyday Roots promotion is required by this preparation.
+
+## CI efficiency and stalled finalization — 2026-10-29
+
+Work is isolated from the preserved dirty primary checkout, starting at merged
+main `16d050c8`. This is source development; the alpha.6 release is unchanged.
+
+- [x] Restrict full CI to pull requests, main pushes and manual dispatch while
+  preserving every job, platform and acceptance check.
+- [x] Expose pending/stalled effect evidence and run cleanup, with cooperative
+  Stop context and a bounded close wait that retains the original work.
+- [x] Preserve dependencies through CLI and nested/managed resource cleanup when
+  an unresolved close returns its pending marker; retry explicitly without replay.
+
+Actual regressions, browser observations and remaining validation are recorded in
+[verification](verification.md). A hook that never cooperates remains pending;
+elapsed waiting never becomes successful cleanup. Hosted CI, release publication,
+customer adoption and ordinary Roots promotion remain separate gates.
 
 ## Diagnostics rollout closure — 2026-10-28
 
@@ -101,19 +352,21 @@ Product delivery and the authorized post-publication support reply are complete.
 Actual results and remaining customer acceptance belong in docs/verification.md.
 
 
-Current release: [Daedlo alpha delivery — 28 October 2026](alpha-release.md),
-published assisted **0.1.4-alpha.6**. Shared recipe paths join the managed runner
-and reporting guidance. Exact installed runtime/tools/references, source and
-publisher CI, the actual public installer and HTTPS upgrade/restart/rollback
-passed. Published alpha.5 tools remain unchanged through the update drill. The
-signed feed preserves every previous release and the existing publisher trust.
+Current release: [Daedlo alpha delivery — 5 November 2026](alpha-release.md),
+published assisted **0.1.4-alpha.7**. Native observation/recovery joins the managed
+runner and reporting guidance. Exact installed runtime/tools/references, source
+and publisher CI, the actual public installer and HTTPS tools bootstrap/upgrade/
+restart/rollback passed. Published alpha.6 tools and installations remain intact;
+the supervisor fix uses separately verified alpha.7 tools. The signed feed
+preserves every previous release and the existing publisher trust.
 
 The [verification record](verification.md) owns exact identities and scoped
 results. Customer native registration, business-flow and full fault coverage,
 customer upgrade/rollback and ordinary dependency promotion remain separate.
 The original native setup worktree and everyday Roots dependencies are unchanged.
-Daily renewal remains active at 04:23 UTC. Earlier milestones below retain their
-historical scope and do not establish additional current customer acceptance.
+Daily renewal remains scheduled at 04:23 UTC; execution can be delayed. Earlier
+milestones below retain their historical scope and do not establish additional
+current customer acceptance.
 
 ## Goal and approved constraints
 

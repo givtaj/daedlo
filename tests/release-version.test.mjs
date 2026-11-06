@@ -19,6 +19,7 @@ async function fixture(t) {
     "Cargo.toml": `[workspace]\nmembers = ["crates/daedlo-engine", "examples/notebook-engine"]\n\n[workspace.package]\nversion = "${current}" # Preserve this comment.\nedition = "2021"\n\n[workspace.dependencies]\nserde = "1"\n`,
     "Cargo.lock": `# Preserve generated metadata.\nversion = 4\n\n${frameworkLock}[[package]]\nname = "notebook-engine"\nversion = "${current}"\ndependencies = ["daedlo-engine"]\n\n[[package]]\nname = "unchanged-library"\nversion = "${current}"\n`,
     "examples/notebook-engine/Cargo.toml": `[package]\nname = "notebook-engine"\nversion.workspace = true\n\n[dependencies]\ndaedlo-engine = { path = "../../crates/daedlo-engine", version = "=${current}" } # Preserve\n`,
+    "examples/starter/model/Cargo.toml": `[package]\nname = "daedlo-starter-engine"\nversion = "0.1.0"\n\n[workspace]\n\n[dependencies]\ndaedlo-engine = { path = "../../../crates/daedlo-engine", version = "=${current}" }\nserde = "1"\n`,
   };
   for (const [directory, name] of [
     ["integrations/roots/engine", "roots-browser-driver-consumer"],
@@ -46,12 +47,12 @@ async function contents(root, files) {
   );
 }
 
-test("prepares all nine version files while preserving customer pins and unrelated text", async (t) => {
+test("prepares all ten version files including the shipped starter while preserving customer pins and unrelated text", async (t) => {
   const { root, files } = await fixture(t);
   const result = await setReleaseVersion({ repoRoot: root, version: next });
   assert.equal(result.previousVersion, current);
   assert.equal(result.version, next);
-  assert.equal(result.files.length, 9);
+  assert.equal(result.files.length, 10);
   const changed = await contents(root, files);
   for (const [path, before] of Object.entries(files)) {
     assert.ok(

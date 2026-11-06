@@ -11,15 +11,23 @@ application outcome. Authored flows run without an AI agent or model API key.
 [Contribute](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Get help](SUPPORT.md) ·
 [Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
-**0.1.4-alpha.6 is released: assisted macOS arm64 onboarding with Codex.**
+**0.1.4-alpha.7 is released: assisted macOS arm64 onboarding with Codex.**
 [Start with one Codex prompt](https://daedlo.com/install) or read the
-[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.6).
+[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.7)
+(source access required).
 The exact installed kit, source CI, managed reference, public installer and
-production HTTPS upgrade/restart/rollback passed their scoped checks on 28 October
-2026. The [verification record](docs/verification.md) owns measured results and
+production HTTPS tools bootstrap/upgrade/restart/rollback passed their scoped
+checks on 5 November 2026. The [verification record](docs/verification.md) owns measured results and
 limits; [alpha delivery](docs/alpha-release.md) owns the product scope.
 
-Alpha.6 groups recipes with identical authored starting steps and shows complete
+Alpha.7 separates native observation failures from stopped ownership, reports
+unknown draft safety explicitly and documents guarded recovery. The supervisor
+fix requires a separately verified tools bootstrap; a runtime-only update retains
+the old tools. Use the same registration, configuration, store and publisher trust
+after a safe stop; retain the accepted tools and installation for recovery.
+Customer incident recovery and application acceptance remain unconfirmed.
+
+Alpha.6 introduced groups for recipes with identical authored starting steps and complete
 ordered previews. Viewing a path is read-only; every recipe keeps its own
 availability and executes its full guarded sequence. Existing model, protocol,
 public API and managed configuration contracts remain unchanged. Published
@@ -36,8 +44,8 @@ validates the existing project, restarts at a safe boundary and supports complet
 rollback. One-time managed registration and a pinned publisher key are required.
 The [signed preview feed](https://daedlo.com/updates/preview.json) and
 [setup guide](https://daedlo.com/updates) are live. Daily catalog renewal remains
-active at 04:23 UTC. Expiry blocks new checks/downloads while accepted local use
-and rollback remain available. Customer registration and business-flow acceptance
+scheduled at 04:23 UTC; execution can be delayed. Expiry blocks new checks/downloads
+while accepted local use and rollback remain available. Customer registration and business-flow acceptance
 remain separate; everyday Roots dependencies are unchanged.
 
 ## Licensing and package names

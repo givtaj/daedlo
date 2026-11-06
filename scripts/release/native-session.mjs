@@ -90,6 +90,48 @@ export function safeFrontend(value) {
     ownership,
   };
 }
+const observationMessages = {
+  observation_failed:
+    "Application observation failed. Current safety state is unconfirmed.",
+  invalid_observation:
+    "The adapter did not provide a valid application observation.",
+  disconnected: "The application page or model connection is unavailable.",
+  unknown_state:
+    "The model did not recognize the currently observed application state.",
+  engine_disconnected: "The model engine connection is unavailable.",
+  engine_timeout: "The model engine did not respond before the deadline.",
+  target_mismatch:
+    "The controlled page does not match this frontend's registered target.",
+  draft_observation_failed: "Current draft safety could not be observed.",
+  draft_unknown:
+    "Current draft safety is unknown. Obtain a fresh measurement before cleanup.",
+  child_unreachable:
+    "The owned child cannot be reached. Preserve its ownership and recovery records.",
+  child_timeout:
+    "The owned child did not respond before the deadline. Current safety state is unknown.",
+  child_exited:
+    "The owned child exited without confirmed resource cleanup. Preserve its recovery records.",
+};
+export function safeObservation(value) {
+  if (value === undefined) return undefined;
+  const status = [
+    "available",
+    "failed",
+    "unreachable",
+    "not_running",
+    "starting",
+  ].includes(value?.status)
+    ? value.status
+    : "failed";
+  if (!["failed", "unreachable"].includes(status)) return { status };
+  const raw = value?.error?.code ?? value?.error?.error_code;
+  const code = Object.hasOwn(observationMessages, raw)
+    ? raw
+    : status === "unreachable"
+      ? "child_unreachable"
+      : "observation_failed";
+  return { status, error: { code, message: observationMessages[code] } };
+}
 const messages = {
   startup_cancelled:
     "Startup was cancelled. Readiness was not established; review owned cleanup below.",

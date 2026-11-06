@@ -8,10 +8,166 @@ import {
   acquireAcceptanceOutput,
   acquireConsumerDirectory,
   runReleaseAcceptance,
+  runInstalledNativeAcceptance,
   validatePackageArchive,
   verifyInstalledRuntime,
 } from "./release-acceptance.mjs";
 import { createManifest, sha256 } from "../scripts/release/manifest.mjs";
+
+function nativeAcceptanceFixture() {
+  const options = {
+    repoRoot: "/synthetic/repository",
+    installedTools: "/synthetic/installed-tools",
+    runtimePath: "/synthetic/installed-runtime/src/index.mjs",
+    enginePath: "/synthetic/compiled-notebook-engine",
+    engineCrate: "/synthetic/extracted-crate",
+    targetDir: "/synthetic/isolated-target",
+    output: "/synthetic/acceptance",
+    runtimeName: "@daedlo/runtime",
+    runtimeVersion: "0.1.4-alpha.6",
+    engineSha256: "f".repeat(64),
+  };
+  const receipts = {
+    native: {
+      status: "PASS",
+      toolsRoot: join(options.installedTools, "lib"),
+      runtimePath: options.runtimePath,
+      enginePath: options.enginePath,
+      engineCrate: options.engineCrate,
+      runtime: { name: options.runtimeName, version: options.runtimeVersion },
+      checks: Array.from({ length: 13 }, (_, i) => `startup-${i}`),
+      browser: { version: "synthetic-browser" },
+    },
+    "native-observation": {
+      status: "PASS",
+      cleanup: "PASS",
+      toolsRoot: join(options.installedTools, "lib"),
+      runtimePath: options.runtimePath,
+      enginePath: options.enginePath,
+      engineSha256: options.engineSha256,
+      runtime: { name: options.runtimeName, version: options.runtimeVersion },
+      checks: Array.from({ length: 5 }, (_, i) => `observation-${i}`),
+      browser: { version: "synthetic-browser" },
+    },
+  };
+  const calls = [];
+  const tap = (tests, changes = {}) =>
+    "TAP version 13\n" +
+    Object.entries({
+      tests,
+      pass: tests,
+      fail: 0,
+      cancelled: 0,
+      skipped: 0,
+      todo: 0,
+      ...changes,
+    })
+      .map(([key, value]) => `# ${key} ${value}\n`)
+      .join("");
+  const logs = {
+    "installed-native-startup": tap(1),
+    "installed-native-observation": tap(2),
+  };
+  const dependencies = {
+    run: (...args) => {
+      calls.push(args);
+      return logs[args[0]];
+    },
+    readReceipt: (path) => {
+      const kind = path.split("/").at(-2);
+      assert.ok(receipts[kind], "Executed suite must leave its receipt");
+      return structuredClone(receipts[kind]);
+    },
+  };
+  return { options, receipts, calls, dependencies, logs, tap };
+}
+
+for (const [suite, count] of [
+  ["startup", 1],
+  ["observation", 2],
+]) {
+  for (const [failure, totals] of [
+    ["one skipped test", { pass: count - 1, skipped: 1 }],
+    ["one failed test", { pass: count - 1, fail: 1 }],
+    ["one cancelled test", { pass: count - 1, cancelled: 1 }],
+    ["one todo test", { pass: count - 1, todo: 1 }],
+    ["incomplete test selection", { tests: count - 1, pass: count - 1 }],
+  ]) {
+    test(`installed native ${suite} rejects ${failure} despite a passing fixture receipt`, () => {
+      const f = nativeAcceptanceFixture();
+      f.logs[`installed-native-${suite}`] = f.tap(count, totals);
+      assert.throws(() =>
+        runInstalledNativeAcceptance(f.options, f.dependencies),
+      );
+    });
+  }
+  test(`installed native ${suite} rejects absent TAP totals despite a passing fixture receipt`, () => {
+    const f = nativeAcceptanceFixture();
+    f.logs[`installed-native-${suite}`] = "TAP version 13\n";
+    assert.throws(() =>
+      runInstalledNativeAcceptance(f.options, f.dependencies),
+    );
+  });
+}
+
+test("installed native acceptance executes observation recovery with the exact selected package paths", () => {
+  const f = nativeAcceptanceFixture();
+  const result = runInstalledNativeAcceptance(f.options, f.dependencies);
+  assert.deepEqual(
+    f.calls.map(([name]) => name),
+    ["installed-native-startup", "installed-native-observation"],
+  );
+  const observation = f.calls[1];
+  assert.equal(
+    observation[2].at(-1),
+    join(
+      f.options.repoRoot,
+      "tests/release-native-observation-browser.test.mjs",
+    ),
+  );
+  assert.equal(
+    observation[3].env.DAEDLO_NATIVE_TOOLS_ROOT,
+    join(f.options.installedTools, "lib"),
+  );
+  assert.equal(
+    observation[3].env.DAEDLO_NATIVE_RUNTIME_PATH,
+    f.options.runtimePath,
+  );
+  assert.equal(
+    observation[3].env.DAEDLO_NATIVE_ENGINE_PATH,
+    f.options.enginePath,
+  );
+  assert.equal(result.nativeObservation.status, "PASS");
+});
+
+for (const variant of [
+  "missing",
+  "failed",
+  "skipped",
+  "runtime",
+  "engine",
+  "tools",
+  "binary",
+  "cleanup",
+]) {
+  test(`installed observation ${variant} cannot be accepted as a passing release`, () => {
+    const f = nativeAcceptanceFixture();
+    const receipt = f.receipts["native-observation"];
+    if (variant === "missing") delete f.receipts["native-observation"];
+    if (variant === "failed") receipt.status = "FAIL";
+    if (variant === "skipped") receipt.checks = [];
+    if (variant === "runtime")
+      receipt.runtimePath = "/synthetic/source-runtime/src/index.mjs";
+    if (variant === "engine")
+      receipt.enginePath = "/synthetic/source-target/notebook-engine";
+    if (variant === "tools") receipt.toolsRoot = "/synthetic/source-tools";
+    if (variant === "binary") receipt.engineSha256 = "0".repeat(64);
+    if (variant === "cleanup") receipt.cleanup = "FAIL";
+    assert.throws(() =>
+      runInstalledNativeAcceptance(f.options, f.dependencies),
+    );
+  });
+}
 
 function fixture(t) {
   const root = fs.mkdtempSync(join(tmpdir(), "driver-install-contract-"));

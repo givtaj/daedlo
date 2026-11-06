@@ -119,6 +119,37 @@ These visuals do not authorize actions or establish application outcomes.
 
 Session API: `observe()` / `snapshot()`; `execute(id,params,revision)`; `runRecipe(id,revision)`; compatibility `command({id,params,revision,recipe})`; `pause()`, `resume()`, `stop()`, `setSpeed("slow"|"normal"|"fast")`, `report()`, `report({runId})`, `close()`. Snapshot includes `connected,descriptor,state,revision,commands,recipes,display,execution,busy,paused,speed,runId,progress,lastResult,identity`. Result separates `execution` (`completed|rejected|failed|stopped`) from `outcome` and `effect`. It also contains the descriptor command or recipe ID in `command`, a boolean `recipe`, and ISO `startedAt`/`finishedAt` timestamps. Unknown requested IDs are recorded as `command:null`; arbitrary identifiers, parameters and facts are not copied into these result fields. Only an active run receives a `runId`. `ok:true` or `execution:"completed"` alone does not establish a successful application outcome or persistence.
 
+Every `snapshot()` / `observe()` attempts a fresh read. Observation failure returns
+`connected:false`, no state/revision or enabled commands, and a sanitized error;
+it does not replay an action or rewrite completed results/effect evidence. A later
+successful read restores current observation using the same adapter/session.
+It does not establish that a previously submitted operation was reconciled.
+
+Native managed status separately reports
+`observation:{status,error?:{code,message}}`, where status is
+`available|failed|unreachable|not_running|starting`. Failure reasons use static,
+allowlisted public categories; adapter text, paths and transport error strings
+are not exposed. A failed/unreachable native handoff has `ok:false` and top-level
+`status:"observation_failed"` / `status:"unreachable"`. `running` retains the
+accepted owned installation while its child remains retained after observation
+failure; hard child loss may leave only a recovery record. It is not proof of
+readiness. Viewer readiness requires fresh
+connection/model/target checks. Fresh native status also calls the launcher's
+read-only `draftState()` hook: only a current measured `false` establishes clean
+draft/session state. `true` is known dirty; absent, throwing or indeterminate
+evidence is unknown and still blocks unsafe shutdown/replacement. Readiness
+recovery does not remove independent pending-operation, archive or cleanup guards.
+An observation failure after the supervisor acquired its own quiesce pause retains
+that gate. A later explicit safe stop may drain only that owned pause after fresh
+available, idle, clean and complete-evidence checks; user pauses still block and
+application effects are not resumed. Child IPC disconnection triggers best-effort
+owned cleanup, not a guarantee that unsaved drafts or in-memory pending evidence
+survive owner/process/host loss. Durable archives and recovery records must be
+retained until cleanup is established.
+The [recovery procedure](native-setup.md#recover-observation-in-the-existing-owned-session)
+preserves the original owner and attached resources; it adds no force-stop,
+automatic command retry or live adapter replacement.
+
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
 
 The alpha.6 viewer also previews each recipe's ordered command labels and
@@ -156,6 +187,58 @@ selection field still omits it. Reloading the viewer discards parameter editing
 intent and never replays a command.
 
 Resource registry tracks explicit owned/attached handles; cleanup reverses acquisition, preserves attached resources, records failed cleanup and supports retry. Replacement processes must be registered before removing prior ownership records. No global process/container killing.
+
+### Pending finalization and bounded close
+
+`effectStatus` and `endRun` receive `{runId,command,recipe,signal}`. The runtime
+always supplies the context and `AbortSignal`; their TypeScript additions remain
+optional for legacy direct hook callers. Existing adapters that ignore these
+arguments continue to work. Stop and close abort the signal as a cooperative
+request. An aborted signal does not prove that evidence collection or cleanup
+finished, and does not undo a dispatched write. An `endRun` hook must still clean
+its owned resources or retain their handles and reject; it must not treat the
+signal alone as successful cleanup.
+
+Snapshots and current session reports add `finalization:null` or
+`{runId,phase,status,stopRequested}`. Phases are `effect_evidence` and
+`run_cleanup`. Status starts as `pending` and becomes `stalled` after
+`createDriverSession({finalizationWaitMs})` (default 5000 ms, integer 1–60000).
+This is a display threshold, not an operation deadline. The viewer shows
+Finalizing and the pending phase, including a Stop request and a longer wait.
+The fields are optional in public types so older custom session facades remain
+compatible. Ordinary observation and application-action waits do not acquire new
+timeouts or this finalization state.
+
+The original run remains busy until each original hook settles. New commands are
+refused, no completed-run report is published, and Stop does not fabricate an
+outcome or persistence status. Late settlement continues that same run exactly
+once; throwing effect evidence remains uncertain and throwing `endRun` retains
+the existing cleanup-failure result. Stop during effect evidence retains collected
+evidence with stopped execution. Stop during `endRun` does not rewrite the
+already observed application result; cleanup must finish before publication.
+Completed reports remain immutable. Bounded public `finalization_pending`,
+`finalization_stalled` and `finalization_settled` events identify only the phase.
+
+`session.close({timeoutMs})` bounds a caller's total wait (default 5000 ms,
+integer 1–60000). Concurrent callers share one close attempt and its budget.
+Expiry rejects with a sanitized `DriverError` having
+`code:"cleanup_incomplete"` and `cleanupPending:true`. It seals new commands but
+retains the active run or original pending cleanup promise. It does not invoke
+adapter close while an active run is unresolved, start the same pending cleanup
+twice, or abandon the engine and resource handles. Retain the session and retry
+`close()` explicitly after the work can settle. A hook that ignores cancellation
+and never settles continues to block complete cleanup; no forced completion is
+claimed. Settled cleanup failures can still be retried, and successful cleanup
+steps are not repeated.
+
+An owning resource scope propagates `cleanupPending:true` through its aggregate
+error and pauses reverse cleanup at that handle, including setup failures. Earlier acquisitions
+remain owned because pending work may depend on them; attached resources remain
+untouched. Ordinary settled cleanup failures still permit independent cleanup
+and retain their failed handles. The CLI keeps its browser, fixture and viewer
+alive after a pending close, writes the pending report when requested, and retains
+explicit signal retry. The managed runner uses the same scope rule. Callers must
+preserve this dependency boundary when nesting their own cleanup owners.
 
 `session.report()` returns a detached current session view with `format:"browser-driver-report/1"`, `identity`, `runId`, `lastResult`, the latest 200 session `events`, `resources`, and `completedRunIds`. During an active run, `lastResult` remains the prior result until the new result is available. The session view changes as work proceeds; it is not a frozen record of one run.
 

@@ -2,7 +2,11 @@ import http from "node:http";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
-import { safeFrontend, safeStartup } from "./native-session.mjs";
+import {
+  safeFrontend,
+  safeObservation,
+  safeStartup,
+} from "./native-session.mjs";
 
 const MAX_BODY = 4096;
 const phases = new Set([
@@ -33,6 +37,26 @@ const messages = {
     "A draft or session cannot be preserved. Finish or preserve it before restarting.",
   dirty_draft:
     "A draft or session cannot be preserved. Finish or preserve it before restarting.",
+  draft_unknown:
+    "Current draft safety is unknown. Obtain a fresh measurement before cleanup or restart.",
+  observation_failed:
+    "Application observation failed. Current safety state is unconfirmed.",
+  invalid_observation:
+    "The adapter did not provide a valid application observation.",
+  disconnected: "The application page or model connection is unavailable.",
+  unknown_state:
+    "The model did not recognize the currently observed application state.",
+  engine_disconnected: "The model engine connection is unavailable.",
+  engine_timeout: "The model engine did not respond before the deadline.",
+  target_mismatch:
+    "The controlled page does not match this frontend's registered target.",
+  draft_observation_failed: "Current draft safety could not be observed.",
+  child_unreachable:
+    "The owned child cannot be reached. Preserve its ownership and recovery records.",
+  child_timeout:
+    "The owned child did not respond before the deadline. Current safety state is unknown.",
+  child_exited:
+    "The owned child exited without confirmed resource cleanup. Preserve its recovery records.",
   unsafe_restart: "The project is not at a safe restart boundary.",
   source_changed:
     "Project inputs changed. Prepare and validate the update again.",
@@ -105,6 +129,10 @@ function publicStatus(value) {
     },
     selected: installation(value?.selected),
     running: installation(value?.running),
+    dirty: typeof value?.dirty === "boolean" ? value.dirty : null,
+    ...(value?.observation !== undefined
+      ? { observation: safeObservation(value.observation) }
+      : {}),
     phase: known ? value.phase : "recovery_required",
     available:
       object(value?.available) && id(value.available.id)
@@ -224,6 +252,9 @@ export async function createNinjaServer({
     if (busy) throw Object.assign(Error(), { code: "operation_busy" });
     const value = await lifecycle.snapshot();
     const state = await snapshot();
+    const observation = safeObservation(
+      value.observation ?? state.status.observation,
+    );
     if (busy || epoch !== mutationEpoch)
       throw Object.assign(Error(), { code: "operation_busy" });
     if (
@@ -233,7 +264,11 @@ export async function createNinjaServer({
       throw Object.assign(Error(), { code: "status_unavailable" });
     if (
       (value.runningId ?? null) !== (state.status.running?.id ?? null) ||
-      (value.viewerUrl && !value.runningId)
+      (value.viewerUrl && !value.runningId) ||
+      (value.observation !== undefined &&
+        state.status.observation !== undefined &&
+        JSON.stringify(observation) !==
+          JSON.stringify(state.status.observation))
     )
       throw Error("Native session changed during observation");
     const viewer = value.viewerUrl ? new URL(value.viewerUrl) : null;
@@ -265,7 +300,8 @@ export async function createNinjaServer({
         instance: value.instance,
         configSha256: value.configSha256,
         toolsSha256: value.toolsSha256,
-        viewerUrl: viewer?.href ?? null,
+        viewerUrl: observation?.error ? null : (viewer?.href ?? null),
+        ...(observation ? { observation } : {}),
         starting: value.starting === true,
         recovery: value.recovery === true,
         ...(value.frontend ? { frontend: safeFrontend(value.frontend) } : {}),
