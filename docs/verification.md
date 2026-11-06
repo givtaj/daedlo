@@ -1,5 +1,36 @@
 # Verification record
 
+## CI efficiency with retained installed coverage — 2026-11-06
+
+Prepared from main `06331d7` in an isolated checkout. Both required Node 22/24
+statuses, all source/browser/exact-installed consumer suites, main/manual full
+verification, PR trigger coverage and superseded-run cancellation remain.
+Node-independent Rust formatting, Clippy and contract tests run once in Node 24;
+both lanes still build their fixture. Official SHA-pinned Cargo caches cover
+registry downloads and the workspace target only. Fresh temporary installed
+consumers, package archives, acceptance receipts and production renewal are not
+cached or bypassed.
+
+The only lightweight PR case is ordinary edits to the two non-shipped records
+`docs/plan.md` and `docs/verification.md`. The checked-out merge's two parents
+must match the event; its complete diff from the merge base must contain only
+those regular-file modifications. Main/manual runs, product/shipped-doc changes,
+additions, deletions, renames, mode changes and uncertain inputs require full
+verification. The light statuses explicitly say source/browser/package checks
+were NOT RUN. Failed metadata/selection cannot produce passing Node statuses.
+These records still change source provenance; no unchanged-artifact claim is made.
+
+Regression-first evidence: two workflow assertions failed against the original
+configuration (duplicate Rust checks and absent fail-closed selection gate),
+then passed after implementation. Local real-Git fixtures cover record-only
+merges, base-side runtime changes, source-to-record renames, malformed/missing
+events and revisions, missing Git history, and required-status shell failures.
+Focused policy/metadata/guardrail tests, source syntax/types/formatting, tracked
+metadata checks and actionlint 1.7.12 pass. Local evidence is retained under
+`artifacts/ci-efficiency/` in the isolated checkout. Hosted full-matrix results
+are tracked on the CI-efficiency PR; no warm-cache savings or new package/customer
+acceptance is claimed from these local checks.
+
 ## Alpha.8 grid integration and acceptance-gate preparation — 2026-11-06
 
 The owner authorized merging the grid and preparing alpha.8 while keeping the

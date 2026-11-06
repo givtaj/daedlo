@@ -17,6 +17,8 @@ concurrency:
 jobs:
   verify:
     name: Source and packaged consumer (Node ${{ matrix.node }})
+    needs: public-metadata
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
@@ -24,39 +26,73 @@ jobs:
       matrix:
         node: [22, 24]
     steps:
+      - name: Require a successful verification decision
+        env:
+          METADATA_RESULT: ${{ needs.public-metadata.result }}
+          FULL_VERIFICATION: ${{ needs.public-metadata.outputs.full }}
+        run: |
+          test "$METADATA_RESULT" = success
+          case "$FULL_VERIFICATION" in
+            true) echo "Full source, browser and exact-installed verification required." ;;
+            false) echo "Only non-shipped planning records changed. Full source, browser and package checks NOT RUN; metadata and policy checks passed." ;;
+            *) echo "Missing or invalid verification decision."; exit 1 ;;
+          esac
       - name: Check out source
+        if: needs.public-metadata.outputs.full == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Set up Node
+        if: needs.public-metadata.outputs.full == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Install locked Node dependencies
+        if: needs.public-metadata.outputs.full == 'true'
         run: npm ci
       - name: Load the pinned Rust toolchain
+        if: needs.public-metadata.outputs.full == 'true'
         run: rustup show active-toolchain
-      - name: Check Rust format and lints
+      - name: Restore Cargo dependencies and workspace build cache
+        if: needs.public-metadata.outputs.full == 'true'
+        id: cargo-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/registry/src
+            ~/.cargo/git/db
+            target/
+          key: daedlo-cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', '**/Cargo.lock', '**/Cargo.toml', '.cargo/config.toml', '.github/workflows/ci.yml') }}-${{ hashFiles('**/*.rs') }}
+          restore-keys: |
+            daedlo-cargo-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', '**/Cargo.lock', '**/Cargo.toml', '.cargo/config.toml', '.github/workflows/ci.yml') }}-
+      - name: Check Rust format, lints and contracts once
+        if: needs.public-metadata.outputs.full == 'true' && matrix.node == 24
         run: |
           cargo fmt --all -- --check
           cargo clippy --workspace --all-targets --locked -- -D warnings
-      - name: Test and build Rust contracts and independent model
-        run: |
           cargo test --workspace --locked
-          cargo build --workspace --locked
+      - name: Build the independent Rust fixture
+        if: needs.public-metadata.outputs.full == 'true'
+        run: cargo build --workspace --locked
       - name: Check Node source, declarations and format
+        if: needs.public-metadata.outputs.full == 'true'
         run: npm run check
       - name: Install Chromium and its system dependencies
+        if: needs.public-metadata.outputs.full == 'true'
         run: npx playwright install --with-deps chromium
       - name: Test shared runtime, release contracts and archive workbench
+        if: needs.public-metadata.outputs.full == 'true'
         run: |
           npm test
           node --test tests/release-*.test.mjs tests/alpha4-*.test.mjs
           node tests/ninja-architecture-acceptance.mjs --test-published-config
           npm run test:roots-example
       - name: Run independent browser acceptance from source
+        if: needs.public-metadata.outputs.full == 'true'
         run: |
           npm run test:e2e
           npm run test:motion
@@ -71,6 +107,7 @@ jobs:
           npm run test:managed-starter
           npm run test:evidence
       - name: Build an immutable candidate bundle from the clean checkout
+        if: needs.public-metadata.outputs.full == 'true'
         id: bundle
         run: |
           node --input-type=module <<'NODE'
@@ -80,6 +117,7 @@ jobs:
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `manifest-sha256=${result.manifestSha256}\nversion=${result.manifest.version}\n`);
           NODE
       - name: Build and verify the complete public installation kit
+        if: needs.public-metadata.outputs.full == 'true'
         env:
           EXPECTED_MANIFEST_SHA256: ${{ steps.bundle.outputs.manifest-sha256 }}
         run: |
@@ -92,6 +130,7 @@ jobs:
           await import("node:fs/promises").then(fs => fs.writeFile("artifacts/ci-tools-identity.json", JSON.stringify({archive: tools.archivePath, sha256: tools.sha256})));
           NODE
       - name: Verify exact installed tools, native startup and shipped starter
+        if: needs.public-metadata.outputs.full == 'true'
         env:
           EXPECTED_MANIFEST_SHA256: ${{ steps.bundle.outputs.manifest-sha256 }}
         run: |
@@ -108,6 +147,7 @@ jobs:
       # Only distributable bytes are uploaded. Browser evidence and local logs stay private.
       # This is a workflow artifact, not a GitHub Release or registry publication.
       - name: Retain the verified candidate bundle
+        if: needs.public-metadata.outputs.full == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: daedlo-${{ steps.bundle.outputs.version }}-node${{ matrix.node }}-${{ github.sha }}
@@ -116,9 +156,24 @@ jobs:
             artifacts/ci-public-kit/*
           if-no-files-found: error
           retention-days: 14
+      # Caches accelerate compilation; all checks still execute. Independent
+      # installed consumers retain fresh temporary targets outside this cache.
+      - name: Save the successful Cargo cache once
+        if: needs.public-metadata.outputs.full == 'true' && matrix.node == 24 && steps.cargo-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/registry/src
+            ~/.cargo/git/db
+            target/
+          key: ${{ steps.cargo-cache.outputs.cache-primary-key }}
 
   public-metadata:
     name: Public metadata and secrets
+    outputs:
+      full: ${{ steps.selection.outputs.full }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -132,7 +187,10 @@ jobs:
         with:
           node-version: 24
       - name: Test repository safeguards
-        run: node --test tests/public-metadata.test.mjs tests/repository-guardrails.test.mjs
+        run: node --test tests/public-metadata.test.mjs tests/repository-guardrails.test.mjs tests/release-ci-policy.test.mjs
+      - name: Select verification from the actual merge checkout
+        id: selection
+        run: node scripts/ci-select.mjs
       - name: Check tracked public metadata
         run: node scripts/check-public-metadata.mjs
       - name: Scan Git history for secrets

@@ -93,6 +93,21 @@ for the separate historical review and repository settings.
 Documentation-only edits usually need link/command review and formatting checks,
 not a new behavior test. Explain what you actually checked in the pull request.
 
+CI keeps the full Node 22/24 source, browser and exact-installed package suites
+for product changes, shipped documentation, every main push and manual run.
+Rust formatting, Clippy and contract tests run once in the Node 24 lane; both
+lanes build their independent Rust fixture. Cargo dependency/workspace caches
+accelerate builds without skipping checks or reusing installed-consumer outputs.
+Only PRs consisting of ordinary edits to `docs/plan.md` and/or
+`docs/verification.md` use the lighter record-only path. Metadata, secrets and
+CI-policy checks still run, and both required Node statuses explicitly report
+that source/browser/package checks were **NOT RUN**. The selector checks the
+actual merge and includes base-branch changes; uncertain, empty, renamed,
+deleted or newly added paths retain full verification. All other Markdown,
+including installation instructions and skill references, stays on the full path.
+These records still affect the source digest; a light PR pass is not evidence
+for a newly built package. Main and manual runs verify that exact source fully.
+
 **Browser checks** need the built Rust workspace and matching Chromium:
 
 ```sh

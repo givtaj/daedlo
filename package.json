@@ -25,7 +25,7 @@
     "demo": "node examples/roots/serve.mjs",
     "check": "node scripts/check.mjs && npm run types && npm run format:check",
     "types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target esnext --types node packages/runtime/src/index.d.ts",
-    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook examples/starter examples/managed-starter tests/managed-starter-*.mjs tests/evidence-*.mjs tests/starter*.mjs tests/alpha4-*.mjs tests/fixtures/alpha4-upgrade tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml",
+    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook examples/starter examples/managed-starter tests/managed-starter-*.mjs tests/evidence-*.mjs tests/starter*.mjs tests/alpha4-*.mjs tests/fixtures/alpha4-upgrade tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/ci-select.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml",
     "demo:notebook": "node packages/runtime/src/cli.mjs --project examples/notebook/project.mjs",
     "roots:prepare": "node examples/roots/prepare-live.mjs",
     "roots:live": "node examples/roots/launch-live.mjs",
