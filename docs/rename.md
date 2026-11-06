@@ -5,7 +5,8 @@ selected kit's `release.json` records exact source and artifact identities and
 scoped verification. Current publication results belong in the
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md);
 customer upgrade and rollback results belong in that project's handoff.
-The repository stays private until the owner separately approves public access.
+The repository stays private until the owner separately approves public access;
+the [public-launch checklist](https://github.com/givtaj/daedlo/blob/main/docs/public-launch.md) owns the current preparation gates.
 
 ## Names and compatibility
 
@@ -24,11 +25,11 @@ The repository stays private until the owner separately approves public access.
 
 The repository operation is a rename of the existing repository, preserving its
 Git history, branches, tags, issues and pull requests. It does not create a new
-repository or initialize a new Git history. Local checkout folder names are
-independent: active checkouts and worktrees remain in place during this work.
-Moving them requires coordination with their owners after active tasks finish.
-Update repository URLs and remotes as part of the coordinated rename; a folder
-called `browser-driver` can still use the renamed remote.
+repository or initialize a new Git history. The primary checkout was renamed in
+place on 23 October with unrelated work preserved. Other worktree folder names
+can retain `browser-driver` while using the renamed remote; moving another
+checkout remains a separately coordinated operation. Opening source retains
+the existing commit and tag identities; it does not require a history rewrite.
 
 New runtime/tools packages retain the executable aliases `browser-driver` and
 `browser-driver-release`. The `ninja-update` executable remains named as before.
