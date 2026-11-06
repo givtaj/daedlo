@@ -49,6 +49,41 @@ test("production alpha7 promotion binds the accepted clean source and complete i
   );
 });
 
+test("production alpha8 promotion binds the accepted clean source and complete immutable inventory", () => {
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.alpha8Promotion, {
+    version: "0.1.4-alpha.8",
+    sourceCommit: "e878a30de41d996330af70e09723be23dc3d9609",
+  });
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.assets["0.1.4-alpha.8"], {
+    "daedlo-0.1.4-alpha.8.zip": {
+      bytes: 318158,
+      sha256:
+        "be7bc8c7228f445d1e659bbededdcd0d452110501b0edae72ed8ada2d57fd51a",
+    },
+    "release.json": {
+      bytes: 7693,
+      sha256:
+        "7bae303e35c69ebd69f807a6560d6ce395c40ce241b9834a55cba0b9f06f9a62",
+    },
+    SHA256SUMS: {
+      bytes: 91,
+      sha256:
+        "8110d5369b7418f0419b20b68d8e60ee4849d663faa4e03a89b2000d0357ee97",
+    },
+  });
+  assert.deepEqual(
+    PRODUCTION_RENEWAL_POLICY.releaseContracts["0.1.4-alpha.8"],
+    {
+      manager: 2,
+      launcher: 1,
+      nodeAdapter: 1,
+      rustModel: 1,
+      protocol: 1,
+      capabilities: ["recipeContext:1"],
+    },
+  );
+});
+
 function fixture(candidateVersion = version) {
   const version = candidateVersion;
   const publicBase = `https://daedlo.com/downloads/${version}/`;
@@ -146,13 +181,15 @@ function fixture(candidateVersion = version) {
       state.prepared++;
       assert.deepEqual(options, {
         ...args,
-        [version.endsWith("alpha.7")
-          ? "promoteAlpha7"
-          : version.endsWith("alpha.6")
-            ? "promoteAlpha6"
-            : version.endsWith("alpha.5")
-              ? "promoteAlpha5"
-              : "promoteAlpha4"]: true,
+        [version.endsWith("alpha.8")
+          ? "promoteAlpha8"
+          : version.endsWith("alpha.7")
+            ? "promoteAlpha7"
+            : version.endsWith("alpha.6")
+              ? "promoteAlpha6"
+              : version.endsWith("alpha.5")
+                ? "promoteAlpha5"
+                : "promoteAlpha4"]: true,
       });
       assert.equal(renewalDeps.policy, policy);
       for (const [name, bytes] of files) {
@@ -531,6 +568,68 @@ test("alpha7 refuses a tag that differs from its independently pinned package so
   f.state.ref.object.sha = "c".repeat(40);
   await assert.rejects(
     prepareNinjaPromotion({ ...args, promoteAlpha7: true }, f.deps),
+    /tag target does not match pinned source/,
+  );
+  assert.equal(f.state.prepared, 0);
+});
+
+test("explicit alpha8 promotion uses only its independently pinned source and three assets", async () => {
+  const f = fixture("0.1.4-alpha.8");
+  f.policy.alpha8Promotion = f.policy.promotion;
+  delete f.policy.promotion;
+  const result = await prepareNinjaPromotion(
+    { ...args, promoteAlpha8: true },
+    f.deps,
+  );
+  assert.equal(result.status, "PREPARED");
+  assert.equal(f.state.prepared, 1);
+  assert.ok(
+    f.calls.some((c) => c.url.endsWith("/git/ref/tags/v0.1.4-alpha.8")),
+  );
+  assert.ok(!f.calls.some((c) => /alpha\.[4567]/.test(c.url)));
+});
+
+test("alpha8 promotion requires independent pins and refuses mixed or nonboolean selectors before transport", async () => {
+  for (const change of [
+    (f) => delete f.policy.alpha8Promotion,
+    (f) => (f.policy.alpha8Promotion.sourceCommit = "main"),
+    ...["daedlo-0.1.4-alpha.8.zip", "release.json", "SHA256SUMS"].map(
+      (name) => (f) => delete f.policy.assets["0.1.4-alpha.8"][name],
+    ),
+  ]) {
+    const f = fixture("0.1.4-alpha.8");
+    f.policy.alpha8Promotion = f.policy.promotion;
+    delete f.policy.promotion;
+    change(f);
+    await assert.rejects(
+      prepareNinjaPromotion({ ...args, promoteAlpha8: true }, f.deps),
+      /reviewed candidate/,
+    );
+    assert.equal(f.calls.length, 0);
+  }
+  for (const options of [
+    { promoteAlpha8: "true" },
+    { promoteAlpha5: true, promoteAlpha8: true },
+    { promoteAlpha6: true, promoteAlpha8: true },
+    { promoteAlpha7: true, promoteAlpha8: true },
+    { promoteAlpha5: true, promoteAlpha6: true, promoteAlpha8: true },
+  ]) {
+    const f = fixture("0.1.4-alpha.8");
+    await assert.rejects(
+      prepareNinjaPromotion({ ...args, ...options }, f.deps),
+      /Promotion/,
+    );
+    assert.equal(f.calls.length, 0);
+  }
+});
+
+test("alpha8 refuses a tag that differs from its independently pinned package source", async () => {
+  const f = fixture("0.1.4-alpha.8");
+  f.policy.alpha8Promotion = f.policy.promotion;
+  delete f.policy.promotion;
+  f.state.ref.object.sha = "c".repeat(40);
+  await assert.rejects(
+    prepareNinjaPromotion({ ...args, promoteAlpha8: true }, f.deps),
     /tag target does not match pinned source/,
   );
   assert.equal(f.state.prepared, 0);

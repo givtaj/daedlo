@@ -52,23 +52,36 @@ Worker or domain permission is required. See verification for provisioning statu
 
 ## Explicit release promotion
 
-Alpha.4, alpha.5, alpha.6 and alpha.7 use separate reviewed promotion selections in the
+Alpha.4, alpha.5, alpha.6, alpha.7 and alpha.8 use separate reviewed promotion selections in the
 existing renewal workflow. After exact-package acceptance, pin the candidate's clean
 source commit and its complete three-file public inventory in
 `scripts/release/ninja-renew.mjs`. Retain all previous identities. Publish the
 matching GitHub prerelease, merge reviewed publisher policy, then dispatch
 `promote_alpha5=true` on the default branch for alpha.5,
-`promote_alpha6=true` for alpha.6, or `promote_alpha7=true` for alpha.7. Select at most one promotion input; ordinary
+`promote_alpha6=true` for alpha.6, `promote_alpha7=true` for alpha.7, or
+`promote_alpha8=true` for alpha.8. Select at most one promotion input; ordinary
 renewal cannot introduce an unpinned release.
 
 The alpha.5 path requires the retained alpha.4 entry; alpha.6 requires the complete
-retained alpha.5 inventory; alpha.7 requires the complete retained alpha.6 inventory.
+retained alpha.5 inventory; alpha.7 requires the complete retained alpha.6 inventory;
+alpha.8 requires the complete retained alpha.7 inventory.
 Each requires the same authenticated high-water
 checkpoint and signing identity, and manager contract 2. They preserve all earlier
 releases exactly. After successful promotion, ordinary renewal must retain the
-complete inventory including alpha.7; a higher generation cannot remove it.
+complete inventory including alpha.8; a higher generation cannot remove it.
 These workflow capabilities do not establish publication until the live gates
 pass and verification records the actual result.
+
+Alpha.8 publisher preparation is separate from its frozen package source
+`e878a30de41d996330af70e09723be23dc3d9609`. The ZIP is not rebuilt when publisher
+policy or verification records change. Complete exact-kit, isolated Roots and
+recovery acceptance before finalizing the sanitized `release.json` metadata and
+its three-file inventory pins. Keep preparation inactive until those pins are
+reviewed and publication is authorized. Once alpha.8 is pinned as the latest
+release, ordinary renewal deliberately refuses an alpha.7-only live catalog;
+the explicit alpha.8 promotion must establish the complete retained inventory.
+Preparing this code does not publish a release, dispatch the workflow, change
+the live feed or select a replacement customer installation.
 
 Alpha.7's native observation/supervisor fix is delivered in release-tools. A
 runtime update through an existing alpha.6 manager keeps that manager's tools and

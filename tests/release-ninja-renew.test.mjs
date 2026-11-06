@@ -171,8 +171,11 @@ async function fixture(
     promoted6 = alpha6,
     alpha7 = false,
     promoted7 = alpha7,
+    alpha8 = false,
+    promoted8 = alpha8,
   } = {},
 ) {
+  alpha7 ||= alpha8;
   alpha6 ||= alpha7;
   alpha5 ||= alpha6;
   alpha4 ||= alpha5;
@@ -215,6 +218,7 @@ async function fixture(
     ...(alpha5 ? ["0.1.4-alpha.5"] : []),
     ...(alpha6 ? ["0.1.4-alpha.6"] : []),
     ...(alpha7 ? ["0.1.4-alpha.7"] : []),
+    ...(alpha8 ? ["0.1.4-alpha.8"] : []),
   ];
   for (const version of versions) {
     const files = kit(
@@ -225,6 +229,7 @@ async function fixture(
         "0.1.4-alpha.5",
         "0.1.4-alpha.6",
         "0.1.4-alpha.7",
+        "0.1.4-alpha.8",
       ].includes(version)
         ? "daedlo"
         : "browser-driver",
@@ -245,7 +250,8 @@ async function fixture(
       (version === "0.1.4-alpha.4" && !promoted) ||
       (version === "0.1.4-alpha.5" && !promoted5) ||
       (version === "0.1.4-alpha.6" && !promoted6) ||
-      (version === "0.1.4-alpha.7" && !promoted7)
+      (version === "0.1.4-alpha.7" && !promoted7) ||
+      (version === "0.1.4-alpha.8" && !promoted8)
     )
       continue;
     const asset = (name) => ({
@@ -261,6 +267,7 @@ async function fixture(
         "0.1.4-alpha.5",
         "0.1.4-alpha.6",
         "0.1.4-alpha.7",
+        "0.1.4-alpha.8",
       ].includes(version)
         ? { ...contracts, manager: 2 }
         : contracts,
@@ -305,6 +312,7 @@ async function fixture(
       ...(alpha5 ? { "0.1.4-alpha.5": { ...contracts, manager: 2 } } : {}),
       ...(alpha6 ? { "0.1.4-alpha.6": { ...contracts, manager: 2 } } : {}),
       ...(alpha7 ? { "0.1.4-alpha.7": { ...contracts, manager: 2 } } : {}),
+      ...(alpha8 ? { "0.1.4-alpha.8": { ...contracts, manager: 2 } } : {}),
     },
     initialCheckpoint: {
       generation: 1,
@@ -1028,7 +1036,7 @@ test("workflow limits events, credentials, concurrency and deployed configuratio
   );
   assert.match(
     text,
-    /case "\$PROMOTE_ALPHA4:\$PROMOTE_ALPHA5:\$PROMOTE_ALPHA6:\$PROMOTE_ALPHA7" in/,
+    /case "\$PROMOTE_ALPHA4:\$PROMOTE_ALPHA5:\$PROMOTE_ALPHA6:\$PROMOTE_ALPHA7:\$PROMOTE_ALPHA8" in/,
   );
   assert.ok(
     text.indexOf("Validate one explicit promotion selection") <
@@ -1458,6 +1466,7 @@ test("alpha6 workflow selection refuses every combined promotion before credenti
           PROMOTE_ALPHA5: b,
           PROMOTE_ALPHA6: c,
           PROMOTE_ALPHA7: "false",
+          PROMOTE_ALPHA8: "false",
         };
         const run = () =>
           execFileSync("bash", ["-c", script], { env, stdio: "pipe" });
@@ -1617,6 +1626,7 @@ test("alpha7 workflow selection rejects every combined promotion before credenti
   for (let mask = 0; mask < 16; mask++) {
     const env = {
       ...process.env,
+      PROMOTE_ALPHA8: "false",
       ...Object.fromEntries(
         [4, 5, 6, 7].map((number, index) => [
           "PROMOTE_ALPHA" + number,
@@ -1645,4 +1655,318 @@ test("alpha7 workflow selection rejects every combined promotion before credenti
     text,
     /elif test "\$NINJA_PROMOTE_ALPHA7" = "true"; then\n\s+node scripts\/release\/ninja-promotion\.mjs --release 0\.1\.4-alpha\.7/,
   );
+});
+
+test("only explicit alpha8 promotion extends complete alpha7 history and verification retains every asset", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha8: true,
+    promoted8: false,
+  });
+  await assert.rejects(prep(f), /inventory|promotion/i);
+  const result = await prepareNinjaRenewal(
+    { ...f.options, promoteAlpha8: true },
+    f.dependencies,
+  );
+  const envelope = JSON.parse(
+    await fs.readFile(join(result.sitePath, "public/updates/preview.json")),
+  );
+  assert.deepEqual(envelope.signed.releases.slice(0, -1), f.signed.releases);
+  assert.equal(envelope.signed.releases.at(-1).version, "0.1.4-alpha.8");
+  assert.equal(envelope.signed.releases.at(-1).contracts.manager, 2);
+  assert.equal(
+    (await verifyNinjaRenewal({ output: f.options.output }, f.dependencies))
+      .status,
+    "PASS",
+  );
+  const served = new Map();
+  const preparedReceipt = JSON.parse(
+    await fs.readFile(join(f.options.output, "renewal-receipt.json")),
+  );
+  for (const file of preparedReceipt.manifest.files) {
+    if (
+      !file.path.startsWith("public/") ||
+      ["public/_headers", "public/.assetsignore"].includes(file.path)
+    )
+      continue;
+    served.set(
+      origin + "/" + file.path.slice(7),
+      await fs.readFile(join(result.sitePath, file.path)),
+    );
+  }
+  const live = await verifyLiveNinjaRenewal(
+    { output: f.options.output },
+    {
+      ...f.dependencies,
+      fetchImpl: async (url) => {
+        const canonical = url === origin + "/" ? origin + "/index.html" : url;
+        const body = served.get(canonical);
+        return new Response(body ?? "", {
+          status: body ? 200 : 404,
+          headers: {
+            "x-content-type-options": "nosniff",
+            "content-length": String(body?.length ?? 0),
+            "cache-control":
+              url === feed
+                ? "no-cache, max-age=0, must-revalidate"
+                : /\/(downloads|updates\/keys)\//.test(url)
+                  ? "public, max-age=31536000, immutable"
+                  : "no-cache",
+          },
+        });
+      },
+    },
+  );
+  assert.equal(live.status, "PASS");
+  assert.equal(live.generation, result.generation);
+  assert.deepEqual(
+    served.get(origin + "/downloads/0.1.4-alpha.8/daedlo-0.1.4-alpha.8.zip"),
+    f.bodies.get(origin + "/downloads/0.1.4-alpha.8/daedlo-0.1.4-alpha.8.zip"),
+  );
+  const receiptPath = join(f.options.output, "renewal-receipt.json");
+  const receipt = JSON.parse(await fs.readFile(receiptPath));
+  assert.equal(receipt.promoteAlpha8, true);
+  receipt.promoteAlpha8 = false;
+  await fs.writeFile(receiptPath, JSON.stringify(receipt));
+  await assert.rejects(
+    verifyNinjaRenewal({ output: f.options.output }, f.dependencies),
+    /inventory|promotion/i,
+  );
+});
+
+test("alpha8 ordinary renewal authenticates alpha7 checkpoint history and cannot drop retained releases", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha8: true,
+  });
+  const releases = f.signed.releases;
+  f.signed.releases = releases.slice(0, -1);
+  const checkpointPath = join(f.root, "alpha7-checkpoint.json");
+  await fs.writeFile(checkpointPath, f.envelope());
+  f.signed.releases = releases;
+  f.signed.generation = 2;
+  f.bodies.set(feed, f.envelope());
+  const result = await prepareNinjaRenewal(
+    { ...f.options, checkpointPath },
+    f.dependencies,
+  );
+  assert.equal(result.generation, 3);
+  const envelope = JSON.parse(
+    await fs.readFile(join(result.sitePath, "public/updates/preview.json")),
+  );
+  assert.deepEqual(envelope.signed.releases, releases);
+  assert.equal(
+    (await verifyNinjaRenewal({ output: f.options.output }, f.dependencies))
+      .status,
+    "PASS",
+  );
+});
+
+test("alpha8 cannot skip alpha7, combine promotions, or omit historical pins", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha8: true,
+    promoted7: false,
+    promoted8: false,
+  });
+  await assert.rejects(
+    prepareNinjaRenewal({ ...f.options, promoteAlpha8: true }, f.dependencies),
+    /inventory|promotion/i,
+  );
+  const complete = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha8: true,
+    promoted8: false,
+  });
+  const selectors = [
+    "promoteAlpha4",
+    "promoteAlpha5",
+    "promoteAlpha6",
+    "promoteAlpha7",
+    "promoteAlpha8",
+  ];
+  for (let mask = 1; mask < 32; mask++) {
+    const selected = Object.fromEntries(
+      selectors.filter((_, i) => mask & (1 << i)).map((name) => [name, true]),
+    );
+    if (Object.keys(selected).length < 2) continue;
+    await assert.rejects(
+      prepareNinjaRenewal(
+        { ...complete.options, ...selected },
+        complete.dependencies,
+      ),
+      /Only one explicit release promotion/,
+    );
+    await assert.rejects(fs.lstat(complete.options.output), { code: "ENOENT" });
+  }
+  for (const version of [
+    "0.1.4-alpha.4",
+    "0.1.4-alpha.5",
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.7",
+  ]) {
+    const pins = complete.policy.assets[version];
+    delete complete.policy.assets[version];
+    await assert.rejects(prep(complete), /inventory/i);
+    complete.policy.assets[version] = pins;
+  }
+});
+
+test("alpha8 asset network diagnostics use only its reviewed public path and static failure category", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha8: true,
+  });
+  const transport = f.dependencies.fetchImpl;
+  f.dependencies.fetchImpl = async (url, options) => {
+    if (url === origin + "/downloads/0.1.4-alpha.8/daedlo-0.1.4-alpha.8.zip")
+      throw Object.assign(Error("private peer and response details"), {
+        code: "ECONNRESET",
+      });
+    return transport(url, options);
+  };
+  await assert.rejects(prep(f), {
+    message:
+      "Renewal network failure: stage=prepare path=/downloads/0.1.4-alpha.8/daedlo-0.1.4-alpha.8.zip phase=headers category=connection",
+  });
+});
+
+test("alpha8 workflow selection rejects every combined promotion before credentials", async () => {
+  const text = await fs.readFile(
+    join(repo, ".github/workflows/ninja-renew.yml"),
+    "utf8",
+  );
+  const section = text
+    .split("- name: Validate one explicit promotion selection")[1]
+    .split("- name: Set up Node")[0];
+  const script = section
+    .split("run: |\n")[1]
+    .split("\n")
+    .map((line) => line.replace(/^          /, ""))
+    .join("\n");
+  for (let mask = 0; mask < 32; mask++) {
+    const env = {
+      ...process.env,
+      ...Object.fromEntries(
+        [4, 5, 6, 7, 8].map((number, index) => [
+          "PROMOTE_ALPHA" + number,
+          mask & (1 << index) ? "true" : "false",
+        ]),
+      ),
+    };
+    const run = () =>
+      execFileSync("bash", ["-c", script], { env, stdio: "pipe" });
+    if (
+      [4, 5, 6, 7, 8].filter(
+        (number) => env["PROMOTE_ALPHA" + number] === "true",
+      ).length > 1
+    )
+      assert.throws(run);
+    else assert.doesNotThrow(run);
+  }
+  assert.match(
+    text,
+    /promote_alpha8:\n\s+description:[^\n]+\n\s+type: boolean\n\s+default: false/,
+  );
+  assert.match(
+    text,
+    /NINJA_PROMOTE_ALPHA8:.*github.event_name == 'workflow_dispatch'.*inputs.promote_alpha8/,
+  );
+  assert.match(
+    text,
+    /elif test "\$NINJA_PROMOTE_ALPHA8" = "true"; then\n\s+node scripts\/release\/ninja-promotion\.mjs --release 0\.1\.4-alpha\.8/,
+  );
+});
+
+test("alpha8 refuses changed retained history, missing durable checkpoint and an ahead checkpoint", async (t) => {
+  for (const change of [
+    (f) => f.signed.releases.pop(),
+    (f) => {
+      f.signed.releases[0].kit.sha256 = "f".repeat(64);
+    },
+  ]) {
+    const f = await fixture(t, {
+      alpha4: true,
+      alpha5: true,
+      alpha6: true,
+      alpha7: true,
+      alpha8: true,
+    });
+    const checkpointPath = join(f.root, "alpha8-checkpoint.json");
+    await fs.writeFile(checkpointPath, f.envelope());
+    change(f);
+    f.signed.generation = 2;
+    f.bodies.set(feed, f.envelope());
+    await assert.rejects(
+      prepareNinjaRenewal(
+        { ...f.options, checkpointPath, promoteAlpha8: true },
+        f.dependencies,
+      ),
+      /retained release|immutable asset/i,
+    );
+    await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+  }
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha8: true,
+  });
+  f.signed.generation = 2;
+  f.bodies.set(feed, f.envelope());
+  await assert.rejects(prep(f), /Durable signed checkpoint required/);
+  f.signed.generation = 3;
+  const checkpointPath = join(f.root, "ahead-checkpoint.json");
+  await fs.writeFile(checkpointPath, f.envelope());
+  await assert.rejects(
+    prepareNinjaRenewal({ ...f.options, checkpointPath }, f.dependencies),
+    /rollback|generation|checkpoint/i,
+  );
+  await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+});
+
+test("alpha8 renewal rejects nonboolean or stale predecessor selectors and a changed trust pin", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha8: true,
+    promoted8: false,
+  });
+  for (const options of [
+    { promoteAlpha8: "true" },
+    { promoteAlpha4: true },
+    { promoteAlpha5: true },
+    { promoteAlpha6: true },
+    { promoteAlpha7: true },
+  ]) {
+    await assert.rejects(
+      prepareNinjaRenewal({ ...f.options, ...options }, f.dependencies),
+      /promotion|inventory/i,
+    );
+    await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+  }
+  f.policy.publicKeyPemSha256 = "f".repeat(64);
+  await assert.rejects(
+    prepareNinjaRenewal({ ...f.options, promoteAlpha8: true }, f.dependencies),
+    /public key pin differs/,
+  );
+  await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
 });

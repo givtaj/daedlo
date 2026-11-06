@@ -69,3 +69,9 @@
 !/downloads/0.1.4-alpha.7/daedlo-0.1.4-alpha.7.zip
 !/downloads/0.1.4-alpha.7/SHA256SUMS
 !/downloads/0.1.4-alpha.7/release.json
+
+# Exact live workspace grid and finalization release.
+!/downloads/0.1.4-alpha.8/
+!/downloads/0.1.4-alpha.8/daedlo-0.1.4-alpha.8.zip
+!/downloads/0.1.4-alpha.8/SHA256SUMS
+!/downloads/0.1.4-alpha.8/release.json

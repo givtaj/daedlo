@@ -21,6 +21,7 @@ const ALPHA4 = "0.1.4-alpha.4";
 const ALPHA5 = "0.1.4-alpha.5";
 const ALPHA6 = "0.1.4-alpha.6";
 const ALPHA7 = "0.1.4-alpha.7";
+const ALPHA8 = "0.1.4-alpha.8";
 const MAX_JSON = 1024 * 1024;
 const MAX_ASSET = 64 * 1024 * 1024;
 const fail = (message) => {
@@ -30,13 +31,15 @@ const positive = (n) => Number.isSafeInteger(n) && n > 0;
 
 function pinned(policy, version) {
   const promotion =
-    version === ALPHA7
-      ? policy?.alpha7Promotion
-      : version === ALPHA6
-        ? policy?.alpha6Promotion
-        : version === ALPHA5
-          ? policy?.alpha5Promotion
-          : policy?.promotion;
+    version === ALPHA8
+      ? policy?.alpha8Promotion
+      : version === ALPHA7
+        ? policy?.alpha7Promotion
+        : version === ALPHA6
+          ? policy?.alpha6Promotion
+          : version === ALPHA5
+            ? policy?.alpha5Promotion
+            : policy?.promotion;
   const pins = policy?.assets?.[version];
   const names = [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"];
   if (
@@ -104,6 +107,7 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
     promoteAlpha5 = false,
     promoteAlpha6 = false,
     promoteAlpha7 = false,
+    promoteAlpha8 = false,
   } = options;
   if (
     Object.keys(options).some(
@@ -115,12 +119,15 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
           "promoteAlpha5",
           "promoteAlpha6",
           "promoteAlpha7",
+          "promoteAlpha8",
         ].includes(key),
     ) ||
     typeof promoteAlpha5 !== "boolean" ||
     typeof promoteAlpha6 !== "boolean" ||
     typeof promoteAlpha7 !== "boolean" ||
-    [promoteAlpha5, promoteAlpha6, promoteAlpha7].filter(Boolean).length > 1 ||
+    typeof promoteAlpha8 !== "boolean" ||
+    [promoteAlpha5, promoteAlpha6, promoteAlpha7, promoteAlpha8].filter(Boolean)
+      .length > 1 ||
     [privateKeyPath, output, checkpointPath].some(
       (path) =>
         typeof path !== "string" || !isAbsolute(path) || path.includes("\0"),
@@ -128,13 +135,15 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
   )
     fail("requires explicit key, output and checkpoint paths");
   const policy = deps.policy ?? PRODUCTION_RENEWAL_POLICY;
-  const version = promoteAlpha7
-    ? ALPHA7
-    : promoteAlpha6
-      ? ALPHA6
-      : promoteAlpha5
-        ? ALPHA5
-        : ALPHA4;
+  const version = promoteAlpha8
+    ? ALPHA8
+    : promoteAlpha7
+      ? ALPHA7
+      : promoteAlpha6
+        ? ALPHA6
+        : promoteAlpha5
+          ? ALPHA5
+          : ALPHA4;
   const tag = `v${version}`;
   const publicBase = `https://daedlo.com/downloads/${version}/`;
   const { pins, sourceCommit, names } = pinned(policy, version);
@@ -278,13 +287,15 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
       privateKeyPath,
       output,
       checkpointPath,
-      [promoteAlpha7
-        ? "promoteAlpha7"
-        : promoteAlpha6
-          ? "promoteAlpha6"
-          : promoteAlpha5
-            ? "promoteAlpha5"
-            : "promoteAlpha4"]: true,
+      [promoteAlpha8
+        ? "promoteAlpha8"
+        : promoteAlpha7
+          ? "promoteAlpha7"
+          : promoteAlpha6
+            ? "promoteAlpha6"
+            : promoteAlpha5
+              ? "promoteAlpha5"
+              : "promoteAlpha4"]: true,
     },
     {
       policy,
@@ -336,7 +347,7 @@ if (
     }
     if (
       parsed["--release"] &&
-      ![ALPHA4, ALPHA5, ALPHA6, ALPHA7].includes(parsed["--release"])
+      ![ALPHA4, ALPHA5, ALPHA6, ALPHA7, ALPHA8].includes(parsed["--release"])
     )
       fail("unsupported release selector");
     const result = await prepareNinjaPromotion({
@@ -346,6 +357,7 @@ if (
       promoteAlpha5: parsed["--release"] === ALPHA5,
       promoteAlpha6: parsed["--release"] === ALPHA6,
       promoteAlpha7: parsed["--release"] === ALPHA7,
+      promoteAlpha8: parsed["--release"] === ALPHA8,
     });
     console.log(JSON.stringify(result));
   } catch (error) {
