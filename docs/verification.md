@@ -1,5 +1,89 @@
 # Verification record
 
+## Dependency security update — 2026-11-06
+
+**PASS — local source and exact installed-package checks on macOS arm64.**
+Clean candidate source `7404f854c58397cb869625b497379cdc1d39a830`, based on main
+`b3d4e575`, updates Playwright to **1.65.0**, Chromium to **158.0.8127.18** and the
+publisher workflow's separately installed Wrangler to **4.158.0**. Source setup
+selects **Node 24.22.2 / npm 11.21.2**; CI also selects **Node 22.23.4**, with the
+same npm version and unchanged required check names. Runtime `engines >=22` and
+portable manifest compatibility remain major-only contracts; this change does
+not add security patch rejection to existing customer tools.
+
+The new Chromium supplies `requestfailed` for a held keepalive request during
+navigation, where the previous starter check expected missing terminal evidence.
+The genuine failing assertion observed **0 pending instead of 1**. An independent
+browser trace confirmed the terminal event belongs to the original Request.
+Acceptance now compares exact request identities with independently observed
+terminal evidence, still refuses to settle a live held request and preserves
+unresolved work at cleanup. A deterministic unit check proves frame/navigation
+changes and unrelated terminal events cannot erase that work. Production adapter,
+request accounting and persistence assertions are unchanged; three-file review
+found no remaining issue.
+
+| Check | Measured result |
+| --- | --- |
+| Node source quality | PASS on 22.23.4 and 24.22.2: syntax, types and formatting |
+| Shared runtime | PASS on both: 181 tests, zero failures/skips |
+| Release/alpha contracts | PASS on both: 538 tests, zero failures/skips |
+| Archive and safeguards | PASS on both: 11 archive tests and 36 metadata/guardrail tests; public metadata check passes |
+| Rust | PASS: 1.96.0 locked/offline build, fmt, Clippy with warnings denied, 26 tests; one subprocess helper intentionally ignored directly |
+| Source browser | PASS on both: eight notebook groups and 58 CLI/control/viewer/finalization/Ninja assertions; native startup and observation also pass |
+| Starter regression | PASS on both: three deterministic accounting tests and eight real request-accounting groups |
+| Exact installed runtime/tools | PASS on both: eight notebook groups, 112 safety assertions in 14 groups, native startup/observation, exact inventories and cleanup |
+| Exact installed references | PASS on both: 16 starter browser checks, nine evidence checks and eight managed-reference checks, including real isolated dependency installation; cleanup passes |
+| Presentation | Inspected real Chromium notebook viewer and native recovery screenshots; no new visual readiness claim beyond those sampled views |
+| Deployment tooling | Wrangler 4.158.0 version check and credential-free static-site dry-run pass; 19 source assets and 47 self-contained website tests; no deployment |
+| Advisory checks | Updated project lock and isolated Wrangler installation: zero npm findings. Installed npm 11.21.2: two moderate glob/minimatch findings, no high/critical matches |
+
+The complete local receipts, original failures, diagnostic trace, screenshots,
+lock audits and candidate metadata are retained in the isolated worktree under
+`artifacts/security-updates-2026-11-06/`. Source receipts are `source-final22/`,
+`source-final24/`, `browser22/`, `browser24/` and `browser-final24/`; exact consumer
+results are in `installed22/`, `installed24/` and their `-cache-ready` counterparts.
+
+Candidate manifest SHA-256:
+`84d83233943449536683efc510674026aaa4092519abe9e2098b5c8add7f6907`.
+Tools SHA-256:
+`d1ee7d23aea0c0e71731e9d1341caf9d7327625d200be78539ff441144e6b985`.
+The locally built kit retains the source's `0.1.4-alpha.7` version but has different
+bytes from published alpha.7. It is an unpublished engineering candidate, not a
+replacement release or a production update-feed entry.
+
+Setup corrections are distinct from product failures. Initial native checks used
+an absent default engine path; selecting the isolated compiled engine resolved
+that prerequisite. The old Wrangler-pin assertion was updated to the new exact
+pin. Initial installed managed hooks could not find Chromium because their
+restricted environment intentionally drops the outer browser-cache override.
+Installing the matching browser in its separate default version directory with
+cache garbage collection disabled resolved the prerequisite; fresh consumers
+then passed. Original failed consumers and receipts remain retained. A local
+orchestration syntax error preceded test execution and was corrected separately.
+
+Node 24.22.2/npm 11.21.2 was installed alongside the host's prior nvm versions;
+the default alias remains unchanged. Node 22.23.4/npm 11.21.2 also ran from an
+isolated verified toolchain. Older browsers were preserved. The original dirty
+checkout, other worktrees, Roots dependencies and live customer resources were
+not modified. No package publication, Cloudflare deployment or customer promotion
+was performed. Hosted CI and any later integration are separate PR evidence.
+
+Known limits: the two moderate npm findings remain in both 11.21.2 and the checked
+12.2.2 archive; no blanket vulnerability-free claim is made. Browser verification
+covers Chromium, not Playwright's Firefox/WebKit bundles. Another Node security
+release is [announced for November 11](https://nodejs.org/zh-cn/blog/vulnerability/november-2026-security-releases).
+Current security patch guidance is separate from compatibility with older tools.
+
+Integration with merged PR #23 main `133dc8009a73a1a514f40ac42dc8a4e0a9fa6b4c`
+retains its launch/rename documentation, historical audit limits and read-only
+guardrail changes. The only textual conflict was this verification history;
+both entries are retained. Post-integration source quality, 41 metadata/guardrail
+tests, 21 source-license/tools-archive tests and current public metadata checks
+PASS on both patched Node versions. Receipts are in `source-integration22/` and
+`source-integration24/`. The frozen `7404f85` package and hashes above remain
+unchanged and predate #23's shipped documentation; the integrated PR requires its
+own hosted package build and exact installed checks.
+
 ## PR #23 private preparation integration — 2026-11-06
 
 **PASS — local preparation checks; repository remains private.**

@@ -5,14 +5,47 @@ import { trackPageRequests } from "../examples/starter/request-accounting.mjs";
 
 function fixture() {
   const context = new EventEmitter();
-  const page = { context: () => context };
-  const request = () => ({
-    frame: () => ({ page: () => page }),
-    method: () => "GET",
-    resourceType: () => "fetch",
-  });
+  const page = Object.assign(new EventEmitter(), { context: () => context });
+  const request = () => {
+    const frame = { page: () => page };
+    return {
+      frame: () => frame,
+      method: () => "GET",
+      resourceType: () => "fetch",
+    };
+  };
   return { context, page, request };
 }
+test("document changes cannot erase requests with missing terminal evidence", async () => {
+  const { context, page, request } = fixture();
+  const tracker = trackPageRequests(page);
+  const original = request(),
+    unrelated = request(),
+    frame = original.frame();
+  context.emit("request", original);
+  original.frame = () => {
+    throw new Error("detached");
+  };
+  for (const emitter of [page, context]) {
+    emitter.emit("framenavigated", frame);
+    emitter.emit("framedetached", frame);
+  }
+  context.emit("requestfinished", unrelated);
+  context.emit("requestfailed", unrelated);
+  assert.equal(tracker.snapshot().pendingCount, 1);
+  assert.equal(tracker.snapshot().finished, 0);
+  assert.equal(tracker.snapshot().failed, 0);
+  await assert.rejects(
+    tracker.waitForIdle({ timeoutMs: 20 }),
+    (error) =>
+      error.code === "requests_pending" && error.diagnostics.pendingCount === 1,
+  );
+  assert.equal(tracker.snapshot().pendingCount, 1);
+  context.emit("requestfailed", original);
+  await tracker.waitForIdle();
+  assert.equal(tracker.snapshot().failed, 1);
+  assert.equal(tracker.close().pendingCount, 0);
+});
 test("late and duplicate terminal events retire only the original request identity", async () => {
   const { context, page, request } = fixture();
   const tracker = trackPageRequests(page);

@@ -114,7 +114,9 @@ MCP server or registry installer. It is not included in the current runtime tarb
 ## Dependency preflight
 
 Read the selected kit's manifests before installing. The requirements below
-describe `0.1.4-alpha.7`; require its exact-package verification receipt before
+describe the current source candidate. Published `0.1.4-alpha.7` retains its
+released dependencies, including Playwright `1.62.1`; these source updates do not
+modify that kit. Require a new exact-package verification receipt before
 customer promotion. Use the selected kit and independently supplied verification
 values.
 The existing public `0.1.2-rc.1` download is a different package identity. Follow
@@ -122,10 +124,10 @@ the selected manifests rather than silently upgrading a working consumer.
 
 | Component                    | Current requirement                             | Purpose                                                                                                   |
 | ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Node.js                      | Runtime declares `>=22`; CI exercises 22 and 24 | Session runtime, CLI, viewer and browser adapter; Node 24 also satisfies the Roots fixture requirement    |
-| npm                          | No separate minimum declared                    | Install the exact runtime artifact and retain the consumer lockfile; repository development uses `npm ci` |
+| Node.js                      | Runtime declares `>=22`; use patched 22.23.4 or 24.22.2 | Session runtime, CLI, viewer and browser adapter; Node 24 also satisfies the Roots fixture requirement    |
+| npm                          | Source tooling selects 11.21.2                    | Install the exact runtime artifact and retain the consumer lockfile; repository development uses `npm ci` |
 | Rust and Cargo               | Rust minimum 1.96; repository pins 1.96.0       | Build the customer's typed `ApplicationModel` against the shared crate                                    |
-| Playwright                   | Runtime pins `1.62.1`                           | Browser control; install its matching Chromium separately                                                 |
+| Playwright                   | Current source pins `1.65.0`                           | Browser control; install its matching Chromium separately                                                 |
 | Chromium system libraries    | Platform-dependent                              | Linux may need Playwright's system dependency installation; use the host's normal permission flow         |
 | Docker                       | Conditional on the customer's fixture           | Roots uses an isolated PostgreSQL container; shared runtime and notebook acceptance do not require Docker |
 | Application build/data tools | Customer-specific                               | Read the application's manifests and setup guide; its requirements may exceed the driver's                |
