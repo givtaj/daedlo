@@ -1065,7 +1065,7 @@ test("workflow limits events, credentials, concurrency and deployed configuratio
   assert.match(text, /umask 077/);
   assert.match(text, /trap .*EXIT/);
   assert.match(text, /if: always\(\)/);
-  assert.match(text, /wrangler@4\.147\.0/);
+  assert.match(text, /wrangler@4\.158\.0/);
   assert.match(text, /versions upload/);
   assert.match(text, /versions deploy/);
   assert.doesNotMatch(text, /wrangler[^\n]*\sdeploy\s--config/);

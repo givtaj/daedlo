@@ -125,7 +125,9 @@ fixtures and acceptance checks.
 
 ## Contribute from source
 
-Use Node 22 or 24, npm and the Rust 1.96.0 toolchain pinned in this repository.
+Use Node 24.22.2 (`.nvmrc`), npm 11.21.2 and the Rust 1.96.0 toolchain pinned
+in this repository. CI also selects Node 22.23.4; keep both supported lines on
+current security patches.
 From a source checkout:
 
 ```sh
