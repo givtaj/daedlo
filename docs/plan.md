@@ -13,6 +13,8 @@ website deployment or customer dependency promotion is part of this integration.
   the October 30 account blocker is historical, superseded by passing #22 main CI.
 - [x] Verify source quality and 54 focused audit, metadata and licensing regressions;
   read back current private settings without mutations.
+- [x] Fix the installed naming-guide link after CI and local reproduction; all eight
+  release-tools archive/consumer checks pass with unchanged assertions.
 - [ ] Complete exact-head PR CI, merge and resulting main CI, tracked on #23.
 - [ ] For any future public launch, obtain separate visibility authorization,
   refresh the exposure inventory and verify the public-only controls after switching.

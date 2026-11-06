@@ -25,7 +25,7 @@ Measured with Node 22.20.0 and a fresh offline installation of the locked depend
 | Source syntax, public types and configured formatting | PASS, `npm run check` |
 | Repository audit, public metadata and source-license regressions | PASS, 54/54; includes #22's CI-trigger policy check and #23's public-read/private-write checks |
 | Current-tree public metadata, focused script/test formatting and diff whitespace | PASS |
-| Local documentation links | PASS, 139 local references including 24 anchors across ten entry/launch documents; one existing pilot-checklist anchor corrected after a recorded failing check |
+| Local documentation links | PASS, 138 local references including 24 anchors across ten entry/launch documents; one existing pilot-checklist anchor corrected after a recorded failing check |
 | Actual source-license validation | PASS, 379 tracked files; Apache-2.0 declarations and legacy/third-party notices |
 | Independent audit-code review | PASS, no blocking finding |
 | Live repository identity and visibility | PASS, exact ID/name/default branch; **private** |
@@ -33,6 +33,16 @@ Measured with Node 22.20.0 and a fresh offline installation of the locked depend
 | Live main protection | BLOCKED_BY_PLAN, HTTP 403 for protection and rulesets; no enforcement claim |
 | Public contributor approval | UNAVAILABLE while private, HTTP 422; deferred to a separately authorized visibility switch |
 | Primary checkout preservation before integration push | PASS, unchanged HEAD/index/status and all 306 tracked/untracked file contents and modes |
+
+Initial PR [CI run 42193799744](https://github.com/givtaj/daedlo/actions/runs/42193799744)
+failed the same real installed-archive assertion in both Node jobs: the shipped
+`docs/rename.md` linked locally to source-only `public-launch.md`. The exact
+failure was reproduced locally before changing that link to its explicit
+upstream source URL. The existing archive inventory and assertions are unchanged;
+all eight `tests/release-tools.test.mjs` checks then PASS, including offline
+installation and real commands outside Git without Rust. Source-checkout links
+and installed-archive links are distinct checks. The failed CI and local red
+receipts are retained; the corrected head requires a fresh full hosted run.
 
 The read-only audit exits 1 with aggregate `BLOCKED` because main protection is
 unavailable under the current private plan. This is a declared settings limit,
