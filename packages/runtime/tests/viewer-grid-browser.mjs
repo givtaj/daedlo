@@ -33,7 +33,11 @@ const recipe = {
   })),
 };
 
-async function withViewer(name, run, { active = false, viewport } = {}) {
+async function withViewer(
+  name,
+  run,
+  { active = false, viewport, extraStates = [] } = {},
+) {
   let browser, viewer, ui;
   const calls = [];
   const snapshot = {
@@ -46,6 +50,7 @@ async function withViewer(name, run, { active = false, viewport } = {}) {
         { id: "ready", label: "Ready", parent: null, support: "supported" },
         { id: "draft", label: "Draft", parent: null, support: "supported" },
         { id: "saved", label: "Saved", parent: null, support: "supported" },
+        ...structuredClone(extraStates),
       ],
       commands: structuredClone(commands),
       recipes: [structuredClone(recipe)],
@@ -565,3 +570,173 @@ test("mobile flow fits the viewport and reload retains current run attribution",
     { active: true, viewport: { width: 390, height: 844 } },
   );
 });
+
+const largeStateHierarchy = Array.from({ length: 15 }, (_, branch) => [
+  {
+    id: `section-${branch}`,
+    label: `Application section ${branch + 1} and its observed workflow states`,
+    parent: null,
+    support: "supported",
+  },
+  ...Array.from({ length: 10 }, (_, state) => ({
+    id: `section-${branch}-state-${state}`,
+    label: `Observed state ${state + 1}: draft editing, validation and independent storage verification`,
+    parent: `section-${branch}`,
+    support: "supported",
+  })),
+]).flat();
+
+async function readLargeModelGeometry(ui) {
+  return ui.evaluate(() => {
+    const box = (element) => {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    };
+    const scrollBox = (selector) => {
+      const element = document.querySelector(selector);
+      return {
+        ...box(element),
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+        scrollTop: element.scrollTop,
+        overflowY: getComputedStyle(element).overflowY,
+      };
+    };
+    const image = document.querySelector("#browser-image");
+    const rect = box(image);
+    // object-fit: contain centers the actual frame inside the image element.
+    // A tall image box can otherwise pass visibility checks while its pixels are
+    // thousands of pixels below the viewport in an empty letterboxed area.
+    const scale = Math.min(
+      rect.width / image.naturalWidth,
+      rect.height / image.naturalHeight,
+    );
+    const width = image.naturalWidth * scale;
+    const height = image.naturalHeight * scale;
+    const painted = {
+      x: rect.x + (rect.width - width) / 2,
+      y: rect.y + (rect.height - height) / 2,
+      width,
+      height,
+    };
+    return {
+      viewport: { width: innerWidth, height: innerHeight },
+      documentWidth: document.documentElement.scrollWidth,
+      pageScrollY: scrollY,
+      sidebar: scrollBox(".sidebar"),
+      stateTreeVisible:
+        document.querySelector("#state-tree").getBoundingClientRect().height >
+        0,
+      browser: box(document.querySelector(".browser-panel")),
+      image: rect,
+      painted,
+      execution: box(document.querySelector(".execution-panel")),
+      flow: box(document.querySelector(".flow-region")),
+      catalog: scrollBox(".action-catalog"),
+    };
+  });
+}
+
+for (const width of [732, 747, 920, 390, 1440]) {
+  test(`large state hierarchy preserves usable viewer layout at ${width}x888`, async () => {
+    await withViewer(
+      `large-model-${width}x888`,
+      async ({ ui, calls }) => {
+        const geometry = await readLargeModelGeometry(ui);
+        await writeFile(
+          join(evidence, `large-model-geometry-${width}x888.json`),
+          JSON.stringify(geometry, null, 2),
+        );
+        await ui.screenshot({
+          path: join(evidence, `large-model-initial-${width}x888.png`),
+          fullPage: false,
+        });
+        assert.ok(
+          geometry.sidebar.height <= 888,
+          `The state sidebar must be bounded by the viewport: ${JSON.stringify(geometry.sidebar)}`,
+        );
+        assert.ok(
+          geometry.browser.height <= 888,
+          `The browser panel must not stretch with the state list: ${JSON.stringify(geometry.browser)}`,
+        );
+        assert.ok(
+          geometry.painted.y < 888 * 0.65,
+          `Actual frame pixels must start near the top: ${JSON.stringify(geometry.painted)}`,
+        );
+        const visiblePaintedHeight = Math.max(
+          0,
+          Math.min(888, geometry.painted.y + geometry.painted.height) -
+            Math.max(0, geometry.painted.y),
+        );
+        assert.ok(
+          visiblePaintedHeight >= 120,
+          `The initial viewport must show useful frame content: ${visiblePaintedHeight}px`,
+        );
+        assert.ok(
+          geometry.execution.height <= 888,
+          "Execution panel must keep its natural content height",
+        );
+        assert.ok(
+          geometry.flow.height <= 888,
+          "Flow panel must keep its natural content height",
+        );
+        assert.ok(
+          geometry.catalog.height <= 888,
+          "Command catalog must be bounded",
+        );
+        assert.ok(
+          geometry.catalog.scrollHeight > geometry.catalog.clientHeight,
+          "Large command catalog must scroll independently",
+        );
+        assert.match(geometry.catalog.overflowY, /auto|scroll/);
+        assert.ok(
+          geometry.documentWidth <= width,
+          "Large labels must not create page-wide horizontal scrolling",
+        );
+
+        if (geometry.stateTreeVisible) {
+          assert.ok(
+            geometry.sidebar.scrollHeight > geometry.sidebar.clientHeight,
+            "The large state list must scroll within its bounded sidebar",
+          );
+          assert.match(geometry.sidebar.overflowY, /auto|scroll/);
+          await ui.locator(".sidebar").evaluate((element) => {
+            element.scrollTop = element.scrollHeight;
+          });
+          const afterStateScroll = await readLargeModelGeometry(ui);
+          assert.ok(afterStateScroll.sidebar.scrollTop > 0);
+          assert.equal(
+            afterStateScroll.painted.y,
+            geometry.painted.y,
+            "Reading later states must not push the browser image into blank space",
+          );
+          assert.equal(afterStateScroll.pageScrollY, geometry.pageScrollY);
+        }
+        await ui.locator(".action-catalog").evaluate((element) => {
+          element.scrollTop = element.scrollHeight;
+        });
+        const afterCatalogScroll = await readLargeModelGeometry(ui);
+        assert.ok(afterCatalogScroll.catalog.scrollTop > 0);
+        assert.equal(
+          afterCatalogScroll.browser.height,
+          geometry.browser.height,
+        );
+        assert.equal(
+          afterCatalogScroll.painted.y,
+          geometry.painted.y,
+          "Reading later commands must not move the application image",
+        );
+        assert.deepEqual(
+          calls,
+          [],
+          "Reading a large model must not execute application actions",
+        );
+      },
+      {
+        active: true,
+        viewport: { width, height: 888 },
+        extraStates: largeStateHierarchy,
+      },
+    );
+  });
+}

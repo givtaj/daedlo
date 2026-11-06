@@ -1,5 +1,49 @@
 # Verification record
 
+## Large-model tablet grid correction — 2026-11-06
+
+**PASS — source correction and read-only actual-Roots CSS preview.** The earlier
+candidate `714e856` passes the scoped checks below but has a newly reproduced
+layout defect at 641–920px when a large state map determines the page height.
+The sidebar stretches the body grid row, then the main flex container and its
+stacked panels absorb that height. The browser image can be thousands of pixels
+below the visible header. The original installed candidate and its earlier
+receipts remain unchanged; this record does not broaden their acceptance.
+
+- **RED before correction:** a large synthetic hierarchy reproduces the bug at
+  732, 747 and 920px; existing 390 and 1440px cases pass. At 747×888, the sidebar
+  is 18,243px tall and actual contained image pixels begin at y=2,897px.
+  Assertions measure the painted image area, not only the image element's box.
+- **Source fix:** tablet sidebar content scrolls within the viewport; stacked
+  panels use their content heights instead of inheriting the state-map height.
+  All states remain reachable. Desktop rules and mobile header behavior are
+  preserved. The tablet remains a vertically scrolling layout, with active flow
+  following results; simultaneous above-fold visibility of every panel is not
+  claimed at that width.
+- **GREEN:** all 18 grid cases and all 27 viewer Chromium tests pass, including
+  large hierarchies at 732/747/920/390/1440px, independent state/catalog scrolling,
+  image placement, no horizontal overflow, existing finalization/disconnection
+  cases, presentation, frontend isolation and result attribution. Syntax, public
+  types, formatting and `git diff --check` pass. No runtime or Rust behavior changed.
+- **Actual Roots preview, read-only:** a separate test browser loads the existing
+  installed candidate with 151 states and substitutes only the corrected CSS
+  response for that browser. At 747×888 the original browser panel is 3,501px tall
+  and image pixels start at y=1,663px. With source CSS the panel is 482px tall,
+  pixels start at y=154px, and the sidebar is bounded to 888px. Checks also pass
+  at 732/920/1280px. The 747px result was visually inspected; no preview request
+  used a method other than GET. This is rendering evidence, not a new installed
+  package or application business-flow acceptance.
+- **Review:** an independent source and screenshot review found no additional
+  layout defect. Both the original candidate dashboard and official alpha.7
+  session, package bytes, shared application API and frontend remain untouched.
+  Only the preview browser was started and closed.
+
+Evidence is under ignored `artifacts/viewer-grid-tablet-20261106/`:
+`baseline.tap`, `grid-green.log`, `viewer-final.log`, `source-checks.log`, and
+`roots-preview-CFyPOx/receipt.json` with before/after screenshots. The fixture
+baseline is `run-lKfDc0`. A new packaged candidate, installed acceptance,
+integration with later main changes and publication remain separate.
+
 ## Live workspace grid candidate — 2026-11-06
 
 **PASS — isolated source implementation and synthetic browser conformance.**

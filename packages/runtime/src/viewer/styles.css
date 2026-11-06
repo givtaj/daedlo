@@ -1313,9 +1313,11 @@ main > .notice {
 @media (max-width: 920px) {
   body {
     grid-template-columns: 168px minmax(0, 1fr);
+    align-items: start;
   }
   main {
     padding: 14px;
+    align-self: start;
   }
   .sidebar {
     padding: 18px 12px;
@@ -1323,10 +1325,14 @@ main > .notice {
   .workspace-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
+    grid-auto-rows: max-content;
+    align-content: start;
+    flex: none;
   }
   .browser-screen {
     min-height: 220px;
     aspect-ratio: 4 / 3;
+    flex: none;
   }
   .browser-panel {
     grid-column: 1;
@@ -1361,6 +1367,16 @@ main > .notice {
   }
   .header-meta {
     display: none;
+  }
+}
+/* A long model must scroll beside the stacked workspace, never size its rows. */
+@media (min-width: 641px) and (max-width: 920px) {
+  .sidebar {
+    align-self: start;
+    max-height: 100vh;
+    max-height: 100dvh;
+    position: sticky;
+    top: 0;
   }
 }
 @media (max-width: 640px) {
