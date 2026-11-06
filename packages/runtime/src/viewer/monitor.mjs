@@ -25,6 +25,7 @@ let latest,
   startingPresentation = false,
   advancePending = false,
   streamFailed = false,
+  awaitingStream = false,
   lastStreamRetry = 0;
 const commandViews = new Map(),
   recipeViews = new Map(),
@@ -583,9 +584,215 @@ function fillFacts(target, values) {
   if (!values.length) target.append(node("dt", "", "No additional facts"));
 }
 
+// This is a display of the runtime's canonical flow, never an execution plan.
+// A viewer may join a run started by another client, so local button clicks are
+// not a source of truth for either its identity or its completed steps.
+function renderFlow(driver, connected) {
+  const active = Boolean(driver.busy);
+  const finalizing =
+    active && driver.runId && driver.lastResult?.runId === driver.runId;
+  const run = active
+    ? driver.activeRun
+    : driver.lastResult?.runId === driver.runId
+      ? driver.lastResult
+      : null;
+  const descriptor = driver.descriptor;
+  const recipe = run?.recipe
+    ? descriptor?.recipes?.find(({ id }) => id === run.command)
+    : null;
+  const command = !run?.recipe
+    ? descriptor?.commands?.find(({ id }) => id === run?.command)
+    : null;
+  const steps = recipe?.steps || (command ? [{ command: command.id }] : []);
+  const progress = driver.progress;
+  const completed = progress?.completed ?? progress?.index ?? progress?.step;
+  const hasProgress =
+    Number.isInteger(completed) &&
+    completed >= 0 &&
+    completed <= steps.length &&
+    progress?.total === steps.length;
+  const holding =
+    active &&
+    !finalizing &&
+    driver.presentation?.phase === "holding" &&
+    driver.presentation?.status === "running";
+  const current = holding ? driver.presentation.stage - 1 : completed;
+  const label = (id) =>
+    descriptor?.commands?.find((item) => item.id === id)?.label || id;
+  $("flow-title").textContent =
+    recipe?.label ||
+    command?.label ||
+    driver.presentation?.title ||
+    (active ? "Active run" : "Choose a command or flow");
+  $("flow-panel").dataset.runId = driver.runId || "";
+  $("flow-panel").dataset.observation = connected ? "current" : "stale";
+  $("flow-run-identity").textContent = driver.runId
+    ? `Run ${text(driver.runId)}`
+    : "";
+  const phase = finalizing
+    ? "Finalizing"
+    : active
+      ? driver.paused
+        ? "Paused"
+        : holding
+          ? "Holding"
+          : "Running"
+      : run
+        ? title(run.execution || "unknown")
+        : "Ready";
+  $("flow-status").textContent =
+    (!connected ? "Last observed · " : "") +
+    (finalizing
+      ? "Finalizing · Awaiting final outcome and cleanup"
+      : steps.length && !hasProgress
+        ? `${phase} · Step progress unavailable`
+        : active && steps.length
+          ? current < steps.length
+            ? `${phase} · Step ${current + 1} of ${steps.length}: ${label(steps[current].command)}`
+            : `${phase} · Finalizing ${steps.length} steps`
+          : run && steps.length
+            ? `${phase} · ${completed} of ${steps.length} steps finished`
+            : active
+              ? `${phase} · Flow details unavailable`
+              : "Select an authored action to follow its progress here.");
+  const list = $("flow-steps");
+  // Keep scroll position stable across polls. Only replace the list when its
+  // actual display changes, then reveal a new current step within this panel.
+  const items = steps.map((step, index) => {
+    const status = !hasProgress
+      ? "unknown"
+      : active && !finalizing && index === current
+        ? "current"
+        : index < completed
+          ? "done"
+          : active && !finalizing
+            ? "upcoming"
+            : index === completed && progress?.lastAction === step.command
+              ? "interrupted"
+              : "not-run";
+    return { label: label(step.command), status };
+  });
+  const key = JSON.stringify([driver.runId, connected, items, holding]);
+  if (list.dataset.renderKey !== key) {
+    list.dataset.renderKey = key;
+    list.replaceChildren();
+    for (const [index, item] of items.entries()) {
+      const row = node("li", "flow-step");
+      row.dataset.stepStatus = item.status;
+      if (item.status === "current" && connected)
+        row.setAttribute("aria-current", "step");
+      row.append(
+        node("span", "flow-step-label", `${index + 1}. ${item.label}`),
+        node(
+          "span",
+          "flow-step-state",
+          {
+            done: "Finished",
+            current: !connected
+              ? "Last observed"
+              : holding
+                ? "Holding"
+                : "Current",
+            upcoming: "Upcoming",
+            interrupted: "Needs attention",
+            "not-run": "Not run",
+            unknown: "Not observed",
+          }[item.status],
+        ),
+      );
+      list.append(row);
+    }
+    const row = list.querySelector('[aria-current="step"]');
+    if (row) {
+      const rect = row.getBoundingClientRect();
+      const container = list.getBoundingClientRect();
+      if (rect.bottom > container.bottom)
+        list.scrollTop += rect.bottom - container.bottom;
+      else if (rect.top < container.top)
+        list.scrollTop += rect.top - container.top;
+    }
+  }
+  list.hidden = !items.length;
+}
+
+function renderObservation(driver, connected) {
+  const stateId = driver.state?.id;
+  const current = stateViews.get(stateId);
+  document.querySelector(".sidebar").dataset.observation = connected
+    ? "current"
+    : "stale";
+  $("observation-status").textContent = connected
+    ? "Current observation"
+    : "Last observed · disconnected";
+  for (const [id, view] of stateViews) {
+    view.entry.classList.toggle("active", connected && id === stateId);
+    view.entry.classList.toggle(
+      "ancestor",
+      connected && Boolean(current?.ancestors.includes(id)),
+    );
+    if (id === stateId && connected)
+      view.entry.setAttribute("aria-current", "true");
+    else view.entry.removeAttribute("aria-current");
+  }
+  const stateLabel =
+    driver.descriptor?.states?.find((state) => state.id === stateId)?.label ||
+    stateId ||
+    "Unknown application state";
+  $("state-label").textContent = connected
+    ? stateLabel
+    : `Last observed: ${stateLabel}`;
+}
+
+function renderImage() {
+  const connected = Boolean(latest?.connected);
+  const received = $("browser-image").naturalWidth > 0;
+  // A failed initial request can finish before this module installs its listener.
+  if ($("browser-image").complete && !received) streamFailed = true;
+  const state = !connected
+    ? "disconnected"
+    : streamFailed
+      ? "unavailable"
+      : received && !awaitingStream
+        ? "live"
+        : "waiting";
+  document.querySelector(".browser-panel").dataset.imageState = state;
+  $("mirror-status").textContent = {
+    disconnected: received ? "Last captured frame" : "Disconnected",
+    unavailable: "Image unavailable",
+    waiting: "Waiting for image",
+    live: "Live mirror",
+  }[state];
+  $("browser-image").alt =
+    state === "live"
+      ? "Live mirror of the controlled browser; use the command panel to interact"
+      : "Last captured browser image; current appearance is not confirmed";
+  $("stream-error").hidden = state === "live";
+  $("stream-error-title").textContent = {
+    disconnected: received
+      ? "Last captured frame — disconnected"
+      : "Browser disconnected — no image available",
+    unavailable: "Browser image unavailable",
+    waiting: "Waiting for a browser image",
+    live: "",
+  }[state];
+  $("stream-error-detail").textContent =
+    state === "disconnected"
+      ? "The image and observation are not current. Reconnecting never replays commands."
+      : state === "unavailable"
+        ? "The driver is connected, but the browser image is unavailable."
+        : "The controlled browser will appear here when an image arrives.";
+  $("frame-status").textContent =
+    state === "live"
+      ? "Watching controlled session"
+      : state === "disconnected"
+        ? "Disconnected"
+        : $("mirror-status").textContent;
+}
+
 function render(snapshot) {
   const frontend = snapshot.frontend;
   $("frontend-identity").hidden = !frontend;
+  $("frontend-warning").hidden = true;
   if (frontend) {
     $("frontend-name").textContent = frontend.name;
     document.title = `${frontend.name} · Daedlo`;
@@ -612,7 +819,9 @@ function render(snapshot) {
       ? "Target or model mismatch. Commands are disabled for this frontend."
       : "";
   }
+  const recovered = latest?.connected === false && snapshot.connected;
   latest = snapshot;
+  if (recovered) reconnectImage();
   const driver = snapshot.driver || {};
   if (driver.descriptor) {
     const key = JSON.stringify(driver.descriptor);
@@ -655,21 +864,7 @@ function render(snapshot) {
     ? "Watching controlled session"
     : "Connection unavailable";
   $("frame-count").textContent = `${snapshot.frames || 0} frames`;
-  const stateId = driver.state?.id;
-  const current = stateViews.get(stateId);
-  for (const [id, view] of stateViews) {
-    view.entry.classList.toggle("active", id === stateId);
-    view.entry.classList.toggle(
-      "ancestor",
-      Boolean(current?.ancestors.includes(id)),
-    );
-    if (id === stateId) view.entry.setAttribute("aria-current", "true");
-    else view.entry.removeAttribute("aria-current");
-  }
-  $("state-label").textContent =
-    driver.descriptor?.states?.find((state) => state.id === stateId)?.label ||
-    stateId ||
-    "Unknown application state";
+  renderObservation(driver, snapshot.connected);
   fillFacts($("display-facts"), driver.display || []);
   fillFacts(
     $("identity-values"),
@@ -700,15 +895,31 @@ function render(snapshot) {
         ? "Executing and observing the application…"
         : "Ready for a command");
   renderResults(driver);
+  if (!snapshot.connected) {
+    $("execution-state").textContent = "Connection unavailable";
+    if (driver.busy)
+      $("active-outcome-label").textContent =
+        "Connection unavailable; final application outcome unknown";
+  }
+  renderFlow(driver, snapshot.connected);
+  renderImage();
   updateAvailability();
   if (
     streamFailed &&
     snapshot.connected &&
     Date.now() - lastStreamRetry > 5000
   ) {
-    lastStreamRetry = Date.now();
-    $("browser-image").src = `/stream?reconnect=${lastStreamRetry}`;
+    reconnectImage();
   }
+}
+
+function reconnectImage() {
+  // Status recovery is not image recovery. Establish a new read-only stream and
+  // wait for its first load before making a live-image claim again.
+  awaitingStream = true;
+  streamFailed = false;
+  lastStreamRetry = Date.now();
+  $("browser-image").src = `/stream?reconnect=${lastStreamRetry}`;
 }
 
 async function refresh() {
@@ -724,7 +935,15 @@ async function refresh() {
       "The local viewer is unavailable. Existing commands are never replayed when it reconnects.";
     $("connection-error").hidden = false;
     $("live-dot").classList.add("offline");
-    renderPresentation(latest?.driver || {}, false);
+    const driver = latest?.driver || {};
+    renderPresentation(driver, false);
+    renderObservation(driver, false);
+    renderFlow(driver, false);
+    renderImage();
+    $("execution-state").textContent = "Connection unavailable";
+    if (driver.busy)
+      $("active-outcome-label").textContent =
+        "Connection unavailable; final application outcome unknown";
     updateAvailability();
   }
 }
@@ -772,11 +991,13 @@ $("speed").addEventListener("change", async () => {
 });
 $("browser-image").addEventListener("error", () => {
   streamFailed = true;
-  $("stream-error").hidden = false;
+  awaitingStream = false;
+  renderImage();
 });
 $("browser-image").addEventListener("load", () => {
   streamFailed = false;
-  $("stream-error").hidden = true;
+  awaitingStream = false;
+  renderImage();
 });
 async function poll() {
   await refresh();

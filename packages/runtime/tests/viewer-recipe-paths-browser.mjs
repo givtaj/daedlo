@@ -399,7 +399,7 @@ test("legacy recipes expose only an exact shared prefix as an inspectable path g
         "Read-only disclosures send no command request",
       );
       await layoutFits(ui);
-      await ui.locator(".action-panel").evaluate((panel) => {
+      await ui.locator(".action-catalog").evaluate((panel) => {
         const recipes = panel.querySelector("#recipes");
         panel.scrollTop +=
           recipes.getBoundingClientRect().top -
@@ -409,13 +409,13 @@ test("legacy recipes expose only an exact shared prefix as an inspectable path g
       assert.equal(
         await groups.locator(":scope > summary").evaluate((summary) => {
           const panel = summary
-            .closest(".action-panel")
+            .closest(".action-catalog")
             .getBoundingClientRect();
           const visible = summary.getBoundingClientRect();
           return visible.top >= panel.top && visible.bottom <= panel.bottom;
         }),
         true,
-        "The shared path remains reachable in the existing desktop command-panel scroller",
+        "The shared path remains reachable in the desktop command-catalog scroller",
       );
       await screenshot("desktop-paths", ".action-panel");
       await screenshot("desktop", undefined, false);
