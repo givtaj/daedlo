@@ -1,5 +1,68 @@
 # Verification record
 
+## PR #22 reconciliation and exact-installed verification — 2026-11-06
+
+**PASS — local integration and exact-installed conformance on macOS arm64.**
+[PR #22](https://github.com/givtaj/daedlo/pull/22)'s authoritative head
+`d4defb6e1e1f68853a06f4b62e8f01c7bc225886` was merged with main
+`04de789c2c83aba1717a21d950ef7570495107a0`, producing clean package source
+`0386f517c34c8fbdfa98f3df7e9d9332b1cc8019`. The two textual conflicts were in
+plan/verification histories; both sides were preserved, newest delivery first.
+The original regression-first records below remain the evidence for #22's
+behavioral changes. Reconciliation required no additional runtime behavior fix.
+
+The package contains #22's pending/stalled effect-evidence and run-cleanup
+states, cooperative Stop, bounded close and retained dependency ownership,
+while retaining alpha.7's truthful native observation and guarded recovery.
+CI runs on unfiltered pull requests, main pushes and manual dispatch; topic
+push duplication is removed without changing either Node job or its gates.
+
+| Check | Actual result |
+| --- | --- |
+| Source quality | PASS: syntax/source, TypeScript declarations, formatting and public metadata |
+| Shared runtime | PASS: 181 tests, zero failed/cancelled/skipped/todo |
+| Release and alpha contracts | PASS: 538 tests, including native/Ninja recovery and installed-harness provenance contracts; zero failed/cancelled/skipped/todo |
+| Repository safeguards | PASS: 36 metadata/guardrail checks, including CI trigger coverage |
+| Rust | PASS: locked/offline workspace build, fmt, clippy with warnings denied and 26 tests; one subprocess helper intentionally ignored directly and exercised by its parent |
+| Source browser | PASS: eight notebook groups; motion, controls, CLI, viewer, authorization/cleanup/finalization and Ninja UI; archive and published-configuration checks also pass |
+| Clean engineering package | PASS: immutable runtime/crate bundle, complete tools archive and local kit built with dirty-source rejection |
+| Exact installed safety | PASS: 112 assertions in 14 groups, public ESM consumer resolution, original/copied check digests, expected counts and zero skips; installed files remain unchanged |
+| Exact installed native | PASS: startup TAP 1/1 with 13 assertions; observation TAP 2/2 with five recovery assertions; selected tools/runtime/engine paths and compiled-engine digest match |
+| Exact installed references | PASS: starter 16 browser groups, evidence reference nine checks and managed reference eight checks, including real dependency installation/hooks |
+| Presentation and ownership | PASS: inspected installed stalled/close-pending desktop/narrow screenshots and native failed/recovered observation screens; both installed consumers report cleanup PASS, attached application preservation checked |
+
+Measured toolchains were Node 22.20.0, Rust 1.96.0 and Chromium 151.0.7922.34.
+Independent runtime/ownership and installed-harness reviews found no blocking
+regression in the reconciled source. Hosted current-head results and merge
+identity belong to the PR's checks and merge record; local passes do not substitute
+for those gates or customer acceptance.
+
+Exact local artifact identities:
+
+- Source tree SHA-256: `ecd0233ff9296511eb6b2cca1ce34babbe9f0d65d3d958f05a5551340d10119e`.
+- Bundle manifest SHA-256: `713976233b4b920d842b378bfeb3b6616e5ff0638c8e49060ba20f62398251a0`.
+- Runtime archive SHA-256: `9cb34711a6ad49d5d395f734ef1c1aaaabb3b5ce17cb59e9f54e3bb3cbec72c9`.
+- Engine crate SHA-256: `3aac47987cedfffba49e98c4c5bf7a73d9e3c18f4ed4a93da5edff021c2ee312`.
+- Tools archive SHA-256: `c0cf6fa9bf9850617f861250c6034e043db852d9de810a4124a48d28ebf281b7`.
+- Local kit SHA-256: `fa4ea5ec6f109f4819c984fa07cdf1a4db34c63cf94c38d7b31a9d40fc559539`.
+
+These unpublished engineering artifacts retain source version `0.1.4-alpha.7`;
+they differ from the public alpha.7 bytes and do not replace that release.
+The later record-only commit changes no executable or acceptance-harness bytes.
+Private local receipts retain package inventories, browser images, process cleanup
+and a launcher syntax failure that occurred before any package build or browser
+execution; the corrected launcher produced the separate passing receipts above.
+
+The preserved primary checkout, old recovery material and other tasks' worktrees,
+installed versions and live sessions were not used as candidates. Source and
+receipt preservation remains local; no off-host backup claim is made. Customer
+acceptance remains open in [#25](https://github.com/givtaj/daedlo/issues/25), with
+release publication, public visibility and everyday Roots promotion separate.
+The primary preservation comparison retained unchanged HEAD, index, Git status
+and 305 of 306 tracked/untracked file contents and modes. Its installation owner
+concurrently added the separate durable-alpha.7 verification record to the remaining
+file, `docs/verification.md`; that owner's update was left intact.
+
 ## Alpha.7 production delivery — 2026-11-05
 
 **PASS — merged source, immutable publication and actual public HTTPS acceptance.**

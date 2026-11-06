@@ -1,5 +1,29 @@
 # Implementation plan
 
+## PR #22 integration checkpoint — 2026-11-06
+
+The owner authorized reconciliation and merge of [PR #22](https://github.com/givtaj/daedlo/pull/22)
+with current main. Isolated merge source `0386f517c34c8fbdfa98f3df7e9d9332b1cc8019`
+contains authoritative PR head `d4defb6` and main `04de789c`; both dated plan and
+verification histories are retained. The existing stalled-finalization, bounded
+close and resource-ownership changes remain scoped to #22. Alpha.7's native
+observation/recovery implementation and exact-installed checks are retained.
+
+Local source, Rust, real-browser and exact-installed package checks PASS; see
+[the measured checkpoint](verification.md#pr-22-reconciliation-and-exact-installed-verification--2026-11-06).
+Hosted checks, independent review and the merge identity are tracked on #22.
+The independently owned viewer-grid change follows #22 and must reconcile its
+active/finalized-run presentation against that merged source.
+
+Public alpha.7 already contains #19–#21. The October 30 pilot checklist below is
+a historical preparation record: its alpha.6 delivery state and Actions account
+blocker are not current evidence for main. The new local engineering package
+retains source version `0.1.4-alpha.7` but has different bytes from the immutable
+published release; it is not a customer distribution or update-feed entry.
+Customer acceptance remains open in [#25](https://github.com/givtaj/daedlo/issues/25).
+Normal Roots promotion, release publication and public repository visibility
+remain separate work.
+
 ## Alpha.7 delivery — 2026-11-05
 
 The owner explicitly authorized merging and publishing alpha.7 after the native
