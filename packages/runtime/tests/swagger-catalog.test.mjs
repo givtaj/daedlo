@@ -202,6 +202,100 @@ test("requests preserve server base path, encode values, and refuse origin escap
   );
 });
 
+test("catalog refuses operation paths that URL parsing would redirect to another path", () => {
+  for (const path of [
+    "/allowed/../private",
+    "/allowed/./private",
+    "/allowed/%2e%2e/private",
+    "/allowed/.%2E/private",
+    "/allowed/%2E./private",
+    "/allowed/%2e/private",
+    "/allowed/..",
+    "/allowed/%2E%2e",
+    "/allowed/pri\tvate",
+    "/allowed/pri\nvate",
+    "/allowed/pri\rvate",
+    "/allowed/private ",
+  ]) {
+    const doc = document();
+    doc.paths = {
+      [path]: { post: { responses: { 204: { description: "Saved" } } } },
+    };
+    assert.throws(() => buildCatalog(doc), /path/i, JSON.stringify(path));
+  }
+});
+
+test("request construction refuses dot segments formed by complete path substitution", () => {
+  for (const [path, id] of [
+    ["/allowed/{id}../private", ""],
+    ["/allowed/.{id}/private", ""],
+    ["/allowed/%2{id}/private", "e"],
+    ["/allowed/%2E{id}/private", "."],
+  ]) {
+    const doc = document();
+    doc.paths = {
+      [path]: {
+        post: {
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          ],
+          responses: { 204: { description: "Saved" } },
+        },
+      },
+    };
+    const catalog = buildCatalog(doc);
+    assert.throws(
+      () =>
+        buildRequest(
+          catalog,
+          getOperation(catalog, `POST ${path}`),
+          { path: { id } },
+          "https://fixture.invalid/base/schema.json",
+        ),
+      /path/i,
+      JSON.stringify({ path, id }),
+    );
+  }
+});
+
+test("path checks preserve embedded dots, Unicode and once-encoded scalar values", () => {
+  const doc = document();
+  const path = "/v1.2/café/..note/{id}";
+  doc.servers = [{ url: "/base" }];
+  doc.paths = {
+    [path]: {
+      get: {
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: { 204: { description: "Empty" } },
+      },
+    },
+  };
+  const catalog = buildCatalog(doc);
+  for (const id of ["part/name", "%2e%2e", "v1.2", "..note", "café"]) {
+    assert.equal(
+      buildRequest(
+        catalog,
+        getOperation(catalog, `GET ${path}`),
+        { path: { id } },
+        "https://fixture.invalid/schema.json",
+      ).url,
+      `https://fixture.invalid/base/v1.2/caf%C3%A9/..note/${encodeURIComponent(id)}`,
+    );
+  }
+});
+
 test("response checks require declared status, matching media type and full supported schema", () => {
   const catalog = buildCatalog(document());
   assert.deepEqual(

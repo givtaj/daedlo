@@ -351,10 +351,10 @@ export async function runInstalledSwagger({
     });
     assert.equal(
       browserResult.checks.length,
-      12,
+      13,
       "All installed Swagger acceptance groups must run",
     );
-    assert.equal(new Set(browserResult.checks).size, 12);
+    assert.equal(new Set(browserResult.checks).size, 13);
     Object.assign(result, browserResult);
     result.runtimeInventory = verifyInstalledRuntime(
       selected.runtime.root,

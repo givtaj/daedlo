@@ -31,6 +31,11 @@ support is separate from the exact Daedlo test coverage in `docs/verification.md
 Sources: [OpenAPI 3.2.1](https://spec.openapis.org/oas/v3.2.1.html),
 [Swagger UI 5.34.1 matrix](https://github.com/swagger-api/swagger-ui/blob/v5.34.1/README.md#compatibility).
 
+Paths with literal or encoded dot segments, raw whitespace/control characters, or
+URL delimiters are refused. The same check applies after all path parameters are
+substituted, so template boundaries cannot change the authorized endpoint.
+Ordinary embedded dots, Unicode and once-encoded scalar values remain supported.
+
 Discovery is not authorization or a claim of complete conformance. Unsupported
 schema assertions and request encodings fail closed, with static capability
 reasons. A successful HTTP/schema check says that the response matched the

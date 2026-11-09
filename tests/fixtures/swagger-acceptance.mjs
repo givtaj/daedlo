@@ -33,6 +33,19 @@ function specification(version) {
     servers: [{ url: "/api" }],
     paths: {
       "/hello": { get: { responses: { 200: response(message) } } },
+      "/allowed/%2{id}/private": {
+        post: {
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          ],
+          responses: { 204: { description: "Saved" } },
+        },
+      },
       "/items/{id}": {
         get: {
           parameters: [
@@ -420,6 +433,26 @@ export async function runSwaggerBrowserAcceptance({
         `installed helper validates ${version} scalar path/query/header request`,
       );
     }
+    const normalizationOperation = "POST /allowed/%2{id}/private";
+    const normalization = await open({
+      allowOperations: [normalizationOperation],
+      allowWrites: [normalizationOperation],
+    });
+    await select(normalizationOperation);
+    const beforeNormalization = app.calls.length;
+    assert.notEqual(
+      (await run("prepare", { request: JSON.stringify({ path: { id: "e" } }) }))
+        .outcome?.kind,
+      "success",
+    );
+    assert.equal((await normalization.adapter.observe()).facts.prepared, false);
+    assert.equal((await run("execute")).execution, "rejected");
+    assert.equal(app.calls.length, beforeNormalization);
+    await session.close();
+    session = null;
+    checks.push(
+      "composed dot-segment path refuses preparation and dispatches no write",
+    );
     const { adapter } = await open();
     await select("GET /items/{id}");
     const beforeInvalid = app.calls.length;

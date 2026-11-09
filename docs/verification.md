@@ -1,5 +1,27 @@
 # Verification record
 
+## Alpha.9 path authorization correction — 2026-11-09
+
+Final independent review found a release blocker in candidate `08874503`: literal
+or percent-encoded dot segments in an operation path, including segments composed
+across template boundaries, could normalize to a different endpoint. The old kit
+and its draft release are held and must not be promoted. Alpha.7 remains public.
+
+Two unit assertions genuinely failed for missing refusal, and a real Swagger UI
+browser assertion failed because preparation incorrectly reported success. The
+fix checks both the declared template and the complete substituted path before
+URL parsing; it also refuses raw path whitespace/control characters and existing
+URL delimiters. Embedded dots, Unicode and once-encoded scalar values retain
+explicit positive coverage. No live application write was used to reproduce it.
+
+PASS: 225 runtime tests, including 35 focused Swagger unit tests, and all 21 real Swagger browser checks,
+including refused preparation, execute refusal and zero API calls. Source syntax,
+types and formatting passed. An added thirteenth exact-installed acceptance group
+requires the same zero-request behavior from the shipped runtime. New immutable
+artifacts, exact installed acceptance, relevant isolated application rerun, upgrade
+recovery and new-head CI are required before this correction can be published.
+Earlier candidate receipts remain historical evidence for their exercised scope.
+
 ## Alpha.9 Swagger release preparation — 2026-11-09
 
 **IN PROGRESS — source and preliminary exact installed checks passed. A final

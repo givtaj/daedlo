@@ -255,6 +255,7 @@ async function setup(
   t,
   {
     version,
+    schema: suppliedSchema,
     allowOperations = ["GET /hello"],
     allowWrites = [],
     timeoutMs = 1000,
@@ -263,7 +264,7 @@ async function setup(
     useSessionHelper = false,
   } = {},
 ) {
-  const schema = specification(version);
+  const schema = suppliedSchema ?? specification(version);
   const app = await fixture(schema);
   const temporary = await mkdtemp(join(tmpdir(), "daedlo-swagger-browser-"));
   let browser, adapter, session;
@@ -454,6 +455,33 @@ test("invalid required inputs dispatch no request", async (t) => {
     }),
   });
   assert.notEqual(invalid.outcome?.kind, "success");
+  assert.equal((await f.adapter.observe()).facts.prepared, false);
+  assert.equal((await f.run("execute")).execution, "rejected");
+  assert.deepEqual(f.app.calls, []);
+});
+
+test("a substituted path cannot prepare a different endpoint or dispatch a write", async (t) => {
+  const path = "/allowed/%2{id}/private";
+  const operation = `POST ${path}`;
+  const schema = specification();
+  schema.paths[path] = {
+    post: {
+      parameters: [
+        { name: "id", in: "path", required: true, schema: { type: "string" } },
+      ],
+      responses: { 204: { description: "Saved" } },
+    },
+  };
+  const f = await setup(t, {
+    schema,
+    allowOperations: [operation],
+    allowWrites: [operation],
+  });
+  await f.select(operation);
+  const result = await f.run("prepare", {
+    request: JSON.stringify({ path: { id: "e" } }),
+  });
+  assert.notEqual(result.outcome?.kind, "success");
   assert.equal((await f.adapter.observe()).facts.prepared, false);
   assert.equal((await f.run("execute")).execution, "rejected");
   assert.deepEqual(f.app.calls, []);

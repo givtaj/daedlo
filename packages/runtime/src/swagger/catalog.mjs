@@ -23,6 +23,19 @@ const fail = (message) => {
   throw new Error(message);
 };
 
+function assertOperationPath(path) {
+  // WHATWG URL parsing removes literal/encoded dot segments and raw whitespace.
+  // Check both the declared template and its fully substituted path: individually
+  // harmless scalar values can complete a dot segment across template boundaries.
+  if (
+    !path.startsWith("/") ||
+    path.startsWith("//") ||
+    /[?#\\\u0000-\u0020\u007f]/.test(path) ||
+    /(?:^|\/)(?:\.|%2e){1,2}(?:\/|$)/i.test(path)
+  )
+    fail("Invalid or normalizing OpenAPI path.");
+}
+
 function boundedJson(value, limit) {
   let nodes = 0;
   const active = new Set();
@@ -584,13 +597,7 @@ export function buildCatalog(input) {
   const operations = [];
   for (const [path, rawPath] of Object.entries(document.paths)) {
     if (!path.startsWith("/")) continue;
-    if (
-      path.startsWith("//") ||
-      path.includes("?") ||
-      path.includes("#") ||
-      path.includes("\\")
-    )
-      fail("Invalid OpenAPI path.");
+    assertOperationPath(path);
     const pathItem = resolve(document, rawPath, new Set(), true);
     const entries = METHODS.filter((method) => own(pathItem, method)).map(
       (method) => [method.toUpperCase(), pathItem[method], false],
@@ -868,6 +875,7 @@ export function buildRequest(catalog, operation, request, baseUrl) {
     path = path.replaceAll(`{${parameter.name}}`, encodeURIComponent(value));
   }
   if (/[{}]/.test(path)) fail("Unresolved request path.");
+  assertOperationPath(path);
   // Concatenate instead of URL-relative resolution: operation paths are relative
   // to a server's base path, even though every OpenAPI path starts with '/'.
   const url = new URL(`${server.href.replace(/\/$/, "")}${path}`);
