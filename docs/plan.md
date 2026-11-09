@@ -1,20 +1,22 @@
 # Implementation plan
 
-## Alpha.9 publication checkpoint — 2026-11-09
+## Alpha.9 production release — 2026-11-09
 
 - [x] Merge the tested generic Swagger source and corrected path validation.
 - [x] Freeze and verify the exact runtime/core/tools kit, isolated Roots, and recovery.
 - [x] Pass source and publisher review/CI plus the exact staged website and installer.
 - [x] Publish the exact private-repository GitHub prerelease and verify its tag/bytes.
 - [x] Merge the reviewed publisher policy without rebuilding the accepted kit.
-- [ ] Obtain explicit approval for production signing and Cloudflare promotion.
-- [ ] Verify actual public HTTPS installation and upgrade/rollback after activation.
+- [x] Obtain explicit release-owner approval and promote with the existing key/Worker.
+- [x] Verify actual public HTTPS files, visible website, copied installer and cleanup.
+- [x] Pass all nine production HTTPS upgrade/migration/restart/rollback checkpoints.
 
-The public feed remains alpha.7. The active publisher policy now expects alpha.9,
-so complete the approved coordinated promotion before ordinary renewal can pass.
-Measured results and the immutable release inventory belong in verification.
+Alpha.9 is live at [daedlo.com](https://daedlo.com/install.html), signed generation 28. All historical downloads and trust are retained. The exact measured results,
+immutable inventory and supported limits are in [verification](verification.md).
+The Swagger integration remains standalone and uses its documented OpenAPI
+subset; richer compatibility and managed Swagger onboarding remain future work.
 
-## Alpha.9 Swagger release preparation — 2026-11-09
+## Historical alpha.9 Swagger release preparation — 2026-11-09
 
 Prepare a new coherent candidate from current main, incorporating generic Swagger,
 portable exact-runtime/model delivery, explicit password fields and the reviewed
