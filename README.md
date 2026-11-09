@@ -11,19 +11,18 @@ application outcome. Authored flows run without an AI agent or model API key.
 [Contribute](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Get help](SUPPORT.md) ·
 [Security](SECURITY.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
-**0.1.4-alpha.7 is released: assisted macOS arm64 onboarding with Codex.**
-[Start with one Codex prompt](https://daedlo.com/install) or read the
-[versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.7)
-(source access required).
-The exact installed kit, source CI, managed reference, public installer and
-production HTTPS tools bootstrap/upgrade/restart/rollback passed their scoped
-checks on 5 November 2026. The [verification record](docs/verification.md) owns measured results and
-limits; [alpha delivery](docs/alpha-release.md) owns the product scope.
+**Assisted macOS arm64 onboarding with Codex.**
+[Start with one Codex prompt](https://daedlo.com/install).
+The [verification record](docs/verification.md) owns current publication status,
+measured acceptance and limits; [alpha delivery](docs/alpha-release.md) owns the
+product scope. Use the exact verified release kit and its installation instructions.
 
-Source is preparing **0.1.4-alpha.8** with the live application/flow/results grid,
-bounded large state maps and explicit pending/stalled finalization. Alpha.7 remains
-the published and accepted installation while the exact replacement kit passes
-its installed and Roots checks. See [candidate delivery](docs/alpha-release.md).
+The alpha.9 kit combines the live application/flow/results grid, bounded large
+state maps and explicit pending/stalled finalization with reusable Swagger API
+driving and masked password parameters. Existing integrations require the
+reviewed QA dependency migration and retain their accepted installation for
+recovery. Customer incident recovery and independent application acceptance
+remain separate from the release's technical checks.
 
 Alpha.7 separates native observation failures from stopped ownership, reports
 unknown draft safety explicitly and documents guarded recovery. The supervisor
@@ -156,7 +155,7 @@ focused checks, full browser/release gates and review workflow. Installed-packag
 acceptance is a separate release gate; source checks do not establish customer
 acceptance, complete Roots replacement or remote CI success.
 
-## Swagger API driving — alpha.9 candidate
+## Swagger API driving — alpha.9
 
 A reusable [Swagger integration](integrations/swagger/README.md) reads OpenAPI
 3.0/3.1/3.2 catalogs and drives the supported request/response subset through
@@ -165,8 +164,9 @@ operation permissions, authentication and independent business evidence.
 The portable tools include the generic model source, isolated builder and
 standalone launcher. Independent Swagger UI fixtures, exact installed checks and
 actual Roots acceptance are recorded in [verification](docs/verification.md).
-This candidate is not included in the published alpha.7 kit; its compatibility
-table lists unsupported features explicitly.
+The integration is included in the alpha.9 portable kit. Its compatibility table
+lists unsupported features explicitly; the verification record distinguishes
+accepted artifacts from production publication.
 
 ## Teaching mode — planned
 

@@ -40,10 +40,10 @@
       </p>
       <div class="guide-download">
         <div>
-          <p class="eyebrow">One Codex prompt, from install to updates</p>
+          <p class="eyebrow">One Codex prompt, from install to a first flow</p>
           <p>
             Open your project in Codex. The guided setup includes your first
-            flow and Ninja-Update.
+            flow and its supported launch route.
           </p>
         </div>
         <a class="button primary" href="/install.html"
@@ -71,7 +71,15 @@
       </section>
       <section class="guide-block">
         <h2>2. Connect your application</h2>
-        <p>The current integration has two application-specific parts:</p>
+        <p>
+          For Swagger UI, reuse the shipped generic model and adapter. The
+          installed <code>integrations/swagger/README.md</code> connects your
+          schema, allowed operations and explicit write policy through the
+          standalone CLI. It supports a bounded subset of OpenAPI 3.0, 3.1 and
+          3.2 JSON; unsupported assertions and encodings fail closed. Native
+          managed Swagger onboarding and updates are unsupported.
+        </p>
+        <p>Other application flows have two application-specific parts:</p>
         <ul>
           <li>
             <strong>A Rust state model</strong> describes observed facts,
@@ -87,6 +95,14 @@
           Application behavior, test data, fixtures, and the meaning of a
           successful outcome remain part of your integration.
         </p>
+        <p>
+          When migrating legacy QA dependencies, use the installed
+          <code>docs/ninja-update.md</code> to review the exact QA manifest and
+          lock changes. Keep a snapshot and restore path, preserve the accepted
+          previous installation, and repeat your application acceptance before
+          activation. Changing a runtime alone does not migrate authored source
+          or normal application dependencies.
+        </p>
       </section>
       <section class="guide-block">
         <h2>3. Run, watch, and inspect</h2>
@@ -99,6 +115,13 @@
           Stopping execution cannot undo a request already sent. Fresh
           observations and the application’s evidence determine what can safely
           happen next.
+        </p>
+        <p>
+          Explicit password-type command fields are masked and cleared after
+          submission. Swagger request preparation uses this field type, and
+          reports omit raw parameters and bodies. Swagger itself still displays
+          private inputs and responses in the controlled browser; review the
+          visible page before sharing a screenshot.
         </p>
         <p>
           Authored commands and flows run without an AI agent or model API key.
@@ -123,8 +146,8 @@
           and run reports. Its native launcher archives each finalized report
           immediately. Reports remain bounded: memory keeps 16 completed runs,
           and each report retains at most 200 events. Check the truncation
-          indicator; archiving cannot recover events already omitted from a
-          long run. A later persistence check stays separate from the original
+          indicator; archiving cannot recover events already omitted from a long
+          run. A later persistence check stays separate from the original
           report.
         </p>
       </section>
@@ -150,11 +173,12 @@
           original product work and remains the source of the origin story.
         </p>
         <p>
-          Application-specific integration is required. Linux, Windows and
-          Claude Code onboarding remain unverified. Fresh OS/toolchain
-          installation and independent self-service onboarding are outside this
-          alpha. Complete the handoff by preserving evidence, closing owned
-          resources, then relaunching and repeating the flow.
+          Application-specific integration or a configured Swagger profile is
+          required. Linux, Windows and Claude Code onboarding remain unverified.
+          Fresh OS/toolchain installation and independent self-service
+          onboarding are outside this alpha. Complete the handoff by preserving
+          evidence, closing owned resources, then relaunching and repeating the
+          flow.
         </p>
         <div class="guide-callout">
           <p>

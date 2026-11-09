@@ -1,5 +1,54 @@
 # Verification record
 
+## Alpha.9 corrected immutable release candidate — 2026-11-09
+
+**PASS — corrected source, exact installed kit, isolated application and recovery
+gates. Production publication is NOT RUN.** Frozen source is
+`30d2a985964011c08d80db2e83a3716a2c151345`.
+[Source PR #31](https://github.com/givtaj/daedlo/pull/31) merged as
+`796910d7f407440e078381706f127d1886973900`; [source CI 42675384206](https://github.com/givtaj/daedlo/actions/runs/42675384206)
+passed metadata/secrets and both Node 22.23.4/24.22.2 lanes, including the new
+source and installed path-validation regressions. The earlier `08874503` candidate
+remains held and unpublished. Publisher preparation is [PR #32](https://github.com/givtaj/daedlo/pull/32).
+
+| Immutable public file | Bytes | SHA-256 |
+| --- | --- | --- |
+| `daedlo-0.1.4-alpha.9.zip` | 358374 | `81b252cc4853278360e893713c778676b492df5d60afe4f19d7880484327f4b2` |
+| `release.json` | 10880 | `4d85aeafd0699ccd8a142b4e7ca4546763f7c0423476b13806d448fb4ea1a1a2` |
+| `SHA256SUMS` | 91 | `e44b46953df301aa102655e8f14ee7d89e7cd9a17e8b2603c2589ddab7fa8631` |
+
+Bundle manifest SHA-256 is
+`6d79001594e550a017d5838af35ad1ba1e549bc655f6b9b7be1bc1f09d85813d`;
+tools SHA-256 is
+`be00cce12ac5d620cf7c09ba64dc24fc8b1452b7bdf8a128dc77f45f43da9d59`.
+The merged source tree exactly matches the reviewed frozen source. Main-branch
+CI is tracked separately in [run 42677744268](https://github.com/givtaj/daedlo/actions/runs/42677744268).
+No later publisher/status commit rebuilds these bytes. Final metadata records
+measured acceptance; website and actual delivery gates are recorded separately.
+
+| Gate | Measured result |
+| --- | --- |
+| Source | PASS: 225 runtime tests, 607 release/alpha contracts, 18 Swagger Rust tests, 21 Swagger browser checks; both hosted Node lanes and metadata/secrets passed |
+| Exact installed final kit | PASS: 13 Swagger groups, 8 browser groups, 136 safety assertions across 16 groups, native startup 13 and observation 5 checks, frontend/recipe viewers; 27 runtime and 79 tools files verified before/after; cleanup PASS |
+| Shipped references | PASS: starter 16, evidence 9, managed reference 8; exact installed packages and owned cleanup verified |
+| Fresh Roots Swagger | PASS: all 12 real UI/API/PostgreSQL scenarios reran with the final runtime and rebuilt shipped model; owned services, database, browser and private account file cleaned |
+| Other isolated Roots flows | PASS carried forward only through exact archive-member identity: all non-Swagger runtime files, core archive and shipped executable helpers are unchanged; the runtime catalog alone changed, plus tools source metadata and Swagger README |
+| Final tools bootstrap / dependency migration / rollback | PASS: all 9 checkpoints, including unchanged-lock refusal, explicit QA-only package/lock migration, candidate save, restart and complete retained alpha.7 slot rollback; all 5 owned resources closed |
+| Corrected publisher policy | PASS: 242 checks with independent final source and three-file pins, retained alpha.7 history and all 32 promotion-selector combinations |
+| Corrected final website binding | PASS: final source/metadata binding, 75 tests, 8 pages/8 archives, 14 browser/clipboard checks plus 4 layouts, unchanged exact DOM installer in a nested workspace, Playwright 1.65.0/Chromium 158.0.8127.18, and Wrangler 4.158.0 strict 47-file dry-run; owned cleanup PASS |
+| Production delivery | NOT RUN: corrected GitHub draft upload/readback passed; production signing, prerelease publication, Worker activation and actual HTTPS installation/recovery remain separate gates |
+
+The path correction has genuine unit and real-browser failure evidence before its
+fix. Static or substituted dot segments and raw path whitespace/control characters
+are refused before URL parsing. Ordinary embedded dots, Unicode and once-encoded
+scalar inputs retain positive coverage. HTTP/schema validity remains separate from
+application outcome and independent persistence proof.
+
+Existing alpha.7 integrations require the documented reviewed QA dependency
+migration for Playwright 1.65; an unchanged lock correctly refuses the new runtime.
+No production lock guard was relaxed. Assisted macOS arm64 and standalone Swagger
+remain the delivery scope. Normal Roots dependencies/services are unchanged.
+
 ## Alpha.9 path authorization correction — 2026-11-09
 
 Final independent review found a release blocker in candidate `08874503`: literal
@@ -22,7 +71,74 @@ artifacts, exact installed acceptance, relevant isolated application rerun, upgr
 recovery and new-head CI are required before this correction can be published.
 Earlier candidate receipts remain historical evidence for their exercised scope.
 
-## Alpha.9 Swagger release preparation — 2026-11-09
+## Historical held alpha.9 candidate 08874503 — 2026-11-09
+
+**HELD — superseded by the path authorization correction above.** The following
+checks passed their exercised scope but did not cover the subsequently found
+path normalization case. This candidate must not be published. The frozen source is
+`08874503aefeed81ce52f90a2e6644317293a385`; [source PR #31](https://github.com/givtaj/daedlo/pull/31)
+is separate from the inactive publisher preparation. [CI run 42670482133](https://github.com/givtaj/daedlo/actions/runs/42670482133)
+passed metadata/secrets and both patched Node 22.23.4/24.22.2 lanes, including
+source browser and exact installed Swagger verification. Local verification used
+Node 24.22.2/npm 11.21.2, Rust 1.96.0 and Playwright 1.65.0/Chromium 158.0.8127.18.
+
+| Final immutable public file | Bytes | SHA-256 |
+| --- | --- | --- |
+| `daedlo-0.1.4-alpha.9.zip` | 358045 | `33b5b83d6f0ccaeec817316b0a64b82cbd67bfc83d8f6c8f1f32f31deb6c0346` |
+| `release.json` | 11185 | `e25abe3fb383e5783fb1f0568fe7500f86b2d488e984c93faa81aa7c0e06a543` |
+| `SHA256SUMS` | 91 | `647a9d93f93913361c8604ff42f816c4b196b386c79274b5022131f118febb57` |
+
+Bundle manifest SHA-256 is
+`b56a8b2c2a3df8173666b53e82218cef3d2904f63ce6b6aa83983775e94f6855`;
+tools SHA-256 is
+`4e3c0fc578bceed0e9100f730f9c93ffa723b383c1f25570dfcef7ccead980a5`.
+The public metadata records only sanitized measured results and explicit limits.
+Later publisher/status commits do not rebuild or replace these bytes.
+
+| Gate | Measured result |
+| --- | --- |
+| Source regression | PASS: 222 runtime tests, 605 release/alpha contracts plus 2 shipped-guidance regressions, 18 Swagger Rust tests, 20 Swagger browser tests and 29 shared Rust tests |
+| Exact installed final runtime/tools/core | PASS: 8 browser groups, 136 safety assertions across 16 groups, native startup 13 and observation 5 checks, frontend/recipe viewers; 27 runtime and 79 tools files verified before/after; cleanup PASS |
+| Exact installed Swagger | PASS: 12 groups through actual installed CLI/project/runtime and rebuilt shipped model, OpenAPI 3.0.3/3.1.0/3.2.1, one-request policy, stale/auth refusal, writes uncertain without proof, exact proof saved, masked submit/clear; cleanup PASS |
+| Shipped references | PASS: 16 starter groups, 9 evidence groups, 8 managed-reference groups with real isolated installation and acceptance; cleanup PASS |
+| Roots isolated acceptance | PASS: model 109, privacy 2, save/stale/reload 4, viewer 1, grid/keyboard/recovery 11, CLI 1, real Access masking 5 and Swagger 12 |
+| Exact final tools bootstrap/migration/rollback | PASS: all 9 checkpoints, including original lock refusal, reviewed QA manifest/lock migration, candidate real flow, fresh-manager restart and full alpha.7 slot rollback; all 5 owned resources closed |
+| Publisher policy | PASS: 242 focused/broader safety checks with the final metadata pin; five promotion selectors tested in all 32 combinations, alpha.9 follows retained alpha.7, held alpha.8 excluded |
+| Staged website preparation | PASS with final metadata byte binding: 75 tests, 8 pages/8 archives, 14 browser/clipboard checks, 4 additional layouts, unchanged exact installer in nested workspace, Wrangler 4.158.0 dry-run with strict 47-file inventory; Playwright 1.65.0/Chromium 158.0.8127.18 and owned cleanup verified |
+| Actual publication / production HTTPS | NOT RUN: no release upload, production signing, Worker activation or feed change |
+
+Roots used a pinned application source snapshot and disposable data. The final
+source correction after `32f11d4` changed onboarding text and tests only. Exact
+runtime/core archives and every shipped executable integration file remained
+identical: only tools `SOURCE.json`, skill version text and onboarding reference
+changed. The final kit received fresh installed acceptance and recovery checks;
+Roots behavior evidence is carried forward only through this measured byte
+identity. Its rebuilt models, original receipts and comparison record are retained
+locally. The owned API/frontend/database/container were closed, private account
+file removed, and normal Roots dependencies/services and Docker engine preserved.
+
+The first dependency upgrade correctly refused the old Playwright lock. The
+verified assisted migration updates only the separate QA integration's
+`package.json` and `package-lock.json`, preserving all other authored bytes,
+registration, configuration, trust, application data and retained slots. No
+production lock guard was relaxed. The older failed run and its subsequent
+owned-resource recovery remain separate receipts. A new runtime cannot silently
+migrate an old lock or hot-load new tools into an active session.
+
+The publisher branch is inactive preparation. It retains the 21 historical
+public download files, six existing signed catalog entries and existing key and
+checkpoint policy. Merging the new pinned inventory before coordinated promotion
+would make ordinary renewal reject the alpha.7-only feed; do not merge it early.
+The staged site's catalog uses an explicit ephemeral test key; the production
+pin rejects it. Production signing and post-publication HTTPS verification remain
+separate steps. Assisted macOS arm64 is the onboarding scope; no clean-OS,
+Windows, independent customer or everyday application promotion claim is made.
+
+
+## Historical alpha.9 Swagger preparation checkpoint — 2026-11-09
+
+Superseded by the final immutable candidate record above. The following preserves
+what was measured before the final source freeze and metadata binding.
 
 **IN PROGRESS — source and preliminary exact installed checks passed. A final
 source freeze, refreshed exact artifacts, Roots acceptance, hosted CI and public

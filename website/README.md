@@ -20,7 +20,10 @@ as illustrations. Private traces and customer source must never enter this tree.
 ## One onboarding entrypoint
 
 `/install` is the canonical journey: open the customer project in Codex, copy one
-complete prompt, then inspect its first-flow and update-registration evidence.
+complete prompt, then inspect its first-flow and supported launch evidence.
+Swagger UI requests use the shipped standalone integration and explicit operation
+policy. Native managed Swagger onboarding and updates are unsupported; managed
+application integrations keep their registration and signed-update workflow.
 The prompt is rendered from `templates/install.html` using the verified release
 URL and ZIP/tools/bundle digests. It has no kit-path placeholder. The homepage,
 integration guide and updates reference lead to this same journey. Manual
@@ -46,7 +49,7 @@ local artifact cache. For an unpublished preflight, use the release owner's
 verified local three-file directories instead of downloading them.
 
 ```sh
-for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3 0.1.4-alpha.4 0.1.4-alpha.5 0.1.4-alpha.6; do
+for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3 0.1.4-alpha.4 0.1.4-alpha.5 0.1.4-alpha.6 0.1.4-alpha.7 0.1.4-alpha.9; do
   mkdir -p "artifacts/website-inputs/$daedlo_website_version"
   for daedlo_website_file in "daedlo-$daedlo_website_version.zip" SHA256SUMS release.json; do
     curl --fail --show-error --location \
@@ -73,6 +76,12 @@ node website/scripts/stage-release.mjs --website-root website \
 node website/scripts/stage-release.mjs --website-root website \
   --release-dir artifacts/website-inputs/0.1.4-alpha.6 \
   --expected-version 0.1.4-alpha.6
+node website/scripts/stage-release.mjs --website-root website \
+  --release-dir artifacts/website-inputs/0.1.4-alpha.7 \
+  --expected-version 0.1.4-alpha.7
+node website/scripts/stage-release.mjs --website-root website \
+  --release-dir artifacts/website-inputs/0.1.4-alpha.9 \
+  --expected-version 0.1.4-alpha.9
 
 # Before publication, use the release owner's signed catalog instead.
 curl --fail --show-error --proto '=https' \
@@ -81,10 +90,12 @@ curl --fail --show-error --proto '=https' \
 node website/scripts/stage-updates.mjs --website-root website \
   --catalog artifacts/website-inputs/preview.json \
   --public-key docs/update-trust/daedlo-release-2026-10.pem \
-  --expected-version 0.1.4-alpha.5
+  --expected-version 0.1.4-alpha.9
 ```
 
-Stage rc.1 and alpha.2 first, then alpha.3, alpha.4 and alpha.5, followed by the signed preview feed. The final
+Stage rc.1 and alpha.2–alpha.7 first, then alpha.9, followed by the signed preview feed.
+Alpha.8 remains held and is not part of the public inventory. Preserve all 21
+previous download files and all six signed alpha.2–alpha.7 entries. The final
 release step renders the current installation page. Feed staging renders
 `updates.html` with the exact public key pin and catalog expiry. Validate and
 review only after all releases and the feed are staged. The current ZIP identity comes from the release
@@ -95,17 +106,24 @@ bytes. A new release or metadata change needs a fresh staging tree.
 
 Expected archive identities:
 
-| Version | ZIP SHA-256 |
-| --- | --- |
-| `0.1.2-rc.1` | `da5ce1387eb147a3fb3a7225decd3e51e9fc355a505583ccc20cb2a9bf33963b` |
+| Version         | ZIP SHA-256                                                        |
+| --------------- | ------------------------------------------------------------------ |
+| `0.1.2-rc.1`    | `da5ce1387eb147a3fb3a7225decd3e51e9fc355a505583ccc20cb2a9bf33963b` |
 | `0.1.4-alpha.2` | `b9555b6b237ac437f62b984f6994e3ef12ba4e8f95b730f52c9aa9313a375ee1` |
 | `0.1.4-alpha.3` | `f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190` |
 | `0.1.4-alpha.4` | `3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75` |
 
-Use the release owner's independently frozen alpha.5 identity for the new kit;
+Use the release owner's independently frozen alpha.9 identity for the new kit;
 do not copy a digest from an unverified download or rebuild an older archive.
 
 The alpha `release.json` must include its final sanitized `verification` record.
+When CI and exact-package acceptance complete, freeze that metadata separately
+from the unchanged ZIP, then stage into a new output directory. A local preview
+may use a freshly generated test signing key with an explicit
+`expectedPublicKeySha256` staging option and `updateTrust` for local acceptance.
+Keep the private test key in memory and label the preview test-only. Production
+trust and signed checkpoints remain unchanged. Never deploy the test public key
+or a catalog signed with it.
 Packaging-only metadata cannot satisfy the website release assertions. Both the
 archive and this metadata are release inputs; rebuilding a new archive from a
 source checkout does not reproduce the frozen published bytes.
@@ -142,7 +160,6 @@ includes `wrangler.jsonc`; freeze its bytes together with the public assets.
 `wrangler.jsonc` is the retained Cloudflare configuration for `daedlo.com`.
 Provider preflight, deployment, rollback identity and live download readback are
 separate release-owner operations. A successful local preview is not deployment.
-
 
 ## Signed preview feed
 

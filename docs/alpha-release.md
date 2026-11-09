@@ -1,8 +1,9 @@
 # Daedlo alpha delivery — 9 November 2026
 
-Release candidate: **0.1.4-alpha.9**. Status: **preparing; unpublished**.
-Alpha.7 remains the published release. Alpha.8 publication was held for unmasked
-manual Access inputs; its frozen artifacts remain historical candidates.
+Release kit: **0.1.4-alpha.9**. Current publication and production acceptance
+status are recorded in [verification](verification.md). Frozen source `30d2a98`
+passed source CI and exact installed acceptance. Alpha.8 publication was held for
+unmasked manual Access inputs; its frozen artifacts remain historical candidates.
 
 Alpha.9 combines the workspace grid/finalization behavior with reusable Swagger
 API driving, portable locked model sources and an exact-runtime standalone
@@ -15,7 +16,7 @@ The explicit password parameter contract masks credential-bearing manual inputs
 and clears them after submission. Existing models must mark sensitive fields;
 text fields remain text. Descriptor defaults and recipe values remain public
 metadata. Older runtimes reject the new type rather than displaying it as text.
-The candidate incorporates the reviewed Playwright 1.65.0, patched Node/npm and
+The kit incorporates the reviewed Playwright 1.65.0, patched Node/npm and
 deployment-tooling updates from the dependency security work.
 
 The assisted macOS arm64 scope remains. Swagger uses the standalone CLI;
