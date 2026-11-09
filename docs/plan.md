@@ -1,5 +1,19 @@
 # Implementation plan
 
+## Alpha.9 publication checkpoint — 2026-11-09
+
+- [x] Merge the tested generic Swagger source and corrected path validation.
+- [x] Freeze and verify the exact runtime/core/tools kit, isolated Roots, and recovery.
+- [x] Pass source and publisher review/CI plus the exact staged website and installer.
+- [x] Publish the exact private-repository GitHub prerelease and verify its tag/bytes.
+- [x] Merge the reviewed publisher policy without rebuilding the accepted kit.
+- [ ] Obtain explicit approval for production signing and Cloudflare promotion.
+- [ ] Verify actual public HTTPS installation and upgrade/rollback after activation.
+
+The public feed remains alpha.7. The active publisher policy now expects alpha.9,
+so complete the approved coordinated promotion before ordinary renewal can pass.
+Measured results and the immutable release inventory belong in verification.
+
 ## Alpha.9 Swagger release preparation — 2026-11-09
 
 Prepare a new coherent candidate from current main, incorporating generic Swagger,

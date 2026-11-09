@@ -1,5 +1,36 @@
 # Verification record
 
+## Alpha.9 GitHub publication and pending production approval — 2026-11-09
+
+**PASS — exact GitHub prerelease and source/publisher integration. Production
+promotion is NOT RUN and awaits explicit release-owner approval.**
+[Versioned prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.9)
+was published at 19:20:42 UTC. Tag `v0.1.4-alpha.9` points directly to frozen source
+`30d2a985964011c08d80db2e83a3716a2c151345`; all three attached files match the
+immutable inventory below. Repository visibility remains private.
+
+[Source PR #31](https://github.com/givtaj/daedlo/pull/31) merged as `796910d7` and
+its [main CI](https://github.com/givtaj/daedlo/actions/runs/42677744268) passed all
+three jobs. [Publisher PR #32](https://github.com/givtaj/daedlo/pull/32) merged as
+`df6ae2ffed821d7fae84ff98a9c38b63ffb5ee81`. Its tree exactly matches reviewed head
+`0e27dd2f64f468e445ddcb7923037297ab745a2a`, whose [CI](https://github.com/givtaj/daedlo/actions/runs/42679535021)
+passed metadata/secrets and both full Node lanes. Publisher main CI is tracked
+separately in [run 42682500449](https://github.com/givtaj/daedlo/actions/runs/42682500449).
+
+The production workflow was not dispatched. A fresh read authenticated the live
+feed with the existing pinned key: generation 27, six retained entries ending at
+alpha.7, expiry `2026-11-12T14:21:17.077Z`. Its SHA-256 remains
+`2f337372365d31719898313b9f03183147e3befe879e5a0c9a431f920ff32293`.
+No new production signature, checkpoint, Worker version or active feed was made.
+
+The merged publisher inventory requires alpha.9; ordinary renewal rejects the
+alpha.7-only feed until the explicit coordinated promotion completes. The next
+live action requires release-owner approval: dispatch the existing default-branch
+workflow with only `promote_alpha9=true`, then verify the active Worker, signed
+feed, every download, real HTTPS browser/installer and production upgrade/rollback.
+All exact-kit and staged-site gates below passed; their test-signed tree is never
+a deployment input. Normal Roots dependencies and services remain unchanged.
+
 ## Alpha.9 corrected immutable release candidate — 2026-11-09
 
 **PASS — corrected source, exact installed kit, isolated application and recovery
