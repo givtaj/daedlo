@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="One Codex prompt to install Daedlo, connect your project, verify a first flow and set up Ninja-Update. Assisted alpha for macOS arm64."
+      content="One Codex prompt to install Daedlo, connect your project, verify a first flow and keep its supported launch route. Assisted alpha for macOS arm64."
     />
     <meta name="theme-color" content="#f5f3ed" />
     <link rel="canonical" href="https://daedlo.com/install.html" />
@@ -34,7 +34,8 @@
       </h1>
       <p class="guide-intro">
         Assisted alpha for macOS arm64 with Codex. Your agent installs Daedlo,
-        connects your project, verifies one real flow and sets up Ninja-Update.
+        connects your project, verifies one real flow and leaves its launch
+        commands.
       </p>
       <ol class="onboarding-steps" aria-label="Get started in three steps">
         <li>
@@ -63,7 +64,7 @@
         <div class="prompt-heading">
           <div>
             <p class="eyebrow">YOUR CODEX HANDOFF</p>
-            <h2 id="agent-title">From install to managed updates.</h2>
+            <h2 id="agent-title">From install to a repeatable flow.</h2>
           </div>
           <button
             class="button primary"
@@ -95,19 +96,19 @@
           tabindex="0"
           aria-label="Complete Codex onboarding prompt"
         >
-Set up Daedlo end to end for the application repository open in this Codex chat: install the verified release, connect one existing flow, verify it, and configure Operation Ninja-Update. Do the integration work and leave a working handoff.
+Set up Daedlo end to end for the application repository open in this Codex chat: install the verified release, connect one existing flow, verify it, and configure its supported launch and update route. Do the integration work and leave a working handoff.
 
 1. Inspect this repository's instructions, accepted models, flows and existing tooling. Preserve unrelated dirty work, dependencies, services, live browser sessions and application data. Reuse agreed behavior; inspect the actual UI before describing it. Ask only for unresolved intended behavior, test-environment access or permission for effects. Use disposable test data; onboarding does not authorize new application features or production writes. Already onboarded? Verify and reuse the accepted integration instead of replacing it.
 
 2. Use a durable fresh directory outside the application and any npm workspace. Download https://daedlo.com/downloads/{{VERSION}}/daedlo-{{VERSION}}.zip over HTTPS. Verify its SHA-256 is {{ZIP_SHA256}} before extraction or execution; stop on mismatch. Read the extracted START_HERE.md and AGENT_START.md. Verify the tools archive against {{TOOLS_SHA256}}, install it using the exact START_HERE.md block, and verify the bundle against {{MANIFEST_SHA256}}. For every scoped npm install use both --prefix and --workspaces=false, and verify ancestor manifests and locks remain unchanged. Preflight the documented Node, Rust, Python and matching Playwright/Chromium requirements; preserve working toolchains.
 
-3. Read the installed tools' skills/{{SKILL_NAME}}/SKILL.md and its references, docs/agent-onboarding.md, docs/contracts.md, docs/managed-integration.md, docs/evidence-reporting.md and docs/ninja-update.md. Install the complete bundled skill for Codex without overwriting local customizations; explicitly read it if discovery is unavailable. Build a separate QA integration through the public Rust model and JavaScript adapter interfaces. Rust owns states, guards, outcomes and recipes; do not duplicate the transition graph in JavaScript. Use examples/managed-starter as the native integration reference and return the exact session created through the injected runtime to the viewer and launcher. Put application policy and persistence proof in the adapter; do not replace or proxy the managed session. Review unsupported existing contracts instead of silently rewriting accepted behavior.
+3. Read the installed tools' skills/{{SKILL_NAME}}/SKILL.md and its references, docs/agent-onboarding.md, docs/contracts.md, docs/managed-integration.md, docs/evidence-reporting.md and docs/ninja-update.md. Install the complete bundled skill for Codex without overwriting local customizations; explicitly read it if discovery is unavailable. For Swagger UI/API driving, read integrations/swagger/README.md and use its shipped standalone model, session helper and project. Set runtimeRoot to the exact matching installed runtime; set the real docs/schema URLs, explicit allowOperations and separate allowWrites. Keep credentials out of the profile and shared reports. Verify the supported OpenAPI subset and fail closed on unavailable capabilities. For standalone Swagger, skip steps 5 and 6 and retain the accepted kit, profile and rebuilt model for deliberate replacement. Swagger native managed onboarding and updates are unsupported. For other application flows, build a separate QA integration through the public Rust model and JavaScript adapter interfaces. Rust owns states, guards, outcomes and recipes; do not duplicate the transition graph in JavaScript. Use examples/managed-starter as the native integration reference and return the exact session created through the injected runtime to the viewer and launcher. Put application policy and persistence proof in the adapter; do not replace or proxy the managed session. Review unsupported existing contracts instead of silently rewriting accepted behavior.
 
 4. Verify one agreed existing flow in a visible local viewer using a separate controlled browser. Inspect the UI and distinguish execution from the application outcome. For a save, independently read back persisted data for the exact operation and verify reload; await that proof in adapter.evidence() or adapter.effectStatus() before finalizing the run. Keep later proof in a separate record tied to runId without rewriting the original report. Test a relevant negative case, including independent no-write evidence where applicable. In-memory retention is 16 completed reports and at most 200 events per report; inspect truncation. Native startup archives each finalized run immediately; archive failure must block further actions and restart until retry-evidence succeeds without replaying an action. For an existing custom runner, follow the explicit immediate-capture pattern in docs/evidence-reporting.md. Close only owned resources, relaunch and repeat. Keep credentials, customer data and private traces out of shared records.
 
-5. Register the accepted integration for Ninja-Update following docs/ninja-update.md. Inventory the exact model, states, flows, adapter, transitive source, configuration, dependency locks, instructions and custom skills. Keep tools, the managed store, authored project and application data separate. Add a reviewed createManagedLaunch entrypoint using the injected runtime and engine, real draftState evidence, and acceptance/health hooks that actually verify this flow with disposable data. These hooks are trusted code, not an OS sandbox: exclude production endpoints and credentials. Active/paused runs and unsaved or unknown drafts must block restart; startup only connects and observes, never replays flows.
+5. For a managed application integration, register the accepted integration for Ninja-Update following docs/ninja-update.md. Inventory the exact model, states, flows, adapter, transitive source, configuration, dependency locks, instructions and custom skills. Keep tools, the managed store, authored project and application data separate. Add a reviewed createManagedLaunch entrypoint using the injected runtime and engine, real draftState evidence, and acceptance/health hooks that actually verify this flow with disposable data. These hooks are trusted code, not an OS sandbox: exclude production endpoints and credentials. Active/paused runs and unsaved or unknown drafts must block restart; startup only connects and observes, never replays flows.
 
-6. Pin publisher daedlo and key daedlo-release-2026-10 from the verified tools' docs/update-trust/production.json and bundled public PEM. Configure https://daedlo.com/updates/preview.json on channel preview; never replace the key from an unverified feed or bypass signature, expiry or compatibility checks. Prepare and validate the current release as the initial managed installation, then verify managed startup and the local update screen. Keep its private loopback token local. Rehearse upgrade, rejected-candidate preservation and rollback only when compatible published versions and a verified previous installation exist; otherwise record those drills as NOT RUN with the missing prerequisite. Revert selects the previous verified installation; it does not undo business writes or promise browser login/draft preservation. Keep the accepted browser cache and previous installation available.
+6. For that managed integration, pin publisher daedlo and key daedlo-release-2026-10 from the verified tools' docs/update-trust/production.json and bundled public PEM. Configure https://daedlo.com/updates/preview.json on channel preview; never replace the key from an unverified feed or bypass signature, expiry or compatibility checks. Prepare and validate the current release as the initial managed installation, then verify managed startup and the local update screen. Keep its private loopback token local. Rehearse upgrade, rejected-candidate preservation and rollback only when compatible published versions and a verified previous installation exist; otherwise record those drills as NOT RUN with the missing prerequisite. Revert selects the previous verified installation; it does not undo business writes or promise browser login/draft preservation. Keep the accepted browser cache and previous installation available.
 
 7. Leave project-specific launch and update commands, pinned versions, model/application identities, acceptance evidence, cleanup results and reusable project instructions. Report installation, first-flow acceptance, Ninja-Update registration and upgrade/rollback rehearsal separately as PASS, FAIL, BLOCKED or NOT RUN. Do not call this project ready based only on a download, example fixture or a receipt without actual checks.</pre
         >
@@ -128,8 +129,8 @@ Set up Daedlo end to end for the application repository open in this Codex chat:
             outcome, a relevant negative case and saved evidence.
           </li>
           <li>
-            <strong>Updates ready to use.</strong> A local update screen with
-            signed releases and checks for your project.
+            <strong>A supported launch route.</strong> The standalone Swagger
+            CLI, or a managed application integration with signed updates.
           </li>
           <li>
             <strong>A clear handoff.</strong> Launch commands, exact versions
@@ -137,12 +138,14 @@ Set up Daedlo end to end for the application repository open in this Codex chat:
           </li>
         </ul>
         <p>
-          Your agent does the application-specific Rust model and JavaScript
-          adapter work. Your project states, flows, adapter and data remain
-          yours. A verified download alone does not establish WBF acceptance.
+          Swagger reuses the shipped generic model and adapter with your request
+          policy and persistence checks. For other flows, your agent does the
+          application-specific Rust model and JavaScript adapter work. Your
+          project states, flows, adapter and data remain yours. A verified
+          download alone does not establish WBF acceptance.
         </p>
         <p>
-          Future updates use
+          Managed application updates use
           <strong>Check for updates → Install update → Restart Daedlo</strong>.
           Revert selects a previous verified installation when one exists; it
           does not undo application writes.
@@ -349,6 +352,22 @@ NODE
         <section class="guide-block" aria-labelledby="alpha-changes-title">
           <h2 id="alpha-changes-title">What changed in this alpha</h2>
           <ul>
+            <li>
+              Alpha.9 adds reusable Swagger UI driving for a bounded subset of
+              OpenAPI 3.0, 3.1 and 3.2 JSON. Allowed requests run through the
+              visible explorer; unsupported capabilities fail closed. A
+              successful HTTP response does not prove business success or
+              persistence.
+            </li>
+            <li>
+              Explicit password parameters are masked in the viewer and cleared
+              after submission. Request values stay out of shared reports;
+              Swagger itself can still display private requests and responses.
+            </li>
+            <li>
+              The application, active flow and results share the live workspace
+              grid, with distinct evidence collection and cleanup states.
+            </li>
             <li>
               Alpha.7 distinguishes failed observation from stopped ownership,
               keeps unknown draft safety explicit and supports fresh guarded
