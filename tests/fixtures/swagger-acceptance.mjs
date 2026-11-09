@@ -157,6 +157,25 @@ async function boundedExit(exited) {
     clearTimeout(timer);
   }
 }
+export async function closeSwaggerAcceptanceResources(resources) {
+  const failedResources = [];
+  for (const resource of resources) {
+    try {
+      await resource.close();
+    } catch {
+      failedResources.push(resource);
+    }
+  }
+  if (failedResources.length)
+    throw Object.assign(
+      Error("Owned Swagger acceptance cleanup is incomplete."),
+      {
+        code: "cleanup_incomplete",
+        failedResources,
+      },
+    );
+}
+
 export async function runSwaggerBrowserAcceptance({
   toolsRoot,
   runtimeRoot,
@@ -501,13 +520,24 @@ export async function runSwaggerBrowserAcceptance({
       ).version,
     };
   } finally {
-    if (child && child.exitCode === null) {
-      child.kill("SIGTERM");
-      await boundedExit(exited);
-    }
-    await session?.close();
-    await browser?.close();
-    await app.close();
-    await writeFile(join(output, "cli.log"), childOutput);
+    await closeSwaggerAcceptanceResources([
+      {
+        label: "CLI child",
+        pid: child?.pid,
+        close: async () => {
+          if (child && child.exitCode === null) {
+            child.kill("SIGTERM");
+            await boundedExit(exited);
+          }
+        },
+      },
+      { label: "driver session", close: () => session?.close() },
+      { label: "observer browser", close: () => browser?.close() },
+      { label: "API fixture", close: () => app.close() },
+      {
+        label: "CLI diagnostic log",
+        close: () => writeFile(join(output, "cli.log"), childOutput),
+      },
+    ]);
   }
 }

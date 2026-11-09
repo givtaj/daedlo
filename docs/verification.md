@@ -2,8 +2,9 @@
 
 ## Alpha.9 Swagger release preparation — 2026-11-09
 
-**IN PROGRESS — source checks below passed; exact installed kit, current Roots
-acceptance, hosted CI and public delivery remain separate pending gates.**
+**IN PROGRESS — source and preliminary exact installed checks passed. A final
+source freeze, refreshed exact artifacts, Roots acceptance, hosted CI and public
+delivery remain separate gates.**
 The isolated `codex/swagger-release-alpha9-20261109` branch starts from current
 main `cd049e9` and ports generic Swagger source commit `42da7a6`. The primary
 checkout, frozen held alpha.8 kit and published alpha.7 are preserved. A fresh
@@ -38,10 +39,13 @@ passes the original real-browser assertion.
 | Existing Rust workspace / viewer | PASS: 29 Rust tests (one subprocess-only fixture intentionally ignored); 32 viewer tests |
 | Release version/tools packaging | PASS: 14 tests including twelve-file stamping, rollback, complete isolated portable inventory and no private additions |
 | CI policy | PASS: 11 tests; both Node lanes require Swagger source and exact installed checks |
-| Broad release/alpha suite | 564/565 passed before the native diagnostic fix; failed native browser test passes after that fix; full updated rerun pending |
+| Broad release/alpha suite | PASS: 605 tests after native diagnostic, teardown, bounded cleanup and explicit migration fixes; no failures or skips |
 | Existing source application flows | PASS: eight notebook groups, starter/request-accounting flow, eight managed-reference groups and nine evidence groups |
 | Public metadata | PASS; no source/runtime paths or credentials added to shared reports |
-| Exact installed alpha.9 / Roots / upgrade / CI | NOT RUN for final frozen candidate yet |
+| Preliminary exact installed alpha.9 | PASS from clean source `91b9f9a`: native runtime/tools/core, 8 notebook groups, complete control/grid checks, 16 starter groups, required evidence/managed references, and 12 Swagger groups including masked submission; all cleanup PASS |
+| Preliminary exact upgrade/rollback | PASS: 9 checkpoints from pinned published alpha.7 through exact alpha.9 tools, explicit authored dependency migration, restart, and complete old-slot rollback with preserved data |
+| Preliminary exact Roots | PASS on pinned source `46d1e18`: 4 save/stale/readback groups, viewer contract, 11 grid checks, CLI launch/close, rebuilt customer model and 5 real Access masking checks; installed Swagger run pending |
+| Final exact kit / CI | Still in progress; preliminary CI metadata/secrets and both Node 22/24 contract stages passed |
 | Publication | NOT RUN; alpha.7 remains public |
 
 The release source incorporates the scoped reviewed dependency changes from
@@ -53,6 +57,25 @@ EPERM fixture failures were sandbox/setup failures, retained separately from the
 unrestricted successful runs. Current source/installed checks do not imply a
 clean-machine, other-platform, customer-business or production acceptance claim.
 
+
+The preliminary frozen kit is retained under source identity `91b9f9a0be7081bd6ff4c161419a607a78cf50ef`.
+Its ZIP SHA-256 is `67ed141bf9b563d4c511733313f359710b40b8881e0de60ccaa69c277a12a49e`.
+It is not the final promotion artifact: later acceptance cleanup and assisted
+migration guidance require a fresh clean source and new identities. Native,
+starter, Swagger and upgrade receipts stay under the ignored alpha.9 artifact
+directories; private local diagnostics are excluded from public metadata.
+
+The first exact upgrade correctly refused a changed Playwright dependency lock.
+The reviewed assisted path first proves that refusal preserves the old slot,
+then changes only the independent QA integration's `package.json` and lockfile
+against the exact candidate runtime. It preserves all other authored bytes and
+uses the unchanged manager guard/acceptance path. Historical rollback restores
+the complete alpha.7 slot. The new `--alpha9-dependency-migration` drill flag is
+explicit and valid only with `--alpha9-upgrade`; no general lock guard was relaxed.
+The original failed receipt is retained separately. Test cleanup now closes all
+manager instances before checking their shared ownership store, and waits for an
+owned orphan process to exit before removing its directory. Swagger acceptance
+attempts every owned close and preserves failed handles and consumer files.
 
 ## Reusable Swagger source candidate — 2026-11-09
 

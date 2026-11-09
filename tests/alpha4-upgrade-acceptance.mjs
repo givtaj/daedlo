@@ -10,6 +10,9 @@
 // from immutable alpha.7, including the new finalization/ownership runtime.
 // --alpha9-upgrade verifies the same complete tools-bootstrap and recovery drill
 // from immutable published alpha.7 to the exact alpha.9 candidate.
+// Add --alpha9-dependency-migration to first prove unchanged source is refused,
+// then explicitly author only the fixture's package/lock against the exact new
+// runtime. This is an assisted dependency migration, not an automatic update.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
@@ -20,6 +23,10 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { assertFlow, notes } from "./fixtures/alpha4-upgrade/flow.mjs";
+import {
+  closeUpgradeManagers,
+  assertAuthoredDependencyMigration,
+} from "./alpha4-upgrade-helpers.mjs";
 
 const execute = promisify(execFile);
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -38,6 +45,7 @@ for (const arg of args)
       "--alpha7-upgrade",
       "--alpha8-upgrade",
       "--alpha9-upgrade",
+      "--alpha9-dependency-migration",
     ].includes(arg),
     "Unsupported upgrade acceptance argument",
   );
@@ -53,6 +61,11 @@ const alpha6Upgrade = args.includes("--alpha6-upgrade");
 const alpha7Upgrade = args.includes("--alpha7-upgrade");
 const alpha8Upgrade = args.includes("--alpha8-upgrade");
 const alpha9Upgrade = args.includes("--alpha9-upgrade");
+const dependencyMigration = args.includes("--alpha9-dependency-migration");
+assert.ok(
+  !dependencyMigration || alpha9Upgrade,
+  "Dependency migration requires explicit alpha.9 upgrade mode",
+);
 assert.ok(
   !(
     alpha9Upgrade &&
@@ -228,13 +241,16 @@ const result = {
   output,
   scope: legacyOnly
     ? "legacy fixture preparation only"
-    : "exact installed tools bootstrap, upgrade and rollback",
+    : dependencyMigration
+      ? "exact installed tools bootstrap, refused automatic update, authored dependency migration, upgrade and rollback"
+      : "exact installed tools bootstrap, upgrade and rollback",
   transport: productionHttps ? "production-https" : "ephemeral-signed-feed",
   localCandidate,
   alpha6Upgrade,
   alpha7Upgrade,
   alpha8Upgrade,
   alpha9Upgrade,
+  dependencyMigration,
   reusePublishedTools,
   toolsPolicy: reusePublishedTools
     ? "Keep exact published alpha.5 tools for baseline, upgrade, restart and rollback"
@@ -690,6 +706,7 @@ try {
     launcher: "managed-launch.mjs",
   };
   const original = await old.snapshotProject(registration);
+  let expectedAuthored = original;
   await writeJson(join(output, "project-before.json"), original);
   const { createNotebookServer } = await import(
     pathToFileURL(join(sourceRoot, "server.mjs"))
@@ -1069,6 +1086,87 @@ try {
     assert.ok(acceptedCheckpoint.generation >= checkpoint.generation);
     if (acceptedCheckpoint.generation === checkpoint.generation)
       assert.deepEqual(acceptedCheckpoint, checkpoint);
+    if (dependencyMigration) {
+      await assert.rejects(
+        preparePinned(candidate),
+        /Existing adapter dependency lock changed; migration required/,
+      );
+      assert.equal((await currentReceipt()).id, baselineReceipt.id);
+      assert.equal(
+        (await active.supervisor.status()).running.id,
+        baselineReceipt.id,
+      );
+      assert.deepEqual(await notes(application.url), beforeUpgrade);
+      assert.deepEqual(await newer.snapshotProject(registration), original);
+      await newer.verifyInstallation(baselineReceipt.path, { registration });
+      await record(
+        "Unchanged alpha.7 dependency lock refuses alpha.9 before activation; accepted slot, source and data remain intact",
+      );
+
+      const artifact = candidate.manifest.artifacts.runtime;
+      const archive = join(candidate.root, "bundle", artifact.file);
+      const runtimeBytes = await fs.readFile(archive);
+      assert.equal(hash(runtimeBytes), artifact.sha256);
+      const packagePath = join(sourceRoot, "package.json");
+      const originalPackage = await readJson(packagePath);
+      const migratedPackage = structuredClone(originalPackage);
+      migratedPackage.dependencies[artifact.name] = `file:${archive}`;
+      await writeJson(packagePath, migratedPackage);
+      await run(
+        "npm",
+        [
+          "install",
+          "--package-lock-only",
+          "--ignore-scripts",
+          "--no-audit",
+          "--no-fund",
+          "--cache",
+          join(work, "npm-cache"),
+        ],
+        sourceRoot,
+      );
+      assert.deepEqual(await readJson(packagePath), migratedPackage);
+      const lock = await readJson(join(sourceRoot, "package-lock.json"));
+      const selectedRuntime = lock.packages[`node_modules/${artifact.name}`];
+      assert.equal(selectedRuntime.version, candidateVersion);
+      assert.equal(
+        selectedRuntime.integrity,
+        "sha512-" + createHash("sha512").update(runtimeBytes).digest("base64"),
+      );
+      assert.equal(
+        lock.packages[""].dependencies[artifact.name],
+        `file:${archive}`,
+      );
+      expectedAuthored = await newer.snapshotProject(registration);
+      const changedFiles = assertAuthoredDependencyMigration(
+        original,
+        expectedAuthored,
+      );
+      result.authoredMigration = {
+        runtimeArchiveSha256: artifact.sha256,
+        beforeSourceSha256: original.sha256,
+        afterSourceSha256: expectedAuthored.sha256,
+        changedFiles,
+        playwrightBefore: (
+          await readJson(
+            join(baselineReceipt.snapshotPath, "package-lock.json"),
+          )
+        ).packages["node_modules/playwright"].version,
+        playwrightAfter: lock.packages["node_modules/playwright"].version,
+      };
+      await writeJson(
+        join(output, "project-after-authored-migration.json"),
+        expectedAuthored,
+      );
+      await newer.verifyInstallation(baselineReceipt.path, {
+        registration,
+        checkSource: false,
+      });
+      await record(
+        "Explicit authored package/lock migration binds exact alpha.9 runtime; all other source files and retained alpha.7 slot remain unchanged",
+        { changedFiles: changedFiles.map(({ file }) => file) },
+      );
+    }
     prepared = await preparePinned(candidate);
     assert.equal(prepared.operation.status, "ready");
     assert.deepEqual(await notes(application.url), beforeUpgrade);
@@ -1127,7 +1225,18 @@ try {
       baselineReceipt.id,
     );
     await closeManager();
-    assert.deepEqual(await newer.snapshotProject(registration), original);
+    assert.deepEqual(
+      await newer.snapshotProject(registration),
+      expectedAuthored,
+    );
+    if (dependencyMigration) {
+      assertAuthoredDependencyMigration(original, expectedAuthored);
+      await newer.verifyInstallation(baselineReceipt.path, {
+        registration,
+        checkSource: false,
+      });
+      assert.equal((await readJson(statePath)).historicalSnapshot, true);
+    }
     assert.deepEqual(await inventory(oldTools.root), oldTools.inventory);
     assert.deepEqual(await inventory(newTools.root), newTools.inventory);
     assert.deepEqual(await fs.readFile(configPath), configBytes);
@@ -1160,7 +1269,9 @@ try {
     await record(
       reusePublishedTools
         ? "States/flows/adapter source, exact published tools, config/trust/checkpoint preserved; durable reports and relaunch pass"
-        : "States/flows/adapter source, both tools packages, config/trust/checkpoint preserved; durable reports and relaunch pass",
+        : dependencyMigration
+          ? "Reviewed package/lock migration retained; all other source, both tools packages, config/trust/checkpoint and historical rollback preserved; reports and relaunch pass"
+          : "States/flows/adapter source, both tools packages, config/trust/checkpoint preserved; durable reports and relaunch pass",
       { lifecycleReports: reports.length },
     );
   }
@@ -1174,29 +1285,8 @@ try {
   };
   process.exitCode = 1;
 } finally {
-  let driverClosed = true;
-  for (const [index, value] of managers.entries()) {
-    try {
-      if (!value.closed) await value.manager.close();
-      const status = await value.supervisor.status();
-      assert.equal(status.running, null);
-      assert.equal(status.cleanupPending, false);
-      value.closed = true;
-      result.cleanup.push({
-        resource: "managed driver",
-        instance: index + 1,
-        status: "closed",
-      });
-    } catch (error) {
-      driverClosed = false;
-      result.cleanup.push({
-        resource: "managed driver",
-        instance: index + 1,
-        status: "incomplete",
-        error: error.message,
-      });
-    }
-  }
+  const { driverClosed, cleanup } = await closeUpgradeManagers(managers);
+  result.cleanup.push(...cleanup);
   if (controller) {
     try {
       await controller.close();

@@ -38,6 +38,16 @@ for (const [label, args, pattern] of [
     /Duplicate upgrade acceptance argument/,
   ],
   [
+    "dependency migration without alpha.9 mode",
+    ["--alpha9-dependency-migration"],
+    /Dependency migration requires explicit alpha.9 upgrade mode/,
+  ],
+  [
+    "dependency migration with historical mode",
+    ["--alpha8-upgrade", "--alpha9-dependency-migration"],
+    /Dependency migration requires explicit alpha.9 upgrade mode/,
+  ],
+  [
     "partial production run",
     ["--production-https", "--legacy-only"],
     /Production HTTPS acceptance requires the complete upgrade drill/,
@@ -428,6 +438,12 @@ for (const [label, args, baseline, candidate] of [
   [
     "explicit alpha.9 tools bootstrap",
     ["--alpha9-upgrade"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.9",
+  ],
+  [
+    "explicit alpha.9 authored dependency migration",
+    ["--alpha9-upgrade", "--alpha9-dependency-migration"],
     "0.1.4-alpha.7",
     "0.1.4-alpha.9",
   ],

@@ -106,6 +106,13 @@ never hold credentials. Swagger UI may itself show private request/response data
 
 ## Updates and limits
 
+Alpha.9 changes Playwright's dependency closure. Existing alpha.7 managed
+integrations need the reviewed manifest/lock migration in the installed
+[update guide](ninja-update.md#alpha9-dependency-migration) before normal candidate
+preparation can pass. The previous accepted slot remains available for rollback.
+The standalone Swagger integration additionally requires the new tools/model
+files; a runtime-only update cannot install them.
+
 Alpha.3 adds Operation Ninja-Update. After assisted project registration, its
 separate local update screen checks the signed production catalog, installs and
 validates a complete replacement, then offers Restart and Revert. Read the

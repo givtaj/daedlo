@@ -32,6 +32,60 @@ export function requireInstalledSwagger(toolsRoot) {
       "Verified tools must ship complete Swagger integration: " + file,
     );
 }
+export function cleanupInstalledSwaggerConsumer({
+  temporary,
+  ownedIdentity,
+  result,
+  cleanupIncomplete = false,
+}) {
+  if (cleanupIncomplete) {
+    result.cleanup = "FAIL";
+    result.status = "FAIL";
+    result.retainedTemporary = temporary;
+    return;
+  }
+  try {
+    const current = fs.lstatSync(temporary);
+    assert.ok(
+      current.isDirectory() &&
+        !current.isSymbolicLink() &&
+        current.dev === ownedIdentity.dev &&
+        current.ino === ownedIdentity.ino,
+      "Owned temporary directory was replaced",
+    );
+    fs.rmSync(temporary, { recursive: true });
+    result.cleanup = "PASS";
+  } catch {
+    result.cleanup = "FAIL";
+    result.status = "FAIL";
+    result.retainedTemporary = temporary;
+  }
+}
+
+export function recordSwaggerCleanupFailure(error, result) {
+  if (error?.code !== "cleanup_incomplete") return false;
+  const labels = [
+    "CLI child",
+    "driver session",
+    "observer browser",
+    "API fixture",
+    "CLI diagnostic log",
+  ];
+  const handles =
+    Array.isArray(error.failedResources) && error.failedResources.length
+      ? error.failedResources.slice(0, 5)
+      : [{}];
+  result.failedResources = handles.map((resource) => ({
+    label: labels.includes(resource?.label)
+      ? resource.label
+      : "Swagger resource",
+    ...(Number.isSafeInteger(resource?.pid) && resource.pid > 0
+      ? { pid: resource.pid }
+      : {}),
+  }));
+  return true;
+}
+
 export async function runInstalledSwagger({
   bundle,
   toolsArchive,
@@ -163,6 +217,7 @@ export async function runInstalledSwagger({
     });
     return join(destination, prefix);
   }
+  let cleanupIncomplete = false;
   try {
     assert.notEqual(
       spawnSync("git", ["rev-parse", "--show-toplevel"], {
@@ -314,23 +369,16 @@ export async function runInstalledSwagger({
     );
     assert.equal(sha(fs.readFileSync(toolsArchive)), expectedToolsSha256);
     result.status = "PASS";
+  } catch (error) {
+    cleanupIncomplete = recordSwaggerCleanupFailure(error, result);
+    throw error;
   } finally {
-    try {
-      const current = fs.lstatSync(temporary);
-      assert.ok(
-        current.isDirectory() &&
-          !current.isSymbolicLink() &&
-          current.dev === ownedIdentity.dev &&
-          current.ino === ownedIdentity.ino,
-        "Owned temporary directory was replaced",
-      );
-      fs.rmSync(temporary, { recursive: true });
-      result.cleanup = "PASS";
-    } catch {
-      result.cleanup = "FAIL";
-      result.status = "FAIL";
-      result.retainedTemporary = temporary;
-    }
+    cleanupInstalledSwaggerConsumer({
+      temporary,
+      ownedIdentity,
+      result,
+      cleanupIncomplete,
+    });
     fs.writeFileSync(
       join(output, "summary.json"),
       JSON.stringify(result, null, 2) + "\n",
