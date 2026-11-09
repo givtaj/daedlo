@@ -14,8 +14,10 @@ its [main CI](https://github.com/givtaj/daedlo/actions/runs/42677744268) passed 
 three jobs. [Publisher PR #32](https://github.com/givtaj/daedlo/pull/32) merged as
 `df6ae2ffed821d7fae84ff98a9c38b63ffb5ee81`. Its tree exactly matches reviewed head
 `0e27dd2f64f468e445ddcb7923037297ab745a2a`, whose [CI](https://github.com/givtaj/daedlo/actions/runs/42679535021)
-passed metadata/secrets and both full Node lanes. Publisher main CI is tracked
-separately in [run 42682500449](https://github.com/givtaj/daedlo/actions/runs/42682500449).
+passed metadata/secrets and both full Node lanes. Publisher
+[main CI 42682500449](https://github.com/givtaj/daedlo/actions/runs/42682500449)
+also passed all three jobs on the exact merged commit, including installed
+tools/native/starter acceptance under Node 22 and Node 24, on its first attempt.
 
 The production workflow was not dispatched. A fresh read authenticated the live
 feed with the existing pinned key: generation 27, six retained entries ending at
