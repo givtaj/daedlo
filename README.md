@@ -154,6 +154,17 @@ focused checks, full browser/release gates and review workflow. Installed-packag
 acceptance is a separate release gate; source checks do not establish customer
 acceptance, complete Roots replacement or remote CI success.
 
+## Swagger API driving — source candidate
+
+A reusable [Swagger integration](integrations/swagger/README.md) reads OpenAPI
+3.0/3.1/3.2 catalogs and drives the supported request/response subset through
+Swagger UI 5 using the same guarded execution facade. Projects supply URLs,
+operation permissions, authentication and independent business evidence.
+Independent Swagger UI fixtures and actual Roots acceptance are recorded in
+[verification](docs/verification.md#reusable-swagger-source-candidate--2026-11-09).
+This candidate is not included in the published alpha.7 kit; its compatibility
+table lists unsupported features explicitly.
+
 ## Teaching mode — planned
 
 The [teaching-mode plan](docs/teaching-mode.md) proposes explained demonstrations,

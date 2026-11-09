@@ -20,6 +20,10 @@ Help the user reach one useful, repeatable browser flow with inspectable evidenc
 Any web application backend can use the same native Rust model and Node/Playwright
 adapter. This skill is agent guidance, not an executable model or installer.
 
+For Swagger UI/API driving, also read [Swagger/OpenAPI guidance](references/swagger.md).
+The source integration has an explicit standards/capability matrix; do not infer
+that it is included in an older published kit.
+
 ## Start from the requested outcome
 
 Read the target repository's instructions, scenarios and integration. Distinguish

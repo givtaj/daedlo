@@ -311,3 +311,34 @@ register its `close` with their resource scope. Once cleanup succeeds, repeated
 calls are harmless. If startup cleanup succeeds immediately, the original startup
 error is preserved. These semantics cover rejected cleanup operations; they do
 not introduce a deadline or abandon a CDP operation that has not settled.
+
+
+## Swagger adapter source candidate — 2026-11-09
+
+`@daedlo/runtime/swagger` exports bounded OpenAPI catalog/request/response helpers
+and `createSwaggerAdapter`. The source integration supplies a separate native
+`swagger-engine` implementing `daedlo.swagger@1` and an explicit local project
+profile. Existing protocol, runtime, viewer and customer model contracts remain
+unchanged. The published alpha.7 kit does not include this candidate.
+
+Rust owns observed Catalog/Selected/Prepared/Response states, execution/write
+policy, canonical read recipes and outcome classification. The adapter observes
+Swagger UI 5, validates supported OpenAPI transport inputs, uses guarded browser
+actions and correlates one exact request with its response. Prepared inputs bind
+to private browser authentication; changed cookies or Swagger authorization
+invalidate preparation without exposing credentials or private digests in facts.
+Existing service workers are refused. The adapter is trusted integration code,
+not a security sandbox for untrusted application code.
+
+Request/response values remain private. A documented, schema-valid 2xx response
+is transport-contract evidence. Application persistence remains uncertain for a
+write unless a trusted project verifier supplies independent exact-operation
+proof. Per-run private evidence cannot be reused by a later request. Unknown
+schema assertions, unobserved responses, redirects and ambiguous matches cannot
+become success. Attached APIs, databases and contexts survive session close.
+
+Read the [compatibility table and source setup](../integrations/swagger/README.md)
+and public types at `packages/runtime/src/swagger/index.d.ts`. Reports identify
+both the temporary protocol launcher (`engineSha256`) and actual Rust model
+executable (`swaggerEngineSha256`); neither hash proves source-to-binary build
+provenance by itself. Installed packaging and release acceptance remain separate.

@@ -11,6 +11,10 @@
     ".": {
       "types": "./src/index.d.ts",
       "import": "./src/index.mjs"
+    },
+    "./swagger": {
+      "types": "./src/swagger/index.d.ts",
+      "import": "./src/swagger/index.mjs"
     }
   },
   "bin": {

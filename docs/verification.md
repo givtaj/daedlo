@@ -1,5 +1,72 @@
 # Verification record
 
+## Reusable Swagger source candidate — 2026-11-09
+
+**PASS within the stated source-candidate scope.** Built in the isolated
+`codex/swagger-api-driver-20261109` worktree from Daedlo base `06331d7`.
+The preserved primary checkout and Roots everyday dependencies were not edited.
+The requested design is reusable across projects: OpenAPI catalog, Swagger UI
+adapter and Rust model are generic; customer URLs, policy, authentication and
+persistence proof remain in a project integration.
+
+| Check | Observed result |
+| --- | --- |
+| Generic catalog/project Node tests | 21 passed: 14 catalog and 7 profile/document-loading groups |
+| Complete runtime Node suite | 207 passed, no failures/skips |
+| Swagger Rust model | 18 passed; Clippy with warnings denied, fmt and build passed |
+| Existing Rust workspace | 26 passed; one intentional subprocess-only test ignored by its parent harness; fmt passed |
+| Independent real Swagger UI 5.34.1 | 19 passed, no failures/skips, including OpenAPI 3.0.3, 3.1.0 and 3.2.1 parameterized requests |
+| Actual Roots UI/API/PostgreSQL | 12 passed against the supplied disposable fixture |
+| Existing browser regressions | E2E 8 groups; motion 4, controls 9, CLI 10, viewer 31, Ninja UI 2 tests passed |
+| Source checks | JavaScript syntax, TypeScript declarations, Prettier and diff whitespace passed |
+| Visible viewer | Inspected generic model/catalog and completed GET greeting recipe; three steps finished, HTTP 200, explicit persistence-not-established outcome |
+
+New tests produced genuine failures before implementation: empty operation
+catalog, missing visible operation selection, permissive model authorization,
+stale/multiple response acceptance, earlier-write proof reuse, premature
+finalization during another in-flight request, authentication changes (including
+path-scoped cookies), header casing and service-worker preflight. Setup failures
+were kept separate: the initial independent fixture needed correct UTF-8 HTTP
+headers before its behavioral red could run. Service-worker regressions verify
+mocked browser preflight observations, not actual interception coverage.
+
+Roots acceptance discovers 22 operations and exercises public greeting/health,
+documented unauthenticated 401, missing required query input with no request,
+write policy and stale-revision no-write checks, Swagger JSON/CSRF login,
+cookie-authenticated reads, query parameters and reset. Two explicitly permitted
+synthetic writes distinguish persistence evidence: HTTP 201 plus an empty HTTP
+200 readback remains **uncertain**; exact profile/response-ID/requested-name
+readback matching once produces **saved**. Verifiers run only during finalization.
+
+The supplied Roots binary was built from its existing working tree, including
+pre-existing changes, with base commit
+`d1a74009c06f385bc1f9bfc6bed9343682dac43c`; it is **not pinned-commit acceptance**.
+Its API SHA256 is
+`d7ab4f292b70209d826614ee4e6d15bae308e963ec75bea96aaa271c89a46f59`;
+served JSON schema SHA256 is
+`4f52045ec2f280fd5ca4ccce12c0f3fe988cf81c77312cc2c050758f436dee4e`.
+The Swagger engine used by the post-audit Roots run has SHA256
+`e1506940aa60d2f9372c7c1c782d2216c6ee209db170c65016c8a3619faf00cf`.
+Schemas and binary hashes identify public contract/build bytes, not private account
+identifiers. Synthetic credentials and request/response evidence stay private.
+
+Local ignored evidence: `artifacts/swagger-roots-acceptance-03/summary.json`,
+`results.json`, and the inspected public greeting screenshot; baseline browser
+logs `artifacts/swagger-baseline-*.log`; full Node log
+`artifacts/swagger-node-tests.log`. Owned test sessions/browsers and the inspection
+viewer closed cleanly. The attached Roots API/database remain with their original
+owner. The tests confirmed attached page/authentication survival across session
+closure.
+
+**Limits / NOT RUN:** no release/publication, installed-kit acceptance or hosted
+CI is claimed; no everyday Roots promotion. The reusable source helper currently
+uses a POSIX launcher. No Windows/Linux platform acceptance is claimed. Latest
+OpenAPI 3.2 QUERY/custom operations are discoverable but execution is unavailable;
+YAML, external references, multiple/templated/cross-origin servers, complex
+serialization, multipart, OAuth orchestration, streaming and full JSON Schema
+coverage remain unsupported. See the [precise compatibility matrix](../integrations/swagger/README.md).
+
+
 ## CI efficiency with retained installed coverage — 2026-11-06
 
 Prepared from main `06331d7` in an isolated checkout. Both required Node 22/24
