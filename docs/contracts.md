@@ -27,7 +27,7 @@ Requests: `{protocol:1,id,op,...}`. Every parsed response echoes `protocol:1,id,
 
 Observation envelope: `{connected:boolean,session:string,facts:object}`. Missing required facts, unknown state, incompatible model and absent handlers cannot imply success. Fingerprint includes the full typed observation and session. Application state is derived from observations, never assigned because a click ran. Facts and action parameters must be decoded at the Rust boundary. Model versions identify exact schema contracts; the Node adapter declares `model:{id,version}` and must match the descriptor before effects.
 
-Descriptor: `{id,version,label,states:[{id,label,parent:null|string,support:"supported"|"planned"}],commands:[{id,label,params:{field:Parameter},changesSession?:boolean,recipeOnly?:boolean}],recipes:[{id,label,steps:[{command,params}]}]}`. IDs are explicit stable wire names, never Rust Debug output. Parameter: `{type:"text"|"number"|"boolean"|"select",label,required?:boolean,default?:value,options?:[{value,label}],minimum?:number,maximum?:number,maxLength?:number}`. All undeclared parameters rejected. Observe state is `{id}` referencing a supported descriptor leaf; `commands`/`recipes` contain `{id,enabled,reason?}`; display is `[{label,value}]` with safe public values only.
+Descriptor: `{id,version,label,states:[{id,label,parent:null|string,support:"supported"|"planned"}],commands:[{id,label,params:{field:Parameter},changesSession?:boolean,recipeOnly?:boolean}],recipes:[{id,label,steps:[{command,params}]}]}`. IDs are explicit stable wire names, never Rust Debug output. Parameter: `{type:"text"|"password"|"number"|"boolean"|"select",label,required?:boolean,default?:value,options?:[{value,label}],minimum?:number,maximum?:number,maxLength?:number}`. All undeclared parameters rejected. Observe state is `{id}` referencing a supported descriptor leaf; `commands`/`recipes` contain `{id,enabled,reason?}`; display is `[{label,value}]` with safe public values only.
 
 The public `ApplicationModel` trait exposes associated `Facts`, `State`, `Command` and `Outcome` types. Models implement descriptor, state derivation/ID, typed command decoding, authorization, verification and outcome reporting. Optional display, command-availability and recipe-authorization hooks support the catalog. The selected engine crate's `src/lib.rs` defines the implemented API. A source checkout additionally includes `examples/notebook-engine`; that example is not required or included in portable tools. Verification receives bounded before/after observations and read-only evidence. A declared state tree is descriptive metadata, not a promise of reachability.
 
@@ -311,3 +311,51 @@ register its `close` with their resource scope. Once cleanup succeeds, repeated
 calls are harmless. If startup cleanup succeeds immediately, the original startup
 error is preserved. These semantics cover rejected cleanup operations; they do
 not introduce a deadline or abandon a CDP operation that has not settled.
+
+
+## Sensitive command parameters — alpha.9 candidate
+
+`type:"password"` is a bounded string parameter with the same required and
+`maxLength` checks as text. The viewer renders a masked password input with
+browser autofill and spellchecking disabled, captures its value unchanged for
+the authorized handler, then immediately clears it. Ordinary text fields keep
+their existing behavior. Older runtimes reject this unknown parameter type before
+rendering, so a new sensitive model cannot silently degrade into a text field.
+
+This is a presentation contract. Descriptor defaults and recipe parameters are
+public metadata: never place credentials there. The runtime does not globally
+redact arbitrary customer facts, errors, browser pages or reports; adapters must
+keep private inputs out of those channels. The generic Swagger preparation field
+uses this type because its request JSON may contain credentials.
+
+## Swagger adapter — alpha.9 candidate
+
+`@daedlo/runtime/swagger` exports bounded OpenAPI catalog/request/response helpers
+and `createSwaggerAdapter`. The portable integration supplies a separate native
+`swagger-engine` implementing `daedlo.swagger@1` and an explicit local project
+profile. It uses the shared execution facade and the password parameter contract. The published alpha.7 kit does not include this candidate.
+
+Rust owns observed Catalog/Selected/Prepared/Response states, execution/write
+policy, canonical read recipes and outcome classification. The adapter observes
+Swagger UI 5, validates supported OpenAPI transport inputs, uses guarded browser
+actions and correlates one exact request with its response. Prepared inputs bind
+to private browser authentication; changed cookies or Swagger authorization
+invalidate preparation without exposing credentials or private digests in facts.
+Existing service workers are refused. The adapter is trusted integration code,
+not a security sandbox for untrusted application code.
+
+Request/response values remain private. A documented, schema-valid 2xx response
+is transport-contract evidence. Application persistence remains uncertain for a
+write unless a trusted project verifier supplies independent exact-operation
+proof. Per-run private evidence cannot be reused by a later request. Unknown
+schema assertions, unobserved responses, redirects and ambiguous matches cannot
+become success. Attached APIs, databases and contexts survive session close.
+
+Read the [compatibility table and installation flow](../integrations/swagger/README.md)
+and public types at `packages/runtime/src/swagger/index.d.ts`. Reports identify
+both the temporary protocol launcher (`engineSha256`) and actual Rust model
+executable (`swaggerEngineSha256`); neither hash proves source-to-binary build
+provenance by itself. The portable tools contain the locked model source and isolated build helper;
+select an explicit installed `runtimeRoot`. Managed Ninja/native Swagger startup
+is not included: use the documented standalone CLI. Exact installed-package
+verification and real customer acceptance remain separate evidence.

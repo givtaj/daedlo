@@ -35,7 +35,7 @@ the capability or readiness proof is absent.
 ## Install the selected package pair
 
 For the current protocol-1 implementation, the runtime requires Node 22 or later
-and pins Playwright 1.62.1. The repository pins Rust 1.96.0. Use the chosen release's
+and pins Playwright 1.65.0. The repository pins Rust 1.96.0. Use the chosen release's
 manifest and package metadata if these change. The customer's compiled Rust model
 is required even when its application uses a different language.
 

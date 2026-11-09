@@ -22,6 +22,7 @@ async function fixture(t) {
     "examples/starter/model/Cargo.toml": `[package]\nname = "daedlo-starter-engine"\nversion = "0.1.0"\n\n[workspace]\n\n[dependencies]\ndaedlo-engine = { path = "../../../crates/daedlo-engine", version = "=${current}" }\nserde = "1"\n`,
   };
   for (const [directory, name] of [
+    ["integrations/swagger/engine", "daedlo-swagger-engine"],
     ["integrations/roots/engine", "roots-browser-driver-consumer"],
     ["integrations/roots/edit/engine", "roots-edit-browser-driver-consumer"],
   ]) {
@@ -47,12 +48,12 @@ async function contents(root, files) {
   );
 }
 
-test("prepares all ten version files including the shipped starter while preserving customer pins and unrelated text", async (t) => {
+test("prepares all twelve version files including the shipped starter and Swagger model while preserving customer pins and unrelated text", async (t) => {
   const { root, files } = await fixture(t);
   const result = await setReleaseVersion({ repoRoot: root, version: next });
   assert.equal(result.previousVersion, current);
   assert.equal(result.version, next);
-  assert.equal(result.files.length, 10);
+  assert.equal(result.files.length, 12);
   const changed = await contents(root, files);
   for (const [path, before] of Object.entries(files)) {
     assert.ok(
@@ -77,7 +78,7 @@ test("prepares all ten version files including the shipped starter while preserv
 
 test("an inconsistent last lock file refuses before changing any earlier file", async (t) => {
   const { root, files } = await fixture(t);
-  const last = "integrations/roots/edit/engine/Cargo.lock";
+  const last = "integrations/swagger/engine/Cargo.lock";
   await fs.writeFile(join(root, last), files[last].replace(current, "0.0.9"));
   const before = await contents(root, files);
   await assert.rejects(

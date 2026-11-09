@@ -412,13 +412,13 @@ fn parameters(descriptor: &CommandDescriptor, input: &Value) -> Result<Value> {
                 return Err(err(
                     "invalid_params",
                     "Parameter value does not match its descriptor",
-                ))
+                ));
             }
             None if parameter.required => {
                 return Err(err(
                     "invalid_params",
                     "A required command parameter is missing",
-                ))
+                ));
             }
             _ => {}
         }
@@ -428,7 +428,7 @@ fn parameters(descriptor: &CommandDescriptor, input: &Value) -> Result<Value> {
 
 fn parameter_matches(parameter: &Parameter, value: &Value) -> bool {
     match parameter.kind {
-        ParameterType::Text => value.as_str().is_some_and(|text| {
+        ParameterType::Text | ParameterType::Password => value.as_str().is_some_and(|text| {
             parameter
                 .max_length
                 .is_none_or(|limit| text.chars().count() <= limit)
@@ -565,10 +565,14 @@ fn validate_descriptor(descriptor: &ModelDescriptor) -> Result<()> {
                     "only permitted for select parameters",
                 ));
             }
-            if parameter.kind != ParameterType::Text && parameter.max_length.is_some() {
+            if !matches!(
+                parameter.kind,
+                ParameterType::Text | ParameterType::Password
+            ) && parameter.max_length.is_some()
+            {
                 return Err(invalid_model(
                     &format!("{path}.maxLength"),
-                    "maxLength (Rust max_length) is only permitted for text parameters",
+                    "maxLength (Rust max_length) is only permitted for text parameters or password parameters",
                 ));
             }
             if parameter

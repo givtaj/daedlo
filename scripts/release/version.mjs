@@ -11,9 +11,11 @@ const files = [
   "examples/starter/model/Cargo.toml",
   "integrations/roots/engine/Cargo.toml",
   "integrations/roots/edit/engine/Cargo.toml",
+  "integrations/swagger/engine/Cargo.toml",
   "Cargo.lock",
   "integrations/roots/engine/Cargo.lock",
   "integrations/roots/edit/engine/Cargo.lock",
+  "integrations/swagger/engine/Cargo.lock",
 ];
 
 function semver(value) {

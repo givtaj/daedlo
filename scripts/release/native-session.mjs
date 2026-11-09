@@ -173,6 +173,7 @@ const diagnosticRules = new Set([
   "select parameters must contain at least one option",
   "only permitted for select parameters",
   "maxLength (Rust max_length) is only permitted for text parameters",
+  "maxLength (Rust max_length) is only permitted for text parameters or password parameters",
   "must match the parameter type and constraints",
   "must be unique among options",
   "must contain at least one step",

@@ -1,6 +1,6 @@
 {
   "name": "@daedlo/runtime",
-  "version": "0.1.4-alpha.8",
+  "version": "0.1.4-alpha.9",
   "description": "Visible browser control with a typed Rust application model",
   "license": "Apache-2.0",
   "type": "module",
@@ -11,6 +11,10 @@
     ".": {
       "types": "./src/index.d.ts",
       "import": "./src/index.mjs"
+    },
+    "./swagger": {
+      "types": "./src/swagger/index.d.ts",
+      "import": "./src/swagger/index.mjs"
     }
   },
   "bin": {
@@ -25,6 +29,6 @@
     "licenses"
   ],
   "dependencies": {
-    "playwright": "1.62.1"
+    "playwright": "1.65.0"
   }
 }

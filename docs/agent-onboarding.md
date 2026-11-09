@@ -6,11 +6,11 @@ evidence. The agent reads the application and does the integration work; the tea
 defines the intended behavior and what counts as success. Authored flows can then
 run without an AI agent or model API key.
 
-The alpha.8 candidate kit uses the Daedlo package names, commands and skill paths below.
+The alpha.9 candidate kit uses the Daedlo package names, commands and skill paths below.
 Published alpha.3 and earlier kits retain their original `browser-driver` names;
 follow the instructions bundled with the selected version.
 
-This guide covers **0.1.4-alpha.8**, an assisted alpha for **macOS arm64 with
+This guide covers **0.1.4-alpha.9**, an assisted alpha for **macOS arm64 with
 Codex**, covering one agreed existing application flow and a relevant negative
 case. Exact package and representative-flow results belong to the selected kit's
 `release.json`; current publication status belongs in the
@@ -114,7 +114,8 @@ MCP server or registry installer. It is not included in the current runtime tarb
 ## Dependency preflight
 
 Read the selected kit's manifests before installing. The requirements below
-describe `0.1.4-alpha.8`; require its exact-package verification receipt before
+describe the alpha.9 candidate. Published alpha.7 retains its original dependencies;
+require this candidate's exact-package verification receipt before
 customer promotion. Use the selected kit and independently supplied verification
 values.
 The existing public `0.1.2-rc.1` download is a different package identity. Follow
@@ -122,10 +123,10 @@ the selected manifests rather than silently upgrading a working consumer.
 
 | Component                    | Current requirement                             | Purpose                                                                                                   |
 | ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Node.js                      | Runtime declares `>=22`; CI exercises 22 and 24 | Session runtime, CLI, viewer and browser adapter; Node 24 also satisfies the Roots fixture requirement    |
-| npm                          | No separate minimum declared                    | Install the exact runtime artifact and retain the consumer lockfile; repository development uses `npm ci` |
+| Node.js                      | Runtime declares `>=22`; CI selects patched 22.23.4 and 24.22.2 | Session runtime, CLI, viewer and browser adapter; Node 24 also satisfies the Roots fixture requirement    |
+| npm                          | Source tooling selects npm 11.21.2                    | Install the exact runtime artifact and retain the consumer lockfile; repository development uses `npm ci` |
 | Rust and Cargo               | Rust minimum 1.96; repository pins 1.96.0       | Build the customer's typed `ApplicationModel` against the shared crate                                    |
-| Playwright                   | Runtime pins `1.62.1`                           | Browser control; install its matching Chromium separately                                                 |
+| Playwright                   | Candidate runtime pins `1.65.0`                           | Browser control; install its matching Chromium separately                                                 |
 | Chromium system libraries    | Platform-dependent                              | Linux may need Playwright's system dependency installation; use the host's normal permission flow         |
 | Docker                       | Conditional on the customer's fixture           | Roots uses an isolated PostgreSQL container; shared runtime and notebook acceptance do not require Docker |
 | Application build/data tools | Customer-specific                               | Read the application's manifests and setup guide; its requirements may exceed the driver's                |
@@ -266,3 +267,17 @@ The Roots experience is the source of this workflow. Read the public kit manifes
 and tools receipt for artifact provenance. Repository examples and docs/verification.md
 are not included in portable tools. Customer acceptance still requires running
 the chosen package, model and adapter combination.
+
+## Swagger API integration
+
+The alpha.9 candidate tools ship `integrations/swagger/README.md`, a generic Rust
+model, an isolated model builder and a standalone project launcher. Start there
+for OpenAPI 3.0/3.1/3.2 JSON documents displayed by Swagger UI 5. The same modules
+serve different applications through explicit profiles; Roots routes and
+business rules are not part of the shared runtime. Use the exact selected runtime
+and core crate, then verify the actual application's supported operations.
+
+Mark credential-bearing manual fields `type:"password"`. Defaults and canonical
+recipe parameters remain public metadata, and masking does not make arbitrary
+customer output safe to publish. Keep credentials in private browser sessions or
+local inputs and verify sanitized reports before sharing.

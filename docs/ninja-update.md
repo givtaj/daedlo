@@ -152,6 +152,30 @@ code loading in the managed launcher/adapter require an explicit integration
 migration; they are not silently rewritten. Hook modules are trusted code and
 may dynamically import the selected runtime for their checks.
 
+## Alpha.9 dependency migration
+
+The alpha.9 candidate changes Playwright from 1.62.1 to 1.65.0. An existing
+alpha.7 authoring lockfile can therefore fail preparation with `Existing adapter
+dependency lock changed; migration required`. This refusal preserves the accepted
+installation. Replacing the tools alone does not migrate the authored lockfile.
+
+The integrating agent must review and update the **separate QA integration's**
+Node manifest/lock against the exact verified alpha.9 runtime archive. Preserve
+the original manifest/lock, record their before/after identities and review the
+resolved Playwright closure. Preserve all other customer source, model, flows,
+configuration, trust, store and application data. Install matching Chromium in a
+separate versioned cache and keep the older browser for rollback. Application
+workspaces or shared dependency locks need their own integration review; do not
+silently edit the application's everyday dependencies.
+
+Then use the normal candidate prepare/acceptance/activate sequence with the
+existing registration and retained store. Preparation still checks the reviewed
+lock, model handshake, real application acceptance and ownership. Do not use
+Refresh to migrate a retained alpha.7 installation to a different runtime lock.
+Rollback selects the complete previous installation with its original sealed
+source, model, runtime and dependency closure; keep its tools and browser files.
+This is an explicit assisted migration, not an automatic lock rewrite.
+
 ## Preservation and recovery
 
 Each installation seals original source, generated project dependencies, runtime,

@@ -85,6 +85,18 @@ async function fixture(t, mode) {
         } catch (e) {
           if (e.code !== "ESRCH") throw e;
         }
+      // The closed receipt proves resource drainage, not process exit. The
+      // orphan can still finish its final atomic receipt write. Preserve its
+      // directory until the exact owned child has actually terminated.
+      await until(() => {
+        try {
+          process.kill(child.pid, 0);
+          return false;
+        } catch (error) {
+          if (error.code === "ESRCH") return true;
+          throw error;
+        }
+      });
     }
     await fs.rm(root, { recursive: true, force: true });
   });

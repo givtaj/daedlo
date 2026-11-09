@@ -159,118 +159,144 @@ try {
   otherBarrier.release();
   await other.close();
 
-  // Independently observe terminal events for a request whose frame disappears.
-  // Browser versions may emit one or omit it; accounting must match the evidence.
-  await page.evaluate(() => {
-    const frame = document.createElement("iframe");
-    frame.src = "/frame";
-    document.body.append(frame);
-  });
-  const departingFrame =
-    page.frame({ url: fixture.url + "/frame" }) ??
-    (await page.waitForEvent("framenavigated", (value) =>
-      value.url().endsWith("/frame"),
-    ));
-  const departing = fixture.barrier("departing-document");
-  let departingTerminal = false;
-  const observeTerminal = (request) => {
-    if (request.url().endsWith("/hold/departing-document"))
-      departingTerminal = true;
+  // Independently retain exact Request identities and their terminal evidence.
+  // Navigation/frame loss can emit a terminal event on one browser version and
+  // omit it on another. Neither document loss nor server completion retires it.
+  const detachedRequests = new Set(),
+    terminalRequests = new Set();
+  const observeTerminal = (request) => terminalRequests.add(request);
+  const unresolvedCount = () =>
+    [...detachedRequests].filter((request) => !terminalRequests.has(request))
+      .length;
+  const requestStarted = (suffix) =>
+    context.waitForEvent(
+      "request",
+      (request) => request.url() === fixture.url + suffix,
+    );
+  const assertSettlementMatchesEvidence = async () => {
+    let settlementError;
+    try {
+      await adapter.settle();
+    } catch (error) {
+      settlementError = error;
+    }
+    const expected = unresolvedCount();
+    assert.equal(
+      adapter.requestDiagnostics().pendingCount,
+      expected,
+      "only an independently observed terminal event retires its Request",
+    );
+    if (expected) {
+      assert.equal(settlementError?.code, "requests_pending");
+      assert.equal(settlementError.diagnostics.pendingCount, expected);
+    } else assert.ifError(settlementError);
+    return expected;
   };
   context.on("requestfinished", observeTerminal);
   context.on("requestfailed", observeTerminal);
-  let detachedUnresolved;
   try {
+    await page.evaluate(() => {
+      const frame = document.createElement("iframe");
+      frame.src = "/frame";
+      document.body.append(frame);
+    });
+    const departingFrame =
+      page.frame({ url: fixture.url + "/frame" }) ??
+      (await page.waitForEvent("framenavigated", (value) =>
+        value.url().endsWith("/frame"),
+      ));
+    const departing = fixture.barrier("departing-document");
+    const departingStarted = requestStarted("/hold/departing-document");
     await departingFrame.evaluate(() => {
       fetch("/hold/departing-document")
         .then((response) => response.json())
         .catch(() => {});
     });
     await departing.arrived;
+    detachedRequests.add(await departingStarted);
     await page.locator("iframe").evaluate((value) => value.remove());
     departing.release();
     await departing.closed;
-    detachedUnresolved = departingTerminal ? 0 : 1;
+    const detachedUnresolved = await assertSettlementMatchesEvidence();
+    pass(
+      detachedUnresolved
+        ? "missing detached-document terminal evidence remains unresolved"
+        : "detached-document terminal evidence retires its original request",
+    );
+
+    const keepalive = fixture.barrier("keepalive-previous");
+    const keepaliveStarted = requestStarted("/hold/keepalive-previous");
+    await page.evaluate(() => {
+      fetch("/hold/keepalive-previous", { keepalive: true })
+        .then((response) => response.json())
+        .catch(() => {});
+    });
+    await keepalive.arrived;
+    const keepaliveRequest = await keepaliveStarted;
+    detachedRequests.add(keepaliveRequest);
+    assert.equal(terminalRequests.has(keepaliveRequest), false);
+    // Prove this request is genuinely pending while its response is held. This
+    // assertion is independent of what the browser later emits on navigation.
+    await assert.rejects(
+      adapter.settle(),
+      (error) =>
+        error.code === "requests_pending" &&
+        error.diagnostics.pendingCount === unresolvedCount(),
+    );
+    await page.goto(fixture.url + "/next");
     assert.equal(
       adapter.requestDiagnostics().pendingCount,
-      detachedUnresolved,
-      "detaching a document is not a terminal request event",
+      unresolvedCount(),
+      "navigation alone cannot retire a keepalive Request",
     );
-    if (detachedUnresolved) {
-      await assert.rejects(
-        adapter.settle(),
-        (error) => error.code === "requests_pending",
-      );
-    } else await adapter.settle();
+    keepalive.release();
+    await keepalive.closed;
+    await assertSettlementMatchesEvidence();
+    pass(
+      terminalRequests.has(keepaliveRequest)
+        ? "keepalive terminal evidence retires its original request after navigation"
+        : "missing keepalive terminal evidence stays unresolved after server completion",
+    );
+
+    const retained = fixture.barrier("cleanup-pending");
+    await page.evaluate(() => {
+      fetch("/hold/cleanup-pending")
+        .then((response) => response.json())
+        .catch(() => {});
+    });
+    await retained.arrived;
+    const cleanup = adapter.close();
+    assert.equal(
+      cleanup.pendingCount,
+      1 + unresolvedCount(),
+      "cleanup retains all missing-terminal and still-pending request diagnostics",
+    );
+    assert.equal(cleanup.closed, true);
+    context.off("requestfinished", observeTerminal);
+    context.off("requestfailed", observeTerminal);
+    assert.deepEqual(
+      events.map((event) => context.listenerCount(event)),
+      beforeListeners,
+      "adapter cleanup removes only its own context listeners",
+    );
+    assert.equal(
+      page.isClosed(),
+      false,
+      "attached page survives adapter cleanup",
+    );
+    assert.equal(context.pages().includes(page), true);
+    await assert.rejects(
+      adapter.settle(),
+      (error) => error.code === "request_tracking_closed",
+    );
+    retained.release();
+    pass(
+      "cleanup preserves attached resources, removes owned listeners and retains unresolved evidence",
+    );
   } finally {
     context.off("requestfinished", observeTerminal);
     context.off("requestfailed", observeTerminal);
   }
-  pass(
-    detachedUnresolved
-      ? "missing detached-document terminal evidence remains unresolved"
-      : "detached-document terminal evidence retires its original request",
-  );
-
-  // Chromium can omit Playwright terminal events for keepalive requests after
-  // navigation. Server completion is not permission to delete a browser request.
-  const missingTerminal = fixture.barrier("keepalive-previous");
-  await page.evaluate(() => {
-    fetch("/hold/keepalive-previous", { keepalive: true })
-      .then((response) => response.json())
-      .catch(() => {});
-  });
-  await missingTerminal.arrived;
-  await page.goto(fixture.url + "/next");
-  assert.equal(
-    adapter.requestDiagnostics().pendingCount,
-    1 + detachedUnresolved,
-  );
-  missingTerminal.release();
-  await missingTerminal.closed;
-  await assert.rejects(
-    adapter.settle(),
-    (error) =>
-      error.code === "requests_pending" &&
-      error.diagnostics.pendingCount === 1 + detachedUnresolved,
-  );
-  pass(
-    "missing keepalive terminal evidence stays unresolved after server completion",
-  );
-
-  const retained = fixture.barrier("cleanup-pending");
-  await page.evaluate(() => {
-    fetch("/hold/cleanup-pending")
-      .then((response) => response.json())
-      .catch(() => {});
-  });
-  await retained.arrived;
-  const cleanup = adapter.close();
-  assert.equal(
-    cleanup.pendingCount,
-    2 + detachedUnresolved,
-    "cleanup retains both missing-terminal and still-pending request diagnostics",
-  );
-  assert.equal(cleanup.closed, true);
-  assert.deepEqual(
-    events.map((event) => context.listenerCount(event)),
-    beforeListeners,
-    "adapter cleanup removes only its own context listeners",
-  );
-  assert.equal(
-    page.isClosed(),
-    false,
-    "attached page survives adapter cleanup",
-  );
-  assert.equal(context.pages().includes(page), true);
-  await assert.rejects(
-    adapter.settle(),
-    (error) => error.code === "request_tracking_closed",
-  );
-  retained.release();
-  pass(
-    "cleanup preserves attached resources, removes owned listeners and retains unresolved evidence",
-  );
 } finally {
   const cleanupErrors = [];
   for (const resource of [adapter, browser, fixture]) {

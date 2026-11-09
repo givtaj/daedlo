@@ -1,5 +1,179 @@
 # Verification record
 
+## Alpha.9 path authorization correction — 2026-11-09
+
+Final independent review found a release blocker in candidate `08874503`: literal
+or percent-encoded dot segments in an operation path, including segments composed
+across template boundaries, could normalize to a different endpoint. The old kit
+and its draft release are held and must not be promoted. Alpha.7 remains public.
+
+Two unit assertions genuinely failed for missing refusal, and a real Swagger UI
+browser assertion failed because preparation incorrectly reported success. The
+fix checks both the declared template and the complete substituted path before
+URL parsing; it also refuses raw path whitespace/control characters and existing
+URL delimiters. Embedded dots, Unicode and once-encoded scalar values retain
+explicit positive coverage. No live application write was used to reproduce it.
+
+PASS: 225 runtime tests, including 35 focused Swagger unit tests, and all 21 real Swagger browser checks,
+including refused preparation, execute refusal and zero API calls. Source syntax,
+types and formatting passed. An added thirteenth exact-installed acceptance group
+requires the same zero-request behavior from the shipped runtime. New immutable
+artifacts, exact installed acceptance, relevant isolated application rerun, upgrade
+recovery and new-head CI are required before this correction can be published.
+Earlier candidate receipts remain historical evidence for their exercised scope.
+
+## Alpha.9 Swagger release preparation — 2026-11-09
+
+**IN PROGRESS — source and preliminary exact installed checks passed. A final
+source freeze, refreshed exact artifacts, Roots acceptance, hosted CI and public
+delivery remain separate gates.**
+The isolated `codex/swagger-release-alpha9-20261109` branch starts from current
+main `cd049e9` and ports generic Swagger source commit `42da7a6`. The primary
+checkout, frozen held alpha.8 kit and published alpha.7 are preserved. A fresh
+HTTPS read confirms the public catalog still ends at alpha.7, generation 27.
+
+The candidate packages the standalone Swagger helpers and locked native model
+source, requires an explicit installed runtime, and builds against the exact
+extracted core crate without changing either package. Version stamping now binds
+all twelve release-version files. Portable tools inventory excludes customer
+acceptance scripts, local profiles, build outputs and Swagger UI development
+assets. Swagger UI remains a dev-only independent fixture dependency with its
+optional install analytics disabled.
+
+Release review found and fixed one permit race (two requests could cross an
+async observation using one permit), directional readOnly/writeOnly validation,
+impossible date-time normalization and absent-body versus JSON-null ambiguity.
+Each had a genuine failing assertion before its fix. Packaging assertions first
+failed for omitted Swagger files and missing version consistency checks, then
+passed. Explicit password parameter checks first failed in Node/Rust and the real
+browser (text input), then passed after the contract and viewer implementation.
+The viewer masks/clears marked inputs; public descriptor defaults and recipes are
+not a secret store. A native startup regression caught the new validation message
+being dropped by its safe diagnostic allowlist; the corrected exact allowlist
+passes the original real-browser assertion.
+
+| Check | Observed result |
+| --- | --- |
+| Complete runtime Node suite | PASS: 222 tests, no failures/skips on Node 24.22.2 |
+| Generic Swagger catalog/adapter | PASS: 19 focused tests, including single-permit concurrency and schema corrections |
+| Swagger model and real browser | PASS: 18 Rust tests, fmt/Clippy; 20 Chromium tests using Swagger UI 5.34.1 and OpenAPI 3.0.3/3.1.0/3.2.1 |
+| Password contract | PASS: 4 Node, 3 Rust and 1 Chromium presentation check; masked and cleared screenshots inspected |
+| Existing Rust workspace / viewer | PASS: 29 Rust tests (one subprocess-only fixture intentionally ignored); 32 viewer tests |
+| Release version/tools packaging | PASS: 14 tests including twelve-file stamping, rollback, complete isolated portable inventory and no private additions |
+| CI policy | PASS: 11 tests; both Node lanes require Swagger source and exact installed checks |
+| Broad release/alpha suite | PASS: 605 tests after native diagnostic, teardown, bounded cleanup and explicit migration fixes; no failures or skips |
+| Existing source application flows | PASS: eight notebook groups, starter/request-accounting flow, eight managed-reference groups and nine evidence groups |
+| Public metadata | PASS; no source/runtime paths or credentials added to shared reports |
+| Preliminary exact installed alpha.9 | PASS from clean source `91b9f9a`: native runtime/tools/core, 8 notebook groups, complete control/grid checks, 16 starter groups, required evidence/managed references, and 12 Swagger groups including masked submission; all cleanup PASS |
+| Preliminary exact upgrade/rollback | PASS: 9 checkpoints from pinned published alpha.7 through exact alpha.9 tools, explicit authored dependency migration, restart, and complete old-slot rollback with preserved data |
+| Preliminary exact Roots | PASS on pinned source `46d1e18`: 4 save/stale/readback groups, viewer contract, 11 grid checks, CLI launch/close, rebuilt customer model and 5 real Access masking checks; installed Swagger run pending |
+| Final exact kit / CI | Still in progress; preliminary CI metadata/secrets and both Node 22/24 contract stages passed |
+| Publication | NOT RUN; alpha.7 remains public |
+
+The release source incorporates the scoped reviewed dependency changes from
+[PR #27](https://github.com/givtaj/daedlo/pull/27): Playwright 1.65.0, Node 24.22.2
+and the CI 22.23.4 lane, npm 11.21.2, Wrangler 4.158.0 and the request-accounting
+acceptance adjustment for Chromium terminal events. This is local integration;
+it does not merge that PR or activate a publisher policy. Initial localhost
+EPERM fixture failures were sandbox/setup failures, retained separately from the
+unrestricted successful runs. Current source/installed checks do not imply a
+clean-machine, other-platform, customer-business or production acceptance claim.
+
+
+A later publication audit caught outdated browser-pin and skill-version text in
+shipped onboarding guides. Two new genuine failing guidance assertions now pass:
+current guides match Playwright 1.65.0 and route Swagger to the shipped standalone
+model instead of custom managed onboarding. This documentation-only correction
+requires a new tools/kit identity; runtime/core and integration executable bytes
+are unchanged. Carry forward earlier behavior evidence only after exact-byte
+comparison, and verify the new installed inventory and actual installer flow.
+
+The preliminary frozen kit is retained under source identity `91b9f9a0be7081bd6ff4c161419a607a78cf50ef`.
+Its ZIP SHA-256 is `67ed141bf9b563d4c511733313f359710b40b8881e0de60ccaa69c277a12a49e`.
+It is not the final promotion artifact: later acceptance cleanup and assisted
+migration guidance require a fresh clean source and new identities. Native,
+starter, Swagger and upgrade receipts stay under the ignored alpha.9 artifact
+directories; private local diagnostics are excluded from public metadata.
+
+The first exact upgrade correctly refused a changed Playwright dependency lock.
+The reviewed assisted path first proves that refusal preserves the old slot,
+then changes only the independent QA integration's `package.json` and lockfile
+against the exact candidate runtime. It preserves all other authored bytes and
+uses the unchanged manager guard/acceptance path. Historical rollback restores
+the complete alpha.7 slot. The new `--alpha9-dependency-migration` drill flag is
+explicit and valid only with `--alpha9-upgrade`; no general lock guard was relaxed.
+The original failed receipt is retained separately. Test cleanup now closes all
+manager instances before checking their shared ownership store, and waits for an
+owned orphan process to exit before removing its directory. Swagger acceptance
+attempts every owned close and preserves failed handles and consumer files.
+
+## Reusable Swagger source candidate — 2026-11-09
+
+**PASS within the stated source-candidate scope.** Built in the isolated
+`codex/swagger-api-driver-20261109` worktree from Daedlo base `06331d7`.
+The preserved primary checkout and Roots everyday dependencies were not edited.
+The requested design is reusable across projects: OpenAPI catalog, Swagger UI
+adapter and Rust model are generic; customer URLs, policy, authentication and
+persistence proof remain in a project integration.
+
+| Check | Observed result |
+| --- | --- |
+| Generic catalog/project Node tests | 21 passed: 14 catalog and 7 profile/document-loading groups |
+| Complete runtime Node suite | 207 passed, no failures/skips |
+| Swagger Rust model | 18 passed; Clippy with warnings denied, fmt and build passed |
+| Existing Rust workspace | 26 passed; one intentional subprocess-only test ignored by its parent harness; fmt passed |
+| Independent real Swagger UI 5.34.1 | 19 passed, no failures/skips, including OpenAPI 3.0.3, 3.1.0 and 3.2.1 parameterized requests |
+| Actual Roots UI/API/PostgreSQL | 12 passed against the supplied disposable fixture |
+| Existing browser regressions | E2E 8 groups; motion 4, controls 9, CLI 10, viewer 31, Ninja UI 2 tests passed |
+| Source checks | JavaScript syntax, TypeScript declarations, Prettier and diff whitespace passed |
+| Visible viewer | Inspected generic model/catalog and completed GET greeting recipe; three steps finished, HTTP 200, explicit persistence-not-established outcome |
+
+New tests produced genuine failures before implementation: empty operation
+catalog, missing visible operation selection, permissive model authorization,
+stale/multiple response acceptance, earlier-write proof reuse, premature
+finalization during another in-flight request, authentication changes (including
+path-scoped cookies), header casing and service-worker preflight. Setup failures
+were kept separate: the initial independent fixture needed correct UTF-8 HTTP
+headers before its behavioral red could run. Service-worker regressions verify
+mocked browser preflight observations, not actual interception coverage.
+
+Roots acceptance discovers 22 operations and exercises public greeting/health,
+documented unauthenticated 401, missing required query input with no request,
+write policy and stale-revision no-write checks, Swagger JSON/CSRF login,
+cookie-authenticated reads, query parameters and reset. Two explicitly permitted
+synthetic writes distinguish persistence evidence: HTTP 201 plus an empty HTTP
+200 readback remains **uncertain**; exact profile/response-ID/requested-name
+readback matching once produces **saved**. Verifiers run only during finalization.
+
+The supplied Roots binary was built from its existing working tree, including
+pre-existing changes, with base commit
+`d1a74009c06f385bc1f9bfc6bed9343682dac43c`; it is **not pinned-commit acceptance**.
+Its API SHA256 is
+`d7ab4f292b70209d826614ee4e6d15bae308e963ec75bea96aaa271c89a46f59`;
+served JSON schema SHA256 is
+`4f52045ec2f280fd5ca4ccce12c0f3fe988cf81c77312cc2c050758f436dee4e`.
+The Swagger engine used by the post-audit Roots run has SHA256
+`e1506940aa60d2f9372c7c1c782d2216c6ee209db170c65016c8a3619faf00cf`.
+Schemas and binary hashes identify public contract/build bytes, not private account
+identifiers. Synthetic credentials and request/response evidence stay private.
+
+Local ignored evidence: `artifacts/swagger-roots-acceptance-03/summary.json`,
+`results.json`, and the inspected public greeting screenshot; baseline browser
+logs `artifacts/swagger-baseline-*.log`; full Node log
+`artifacts/swagger-node-tests.log`. Owned test sessions/browsers and the inspection
+viewer closed cleanly. The attached Roots API/database remain with their original
+owner. The tests confirmed attached page/authentication survival across session
+closure.
+
+**Limits / NOT RUN:** no release/publication, installed-kit acceptance or hosted
+CI is claimed; no everyday Roots promotion. The reusable source helper currently
+uses a POSIX launcher. No Windows/Linux platform acceptance is claimed. Latest
+OpenAPI 3.2 QUERY/custom operations are discoverable but execution is unavailable;
+YAML, external references, multiple/templated/cross-origin servers, complex
+serialization, multipart, OAuth orchestration, streaming and full JSON Schema
+coverage remain unsupported. See the [precise compatibility matrix](../integrations/swagger/README.md).
+
+
 ## CI efficiency with retained installed coverage — 2026-11-06
 
 Prepared from main `06331d7` in an isolated checkout. Both required Node 22/24

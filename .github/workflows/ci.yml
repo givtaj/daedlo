@@ -25,6 +25,11 @@ jobs:
       fail-fast: false
       matrix:
         node: [22, 24]
+        include:
+          - node: 22
+            version: "22.23.4"
+          - node: 24
+            version: "24.22.2"
     steps:
       - name: Require a successful verification decision
         env:
@@ -46,9 +51,14 @@ jobs:
         if: needs.public-metadata.outputs.full == 'true'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ matrix.version }}
           cache: npm
           cache-dependency-path: package-lock.json
+      - name: Install the verified npm version
+        if: needs.public-metadata.outputs.full == 'true'
+        run: |
+          npm install --global npm@11.21.2 --ignore-scripts --no-audit --no-fund
+          test "$(npm --version)" = "11.21.2"
       - name: Install locked Node dependencies
         if: needs.public-metadata.outputs.full == 'true'
         run: npm ci
@@ -75,6 +85,8 @@ jobs:
           cargo fmt --all -- --check
           cargo clippy --workspace --all-targets --locked -- -D warnings
           cargo test --workspace --locked
+          cargo fmt --manifest-path integrations/swagger/engine/Cargo.toml -- --check
+          cargo clippy --manifest-path integrations/swagger/engine/Cargo.toml --all-targets --locked -- -D warnings
       - name: Build the independent Rust fixture
         if: needs.public-metadata.outputs.full == 'true'
         run: cargo build --workspace --locked
@@ -106,6 +118,7 @@ jobs:
           node --test tests/managed-starter-*.test.mjs
           npm run test:managed-starter
           npm run test:evidence
+          npm run test:swagger
       - name: Build an immutable candidate bundle from the clean checkout
         if: needs.public-metadata.outputs.full == 'true'
         id: bundle
@@ -143,6 +156,7 @@ jobs:
           await runReleaseAcceptance({...options, output: 'artifacts/ci-native-acceptance'});
           // Native child processes must start from a real file, without inheriting this eval's --input-type flag.
           execFileSync(process.execPath, ['tests/alpha4-installed-starter.mjs', options.bundle, tools.archive, tools.sha256, options.expectedManifestSha256, 'artifacts/ci-starter-acceptance'], {stdio: 'inherit'});
+          execFileSync(process.execPath, ['tests/swagger-installed-acceptance.mjs', options.bundle, tools.archive, tools.sha256, options.expectedManifestSha256, 'artifacts/ci-swagger-acceptance'], {stdio: 'inherit'});
           NODE
       # Only distributable bytes are uploaded. Browser evidence and local logs stay private.
       # This is a workflow artifact, not a GitHub Release or registry publication.
@@ -185,7 +199,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 24
+          node-version: "24.22.2"
+          package-manager-cache: false
       - name: Test repository safeguards
         run: node --test tests/public-metadata.test.mjs tests/repository-guardrails.test.mjs tests/release-ci-policy.test.mjs
       - name: Select verification from the actual merge checkout

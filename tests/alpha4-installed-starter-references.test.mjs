@@ -48,6 +48,7 @@ for (const version of [
   "0.1.4-alpha.6",
   "0.1.4-alpha.7",
   "0.1.4-alpha.8",
+  "0.1.4-alpha.9",
 ]) {
   test(`${version} runs both installed references and retains their receipts`, async () => {
     const fixture = references();
@@ -104,72 +105,93 @@ test("alpha.8 cannot skip a failed installed evidence reference", async () => {
   assert.equal(result.managedReference, undefined);
 });
 
-for (const [name, alter] of [
-  [
-    "failed evidence",
-    (value) => {
-      value.status = "FAIL";
-    },
-  ],
-  [
-    "incomplete evidence",
-    (value) => {
-      value.checks.pop();
-    },
-  ],
-  [
-    "pending evidence cleanup",
-    (value) => {
-      value.cleanup.failures.push("owned fixture");
-    },
-  ],
-]) {
-  test(`alpha.6 ${name} blocks acceptance before the managed reference`, async () => {
+for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
+  for (const [name, alter] of [
+    [
+      "failed evidence",
+      (value) => {
+        value.status = "FAIL";
+      },
+    ],
+    [
+      "incomplete evidence",
+      (value) => {
+        value.checks.pop();
+      },
+    ],
+    [
+      "skipped evidence check",
+      (value) => {
+        value.checks[0].status = "SKIPPED";
+      },
+    ],
+    [
+      "failed evidence check",
+      (value) => {
+        value.checks[0].status = "FAIL";
+      },
+    ],
+    [
+      "missing evidence check status",
+      (value) => {
+        delete value.checks[0].status;
+      },
+    ],
+    [
+      "pending evidence cleanup",
+      (value) => {
+        value.cleanup.failures.push("owned fixture");
+      },
+    ],
+  ]) {
+    test(`${version} ${name} blocks acceptance before the managed reference`, async () => {
+      const fixture = references();
+      alter(fixture.evidence);
+      const result = { version };
+      await assert.rejects(
+        runInstalledStarterReferences(result, options, fixture.runners),
+        { code: "ERR_ASSERTION" },
+      );
+      assert.deepEqual(
+        fixture.calls.map((call) => call.reference),
+        ["evidence"],
+      );
+      assert.equal(result.evidenceReference, fixture.evidence);
+      assert.equal(result.managedReference, undefined);
+    });
+  }
+
+for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
+  for (const field of ["status", "cleanup"]) {
+    test(`${version} failed managed ${field} cannot pass and retains both receipts`, async () => {
+      const fixture = references();
+      fixture.managed[field] = "FAIL";
+      const result = { version };
+      await assert.rejects(
+        runInstalledStarterReferences(result, options, fixture.runners),
+        { code: "ERR_ASSERTION" },
+      );
+      assert.deepEqual(
+        fixture.calls.map((call) => call.reference),
+        ["evidence", "managed"],
+      );
+      assert.equal(result.evidenceReference, fixture.evidence);
+      assert.equal(result.managedReference, fixture.managed);
+    });
+  }
+
+for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
+  test(`${version} reference exceptions propagate without a replacement success receipt`, async () => {
     const fixture = references();
-    alter(fixture.evidence);
-    const result = { version: "0.1.4-alpha.6" };
+    const failure = new Error("Reference could not complete");
+    fixture.runners.managedRunner = async () => {
+      throw failure;
+    };
+    const result = { version };
     await assert.rejects(
       runInstalledStarterReferences(result, options, fixture.runners),
-      { code: "ERR_ASSERTION" },
-    );
-    assert.deepEqual(
-      fixture.calls.map((call) => call.reference),
-      ["evidence"],
+      (error) => error === failure,
     );
     assert.equal(result.evidenceReference, fixture.evidence);
     assert.equal(result.managedReference, undefined);
   });
-}
-
-for (const field of ["status", "cleanup"]) {
-  test(`alpha.6 failed managed ${field} cannot pass and retains both receipts`, async () => {
-    const fixture = references();
-    fixture.managed[field] = "FAIL";
-    const result = { version: "0.1.4-alpha.6" };
-    await assert.rejects(
-      runInstalledStarterReferences(result, options, fixture.runners),
-      { code: "ERR_ASSERTION" },
-    );
-    assert.deepEqual(
-      fixture.calls.map((call) => call.reference),
-      ["evidence", "managed"],
-    );
-    assert.equal(result.evidenceReference, fixture.evidence);
-    assert.equal(result.managedReference, fixture.managed);
-  });
-}
-
-test("alpha.6 reference exceptions propagate without a replacement success receipt", async () => {
-  const fixture = references();
-  const failure = new Error("Reference could not complete");
-  fixture.runners.managedRunner = async () => {
-    throw failure;
-  };
-  const result = { version: "0.1.4-alpha.6" };
-  await assert.rejects(
-    runInstalledStarterReferences(result, options, fixture.runners),
-    (error) => error === failure,
-  );
-  assert.equal(result.evidenceReference, fixture.evidence);
-  assert.equal(result.managedReference, undefined);
-});

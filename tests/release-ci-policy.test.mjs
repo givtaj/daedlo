@@ -330,3 +330,19 @@ test("Cargo caches exclude independent installed outputs and never bypass cargo 
   );
   assert.doesNotMatch(workflow, /cache-hit[^\n]*\n\s+run: cargo/);
 });
+
+test("both supported Node lanes exercise Swagger source and exact installed delivery", () => {
+  assert.match(workflow, /node: \[22, 24\]/);
+  assert.match(workflow, /version: "22\.23\.4"/);
+  assert.match(workflow, /version: "24\.22\.2"/);
+  assert.match(workflow, /node-version: \$\{\{ matrix\.version \}\}/);
+  assert.match(workflow, /npm run test:swagger/);
+  assert.match(
+    workflow,
+    /cargo clippy --manifest-path integrations\/swagger\/engine\/Cargo.toml --all-targets --locked -- -D warnings/,
+  );
+  assert.match(
+    workflow,
+    /tests\/swagger-installed-acceptance\.mjs', options\.bundle, tools\.archive, tools\.sha256, options\.expectedManifestSha256/,
+  );
+});

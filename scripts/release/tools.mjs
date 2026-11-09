@@ -66,6 +66,17 @@ const starterFiles = [
   "model/src/main.rs",
   "model/src/bin/starter-invalid-model.rs",
 ];
+const swaggerFiles = [
+  "README.md",
+  "session.mjs",
+  "project.mjs",
+  "runtime.mjs",
+  "build-model.mjs",
+  "engine/Cargo.toml",
+  "engine/Cargo.lock",
+  "engine/src/lib.rs",
+  "engine/src/main.rs",
+];
 const managedFiles = [
   "README.md",
   "adapter.mjs",
@@ -81,6 +92,7 @@ const requiredSkill = [
   "LICENSE",
   "references/onboarding.md",
   "references/model-and-flows.md",
+  "references/swagger.md",
   "assets/flow-spec.md",
 ];
 
@@ -221,6 +233,7 @@ export async function buildToolsArchive({
   copy("scripts/release/native-session-ui.html", "lib/native-session-ui.html");
   for (const name of documents) copy(`docs/${name}.md`);
   for (const file of starterFiles) copy(`examples/starter/${file}`);
+  for (const file of swaggerFiles) copy(`integrations/swagger/${file}`);
   for (const file of managedFiles) copy(`examples/managed-starter/${file}`);
   copy("docs/update-trust/production.json");
   copy("docs/update-trust/daedlo-release-2026-10.pem");
@@ -269,6 +282,7 @@ export async function buildToolsArchive({
       "skills",
       "examples/starter",
       "examples/managed-starter",
+      "integrations/swagger",
       "README.md",
       ...licensing.files,
       "SOURCE.json",
