@@ -1,5 +1,21 @@
 # Implementation plan
 
+## Alpha.9 Swagger release preparation — 2026-11-09
+
+Prepare a new coherent candidate from current main, incorporating generic Swagger,
+portable exact-runtime/model delivery, explicit password fields and the reviewed
+dependency updates. Preserve the held alpha.8 artifacts and published alpha.7.
+
+- Freeze clean source after test-first release fixes and affected regressions.
+- Verify the exact installed runtime/tools/core crate, standalone Swagger CLI,
+  three OpenAPI versions, request safety, masking and independent effect evidence.
+- Rebuild the isolated Roots model and exercise the agreed real UI/API flows.
+- Verify pinned alpha.7 to alpha.9 tools bootstrap, upgrade and rollback.
+- Obtain hosted CI for the reviewed source and prepare new immutable publication
+  identities without activating the held alpha.8 publisher policy.
+
+Measured status belongs in verification; no publication is claimed by this plan.
+
 ## Reusable Swagger API driver — 2026-11-09
 
 The owner requested Swagger driving across projects, using Roots as one training

@@ -174,6 +174,11 @@ function schemaSupport(document, schema, depth = 0, refs = new Set()) {
   }
   if (own(schema, "nullable") && typeof schema.nullable !== "boolean")
     fail("Invalid nullable schema.");
+  for (const key of ["readOnly", "writeOnly"])
+    if (own(schema, key) && typeof schema[key] !== "boolean")
+      fail("Invalid directional schema annotation.");
+  if (schema.readOnly === true && schema.writeOnly === true)
+    fail("A property cannot be both read-only and write-only.");
   if (own(schema, "format") && !formats.has(schema.format))
     fail("Schema format is unsupported.");
   if (
@@ -253,6 +258,11 @@ function equal(a, b) {
     );
   return false;
 }
+function calendarDate(year, month, day) {
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1];
+}
 function formatValid(format, value) {
   if (format === "int32")
     return (
@@ -276,20 +286,65 @@ function formatValid(format, value) {
       Number.isFinite(Date.parse(value)) &&
       new Date(value).toISOString().slice(0, 10) === value
     );
-  if (format === "date-time")
-    return (
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/i.test(
+  if (format === "date-time") {
+    const parts =
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/i.exec(
         value,
-      ) && Number.isFinite(Date.parse(value))
+      );
+    if (!parts) return false;
+    const [
+      ,
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      second,
+      offsetHour = "0",
+      offsetMinute = "0",
+    ] = parts;
+    return (
+      calendarDate(Number(year), Number(month), Number(day)) &&
+      Number(hour) <= 23 &&
+      Number(minute) <= 59 &&
+      Number(second) <= 59 &&
+      Number(offsetHour) <= 23 &&
+      Number(offsetMinute) <= 59 &&
+      Number.isFinite(Date.parse(value))
     );
+  }
   return false;
 }
-function schemaValid(document, schema, value, depth = 0) {
+function directionFlag(document, schema, flag) {
+  if (!object(schema)) return false;
+  if (schema[flag] === true) return true;
+  if (
+    own(schema, "$ref") &&
+    directionFlag(document, resolve(document, schema), flag)
+  )
+    return true;
+  return (
+    schema.allOf?.some((child) => directionFlag(document, child, flag)) ?? false
+  );
+}
+function schemaValid(
+  document,
+  schema,
+  value,
+  depth = 0,
+  direction = "response",
+) {
   if (depth > 48) return false;
   if (typeof schema === "boolean") return schema;
   if (
     own(schema, "$ref") &&
-    !schemaValid(document, resolve(document, schema), value, depth + 1)
+    !schemaValid(
+      document,
+      resolve(document, schema),
+      value,
+      depth + 1,
+      direction,
+    )
   )
     return false;
   if (own(schema, "type")) {
@@ -317,21 +372,21 @@ function schemaValid(document, schema, value, depth = 0) {
   if (
     schema.allOf &&
     !schema.allOf.every((child) =>
-      schemaValid(document, child, value, depth + 1),
+      schemaValid(document, child, value, depth + 1, direction),
     )
   )
     return false;
   if (
     schema.anyOf &&
     !schema.anyOf.some((child) =>
-      schemaValid(document, child, value, depth + 1),
+      schemaValid(document, child, value, depth + 1, direction),
     )
   )
     return false;
   if (
     schema.oneOf &&
     schema.oneOf.filter((child) =>
-      schemaValid(document, child, value, depth + 1),
+      schemaValid(document, child, value, depth + 1, direction),
     ).length !== 1
   )
     return false;
@@ -383,7 +438,7 @@ function schemaValid(document, schema, value, depth = 0) {
     if (
       own(schema, "items") &&
       !value.every((item) =>
-        schemaValid(document, schema.items, item, depth + 1),
+        schemaValid(document, schema.items, item, depth + 1, direction),
       )
     )
       return false;
@@ -402,11 +457,28 @@ function schemaValid(document, schema, value, depth = 0) {
       keys.length > (schema.maxProperties ?? Infinity)
     )
       return false;
-    if ((schema.required ?? []).some((key) => !own(value, key))) return false;
+    if (
+      (schema.required ?? []).some(
+        (key) =>
+          !own(value, key) &&
+          !directionFlag(
+            document,
+            schema.properties?.[key],
+            direction === "request" ? "readOnly" : "writeOnly",
+          ),
+      )
+    )
+      return false;
     for (const key of keys) {
       if (own(schema.properties ?? {}, key)) {
         if (
-          !schemaValid(document, schema.properties[key], value[key], depth + 1)
+          !schemaValid(
+            document,
+            schema.properties[key],
+            value[key],
+            depth + 1,
+            direction,
+          )
         )
           return false;
       } else if (
@@ -417,6 +489,7 @@ function schemaValid(document, schema, value, depth = 0) {
             schema.additionalProperties,
             value[key],
             depth + 1,
+            direction,
           ))
       )
         return false;
@@ -732,7 +805,15 @@ export function validateRequest(catalog, operation, input) {
         if (parameter.required) errors.push("A required parameter is missing.");
         continue;
       }
-      if (!schemaValid(catalog.document, parameter.schema ?? {}, values[name]))
+      if (
+        !schemaValid(
+          catalog.document,
+          parameter.schema ?? {},
+          values[name],
+          0,
+          "request",
+        )
+      )
         errors.push("A parameter does not match its schema.");
     }
     if (!operation.requestBody && own(request, "body"))
@@ -746,7 +827,9 @@ export function validateRequest(catalog, operation, input) {
       if (!own(request, "body")) {
         if (operation.requestBody.required)
           errors.push("A request body is required.");
-      } else if (!schemaValid(catalog.document, schema, request.body))
+      } else if (
+        !schemaValid(catalog.document, schema, request.body, 0, "request")
+      )
         errors.push("The request body does not match its schema.");
     }
   } catch (error) {
@@ -820,13 +903,9 @@ export function validateResponse(catalog, operation, response) {
       return {
         documented: true,
         ...result(
-          response.body === undefined ||
-            response.body === "" ||
-            response.body === null,
+          response.body === undefined,
           true,
-          response.body === undefined ||
-            response.body === "" ||
-            response.body === null
+          response.body === undefined
             ? []
             : ["An undocumented response body was received."],
         ),

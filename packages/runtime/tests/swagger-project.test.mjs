@@ -220,3 +220,23 @@ test("failed response cancellation is explicit and does not expose raw errors", 
     },
   );
 });
+
+test("project accepts an explicit runtime package and resolves it relative to its profile", async () => {
+  const { fileURLToPath } = await import("node:url");
+  const { relative } = await import("node:path");
+  const runtimeRoot = fileURLToPath(new URL("../", import.meta.url));
+  await withProfile(valid, fetchedDocument, async (directory) => {
+    await writeFile(
+      join(directory, "project.json"),
+      JSON.stringify({
+        ...valid,
+        runtimeRoot: relative(directory, runtimeRoot),
+      }),
+    );
+    await assert.doesNotReject(async () => {
+      const project = await createProject();
+      assert.equal(project.url, valid.docsUrl);
+      assert.equal(typeof project.createSession, "function");
+    });
+  });
+});

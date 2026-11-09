@@ -224,7 +224,7 @@ impl ApplicationModel for SwaggerModel {
             ],
             "commands":[
                 {"id":"select","label":"Select operation","params":{"operation":{"type":"select","label":"Operation","required":true,"options":options}}},
-                {"id":"prepare","label":"Prepare request","params":{"request":{"type":"text","label":"Request JSON: path, query, headers, body","required":true,"default":"{}","maxLength":32768}}},
+                {"id":"prepare","label":"Prepare request","params":{"request":{"type":"password","label":"Request JSON: path, query, headers, body","required":true,"default":"{}","maxLength":32768}}},
                 {"id":"execute","label":"Execute in Swagger","params":{}},
                 {"id":"reset","label":"Return to catalog","params":{}}
             ],"recipes":recipes
@@ -656,6 +656,10 @@ mod tests {
         let model = model();
         let descriptor = model.descriptor();
         assert_eq!(descriptor.commands.len(), 4);
+        assert_eq!(
+            serde_json::to_value(&descriptor.commands[1]).unwrap()["params"]["request"]["type"],
+            "password"
+        );
         assert_eq!(descriptor.recipes.len(), 1);
         assert_eq!(descriptor.recipes[0].id, "check_0");
         assert_eq!(descriptor.recipes[0].steps[2].command, "execute");

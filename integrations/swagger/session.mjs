@@ -2,18 +2,7 @@ import { mkdtemp, readFile, writeFile, chmod, rm } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import {
-  createDriverSession,
-  createResourceScope,
-} from "../../packages/runtime/src/index.mjs";
-import {
-  buildCatalog,
-  validateRequest,
-} from "../../packages/runtime/src/swagger/catalog.mjs";
-import {
-  createSwaggerAdapter,
-  swaggerDigest,
-} from "../../packages/runtime/src/swagger/adapter.mjs";
+import { loadSwaggerRuntime } from "./runtime.mjs";
 
 const quote = (value) => "'" + value.replaceAll("'", "'\\''") + "'";
 // Shared by file-based projects and direct session callers. Operation policies
@@ -51,6 +40,7 @@ export async function createSwaggerSession({
   page,
   context = page.context(),
   enginePath,
+  runtimeRoot,
   document,
   baseUrl,
   docsUrl = page.url(),
@@ -69,6 +59,10 @@ export async function createSwaggerSession({
     /[\u0000\r\n]/.test(enginePath)
   )
     throw Error("An explicit Swagger engine path is required.");
+  const { runtime, swagger } = await loadSwaggerRuntime({ runtimeRoot });
+  const { createDriverSession, createResourceScope } = runtime;
+  const { buildCatalog, validateRequest, createSwaggerAdapter, swaggerDigest } =
+    swagger;
   const catalog = buildCatalog(document);
   const allowed = new Set(allowOperations),
     writes = new Set(allowWrites);

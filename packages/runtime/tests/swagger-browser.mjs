@@ -108,6 +108,24 @@ function specification(version = "3.0.3") {
           responses: { 200: jsonResponse(messageSchema) },
         },
       },
+      "/empty-body": {
+        get: {
+          operationId: "emptyBody",
+          responses: { 200: { description: "No body" } },
+        },
+      },
+      "/null-body": {
+        get: {
+          operationId: "nullBody",
+          responses: { 200: { description: "No body" } },
+        },
+      },
+      "/string-body": {
+        get: {
+          operationId: "stringBody",
+          responses: { 200: { description: "No body" } },
+        },
+      },
     },
   };
 }
@@ -154,6 +172,9 @@ async function fixture(schema) {
           "/denied",
           "/redirect",
           "/missing",
+          "/empty-body",
+          "/null-body",
+          "/string-body",
         ].includes(path) ||
         path.startsWith("/items/")
       ) {
@@ -174,7 +195,10 @@ async function fixture(schema) {
           await held.wait;
         }
         res.setHeader("content-type", "application/json");
-        if (path === "/echo" && echoFailure) res.destroy();
+        if (path === "/empty-body") res.end();
+        else if (path === "/null-body") res.end("null");
+        else if (path === "/string-body") res.end('""');
+        else if (path === "/echo" && echoFailure) res.destroy();
         else if (path === "/echo") res.end(body);
         else if (path === "/invalid") res.end(JSON.stringify({ message: 123 }));
         else if (path === "/denied")
@@ -398,6 +422,23 @@ test("Swagger session reports the actual Rust engine binary identity", async (t)
     f.session.report({ runId: result.runId }).identity.swaggerEngineSha256,
     expected,
   );
+});
+
+test("only an absent HTTP body satisfies a response with no declared content", async (t) => {
+  const f = await setup(t, {
+    allowOperations: ["GET /empty-body", "GET /null-body", "GET /string-body"],
+  });
+  for (const [operation, expected] of [
+    ["GET /empty-body", "success"],
+    ["GET /null-body", "unknown"],
+    ["GET /string-body", "unknown"],
+  ]) {
+    await f.select(operation);
+    await f.prepare();
+    const result = await f.run("execute");
+    assert.equal(result.outcome?.kind, expected, JSON.stringify(result));
+  }
+  assert.equal(f.app.calls.length, 3);
 });
 
 test("invalid required inputs dispatch no request", async (t) => {

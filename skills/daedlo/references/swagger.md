@@ -2,8 +2,11 @@
 
 Use the reusable Swagger integration when the user asks Daedlo to drive an API
 through Swagger UI. Read the selected source/package's compatibility table and
-API contracts; do not assume a published kit includes this source candidate.
-In the source checkout, start at `integrations/swagger/README.md`.
+API contracts. The alpha.9 candidate tools include this integration; alpha.7 does
+not. Start at `integrations/swagger/README.md` in the selected verified tools or
+source checkout. Installed setup selects an explicit `runtimeRoot` and builds the
+shipped model against the exact extracted core crate in fresh output. Use the
+standalone CLI; managed Ninja/native Swagger startup is not included.
 
 Discover the actual OpenAPI document and Swagger UI version. Use method/path
 identity rather than assuming operationId exists or resembles a Roots route.
@@ -15,7 +18,9 @@ Reuse the generic Rust model and Node adapter. Configure the project's docs and
 schema URLs, exact allowed operations, separate write permissions and isolated
 authentication. Relative server URLs resolve against the schema retrieval URL.
 Keep secrets and synthetic credentials outside static profiles and shared reports.
-The browser may visibly contain private payloads; inspect before sharing images.
+The request JSON viewer field is masked and cleared after submission; descriptor
+defaults and recipe parameters are still public metadata. Swagger UI itself
+may visibly contain private payloads; inspect before sharing images.
 
 Use the shared select → prepare → execute flow and canonical read recipes.
 Do not bypass the guarded browser with raw HTTP calls to manufacture an action

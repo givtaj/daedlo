@@ -138,6 +138,7 @@ export async function runInstalledStarterReferences(
       "0.1.4-alpha.6",
       "0.1.4-alpha.7",
       "0.1.4-alpha.8",
+      "0.1.4-alpha.9",
     ].includes(result.version)
   ) {
     result.evidenceReference = await evidenceRunner({
@@ -148,6 +149,12 @@ export async function runInstalledStarterReferences(
     });
     assert.equal(result.evidenceReference.status, "PASS");
     assert.ok(result.evidenceReference.checks.length >= 9);
+    assert.ok(
+      result.evidenceReference.checks.every(
+        (check) => check?.status === "PASS",
+      ),
+      "Every installed evidence reference check must pass",
+    );
     assert.deepEqual(result.evidenceReference.cleanup.failures, []);
     result.managedReference = await managedRunner({
       output: join(output, "managed"),

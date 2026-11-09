@@ -14,7 +14,9 @@ require separately available customer source and fixtures.
 
 ## Set up a source checkout
 
-Install Git, Node.js **22 or 24** with npm, and Rust through rustup. Rust builds
+Install Git, Node.js **24.22.2** with **npm 11.21.2**, and Rust through rustup.
+If you use nvm, the source checkout selects Node 24.22.2 in `.nvmrc`;
+`nvm install` and `nvm use` select it without changing another project's pin. CI also selects Node **22.23.4**. Keep supported Node lines on current security patches. Rust builds
 also need your host's native compiler/linker tools (for example, Xcode Command
 Line Tools on macOS or the C build toolchain on Linux). The repository
 pins **Rust 1.96.0** in [rust-toolchain.toml](rust-toolchain.toml); keep that pin
@@ -24,6 +26,8 @@ Playwright version. Its matching Chromium is a separate download.
 ```sh
 git clone https://github.com/givtaj/daedlo.git
 cd daedlo
+# With nvm, select the pinned version first: nvm install && nvm use
+npm install --global npm@11.21.2 --ignore-scripts --no-audit --no-fund
 npm ci
 rustup show active-toolchain
 cargo build --workspace --locked
@@ -33,9 +37,17 @@ npx playwright install chromium
 On Linux, install Chromium's system libraries with
 `npx playwright install --with-deps chromium` if they are missing; that command may
 need administrator privileges. Use a supported Linux or macOS development host.
-The CI matrix runs Ubuntu with Node 22 and 24. That coverage is distinct from the
+The CI matrix selects Ubuntu with Node 22.23.4 and 24.22.2, both using npm
+11.21.2. Actual run results are recorded in [verification](docs/verification.md),
+separately from the
 published assisted macOS arm64 customer-onboarding claim. Windows development
 and customer onboarding are not yet verified.
+
+The runtime's `node >=22` declaration and portable compatibility checks still
+express the existing major-version contract; they do not enforce security patch
+floors. Use the patched versions above. The npm 11.21.2 bundled dependency audit
+retains two moderate glob/minimatch advisories; it has no high or critical
+matches in the November 6 review. The same two findings also affect npm 12.2.2.
 
 Run the independent fixture to inspect a visible browser flow:
 

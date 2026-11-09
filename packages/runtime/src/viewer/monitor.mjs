@@ -343,7 +343,14 @@ function buildParameter(id, name, parameter) {
         ? "checkbox"
         : parameter.type === "number"
           ? "number"
-          : "text";
+          : parameter.type === "password"
+            ? "password"
+            : "text";
+    if (parameter.type === "password") {
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.autocapitalize = "none";
+    }
     if (parameter.type === "boolean")
       input.checked = parameter.default ?? false;
     else
@@ -354,7 +361,10 @@ function buildParameter(id, name, parameter) {
       if (parameter.minimum !== undefined) input.min = parameter.minimum;
       if (parameter.maximum !== undefined) input.max = parameter.maximum;
     }
-    if (parameter.type === "text" && parameter.maxLength !== undefined)
+    if (
+      ["text", "password"].includes(parameter.type) &&
+      parameter.maxLength !== undefined
+    )
       input.maxLength = parameter.maxLength;
   }
   input.id = inputId;
@@ -375,7 +385,7 @@ function buildParameter(id, name, parameter) {
       parameter.type === "boolean"
         ? input.checked
         : input.value === ""
-          ? parameter.type === "text" && touched
+          ? ["text", "password"].includes(parameter.type) && touched
             ? ""
             : undefined
           : parameter.type === "number"
@@ -383,6 +393,12 @@ function buildParameter(id, name, parameter) {
             : parameter.type === "select"
               ? parameter.options[Number(input.value)]?.value
               : input.value,
+    clearSensitive: () => {
+      if (parameter.type === "password") {
+        input.value = "";
+        touched = false;
+      }
+    },
   };
 }
 
@@ -459,6 +475,9 @@ function buildDescriptor(descriptor) {
         const value = field.value();
         if (value !== undefined) params[name] = value;
       }
+      // Capture the request first, then remove sensitive values from the form
+      // before awaiting dispatch. Result/refresh paths must not restore them.
+      for (const field of fields.values()) field.clearSensitive();
       void run(command.id, params);
     });
     commandViews.set(command.id, { form, button, reason, fields });

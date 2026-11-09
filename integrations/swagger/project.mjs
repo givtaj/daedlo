@@ -1,10 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { createSwaggerSession, validateSwaggerPolicy } from "./session.mjs";
-import {
-  buildCatalog,
-  getOperation,
-} from "../../packages/runtime/src/swagger/catalog.mjs";
+import { loadSwaggerRuntime } from "./runtime.mjs";
 
 const schemaLimit = 2 * 1024 * 1024;
 function configuredUrl(value) {
@@ -105,6 +102,7 @@ export async function createProject() {
     "docsUrl",
     "schemaUrl",
     "enginePath",
+    "runtimeRoot",
     "allowOperations",
     "allowWrites",
   ];
@@ -127,6 +125,19 @@ export async function createProject() {
     profile.allowWrites,
   );
   const enginePath = resolve(dirname(resolve(path)), profile.enginePath);
+  if (
+    profile.runtimeRoot !== undefined &&
+    (typeof profile.runtimeRoot !== "string" ||
+      !profile.runtimeRoot.trim() ||
+      /[\u0000\r\n]/.test(profile.runtimeRoot))
+  )
+    throw Error("Select an explicit runtimeRoot package directory.");
+  const runtimeRoot =
+    profile.runtimeRoot === undefined
+      ? undefined
+      : resolve(dirname(resolve(path)), profile.runtimeRoot);
+  const { swagger } = await loadSwaggerRuntime({ runtimeRoot });
+  const { buildCatalog, getOperation } = swagger;
   const document = await loadDocument(schemaUrl);
   const catalog = buildCatalog(document);
   for (const key of [...policy.allowOperations, ...policy.allowWrites])
@@ -143,6 +154,7 @@ export async function createProject() {
           page,
           context,
           enginePath,
+          runtimeRoot,
           document,
           // Relative API servers resolve against the document's retrieval URL.
           baseUrl: schemaUrl,

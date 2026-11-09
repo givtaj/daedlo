@@ -113,6 +113,9 @@ pub struct Parameter {
 #[serde(rename_all = "snake_case")]
 pub enum ParameterType {
     Text,
+    /// String input masked and cleared after manual submission by the viewer.
+    /// Defaults and recipe literals are still public descriptor metadata.
+    Password,
     Number,
     Boolean,
     Select,

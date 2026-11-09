@@ -564,3 +564,139 @@ test("minor-version-incompatible schema semantics fail closed", () => {
     false,
   );
 });
+
+test("readOnly and writeOnly required properties respect request and response direction", () => {
+  for (const version of ["3.0.4", "3.1.2", "3.2.1"]) {
+    const doc = document();
+    doc.openapi = version;
+    doc.components.schemas.Item = {
+      type: "object",
+      required: ["id", "password", "name"],
+      properties: {
+        id: { type: "integer", readOnly: true },
+        password: { type: "string", writeOnly: true },
+        name: { type: "string" },
+      },
+    };
+    delete doc.paths["/items/{id}"].patch.parameters[0].schema.const;
+    const catalog = buildCatalog(doc);
+    assert.equal(
+      validateRequest(catalog, op(catalog, "PATCH"), {
+        path: { id: 1 },
+        headers: { "X-CSRF": "1" },
+        body: { password: "fixture-input", name: "sample" },
+      }).valid,
+      true,
+      "A request need not contain a response-only required field",
+    );
+    assert.equal(
+      validateResponse(catalog, op(catalog), {
+        status: 200,
+        contentType: "application/json",
+        body: { id: 1, name: "sample" },
+      }).valid,
+      true,
+      "A response need not contain a request-only required field",
+    );
+    assert.equal(
+      validateRequest(catalog, op(catalog, "PATCH"), {
+        path: { id: 1 },
+        headers: { "X-CSRF": "1" },
+        body: { name: "sample" },
+      }).valid,
+      false,
+    );
+    assert.equal(
+      validateResponse(catalog, op(catalog), {
+        status: 200,
+        contentType: "application/json",
+        body: { name: "sample" },
+      }).valid,
+      false,
+    );
+  }
+});
+
+test("directional annotations follow local references and reject malformed flags", () => {
+  const doc = document();
+  doc.components.schemas.Identifier = { type: "integer", readOnly: true };
+  doc.components.schemas.Item = {
+    type: "object",
+    required: ["id", "name"],
+    properties: {
+      id: { $ref: "#/components/schemas/Identifier" },
+      name: { type: "string" },
+    },
+  };
+  const catalog = buildCatalog(doc);
+  assert.equal(
+    validateRequest(catalog, op(catalog, "PATCH"), {
+      path: { id: 1 },
+      headers: { "X-CSRF": "1" },
+      body: { name: "sample" },
+    }).valid,
+    true,
+  );
+  for (const invalid of [
+    { readOnly: "true" },
+    { writeOnly: 1 },
+    { readOnly: true, writeOnly: true },
+  ]) {
+    doc.components.schemas.Identifier = { type: "integer", ...invalid };
+    const broken = buildCatalog(doc);
+    assert.equal(
+      validateRequest(broken, op(broken, "PATCH"), {
+        path: { id: 1 },
+        headers: { "X-CSRF": "1" },
+        body: { name: "sample" },
+      }).supported,
+      false,
+    );
+  }
+});
+
+test("invalid calendar dates and out-of-range clock fields cannot pass date-time validation", () => {
+  const doc = document();
+  doc.components.schemas.Item = { type: "string", format: "date-time" };
+  const catalog = buildCatalog(doc);
+  const check = (body) =>
+    validateResponse(catalog, op(catalog), {
+      status: 200,
+      contentType: "application/json",
+      body,
+    });
+  for (const timestamp of [
+    "2026-02-31T12:00:00Z",
+    "2026-02-29T12:00:00Z",
+    "2026-04-31T12:00:00+01:00",
+    "2026-01-01T24:00:00Z",
+    "2026-01-01T00:00:00+24:00",
+  ])
+    assert.equal(check(timestamp).valid, false, timestamp);
+  for (const timestamp of [
+    "2024-02-29T12:00:00Z",
+    "2026-04-30T23:59:59.123+02:30",
+    "2026-01-01t00:00:00z",
+  ])
+    assert.equal(check(timestamp).valid, true, timestamp);
+});
+
+test("an absent response body is distinct from JSON null and an empty JSON string", () => {
+  const catalog = buildCatalog(document());
+  const operation = op(catalog, "PATCH");
+  assert.equal(
+    validateResponse(catalog, operation, { status: 204, contentType: "" })
+      .valid,
+    true,
+  );
+  for (const body of [null, "", false, 0, {}])
+    assert.equal(
+      validateResponse(catalog, operation, {
+        status: 204,
+        contentType: "application/json",
+        body,
+      }).valid,
+      false,
+      "Undocumented JSON bytes must not be treated as an absent body",
+    );
+});

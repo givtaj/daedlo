@@ -5,7 +5,9 @@ export interface Observation<F = Record<string, unknown>> {
   facts: F;
 }
 export interface Parameter {
-  type: "text" | "number" | "boolean" | "select";
+  /** Password is a masked string input, cleared after manual submission.
+   * Defaults and canonical recipe values remain public model metadata. */
+  type: "text" | "password" | "number" | "boolean" | "select";
   label: string;
   required?: boolean;
   default?: unknown;

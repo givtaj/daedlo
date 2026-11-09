@@ -70,8 +70,7 @@ components.
 
 | Component in the reviewed lockfiles                                                                                                      | Declared license / notice location                                                     |
 | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Playwright and playwright-core 1.62.1                                                                                                    | Apache-2.0; each installed package has `LICENSE`, `NOTICE` and `ThirdPartyNotices.txt` |
-| Optional fsevents 2.3.2                                                                                                                  | MIT; installed package `LICENSE`                                                       |
+| Playwright and playwright-core 1.65.0                                                                                                    | Apache-2.0; each installed package has `LICENSE`, `NOTICE` and `ThirdPartyNotices.txt` |
 | block-buffer 0.10.4, cfg-if 1.0.5, cpufeatures 0.2.17, crypto-common 0.1.7, digest 0.10.7, itoa 1.0.18, libc 0.2.189                     | MIT OR Apache-2.0                                                                      |
 | proc-macro2 1.0.107, quote 1.0.47, serde / serde_core / serde_derive 1.0.229, serde_json 1.0.151, sha2 0.10.9, syn 3.0.6, typenum 1.20.1 | MIT OR Apache-2.0                                                                      |
 | generic-array 0.14.7, zmij 1.0.23                                                                                                        | MIT                                                                                    |

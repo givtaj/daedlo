@@ -51,6 +51,7 @@ const skillFiles = [
   "LICENSE",
   "references/onboarding.md",
   "references/model-and-flows.md",
+  "references/swagger.md",
   "assets/flow-spec.md",
 ];
 const starterFiles = [
@@ -69,6 +70,17 @@ const starterFiles = [
   "model/src/lib.rs",
   "model/src/main.rs",
   "model/src/bin/starter-invalid-model.rs",
+];
+const swaggerFiles = [
+  "README.md",
+  "session.mjs",
+  "project.mjs",
+  "runtime.mjs",
+  "build-model.mjs",
+  "engine/Cargo.toml",
+  "engine/Cargo.lock",
+  "engine/src/lib.rs",
+  "engine/src/main.rs",
 ];
 const managedFiles = [
   "README.md",
@@ -121,6 +133,14 @@ async function fixture(t) {
     files[`examples/starter/${name}`] = `Synthetic starter ${name}\n`;
   for (const name of managedFiles)
     files[`examples/managed-starter/${name}`] = `Managed reference ${name}\n`;
+  for (const name of swaggerFiles)
+    files[`integrations/swagger/${name}`] = `Portable Swagger ${name}\n`;
+  files["integrations/swagger/roots-acceptance.mjs"] =
+    "PRIVATE_ROOTS_SENTINEL\n";
+  files["integrations/swagger/engine/target/private.bin"] =
+    "PRIVATE_BUILD_SENTINEL\n";
+  files["integrations/swagger/local-profile.json"] =
+    "PRIVATE_PROFILE_SENTINEL\n";
   files["examples/managed-starter/local-private.json"] =
     "PRIVATE_MANAGED_SENTINEL\n";
   files["examples/starter/local-secret.txt"] = "PRIVATE_STARTER_SENTINEL\n";
@@ -165,6 +185,7 @@ test("portable tools have a closed consumer inventory and complete agent referen
     ...documents.map((name) => `docs/${name}.md`),
     ...trustFiles,
     ...starterFiles.map((name) => `examples/starter/${name}`),
+    ...swaggerFiles.map((name) => `integrations/swagger/${name}`),
     ...managedFiles.map((name) => `examples/managed-starter/${name}`),
     ...skillFiles.map((name) => `skills/daedlo/${name}`),
   ].sort();
@@ -350,6 +371,7 @@ test("the exact archive installs offline and runs real consumer commands outside
     "scripts/release/ninja-ui.html",
     "scripts/release/native-session-ui.html",
     ...starterFiles.map((name) => `examples/starter/${name}`),
+    ...swaggerFiles.map((name) => `integrations/swagger/${name}`),
     ...managedFiles.map((name) => `examples/managed-starter/${name}`),
     ...libraries.map((name) => `scripts/release/${name}.mjs`),
     ...documents.map((name) => `docs/${name}.md`),

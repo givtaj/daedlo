@@ -119,10 +119,15 @@ and bounded owned operations instead of excluding requests to force a pass.
 
 Observed with Playwright 1.62.1 and its Chromium on macOS arm64: navigating away
 while a response is held can leave a previous-document request without a
-Playwright terminal event; the keepalive case is retained in acceptance. Detached
-frame fetches can emit terminal events, which the tracker correctly handles after
-detachment. Merely moving listeners to BrowserContext does not prove every
-previous-document request will resolve.
+Playwright terminal event. With Playwright 1.65.0 and Chromium 158.0.8127.18 on
+macOS arm64, the same held keepalive request emitted `requestfailed` on navigation.
+Acceptance independently observes the exact Request identity and requires its
+accounting and settlement to match that evidence in either case. It also verifies
+that the live held request blocks settlement before navigation. Detached frame
+fetches can emit terminal events, which the tracker correctly handles after
+detachment. Deterministic unit checks retain the missing-event case even when the
+current browser supplies a terminal event. Merely moving listeners to
+BrowserContext does not prove every previous-document request will resolve.
 The reference keeps such work unresolved, reports `requests_pending` with safe
 request numbers/methods/types, and never erases it because a document disappeared
 or the server finished. Acceptance verifies this honest refusal. Where the

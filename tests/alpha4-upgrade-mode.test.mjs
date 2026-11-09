@@ -33,6 +33,11 @@ for (const [label, args, pattern] of [
     /Duplicate upgrade acceptance argument/,
   ],
   [
+    "duplicate alpha.9 flag",
+    ["--alpha9-upgrade", "--alpha9-upgrade"],
+    /Duplicate upgrade acceptance argument/,
+  ],
+  [
     "partial production run",
     ["--production-https", "--legacy-only"],
     /Production HTTPS acceptance requires the complete upgrade drill/,
@@ -200,6 +205,40 @@ for (const [label, args, baseline, candidate, pattern] of [
     "0.1.4-alpha.8",
     /Published alpha.7 baseline requires explicit alpha.8 upgrade mode/,
   ],
+  ...[
+    ["local candidate mode", "--local-candidate"],
+    ["alpha.6 mode", "--alpha6-upgrade"],
+    ["alpha.7 mode", "--alpha7-upgrade"],
+    ["alpha.8 mode", "--alpha8-upgrade"],
+    ["legacy-only mode", "--legacy-only"],
+  ].map(([label, flag]) => [
+    `alpha.9 release mixed with ${label}`,
+    ["--alpha9-upgrade", flag],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.9",
+    /Alpha.9 upgrade mode cannot use local-candidate, alpha6-upgrade, alpha7-upgrade, alpha8-upgrade or legacy-only/,
+  ]),
+  [
+    "unreviewed alpha.9 release baseline",
+    ["--alpha9-upgrade"],
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.9",
+    /Alpha.9 upgrade mode requires the published alpha.7 baseline/,
+  ],
+  [
+    "unreviewed alpha.9 release candidate",
+    ["--alpha9-upgrade", "--production-https"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.8",
+    /Alpha.9 upgrade mode requires exactly 0.1.4-alpha.9/,
+  ],
+  [
+    "implicit alpha.9 upgrade policy",
+    [],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.9",
+    /Published alpha.7 baseline requires explicit alpha.8 upgrade mode or alpha.9 upgrade mode/,
+  ],
   [
     "implicit alpha.6 baseline tools policy",
     [],
@@ -293,6 +332,7 @@ for (const [label, args] of [
 for (const [version, baselineVersion] of [
   ["7", "6"],
   ["8", "7"],
+  ["9", "7"],
 ]) {
   test(`alpha.${version} pins immutable alpha.${baselineVersion} and requires a separately verified new tools bootstrap`, async (t) => {
     const root = await fs.mkdtemp(join(tmpdir(), `alpha${version}-pin-test-`));
@@ -384,6 +424,18 @@ for (const [label, args, baseline, candidate] of [
     ["--alpha8-upgrade", "--production-https"],
     "0.1.4-alpha.7",
     "0.1.4-alpha.8",
+  ],
+  [
+    "explicit alpha.9 tools bootstrap",
+    ["--alpha9-upgrade"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.9",
+  ],
+  [
+    "explicit alpha.9 production upgrade",
+    ["--alpha9-upgrade", "--production-https"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.9",
   ],
   [
     "explicit alpha.7 tools bootstrap",

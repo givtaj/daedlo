@@ -1,10 +1,10 @@
-# Install the Daedlo 0.1.4-alpha.8 candidate
+# Install the Daedlo 0.1.4-alpha.9 candidate
 
-Alpha.8 is being prepared; alpha.7 remains the published release. Use the exact
+Alpha.9 is being prepared; alpha.7 remains the published release. Use the exact
 locally verified candidate kit and its receipt for isolated acceptance. Do not
 replace an accepted installation or infer publication from these instructions.
 
-This guide covers the Daedlo 0.1.4-alpha.8 kit. Its `release.json` records exact
+This guide covers the Daedlo 0.1.4-alpha.9 kit. Its `release.json` records exact
 artifact identities and scoped verification. Consult the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 for publication status; a guide alone does not establish public availability or
@@ -47,10 +47,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `daedlo-runtime-0.1.4-alpha.8.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
-| `daedlo-engine-0.1.4-alpha.8.crate` | Rust library source for the customer's application model                                                                |
+| `daedlo-runtime-0.1.4-alpha.9.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
+| `daedlo-engine-0.1.4-alpha.9.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `daedlo-tools-0.1.4-alpha.8.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
+| `daedlo-tools-0.1.4-alpha.9.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -62,7 +62,7 @@ is implied.
 ## Bring one application flow
 
 Use Node.js 22 or later, npm, Rust/Cargo 1.96.0 or later, and the runtime's matching
-Playwright Chromium. This version pins Playwright 1.62.1. Chromium and application
+Playwright Chromium. This candidate pins Playwright 1.65.0. Chromium and application
 dependencies are installed separately; they are not included in the download.
 Docker is needed only when the chosen application fixture requires it.
 
@@ -85,6 +85,24 @@ The default creates an owned headless Chromium with a visible local viewer; use
 `--headed` for a native browser window. Opening the viewer does not sign in or run
 authored application commands. Verify the agreed flow and a relevant failure path,
 inspect the visible browser, and record package identities, evidence and ownership.
+
+## Drive a Swagger API
+
+The tools ship `integrations/swagger/README.md` with an exact-package setup flow.
+It builds the included generic Rust model against the extracted core crate in a
+fresh directory, selects the installed runtime explicitly and launches the
+standalone CLI. Configure the API's docs/schema URLs, permitted operations and
+separate write policy. OpenAPI 3.0/3.1/3.2 JSON and Swagger UI 5 are the supported
+starting point; the compatibility table lists unsupported features explicitly.
+No Roots source or database is needed for this integration. Customer persistence
+checks remain application-specific. Managed Ninja/native Swagger startup is not
+part of this candidate.
+
+Credential-bearing command inputs use the explicit `password` descriptor type.
+The Daedlo viewer masks and clears those fields after submission. Existing
+customer models must opt into this type; ordinary `text` fields retain their
+behavior. Descriptor defaults and recipe literals are public metadata and must
+never hold credentials. Swagger UI may itself show private request/response data.
 
 ## Updates and limits
 

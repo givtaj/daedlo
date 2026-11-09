@@ -8,6 +8,8 @@
 // the status/supervisor fix cannot be delivered by a runtime-only update.
 // --alpha8-upgrade verifies the same separately pinned tools-bootstrap boundary
 // from immutable alpha.7, including the new finalization/ownership runtime.
+// --alpha9-upgrade verifies the same complete tools-bootstrap and recovery drill
+// from immutable published alpha.7 to the exact alpha.9 candidate.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
@@ -35,6 +37,7 @@ for (const arg of args)
       "--alpha6-upgrade",
       "--alpha7-upgrade",
       "--alpha8-upgrade",
+      "--alpha9-upgrade",
     ].includes(arg),
     "Unsupported upgrade acceptance argument",
   );
@@ -49,6 +52,18 @@ const localCandidate = args.includes("--local-candidate");
 const alpha6Upgrade = args.includes("--alpha6-upgrade");
 const alpha7Upgrade = args.includes("--alpha7-upgrade");
 const alpha8Upgrade = args.includes("--alpha8-upgrade");
+const alpha9Upgrade = args.includes("--alpha9-upgrade");
+assert.ok(
+  !(
+    alpha9Upgrade &&
+    (localCandidate ||
+      alpha6Upgrade ||
+      alpha7Upgrade ||
+      alpha8Upgrade ||
+      legacyOnly)
+  ),
+  "Alpha.9 upgrade mode cannot use local-candidate, alpha6-upgrade, alpha7-upgrade, alpha8-upgrade or legacy-only",
+);
 assert.ok(
   !(
     alpha8Upgrade &&
@@ -99,6 +114,12 @@ assert.ok(
 );
 const LEGACY_SHA = baselinePins[baselineVersion];
 const legacyNames = baselineVersion === "0.1.4-alpha.3";
+if (alpha9Upgrade)
+  assert.equal(
+    baselineVersion,
+    "0.1.4-alpha.7",
+    "Alpha.9 upgrade mode requires the published alpha.7 baseline",
+  );
 if (alpha8Upgrade)
   assert.equal(
     baselineVersion,
@@ -110,15 +131,21 @@ assert.ok(
   "Published alpha.6 baseline requires explicit alpha.7 upgrade mode",
 );
 assert.ok(
-  baselineVersion !== "0.1.4-alpha.7" || alpha8Upgrade,
-  "Published alpha.7 baseline requires explicit alpha.8 upgrade mode",
+  baselineVersion !== "0.1.4-alpha.7" || alpha8Upgrade || alpha9Upgrade,
+  "Published alpha.7 baseline requires explicit alpha.8 upgrade mode or alpha.9 upgrade mode",
 );
 const candidateVersion =
   process.env.DAEDLO_UPGRADE_CANDIDATE_VERSION ??
   JSON.parse(
     await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
   ).version;
-if (alpha8Upgrade) {
+if (alpha9Upgrade) {
+  assert.equal(
+    candidateVersion,
+    "0.1.4-alpha.9",
+    "Alpha.9 upgrade mode requires exactly 0.1.4-alpha.9",
+  );
+} else if (alpha8Upgrade) {
   assert.equal(
     candidateVersion,
     "0.1.4-alpha.8",
@@ -207,6 +234,7 @@ const result = {
   alpha6Upgrade,
   alpha7Upgrade,
   alpha8Upgrade,
+  alpha9Upgrade,
   reusePublishedTools,
   toolsPolicy: reusePublishedTools
     ? "Keep exact published alpha.5 tools for baseline, upgrade, restart and rollback"

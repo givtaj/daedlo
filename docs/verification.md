@@ -1,5 +1,59 @@
 # Verification record
 
+## Alpha.9 Swagger release preparation — 2026-11-09
+
+**IN PROGRESS — source checks below passed; exact installed kit, current Roots
+acceptance, hosted CI and public delivery remain separate pending gates.**
+The isolated `codex/swagger-release-alpha9-20261109` branch starts from current
+main `cd049e9` and ports generic Swagger source commit `42da7a6`. The primary
+checkout, frozen held alpha.8 kit and published alpha.7 are preserved. A fresh
+HTTPS read confirms the public catalog still ends at alpha.7, generation 27.
+
+The candidate packages the standalone Swagger helpers and locked native model
+source, requires an explicit installed runtime, and builds against the exact
+extracted core crate without changing either package. Version stamping now binds
+all twelve release-version files. Portable tools inventory excludes customer
+acceptance scripts, local profiles, build outputs and Swagger UI development
+assets. Swagger UI remains a dev-only independent fixture dependency with its
+optional install analytics disabled.
+
+Release review found and fixed one permit race (two requests could cross an
+async observation using one permit), directional readOnly/writeOnly validation,
+impossible date-time normalization and absent-body versus JSON-null ambiguity.
+Each had a genuine failing assertion before its fix. Packaging assertions first
+failed for omitted Swagger files and missing version consistency checks, then
+passed. Explicit password parameter checks first failed in Node/Rust and the real
+browser (text input), then passed after the contract and viewer implementation.
+The viewer masks/clears marked inputs; public descriptor defaults and recipes are
+not a secret store. A native startup regression caught the new validation message
+being dropped by its safe diagnostic allowlist; the corrected exact allowlist
+passes the original real-browser assertion.
+
+| Check | Observed result |
+| --- | --- |
+| Complete runtime Node suite | PASS: 222 tests, no failures/skips on Node 24.22.2 |
+| Generic Swagger catalog/adapter | PASS: 19 focused tests, including single-permit concurrency and schema corrections |
+| Swagger model and real browser | PASS: 18 Rust tests, fmt/Clippy; 20 Chromium tests using Swagger UI 5.34.1 and OpenAPI 3.0.3/3.1.0/3.2.1 |
+| Password contract | PASS: 4 Node, 3 Rust and 1 Chromium presentation check; masked and cleared screenshots inspected |
+| Existing Rust workspace / viewer | PASS: 29 Rust tests (one subprocess-only fixture intentionally ignored); 32 viewer tests |
+| Release version/tools packaging | PASS: 14 tests including twelve-file stamping, rollback, complete isolated portable inventory and no private additions |
+| CI policy | PASS: 11 tests; both Node lanes require Swagger source and exact installed checks |
+| Broad release/alpha suite | 564/565 passed before the native diagnostic fix; failed native browser test passes after that fix; full updated rerun pending |
+| Existing source application flows | PASS: eight notebook groups, starter/request-accounting flow, eight managed-reference groups and nine evidence groups |
+| Public metadata | PASS; no source/runtime paths or credentials added to shared reports |
+| Exact installed alpha.9 / Roots / upgrade / CI | NOT RUN for final frozen candidate yet |
+| Publication | NOT RUN; alpha.7 remains public |
+
+The release source incorporates the scoped reviewed dependency changes from
+[PR #27](https://github.com/givtaj/daedlo/pull/27): Playwright 1.65.0, Node 24.22.2
+and the CI 22.23.4 lane, npm 11.21.2, Wrangler 4.158.0 and the request-accounting
+acceptance adjustment for Chromium terminal events. This is local integration;
+it does not merge that PR or activate a publisher policy. Initial localhost
+EPERM fixture failures were sandbox/setup failures, retained separately from the
+unrestricted successful runs. Current source/installed checks do not imply a
+clean-machine, other-platform, customer-business or production acceptance claim.
+
+
 ## Reusable Swagger source candidate — 2026-11-09
 
 **PASS within the stated source-candidate scope.** Built in the isolated

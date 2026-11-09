@@ -1,23 +1,29 @@
-# Daedlo alpha delivery — 6 November 2026
+# Daedlo alpha delivery — 9 November 2026
 
-Release candidate: **0.1.4-alpha.8**. Status: **preparing; unpublished**.
-Alpha.7 remains the published release and accepted installation. This preparation
-merges the live workspace grid with the already merged finalization/ownership
-changes; it does not select a replacement installation or publish artifacts.
+Release candidate: **0.1.4-alpha.9**. Status: **preparing; unpublished**.
+Alpha.7 remains the published release. Alpha.8 publication was held for unmasked
+manual Access inputs; its frozen artifacts remain historical candidates.
 
-The controlled application, authored flow and current/previous results share a
-bounded desktop layout. Large state maps scroll independently; narrow layouts
-keep the image near the header. Descriptor-owned run identity and canonical
-pending/stalled effect-evidence and cleanup states remain distinct from final
-success. Disconnection marks retained images and never replays an action.
+Alpha.9 combines the workspace grid/finalization behavior with reusable Swagger
+API driving, portable locked model sources and an exact-runtime standalone
+launcher. It supports a bounded OpenAPI 3.0/3.1/3.2 JSON subset through Swagger UI
+5; see the integration's compatibility table. Project configuration supplies
+URLs, allowed operations and separate write authorization. Customer business
+outcomes and persistence proof remain project-owned.
 
-The assisted macOS arm64/Codex scope and existing model/protocol contracts remain.
-The exact runtime, crate, rebuilt customer model and adapter must pass the same
-isolated Roots save, stale refusal, keyboard flow and reload checks before any
-replacement is considered. Preserve alpha.7 files, launcher, live sessions and
-recovery evidence throughout. Actual identities and results belong in
-[verification](verification.md); public HTTPS installation and production
-promotion remain separate gates.
+The explicit password parameter contract masks credential-bearing manual inputs
+and clears them after submission. Existing models must mark sensitive fields;
+text fields remain text. Descriptor defaults and recipe values remain public
+metadata. Older runtimes reject the new type rather than displaying it as text.
+The candidate incorporates the reviewed Playwright 1.65.0, patched Node/npm and
+deployment-tooling updates from the dependency security work.
+
+The assisted macOS arm64 scope remains. Swagger uses the standalone CLI;
+managed Ninja/native Swagger integration is not included. Existing managed flows
+require their own regression, upgrade and rollback checks. Source checks,
+exact installed artifacts, real Roots acceptance, hosted CI and public delivery
+are separate gates recorded in [verification](verification.md). Preserve the
+published alpha.7 kit, retained installations and everyday Roots dependencies.
 
 ## Historical alpha.7 delivery — 5 November 2026
 

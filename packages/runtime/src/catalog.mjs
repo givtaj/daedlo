@@ -10,15 +10,17 @@ export function validateParams(command, input = {}) {
     if (!Object.hasOwn(fields, key))
       reject("invalid_parameters", `Unknown parameter: ${key}.`);
   for (const [name, field] of Object.entries(fields)) {
+    const type = field.type;
+    if (!["text", "password", "number", "boolean", "select"].includes(type))
+      reject("invalid_parameters", "Unsupported parameter type.");
     const value = Object.hasOwn(input, name) ? input[name] : field.default;
     if (value === undefined) {
       if (field.required)
         reject("invalid_parameters", `Missing parameter: ${name}.`);
       continue;
     }
-    const type = field.type;
     if (
-      type === "text" &&
+      (type === "text" || type === "password") &&
       (typeof value !== "string" ||
         (field.maxLength !== undefined && [...value].length > field.maxLength))
     )
@@ -95,7 +97,7 @@ export function validateDescriptor(d, adapter) {
         `Missing command parameters or handler: ${c.id}.`,
       );
     for (const p of Object.values(c.params))
-      if (!["text", "number", "boolean", "select"].includes(p.type))
+      if (!["text", "password", "number", "boolean", "select"].includes(p.type))
         reject("invalid_descriptor", "Unsupported parameter type.");
   }
   for (const r of d.recipes) {

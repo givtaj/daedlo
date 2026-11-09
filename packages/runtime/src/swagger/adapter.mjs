@@ -303,6 +303,14 @@ export async function createSwaggerAdapter({
       }
       return route.abort("blockedbyclient");
     }
+    // Authentication and worker observation yield to other intercepted
+    // requests. Recheck the same permit after those awaits, then consume it
+    // synchronously so only one matching request can reach route.fetch.
+    if (arm !== permit || permit.consumed || permit.mismatch) {
+      permit.mismatch = true;
+      if (!permit.consumed) permit.finish();
+      return route.abort("blockedbyclient");
+    }
     permit.consumed = true;
     requestCount++;
     response = null;
@@ -335,7 +343,7 @@ export async function createSwaggerAdapter({
           return;
         }
         const bytes = await received.body();
-        let body = null,
+        let body,
           parsed = true;
         if (bytes.length > 1024 * 1024) parsed = false;
         else if (bytes.length) {

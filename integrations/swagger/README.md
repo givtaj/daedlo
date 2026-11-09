@@ -1,25 +1,28 @@
-# Swagger API driving — source candidate
+# Swagger API driving
 
 This reusable integration teaches Daedlo to operate a Swagger UI API explorer.
 Roots is one customer acceptance fixture. The catalog, browser adapter and Rust
 model contain no Roots route names, accounts, database assumptions or business
 outcomes. The independent browser fixture uses different operations and schemas.
-This source candidate is not in the published alpha.7 kit and is not a release.
+The alpha.9 candidate ships this standalone integration in its portable tools.
+Its release receipt records publication and exact installed verification; source
+checks alone do not establish a released kit. Older kits do not gain these files
+from a runtime-only update.
 
 ## Compatibility
 
-| Surface | Current boundary |
-| --- | --- |
-| OpenAPI documents | JSON 3.0.x, 3.1.x and 3.2.x; unknown versions rejected |
-| Latest standard | OpenAPI 3.2.1; standard operations with the supported request/schema subset |
-| Swagger UI | UI 5 DOM adapter; independent tests pin 5.34.1, plus real Roots embedded UI |
-| HTTP operations | Classic verbs can be discovered; execution requires explicit project policy; non-GET/HEAD also needs explicit write permission |
-| New 3.2 methods | QUERY and additionalOperations are discovered and marked unavailable for execution |
-| Inputs | Scalar path/query/header values, JSON bodies, local schema references |
-| Response evidence | Exact/range/default status, JSON content type and supported schema constraints; fresh matching request required |
-| Servers | One non-templated same-origin server, inherited at root/path/operation level; base paths supported |
-| Authentication | Owned/attached browser cookies and existing Swagger authorization; private inputs stay in the controlled browser and adapter memory |
-| Unsupported | Swagger/OpenAPI 2.0, YAML loading, external/cyclic refs, multiple/templated/cross-origin servers, complex parameter serialization, multipart/files, OAuth orchestration, service-worker-controlled Swagger, regex assertions, streaming and full JSON Schema conformance |
+| Surface           | Current boundary                                                                                                                                                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OpenAPI documents | JSON 3.0.x, 3.1.x and 3.2.x; unknown versions rejected                                                                                                                                                                                                                   |
+| Latest standard   | OpenAPI 3.2.1; standard operations with the supported request/schema subset                                                                                                                                                                                              |
+| Swagger UI        | UI 5 DOM adapter; independent tests pin 5.34.1, plus real Roots embedded UI                                                                                                                                                                                              |
+| HTTP operations   | Classic verbs can be discovered; execution requires explicit project policy; non-GET/HEAD also needs explicit write permission                                                                                                                                           |
+| New 3.2 methods   | QUERY and additionalOperations are discovered and marked unavailable for execution                                                                                                                                                                                       |
+| Inputs            | Scalar path/query/header values, JSON bodies, local schema references                                                                                                                                                                                                    |
+| Response evidence | Exact/range/default status, JSON content type and supported schema constraints; fresh matching request required                                                                                                                                                          |
+| Servers           | One non-templated same-origin server, inherited at root/path/operation level; base paths supported                                                                                                                                                                       |
+| Authentication    | Owned/attached browser cookies and existing Swagger authorization; private inputs stay in the controlled browser and adapter memory                                                                                                                                      |
+| Unsupported       | Swagger/OpenAPI 2.0, YAML loading, external/cyclic refs, multiple/templated/cross-origin servers, complex parameter serialization, multipart/files, OAuth orchestration, service-worker-controlled Swagger, regex assertions, streaming and full JSON Schema conformance |
 
 OpenAPI 3.2.1 is the latest official specification as checked on 2026-11-09.
 Swagger UI's 5.34.1 compatibility matrix lists OpenAPI 3.2.0 support; the
@@ -33,36 +36,77 @@ schema assertions and request encodings fail closed, with static capability
 reasons. A successful HTTP/schema check says that the response matched the
 transport contract. It does not establish the business outcome or persistence.
 
-## Reuse with another project
+## Start from the verified installed kit
 
-From this source worktree, install the locked dependencies and build the generic
-engine once (the Swagger UI fixture is a pinned development dependency; its transitive install analytics are disabled by the workspace configuration):
+Use the matching runtime, core crate and tools from one verified release. First
+follow the kit's `START_HERE.md` and [release verification guide](../../docs/releases.md).
+The commands below use alpha.9 filenames; replace the three absolute paths with
+your verified tools installation, extracted bundle and a **new** private QA
+folder. They do not change the application's normal dependencies.
 
 ```sh
-npm ci --ignore-scripts
-cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml
+tools_root=/absolute/tools/node_modules/@daedlo/release-tools
+bundle_root=/absolute/verified/bundle
+qa_root=/absolute/project/.daedlo-local/swagger-alpha9
+mkdir "$qa_root"
+npm install --prefix "$qa_root" --workspaces=false --ignore-scripts --no-audit --no-fund \
+  "$bundle_root/daedlo-runtime-0.1.4-alpha.9.tgz"
+node "$qa_root/node_modules/playwright/cli.js" install chromium
+mkdir "$qa_root/vendor"
+tar -xzf "$bundle_root/daedlo-engine-0.1.4-alpha.9.crate" -C "$qa_root/vendor"
+node "$tools_root/integrations/swagger/build-model.mjs" \
+  --crate "$qa_root/vendor/daedlo-engine-0.1.4-alpha.9" \
+  --output "$qa_root/swagger-build"
 ```
 
-Create a local profile outside Git. Paths to the engine resolve relative to the
-profile. Supply the real docs and schema URLs and exact method/path operation
-keys from that project's schema:
+The builder copies only the shipped model sources and lockfile into the fresh
+output, checks the core's exact version, and uses `cargo build --locked` with a
+separate target directory. It preserves the tools and extracted crate. Add
+`--offline` only when the exact Cargo dependencies are already cached. Node 22+
+and Rust 1.96+ are required; use the selected release's pinned toolchain and
+matching Playwright Chromium. Chromium and Cargo dependency downloads are
+separate from the Daedlo archives.
+
+Create `$qa_root/profile.json` with the real Swagger docs/schema URLs and exact
+method/path operation keys from that application's schema. This sample assumes
+an existing `GET /health` operation. `runtimeRoot` and `enginePath` resolve relative
+to the profile file; installed tools require `runtimeRoot` and reject a different
+runtime version. The schema must be available without a separately supplied
+schema-fetch credential. Browser authentication remains project-owned.
 
 ```json
 {
   "docsUrl": "http://127.0.0.1:8080/docs/",
   "schemaUrl": "http://127.0.0.1:8080/openapi.json",
-  "enginePath": "/absolute/path/to/swagger-engine",
+  "runtimeRoot": "./node_modules/@daedlo/runtime",
+  "enginePath": "./swagger-build/target/debug/swagger-engine",
   "allowOperations": ["GET /health"],
   "allowWrites": []
 }
 ```
 
-Launch with the existing CLI and viewer:
+Launch the exact installed CLI and shipped project:
 
 ```sh
-DAEDLO_SWAGGER_PROFILE=/absolute/path/to/profile.json \
-  node packages/runtime/src/cli.mjs --project integrations/swagger/project.mjs
+DAEDLO_SWAGGER_PROFILE="$qa_root/profile.json" \
+  node "$qa_root/node_modules/@daedlo/runtime/src/cli.mjs" \
+  --project "$tools_root/integrations/swagger/project.mjs"
 ```
+
+Use `--headed` when signing in manually before preparing requests. Open the
+printed loopback viewer URL; startup does not execute an API operation. This
+standalone route currently uses a POSIX launcher. Windows and native managed
+Swagger onboarding/upgrades are unsupported; existing managed application flows
+keep their separate contract. Do not register this standalone profile as a
+managed integration without a reviewed managed launcher and acceptance.
+
+For development from a reviewed source checkout, `npm ci --ignore-scripts` and
+`cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml`
+build the source candidate. A source profile may omit `runtimeRoot`; this only
+works in the Daedlo workspace layout. Launch with
+`node packages/runtime/src/cli.mjs --project integrations/swagger/project.mjs`
+and the same `DAEDLO_SWAGGER_PROFILE` environment variable. Installed helpers never
+fall back to that checkout route.
 
 The CLI creates an isolated browser. The supplied application remains attached;
 closing Daedlo preserves its API and database. The session owns its route guard,
@@ -85,7 +129,9 @@ its own isolated authentication/fixture setup, and provide an optional trusted
 only after independent evidence for the exact operation. An unavailable or
 throwing verifier remains uncertain. Mutation HTTP status alone never produces
 `saved`. Project-specific readback belongs in that project, not in the adapter.
-The source runtime also exports the reusable helpers under `@daedlo/runtime/swagger`.
+Pass the exact `runtimeRoot` to a custom session helper too. The selected runtime
+exports its lower-level catalog and adapter under `@daedlo/runtime/swagger`; the
+helper resolves both public package exports from that same package directory.
 
 ## Model and evidence
 
@@ -124,12 +170,20 @@ bodies, authorization, cookies, private evidence or hashes of private values.
 
 ## Validation
 
+Source checks (require the repository):
+
 ```sh
 npm run test:swagger
 ```
 
 The suite uses a pinned real Swagger UI with an independent local API fixture,
-plus deterministic catalog and Rust model checks. It does not need Roots.
+plus deterministic catalog and Rust model checks. It does not need Roots. The
+release gate `tests/swagger-installed-acceptance.mjs` separately installs verified
+archives outside a checkout, rebuilds the shipped model against the exact crate,
+launches the installed CLI/project, and checks reads, write policy, freshness,
+authentication, persistence evidence and cleanup. Its receipt binds the model
+binary and package inventories. The Swagger UI fixture remains a development
+dependency; customer applications supply their own Swagger UI.
 
 For actual Roots acceptance, use the separately supplied **disposable** native
 API fixture and synthetic accounts. This script performs writes:
@@ -152,5 +206,5 @@ Add a capability only with a specification example, independent fixture,
 meaningful failing assertion, implementation and browser verification. Priorities
 are additional authentication flows, selected external servers, richer input
 serialization, and newer 3.2 execution/streaming features. Prefer explicit
-capability reporting over a blanket “supports Swagger” claim. Installed packaging,
-release checks and promotion remain separate work.
+capability reporting over a blanket “supports Swagger” claim. Package verification,
+customer acceptance and promotion remain separate evidence.

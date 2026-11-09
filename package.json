@@ -25,7 +25,7 @@
     "demo": "node examples/roots/serve.mjs",
     "check": "node scripts/check.mjs && npm run types && npm run format:check",
     "types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target esnext --types node packages/runtime/src/index.d.ts packages/runtime/src/swagger/index.d.ts",
-    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook examples/starter examples/managed-starter tests/managed-starter-*.mjs tests/evidence-*.mjs tests/starter*.mjs tests/alpha4-*.mjs tests/fixtures/alpha4-upgrade tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/ci-select.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml",
+    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook examples/starter examples/managed-starter tests/managed-starter-*.mjs tests/evidence-*.mjs tests/starter*.mjs tests/alpha4-*.mjs tests/fixtures/alpha4-upgrade tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/ci-select.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml integrations/swagger/*.mjs tests/swagger-*.mjs tests/fixtures/swagger-acceptance.mjs",
     "demo:notebook": "node packages/runtime/src/cli.mjs --project examples/notebook/project.mjs",
     "roots:prepare": "node examples/roots/prepare-live.mjs",
     "roots:live": "node examples/roots/launch-live.mjs",
@@ -33,7 +33,7 @@
     "roots:feature:prepare": "node integrations/roots/prepare-feature.mjs",
     "roots:feature:stage": "node integrations/roots/stage-feature.mjs",
     "test:roots-feature": "node integrations/roots/feature-acceptance.mjs",
-    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs packages/runtime/tests/viewer-frontend-browser.mjs packages/runtime/tests/viewer-recipe-paths-browser.mjs packages/runtime/tests/viewer-grid-browser.mjs",
+    "test:viewer": "node --test packages/runtime/tests/viewer-presentation-browser.mjs packages/runtime/tests/viewer-frontend-browser.mjs packages/runtime/tests/viewer-recipe-paths-browser.mjs packages/runtime/tests/viewer-grid-browser.mjs packages/runtime/tests/sensitive-parameters-browser.mjs",
     "test:starter": "node tests/starter-acceptance.mjs",
     "test:starter:unit": "node --test tests/starter-accounting.test.mjs tests/starter-installed-inventory.test.mjs",
     "test:managed-starter": "node tests/managed-starter-acceptance.mjs",
@@ -48,5 +48,6 @@
   },
   "scarfSettings": {
     "enabled": false
-  }
+  },
+  "packageManager": "npm@11.21.2"
 }
