@@ -1,9 +1,72 @@
 # Verification record
 
-## Alpha.9 corrected immutable release candidate — 2026-11-09
+## Alpha.9 production release — 2026-11-09
+
+**PASS — exact GitHub prerelease, production publication, actual HTTPS installation
+and upgrade/rollback.** [Get started](https://daedlo.com/install.html) with the
+verified alpha.9 kit. The reusable [Swagger integration](../integrations/swagger/README.md)
+ships a documented subset of OpenAPI 3.0/3.1/3.2 JSON and Swagger UI 5 support.
+Roots is one acceptance fixture; customer routes and business outcomes remain
+outside the generic core.
+
+The [GitHub prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.9)
+was published at 19:20:42 UTC. Tag `v0.1.4-alpha.9` points directly to frozen source
+`30d2a985964011c08d80db2e83a3716a2c151345`; all three attached and public HTTPS files
+match the immutable inventory below. Repository visibility remains private.
+
+[Source PR #31](https://github.com/givtaj/daedlo/pull/31) merged as `796910d7` and
+its [main CI](https://github.com/givtaj/daedlo/actions/runs/42677744268) passed all
+three jobs. [Publisher PR #32](https://github.com/givtaj/daedlo/pull/32) merged as
+`df6ae2ffed821d7fae84ff98a9c38b63ffb5ee81`, with the exact reviewed publisher tree.
+Its [main CI](https://github.com/givtaj/daedlo/actions/runs/42682500449) also passed
+all three jobs, including full Node 22 and Node 24 source/browser/installed gates,
+on the first attempt.
+
+After explicit release-owner approval,
+[production promotion run 42685561447](https://github.com/givtaj/daedlo/actions/runs/42685561447)
+passed every step on that publisher commit. The existing Worker `daedlo` activated
+version `e7a8c15e-8387-4f2e-90ae-1725d7d6a966` at 100% traffic, verified at
+19:41:21 UTC. No existing trust key or historical release was replaced.
+
+The independently authenticated live feed has generation 28, seven entries with
+all six prior entries retained exactly, and expiry `2026-11-16T19:41:08.636Z`.
+Its byte SHA-256 is `64672f5b142a5fea8280030a3571d10a25228f770fd171d2a1b0bf56d05561b0`;
+the signed checkpoint digest is `2dea6b0ee7f099630ce326e6741d52953a04e306ae8bb0dc7d7a51d3a89f3f02`.
+The temporary signing key was removed. The active publisher inventory and public
+feed now agree on alpha.9; ordinary renewal no longer has the prior inventory mismatch.
+
+Actual public HTTPS verification passed all 21 historical and three alpha.9
+file pins, 75 website tests, eight pages/eight archives, and 18 real-browser
+checks. All 15 screenshots were inspected. The unchanged installer copied from
+the live browser DOM matched the exact ZIP and installed the 79-file alpha.9
+tools in a fresh nested workspace while preserving ancestor manifests and lock.
+The feed was rechecked unchanged at the end; the browser closed cleanly.
+The sanitized public-delivery receipt SHA-256 is
+`2689528ddfab00b28cfa7a4c5d525c51d3210d1d68022a800ce632dd4c8b8f13`.
+
+The separate production HTTPS upgrade drill passed all nine checkpoints using
+the actual downloaded alpha.9 files and pinned production trust: accepted alpha.7
+bootstrap, discovery, new-tools bootstrap, unchanged-lock refusal, explicit
+QA-only package/lock migration, candidate save, restart, and complete retained
+alpha.7 rollback with data preserved. All five owned resources closed. An
+automatic dependency migration is not supported: the Playwright change requires
+reviewed package/lock updates. The normal Roots checkout, dependencies and
+services were not changed.
+
+Scope remains macOS arm64 with the existing pinned host toolchains and Chromium;
+clean-OS installation and customer acceptance are separate. The recovery drill
+used the independent notebook fixture, not customer data. Driver/manager restart
+was exercised while the separate notebook application
+kept running; application-process restart and persistent-database recovery were
+not exercised by that drill. Shipped `release.json`
+remains the immutable prepublication receipt; this record supplies the later
+publication and live-delivery evidence without replacing the accepted kit.
+
+## Historical alpha.9 corrected release preflight — 2026-11-09
 
 **PASS — corrected source, exact installed kit, isolated application and recovery
-gates. Production publication is NOT RUN.** Frozen source is
+gates. Production publication was NOT RUN at this checkpoint; completion is
+recorded above.** Frozen source is
 `30d2a985964011c08d80db2e83a3716a2c151345`.
 [Source PR #31](https://github.com/givtaj/daedlo/pull/31) merged as
 `796910d7f407440e078381706f127d1886973900`; [source CI 42675384206](https://github.com/givtaj/daedlo/actions/runs/42675384206)
