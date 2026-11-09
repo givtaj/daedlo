@@ -78,7 +78,7 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
   },
   alpha9Promotion: {
     version: ALPHA9,
-    sourceCommit: "08874503aefeed81ce52f90a2e6644317293a385",
+    sourceCommit: "30d2a985964011c08d80db2e83a3716a2c151345",
   },
   releaseContracts: {
     "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 },
@@ -90,19 +90,19 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
   assets: {
     "0.1.4-alpha.9": {
       "daedlo-0.1.4-alpha.9.zip": {
-        bytes: 358045,
+        bytes: 358374,
         sha256:
-          "33b5b83d6f0ccaeec817316b0a64b82cbd67bfc83d8f6c8f1f32f31deb6c0346",
+          "81b252cc4853278360e893713c778676b492df5d60afe4f19d7880484327f4b2",
       },
       "release.json": {
-        bytes: 11185,
+        bytes: 10880,
         sha256:
-          "e25abe3fb383e5783fb1f0568fe7500f86b2d488e984c93faa81aa7c0e06a543",
+          "4d85aeafd0699ccd8a142b4e7ca4546763f7c0423476b13806d448fb4ea1a1a2",
       },
       SHA256SUMS: {
         bytes: 91,
         sha256:
-          "647a9d93f93913361c8604ff42f816c4b196b386c79274b5022131f118febb57",
+          "e44b46953df301aa102655e8f14ee7d89e7cd9a17e8b2603c2589ddab7fa8631",
       },
     },
     "0.1.4-alpha.7": {

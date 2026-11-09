@@ -81,7 +81,7 @@ an already running adapter or bypasses unknown draft/pending-operation guards.
 ## Alpha.9 coordinated promotion
 
 The prepared alpha.9 policy pins source
-`08874503aefeed81ce52f90a2e6644317293a385` and the three immutable files in the
+`30d2a985964011c08d80db2e83a3716a2c151345` and the three immutable files in the
 verification record. Alpha.8 remains held and is not a required predecessor.
 Alpha.9 requires the complete retained alpha.7 history and the same authenticated
 high-water checkpoint and signing identity.
