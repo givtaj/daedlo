@@ -58,6 +58,14 @@ unrestricted successful runs. Current source/installed checks do not imply a
 clean-machine, other-platform, customer-business or production acceptance claim.
 
 
+A later publication audit caught outdated browser-pin and skill-version text in
+shipped onboarding guides. Two new genuine failing guidance assertions now pass:
+current guides match Playwright 1.65.0 and route Swagger to the shipped standalone
+model instead of custom managed onboarding. This documentation-only correction
+requires a new tools/kit identity; runtime/core and integration executable bytes
+are unchanged. Carry forward earlier behavior evidence only after exact-byte
+comparison, and verify the new installed inventory and actual installer flow.
+
 The preliminary frozen kit is retained under source identity `91b9f9a0be7081bd6ff4c161419a607a78cf50ef`.
 Its ZIP SHA-256 is `67ed141bf9b563d4c511733313f359710b40b8881e0de60ccaa69c277a12a49e`.
 It is not the final promotion artifact: later acceptance cleanup and assisted

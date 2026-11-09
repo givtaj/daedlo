@@ -57,7 +57,26 @@ one. Prove recovery of its retained legacy slot before proposing activation.
    permissions before browser actions. A notebook demonstration is not customer
    acceptance.
 
-## Install and wire the integration
+## Swagger API path
+
+When the requested flow uses Swagger UI, read the installed
+`integrations/swagger/README.md` and `skills/{{SKILL_NAME}}/references/swagger.md`.
+Reuse the shipped generic model and adapter through the standalone CLI. Build
+against the exact extracted crate and select the installed runtime explicitly;
+configure the application's schema/docs URLs, operation permissions and separate
+write policy. Follow that complete setup flow instead of authoring a new customer
+model or performing the custom wiring below. Managed Swagger startup is not included.
+Verify the agreed API operation, relevant refusal, independent effect evidence and
+cleanup. Keep request credentials in private inputs; descriptor defaults and
+recipe literals are public metadata. The request input is masked, while Swagger
+UI itself may visibly display private payloads.
+
+For an existing alpha.7 managed application, review the QA-only dependency
+manifest/lock migration in the installed `docs/ninja-update.md`. Preserve its
+configuration, trust, store, accepted slot and browser for rollback. This does not
+turn a standalone Swagger profile into a managed integration.
+
+## Install and wire a custom application integration
 
 Use a scoped integration such as `qa/daedlo` with its own private ESM package,
 lockfile, Rust engine, adapter and project module. Preserve the application's
@@ -153,7 +172,7 @@ commands, assertions, evidence locations and remaining limits. Complete onboardi
 requires the agreed flow, negative case, repeat run and cleanup to be verified;
 report a concrete blocker without labelling incomplete onboarding successful.
 
-For later versions, read the installed `docs/ninja-update.md`. Alpha.3 includes
+For later versions of a custom managed application, read the installed `docs/ninja-update.md`. Alpha.3 includes
 production preview-feed metadata and a pinned public key in `docs/update-trust`.
 Prepare the reviewed managed registration and disposable acceptance/health hooks
 without changing accepted model/adapter source. Verify a complete candidate before

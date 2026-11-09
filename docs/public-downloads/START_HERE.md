@@ -17,7 +17,7 @@ brand operated under its owner's autónomo activity; it is not a separate compan
 ## Before installing
 
 Use existing Node.js 22+ with npm, Rust/Cargo 1.96.0+, and the runtime's pinned
-Playwright 1.62.1 with matching Chromium. Docker is needed only when your
+Playwright 1.65.0 with matching Chromium. Docker is needed only when your
 application's chosen fixture requires it. Linux, Windows, Claude Code onboarding,
 fresh OS/toolchain installation and independent self-service onboarding are
 outside this alpha's acceptance claim. Read the selected version's verification
@@ -98,6 +98,20 @@ Before installing the candidate, use the new tools to recover, launch and health
 check the accepted legacy slot. Then verify the candidate and rollback in an
 isolated application fixture. New tools support both package families; general
 package acceptance does not prove your application's migration or business flow.
+
+## Drive a Swagger API
+
+For Swagger API work, read
+`installed-tools/node_modules/{{TOOLS_NAME}}/integrations/swagger/README.md`.
+The kit includes the generic Rust model, isolated builder and standalone launcher
+for the supported OpenAPI 3.0/3.1/3.2 JSON subset. Use that flow instead of writing
+a customer state model or registering a native manager. Managed Swagger startup is not included. Configure the actual docs/schema URLs and permitted operations;
+application-specific persistence evidence still belongs to the project.
+
+For existing alpha.7 managed integrations, alpha.9 changes Playwright's dependency
+closure. Follow the explicit QA manifest/lock migration in the installed
+`docs/ninja-update.md`; retain the accepted old installation and browser files.
+Do not rewrite everyday application dependencies or bypass the updater's refusal.
 
 ## Connect your application
 

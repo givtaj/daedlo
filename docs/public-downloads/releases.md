@@ -44,7 +44,7 @@ is implied.
 ## Bring one application flow
 
 Use Node.js 22 or later, npm, Rust/Cargo 1.96.0 or later, and the runtime's matching
-Playwright Chromium. This version pins Playwright 1.62.1. Chromium and application
+Playwright Chromium. This version pins Playwright 1.65.0. Chromium and application
 dependencies are installed separately; they are not included in the download.
 Docker is needed only when the chosen application fixture requires it.
 
