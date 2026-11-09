@@ -78,6 +78,40 @@ same configuration, registration, store, publisher trust and high-water checkpoi
 Retain accepted tools/installations for recovery. No tools bootstrap hot-reloads
 an already running adapter or bypasses unknown draft/pending-operation guards.
 
+## Alpha.9 coordinated promotion
+
+The prepared alpha.9 policy pins source
+`08874503aefeed81ce52f90a2e6644317293a385` and the three immutable files in the
+verification record. Alpha.8 remains held and is not a required predecessor.
+Alpha.9 requires the complete retained alpha.7 history and the same authenticated
+high-water checkpoint and signing identity.
+
+Keep this publisher change in a separate inactive draft until publication is
+selected. Adding alpha.9 to the active inventory causes ordinary renewal to
+reject an alpha.7-only feed; it must be integrated in a coordinated promotion
+window. Review the final source and publisher checks, then:
+
+1. Integrate the reviewed source PR without rebuilding the frozen kit.
+2. Publish the exact three-file kit as private-repository prerelease
+   `v0.1.4-alpha.9` targeting the pinned source commit. Verify tag, bytes and hashes.
+3. Integrate the reviewed publisher policy and dispatch the existing renewal
+   workflow with only `promote_alpha9=true`. The historical four selectors remain
+   false. The CLI equivalent is `ninja-promotion.mjs --promote-alpha9` with the
+   existing explicit key, output and authenticated checkpoint paths.
+4. Preserve all prior downloads and six signed entries. The workflow persists a
+   new authenticated checkpoint before upload and verifies the live baseline
+   again before activation. Never substitute the local preview's ephemeral key
+   or bypass a stale/missing checkpoint.
+5. Verify the actual public apex files, signature, active Worker version, fresh
+   installer and the explicit alpha.7 to alpha.9 dependency-migration recovery
+   drill over production HTTPS. Preserve all owned cleanup and rollback evidence.
+
+Alpha.9 changes Playwright's dependency closure. Existing managed applications
+need the reviewed QA-only manifest/lock migration in `docs/ninja-update.md`.
+Swagger itself uses the shipped standalone integration; this promotion does not
+claim native managed Swagger onboarding. Password masking requires the explicit
+password parameter type and does not redact arbitrary application output.
+
 ## Automatic renewal
 
 The reviewed workflow is `.github/workflows/ninja-renew.yml`: daily at **04:23 UTC**

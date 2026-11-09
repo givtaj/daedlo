@@ -119,10 +119,11 @@ do not copy a digest from an unverified download or rebuild an older archive.
 The alpha `release.json` must include its final sanitized `verification` record.
 When CI and exact-package acceptance complete, freeze that metadata separately
 from the unchanged ZIP, then stage into a new output directory. A local preview
-may use a freshly generated test signing key through the staging API
-`updateTrust` seam; label it test-only and keep it out of the public asset tree.
-Production trust and signed checkpoints remain unchanged. Never deploy a
-preview signed with the test key.
+may use a freshly generated test signing key with an explicit
+`expectedPublicKeySha256` staging option and `updateTrust` for local acceptance.
+Keep the private test key in memory and label the preview test-only. Production
+trust and signed checkpoints remain unchanged. Never deploy the test public key
+or a catalog signed with it.
 Packaging-only metadata cannot satisfy the website release assertions. Both the
 archive and this metadata are release inputs; rebuilding a new archive from a
 source checkout does not reproduce the frozen published bytes.

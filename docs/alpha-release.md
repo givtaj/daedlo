@@ -1,6 +1,7 @@
 # Daedlo alpha delivery — 9 November 2026
 
-Release candidate: **0.1.4-alpha.9**. Status: **preparing; unpublished**.
+Release candidate: **0.1.4-alpha.9**. Status: **verified candidate; unpublished**.
+Frozen source `08874503` passed source CI and exact installed acceptance.
 Alpha.7 remains the published release. Alpha.8 publication was held for unmasked
 manual Access inputs; its frozen artifacts remain historical candidates.
 

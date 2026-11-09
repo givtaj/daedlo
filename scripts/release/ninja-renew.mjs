@@ -95,9 +95,9 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
           "33b5b83d6f0ccaeec817316b0a64b82cbd67bfc83d8f6c8f1f32f31deb6c0346",
       },
       "release.json": {
-        bytes: 4330,
+        bytes: 11185,
         sha256:
-          "2cd77e0c72f9cb25d8dbc9cf8ba01264f2f2811be59f1e32b7a2675c01e3ae2d",
+          "e25abe3fb383e5783fb1f0568fe7500f86b2d488e984c93faa81aa7c0e06a543",
       },
       SHA256SUMS: {
         bytes: 91,
