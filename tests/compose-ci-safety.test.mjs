@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 import {
   DEFAULT_MIN_FREE_GIB,
   assertComposeDiskSpace,
@@ -21,8 +22,8 @@ const inspected = (identity, extra = {}) => ({
   RepoTags: [identity.tag],
   Config: {
     Labels: {
-      "com.docker.compose.project": project,
-      "com.docker.compose.service": identity.service,
+      "io.daedlo.compose.project": project,
+      "io.daedlo.compose.service": identity.service,
     },
   },
   ...extra,
@@ -301,6 +302,61 @@ function imageFixture({
   };
 }
 
+test("fixture explicitly labels both built images with the selected project and service", async () => {
+  const compose = await readFile(
+    new URL("../container/compose.notebook.yaml", import.meta.url),
+    "utf8",
+  );
+  const builds = new Map(
+    [
+      ...compose.matchAll(/^  ([a-z-]+):\n    build:\n((?: {6}[^\n]*\n)+)/gm),
+    ].map(([, service, build]) => [service, build]),
+  );
+  assert.deepEqual([...builds.keys()].sort(), [...services].sort());
+  for (const service of services) {
+    const labels = builds
+      .get(service)
+      .match(/^      labels:\n((?: {8}[^\n]*\n)+)/m)?.[1];
+    assert.ok(labels, `${service} must declare image build labels explicitly`);
+    assert.match(
+      labels,
+      /^        io\.daedlo\.compose\.project: \$\{COMPOSE_PROJECT_NAME:\?[^}\n]+\}$/m,
+      "ownership must use Compose's selected project, failing if unavailable",
+    );
+    assert.match(
+      labels,
+      new RegExp(`^        io\\.daedlo\\.compose\\.service: ${service}$`, "m"),
+    );
+  }
+});
+
+test("cleanup cannot trust missing or implicit Compose labels as owned image proof", async () => {
+  for (const labels of [
+    () => null,
+    () => ({}),
+    () => ({ "io.daedlo.compose.project": project }),
+    (identity) => ({ "io.daedlo.compose.service": identity.service }),
+    (identity) => ({
+      "com.docker.compose.project": project,
+      "com.docker.compose.service": identity.service,
+    }),
+  ]) {
+    const fixture = imageFixture({
+      inspect: (identity) =>
+        inspected(identity, { Config: { Labels: labels(identity) } }),
+    });
+    await assert.rejects(
+      captureComposeImages({ project, run: fixture.run }),
+      /ownership could not be verified/,
+    );
+    await assert.rejects(
+      removeComposeImages({ project, images: identities, run: fixture.run }),
+      /ownership could not be verified/,
+    );
+    assert.equal(fixture.removals().length, 0);
+  }
+});
+
 test("freshness rejects an existing exact prospective tag, not a similarly named run", async () => {
   const rows = [
     { Repository: "other-run-daedlo", Tag: "latest" },
@@ -336,7 +392,7 @@ test("capture requires the exact tag and Compose project/service ownership", asy
       Config: {
         Labels: {
           ...row.Config.Labels,
-          "com.docker.compose.project": "foreign",
+          "io.daedlo.compose.project": "foreign",
         },
       },
     }),
@@ -345,7 +401,7 @@ test("capture requires the exact tag and Compose project/service ownership", asy
       Config: {
         Labels: {
           ...row.Config.Labels,
-          "com.docker.compose.service": "foreign",
+          "io.daedlo.compose.service": "foreign",
         },
       },
     }),
