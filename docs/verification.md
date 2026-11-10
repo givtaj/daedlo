@@ -46,8 +46,25 @@ deployment-verifier fixture that still expected 30 served assets. The three new
 demo assets correctly increased that count to 33. The exact assertion reproduced
 locally before correction. The corrected fixture additionally checks source-byte
 identity and rejects same-length tampering for each new asset; all 101 affected
-renewal and promotion tests pass locally. Final combined alpha.10 site checks and
-production publication remain pending at this checkpoint.
+renewal and promotion tests pass locally.
+
+**Final alpha.10 website candidate: LOCAL PASS; website publication pending.**
+Reconciled with merged publisher `a581aac`. The three public alpha.10 files match
+all independent publisher pins and the frozen inputs exactly. Production catalog
+generation 29 verifies under the unchanged pinned public key. The final staged
+website passes all 87 website tests and static acceptance for nine pages, nine
+release archives and 53 public entries. Both Chromium journeys pass all 14 checks
+each, including exact alpha.10 clipboard/installer content and desktop/narrow
+visitor navigation. Actual final homepage and installation captures were inspected;
+owned browsers and loopback servers closed. Source syntax/types/format and public
+metadata checks pass. Independent copy, provenance and verifier-delta reviews
+found no blocking issue. The recording is still explicitly an alpha.9 candidate;
+the alpha.10 public installer is not presented as the kit used in that recording.
+
+[Website PR #38](https://github.com/givtaj/daedlo/pull/38) targets main. Its final
+required hosted checks, protected merge, website publication and production
+readback are separate pending gates. Alpha.10 package publication and customer
+upgrade verification remain owned by the release record.
 
 ## Alpha.10 frozen package and publication preparation — 2026-11-10
 

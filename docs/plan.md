@@ -6,7 +6,7 @@
 - [x] R1: add public source/contribution paths and generic onboarding, preserving the main Codex entrypoint.
 - [x] R2: add released-capability highlights and a clearly separate development roadmap.
 - [x] R3: feature inspected Roots recording evidence with candidate provenance; archive the original demo HTML unchanged.
-- [ ] R4: reconcile the final alpha.10 publisher, review the combined diff and verify exact staged assets and browser presentation.
+- [x] R4: reconcile the final alpha.10 publisher, review the combined diff and verify exact staged assets and browser presentation.
 - [ ] R5: pass protected integration, publish through the existing workflow and verify the production site and retained download/feed identities.
 
 R1–R3 have [local verification](verification.md#website-public-launch-update--2026-11-10).
