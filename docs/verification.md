@@ -33,7 +33,30 @@ to the original model in the same store. These use independent synthetic fixture
 
 The full release/alpha contract run passed 722 tests; its one opt-in exact-bundle
 migration test is exercised separately, with the source-tools run described above.
-Exact candidate-package verification is **NOT RUN at this source checkpoint**.
+**Exact installed-package verification PASS** from clean source
+`84dcf651b93d276ed7f695216ace3eccdddf313f`, using Node 24.22.2, Rust 1.96.0 and
+Chromium 158.0.8127.18 on macOS arm64. The fresh installed consumer passed 147
+checks in 17 extended groups, eight browser groups, frontend/recipe viewers and
+all four native gates: startup, observation recovery, reviewed abandonment and
+reviewed model migration. Each native gate enforces complete TAP totals with no
+skips, exact installed identities and passing cleanup. The model migration gate
+compiled both actual Rust model versions, exercised descriptor-pin changes and
+rejected ordinary/wrong-review activation before a real save and visible rollback.
+Screenshots were inspected; original reports stayed unchanged and attached apps
+survived. The existing update UI's two browser checks also passed.
+
+| Frozen candidate artifact | SHA-256 |
+| --- | --- |
+| Bundle manifest | `91debad9b5296d6f5fe9773e3706de9ecd486e9a5fe126bca62f09e506e338ce` |
+| Portable tools archive | `5c3bf4586e49f6dbba23097716d0c45e70de999614406006082849109857f116` |
+
+The candidate retains the engineering version string `0.1.4-alpha.10`; its bytes
+are different from the published release and must not be represented as that
+release. Both new installed-browser gates are now part of the ordinary release
+acceptance harness. Hosted CI and Linux/Windows execution are **NOT RUN** for this
+candidate. The subsequent documentation-only verification record does not rebuild
+or change the frozen artifacts.
+
 No release, deployment, existing customer incident
 recovery, customer business acceptance or normal Roots dependency promotion is
 claimed. New tools cannot hot-repair an older running controller; unavailable
@@ -41,7 +64,9 @@ independent draft or pending-effect safety still blocks abandonment. See
 [abandonment](managed-abandonment.md) and [model migration](model-migration.md).
 
 Private red/green logs and browser receipts are retained under
-`artifacts/support-recovery/`; they are not public customer evidence.
+`artifacts/support-recovery/`; the exact installed receipt is
+`artifacts/support-recovery/installed-acceptance/results.json`. They are not
+public customer evidence.
 
 ## Local Compose documentation and website — 2026-11-10
 
