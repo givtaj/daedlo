@@ -85,6 +85,41 @@ test("parameters and handler coverage fail before effects", async () => {
     await f.driver.close();
   }
 });
+test("unexpected adapter errors give safe guidance without inventing saved diagnostics", async () => {
+  for (const afterEffect of [false, true]) {
+    let f;
+    f = await fixture({
+      handlers: {
+        edit: async () => {},
+        save: async (_params, execution) => {
+          if (afterEffect)
+            await execution.effect(() => {
+              f.facts.saved = true;
+            });
+          throw Error("PRIVATE_ADAPTER_DETAIL");
+        },
+      },
+    });
+    try {
+      const snapshot = await f.driver.snapshot();
+      const result = await f.driver.execute("save", {}, snapshot.revision);
+      assert.equal(result.error_code, "adapter_error");
+      assert.equal(result.execution, afterEffect ? "failed" : "rejected");
+      assert.equal(
+        result.effect.status,
+        afterEffect ? "uncertain" : "not_attempted",
+      );
+      assert.doesNotMatch(
+        JSON.stringify(f.driver.report()),
+        /PRIVATE_ADAPTER_DETAIL/,
+      );
+      assert.match(result.error, /Review the integration/);
+      assert.doesNotMatch(result.error, /diagnostics|logs/);
+    } finally {
+      await f.driver.close();
+    }
+  }
+});
 test("single execution, cooperative pause/stop, and stop reports a completed effect", async () => {
   let f, entered;
   const ready = new Promise((r) => (entered = r));

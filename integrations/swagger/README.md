@@ -4,7 +4,7 @@ This reusable integration teaches Daedlo to operate a Swagger UI API explorer.
 Roots is one customer acceptance fixture. The catalog, browser adapter and Rust
 model contain no Roots route names, accounts, database assumptions or business
 outcomes. The independent browser fixture uses different operations and schemas.
-The alpha.9 candidate ships this standalone integration in its portable tools.
+The alpha.10 candidate ships this standalone integration in its portable tools.
 Its release receipt records publication and exact installed verification; source
 checks alone do not establish a released kit. Older kits do not gain these files
 from a runtime-only update.
@@ -41,11 +41,29 @@ schema assertions and request encodings fail closed, with static capability
 reasons. A successful HTTP/schema check says that the response matched the
 transport contract. It does not establish the business outcome or persistence.
 
+Operation selection supports collapsed groups and Swagger UI 5.34.1's virtualized
+catalog. When the exact method/path is not visible, the adapter uses Swagger's
+layout navigation once to expand its group and reveal its row, then waits for a
+single visible match within the configured timeout. Navigation and selection use
+the shared guarded execution facade; neither submits an API request. Swagger
+pages without the needed navigation capability can still select an already
+visible operation. For a hidden operation on those pages, expand its group and
+bring it into view before selecting it.
+
+An active filter is preserved. A filtered-out, missing or ambiguous operation
+produces a specific safe error with a next action; the adapter does not guess a
+match, clear a filter, repeat Execute, or bypass Swagger with a direct request.
+Expected adapter errors use static diagnostic codes and messages without raw
+locators, request values or authentication details. A successful GET/HEAD says
+“Documented API response verified; no write expected.” Successful mutation
+responses retain the separate persistence limit until independent effect
+evidence establishes what was saved.
+
 ## Start from the verified installed kit
 
 Use the matching runtime, core crate and tools from one verified release. First
 follow the kit's `START_HERE.md` and [release verification guide](../../docs/releases.md).
-The commands below use alpha.9 filenames; replace the three absolute paths with
+The commands below use alpha.10 filenames; replace the three absolute paths with
 your verified tools installation, extracted bundle and a **new** private QA
 folder. They do not change the application's normal dependencies.
 
@@ -55,12 +73,12 @@ bundle_root=/absolute/verified/bundle
 qa_root=/absolute/project/.daedlo-local/swagger-alpha9
 mkdir "$qa_root"
 npm install --prefix "$qa_root" --workspaces=false --ignore-scripts --no-audit --no-fund \
-  "$bundle_root/daedlo-runtime-0.1.4-alpha.9.tgz"
+  "$bundle_root/daedlo-runtime-0.1.4-alpha.10.tgz"
 node "$qa_root/node_modules/playwright/cli.js" install chromium
 mkdir "$qa_root/vendor"
-tar -xzf "$bundle_root/daedlo-engine-0.1.4-alpha.9.crate" -C "$qa_root/vendor"
+tar -xzf "$bundle_root/daedlo-engine-0.1.4-alpha.10.crate" -C "$qa_root/vendor"
 node "$tools_root/integrations/swagger/build-model.mjs" \
-  --crate "$qa_root/vendor/daedlo-engine-0.1.4-alpha.9" \
+  --crate "$qa_root/vendor/daedlo-engine-0.1.4-alpha.10" \
   --output "$qa_root/swagger-build"
 ```
 

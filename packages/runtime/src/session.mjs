@@ -47,7 +47,7 @@ const publicError = (error) =>
     : {
         error_code: "adapter_error",
         error:
-          "Application adapter failed. Inspect its private local diagnostics.",
+          "Application adapter failed during this step. Review the integration before running it again.",
       };
 
 export async function createDriverSession({

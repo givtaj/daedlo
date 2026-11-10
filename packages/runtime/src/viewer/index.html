@@ -14,6 +14,43 @@
         ><span class="brand-mark" aria-hidden="true">↗</span
         ><span>Daedlo<small>LOCAL WORKSPACE</small></span></a
       >
+      <section class="connection-panel" aria-labelledby="connections-heading">
+        <h2 id="connections-heading">Connections</h2>
+        <ul
+          id="connection-channels"
+          class="connection-channels"
+          aria-live="polite"
+        >
+          <li data-channel="viewer" data-status="neutral">
+            <span class="channel-icon" aria-hidden="true">○</span
+            ><span
+              ><span class="channel-name">Viewer</span
+              ><strong class="channel-value">Connecting</strong></span
+            >
+          </li>
+          <li data-channel="browser" data-status="neutral">
+            <span class="channel-icon" aria-hidden="true">○</span
+            ><span
+              ><span class="channel-name">Browser</span
+              ><strong class="channel-value">Unknown</strong></span
+            >
+          </li>
+          <li data-channel="application" data-status="neutral">
+            <span class="channel-icon" aria-hidden="true">○</span
+            ><span
+              ><span class="channel-name">Application observation</span
+              ><strong class="channel-value">Unknown</strong></span
+            >
+          </li>
+          <li data-channel="image" data-status="neutral">
+            <span class="channel-icon" aria-hidden="true">○</span
+            ><span
+              ><span class="channel-name">Live image</span
+              ><strong class="channel-value">Waiting</strong></span
+            >
+          </li>
+        </ul>
+      </section>
       <div class="model-header">
         <span class="eyebrow">APPLICATION MODEL</span>
         <h1 id="model-name">Connecting…</h1>
@@ -64,7 +101,12 @@
         </div>
       </details>
       <p id="frontend-warning" class="notice" role="status" hidden></p>
-      <div id="connection-error" class="notice" role="status" hidden></div>
+      <div id="connection-error" class="notice connection-notice" hidden>
+        <span id="connection-detail" role="status"></span>
+        <button id="check-connection" class="secondary" type="button">
+          Check connection
+        </button>
+      </div>
       <div class="workspace-grid">
         <section
           class="browser-panel"

@@ -144,6 +144,9 @@ async function fixture() {
     url: `http://127.0.0.1:${server.address().port}`,
     calls,
     document: () => schema,
+    configure: (document) => {
+      schema = document;
+    },
     version: (version) => {
       schema = specification(version);
     },
@@ -296,7 +299,13 @@ export async function runSwaggerBrowserAcceptance({
       (await command("prepare", { request: "{}" })).outcome?.kind,
       "success",
     );
-    assert.equal((await command("execute")).outcome?.kind, "success");
+    const cliRead = await command("execute");
+    assert.equal(cliRead.outcome?.kind, "success");
+    assert.equal(
+      cliRead.outcome.label,
+      "Documented API response verified; no write expected",
+    );
+    assert.equal(cliRead.effect.status, "not_attempted");
     assert.equal(app.calls.length, 1);
     assert.equal(app.calls[0].path, "/api/hello");
     checks.push("installed CLI and shipped project execute OpenAPI 3.2.1 read");
@@ -371,9 +380,10 @@ export async function runSwaggerBrowserAcceptance({
 
     const context = await browser.newContext({ serviceWorkers: "block" });
     const page = await context.newPage();
-    async function open(options = {}) {
+    async function open(options = {}, beforeSession) {
       await page.goto(app.url + "/docs/");
       await page.locator(".opblock").first().waitFor();
+      await beforeSession?.();
       const built = await helper.createSwaggerSession({
         page,
         context,
@@ -414,7 +424,13 @@ export async function runSwaggerBrowserAcceptance({
       await select("GET /items/{id}");
       await prepare(inputs);
       const beforeRead = app.calls.length;
-      assert.equal((await run("execute")).outcome?.kind, "success");
+      const read = await run("execute");
+      assert.equal(read.outcome?.kind, "success");
+      assert.equal(
+        read.outcome.label,
+        "Documented API response verified; no write expected",
+      );
+      assert.equal(read.effect.status, "not_attempted");
       assert.equal(
         app.calls.length,
         beforeRead + 1,
@@ -433,6 +449,167 @@ export async function runSwaggerBrowserAcceptance({
         `installed helper validates ${version} scalar path/query/header request`,
       );
     }
+    for (const mode of ["collapsed", "virtualized"]) {
+      const document = specification("3.2.1");
+      if (mode === "virtualized")
+        document.paths = {
+          ...Object.fromEntries(
+            Array.from({ length: 150 }, (_, index) => [
+              `/filler-${index}`,
+              {
+                get: {
+                  operationId: `filler${index}`,
+                  responses: { 200: response(message) },
+                },
+              },
+            ]),
+          ),
+          ...document.paths,
+        };
+      app.configure(document);
+      await open(
+        {
+          allowOperations: ["GET /hello"],
+          allowWrites: [],
+          timeoutMs: 1000,
+        },
+        async () => {
+          if (mode === "collapsed") {
+            await page.evaluate(() =>
+              window.ui.layoutActions.show(
+                ["operations-tag", "default"],
+                false,
+              ),
+            );
+            await page
+              .locator(".opblock")
+              .first()
+              .waitFor({ state: "hidden", timeout: 2000 });
+          } else {
+            await page.locator(".operations-virtual").waitFor();
+            assert.equal(
+              await page.locator('[data-path="/hello"]').count(),
+              0,
+              "The installed selection target must initially be absent from the virtualized DOM",
+            );
+          }
+        },
+      );
+      const beforeNavigation = app.calls.length;
+      if (mode === "virtualized") await select("GET /filler-0");
+      await select("GET /hello");
+      assert.equal(
+        await page.locator('.opblock-get.is-open [data-path="/hello"]').count(),
+        1,
+      );
+      if (mode === "virtualized")
+        assert.equal(
+          await page.evaluate(() =>
+            window.ui.layoutSelectors.isShown(
+              ["operations", "default", "filler0"],
+              false,
+            ),
+          ),
+          false,
+          "The previous open row must close before navigation unmounts it",
+        );
+      assert.equal(
+        app.calls.length,
+        beforeNavigation,
+        "Navigation and selection must not send API requests",
+      );
+      await prepare({});
+      const read = await run("execute");
+      assert.equal(read.outcome?.kind, "success");
+      assert.equal(
+        read.outcome.label,
+        "Documented API response verified; no write expected",
+      );
+      assert.equal(read.effect.status, "not_attempted");
+      assert.deepEqual(
+        app.calls
+          .slice(beforeNavigation)
+          .map(({ method, path }) => ({ method, path })),
+        [{ method: "GET", path: "/api/hello" }],
+      );
+      await session.close();
+      session = null;
+      checks.push(
+        `installed ${mode} operation selection sends no request before one authorized Execute`,
+      );
+    }
+    app.configure(specification("3.2.1"));
+    for (const mode of ["filtered", "missing", "ambiguous"]) {
+      await open(
+        {
+          allowOperations: ["GET /hello"],
+          allowWrites: [],
+          timeoutMs: 1000,
+        },
+        async () => {
+          if (mode === "filtered") {
+            await page.evaluate(() =>
+              window.ui.layoutActions.updateFilter("PRIVATE_FIXTURE_FILTER"),
+            );
+            await page
+              .locator(".opblock")
+              .first()
+              .waitFor({ state: "hidden", timeout: 2000 });
+          } else {
+            await page
+              .locator(".opblock-get")
+              .filter({ has: page.locator('[data-path="/hello"]') })
+              .evaluate((node, duplicate) => {
+                if (duplicate) node.after(node.cloneNode(true));
+                else node.remove();
+              }, mode === "ambiguous");
+          }
+        },
+      );
+      const beforeSelection = app.calls.length;
+      const refused = await run("select", { operation: "GET /hello" });
+      assert.equal(refused.ok, false);
+      assert.equal(refused.error_code, `swagger_operation_${mode}`);
+      assert.equal(refused.effect.status, "not_attempted");
+      assert.doesNotMatch(
+        JSON.stringify(session.report()),
+        /PRIVATE_FIXTURE_FILTER|data-path|private local diagnostics/,
+      );
+      assert.equal(
+        app.calls.length,
+        beforeSelection,
+        "Failed selection must never dispatch an API request",
+      );
+      await session.close();
+      session = null;
+      checks.push(
+        `installed ${mode} operation refuses selection without API dispatch`,
+      );
+    }
+    const headDocument = specification("3.2.1");
+    headDocument.paths["/head"] = {
+      head: { responses: { 200: { description: "Headers only" } } },
+    };
+    app.configure(headDocument);
+    await open({ allowOperations: ["HEAD /head"], allowWrites: [] });
+    const beforeHead = app.calls.length;
+    await select("HEAD /head");
+    await prepare({});
+    const head = await run("execute");
+    assert.equal(head.outcome?.kind, "success");
+    assert.equal(
+      head.outcome.label,
+      "Documented API response verified; no write expected",
+    );
+    assert.equal(head.effect.status, "not_attempted");
+    assert.deepEqual(
+      app.calls.slice(beforeHead).map(({ method, path }) => ({ method, path })),
+      [{ method: "HEAD", path: "/api/head" }],
+    );
+    await session.close();
+    session = null;
+    checks.push("installed HEAD response reports no write expected");
+    app.configure(specification("3.2.1"));
     const normalizationOperation = "POST /allowed/%2{id}/private";
     const normalization = await open({
       allowOperations: [normalizationOperation],
@@ -495,6 +672,10 @@ export async function runSwaggerBrowserAcceptance({
     await prepare({ body: { value: "PRIVATE_FIXTURE_BODY" } });
     const uncertain = await run("execute");
     assert.equal(uncertain.outcome?.kind, "success");
+    assert.equal(
+      uncertain.outcome.label,
+      "Documented API response verified; persistence is not established",
+    );
     assert.equal(uncertain.effect.status, "uncertain");
     assert.equal(
       JSON.stringify(session.report()).includes("PRIVATE_FIXTURE_"),
@@ -529,6 +710,10 @@ export async function runSwaggerBrowserAcceptance({
     await prepare({ body: { value: "PRIVATE_FIXTURE_SAVED" } });
     const saved = await run("execute");
     assert.equal(saved.effect.status, "saved");
+    assert.equal(
+      saved.outcome.label,
+      "Documented API response verified; persistence is not established",
+    );
     assert.equal(session.report().identity.swaggerEngineSha256, engineHash);
     assert.equal(
       JSON.stringify(session.report()).includes("PRIVATE_FIXTURE_"),

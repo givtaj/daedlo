@@ -586,7 +586,22 @@ test("a chosen child preserves exact dispatch and all existing availability boun
       snapshot.revision = "observed-r3";
       await observe(ui, snapshot, "before-mismatch");
       await application.goto("about:blank");
-      await ui.locator("#frontend-warning").waitFor({ state: "visible" });
+      await ui
+        .locator('#connection-error[data-reason="target_mismatch"]')
+        .waitFor({ state: "visible" });
+      assert.equal(
+        await ui.locator("#connection").innerText(),
+        "Target mismatch",
+      );
+      assert.match(
+        await ui.locator("#connection-error").innerText(),
+        /Target or model mismatch/,
+      );
+      assert.equal(
+        await ui.locator("#frontend-warning").isVisible(),
+        false,
+        "The primary notice must not be duplicated",
+      );
       assert.equal(
         await discard.isDisabled(),
         true,

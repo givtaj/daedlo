@@ -492,7 +492,11 @@ impl ApplicationModel for SwaggerModel {
                 if (200..=299).contains(&response.status) {
                     report(
                         OutcomeKind::Success,
-                        "Documented API response verified; persistence is not established",
+                        if matches!(self.selected(before)?.method.as_str(), "GET" | "HEAD") {
+                            "Documented API response verified; no write expected"
+                        } else {
+                            "Documented API response verified; persistence is not established"
+                        },
                     )
                 } else {
                     report(
@@ -800,6 +804,35 @@ mod tests {
                 verified(&serde_json::from_value(value).unwrap()),
                 OutcomeKind::Unknown,
                 "{field}"
+            );
+        }
+    }
+    #[test]
+    fn read_success_explains_no_write_while_mutations_keep_persistence_limit() {
+        for method in ["GET", "HEAD", "POST"] {
+            let key = format!("{method} /api/hello");
+            let mut profile = profile();
+            profile.operations[0].key = key.clone();
+            profile.operations[0].method = method.into();
+            profile.operations[0].allow_write = method == "POST";
+            profile.operations[0].auto_recipe = method != "POST";
+            let model = SwaggerModel::new(profile).unwrap();
+            let mut before = observation();
+            before.facts.selected = Some(key.clone());
+            let mut after = response();
+            after.facts.selected = Some(key.clone());
+            after.facts.response.as_mut().unwrap().operation = key;
+            let report = model
+                .verify(&before, &after, &Command::Execute, &json!({}))
+                .unwrap();
+            assert_eq!(report.kind, OutcomeKind::Success);
+            assert_eq!(
+                report.label,
+                if method == "POST" {
+                    "Documented API response verified; persistence is not established"
+                } else {
+                    "Documented API response verified; no write expected"
+                }
             );
         }
     }

@@ -159,6 +159,33 @@ automatic command retry or live adapter replacement.
 
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
 
+Viewer status additionally separates `connections:{browser,application}` from
+aggregate command readiness. `application` conservatively requires a usable
+browser connection and a fresh available driver observation with matching
+target/model, not an independent API-health probe.
+Absent observation is unavailable. `lifecycle:{id,status,endedAt?}` identifies
+one viewer instance; status is `open|ended`. A same-origin, read-only GET
+`/events` stream emits `viewer-ended` on explicit viewer closure. Its payload
+contains the terminal lifecycle and, when the session can prove it has finalized,
+the latest completed public `lastResult`. An ended `/status` response includes
+the same captured payload as `terminal:{lifecycle,lastResult?}`, separate from
+an older driver observation still in flight. Both delivery orders preserve the
+proven terminal result. Closing does not perform another
+application observation or close the attached session/browser. Delivery is best
+effort: loss without the event remains unknown, never proof of normal shutdown.
+
+The sidebar reports the viewer, browser, application observation and browser
+image separately with icons, text and color. Status transport failure immediately
+disables commands and marks retained observations stale. The initial reconnecting
+state becomes connection lost if failures continue; status reads have a bounded
+timeout. Completed results remain historical evidence through either condition.
+Status recovery and **Check connection** only read status and reconnect the image
+stream; neither reloads the target page, retries a command, resumes an interrupted
+recipe nor establishes persistence for an uncertain write. A confirmed closed
+viewer stops automatic observation; an explicit connection check can discover a
+new viewer instance on the same port without accepting an old in-flight status
+as recovery.
+
 The alpha.6 viewer also previews each recipe's ordered command labels and
 groups recipes with identical starting steps into expandable shared paths. The
 comparison uses existing command IDs and complete JSON parameter values (object

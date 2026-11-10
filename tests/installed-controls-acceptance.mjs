@@ -90,8 +90,14 @@ const suites = [
   [
     "installed-viewer-grid",
     "viewer-grid-browser.mjs",
-    18,
+    28,
     ["../src/viewer/server.mjs"],
+  ],
+  [
+    "installed-viewer-restart",
+    "viewer-restart-browser.mjs",
+    1,
+    ["../src/index.mjs"],
   ],
 ];
 
@@ -187,6 +193,12 @@ export async function runInstalledControls({
           from: 'new URL("../src/cli.mjs", import.meta.url)',
           to: `new URL(${JSON.stringify(pathToFileURL(join(installed, "src/cli.mjs")).href)})`,
         });
+      if (name === "viewer-restart-browser.mjs")
+        substitutions.push({
+          kind: "evidence-location",
+          from: 'resolve("artifacts/dev-restart-alerts")',
+          to: "resolve(process.env.VIEWER_RESTART_OUTPUT)",
+        });
       for (const { from, to, kind } of substitutions) {
         assert.equal(
           text.split(from).length,
@@ -234,6 +246,7 @@ export async function runInstalledControls({
             RESULT_SESSION_OUTPUT: join(evidence, "attribution-session"),
             FINALIZATION_VIEWER_OUTPUT: join(evidence, "finalization-viewer"),
             VIEWER_GRID_OUTPUT: join(evidence, "viewer-grid"),
+            VIEWER_RESTART_OUTPUT: join(evidence, "viewer-restart"),
           },
         },
       );

@@ -278,6 +278,7 @@ async function setup(
   browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
+  page.setDefaultTimeout(2000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(app.url);
@@ -382,8 +383,121 @@ test("real Swagger selection, prepare, Execute and matching response evidence", 
     [{ method: "GET", path: "/hello" }],
   );
   assert.equal(result.effect.status, "not_attempted");
-  assert.match(result.outcome.label, /persistence is not established/);
+  assert.equal(
+    result.outcome.label,
+    "Documented API response verified; no write expected",
+  );
 });
+
+for (const mode of ["collapsed", "virtualized"]) {
+  test(`Swagger navigation reveals a ${mode} operation without sending a request`, async (t) => {
+    const schema = specification();
+    if (mode === "virtualized") {
+      schema.paths = {
+        ...Object.fromEntries(
+          Array.from({ length: 150 }, (_, i) => [
+            `/filler-${i}`,
+            {
+              get: {
+                operationId: `filler${i}`,
+                responses: { 200: jsonResponse(messageSchema) },
+              },
+            },
+          ]),
+        ),
+        ...schema.paths,
+      };
+    }
+    const f = await setup(t, {
+      schema,
+      beforeAdapter: async ({ page }) => {
+        if (mode === "collapsed") {
+          await page.evaluate(() =>
+            window.ui.layoutActions.show(["operations-tag", "default"], false),
+          );
+          await page.locator(".opblock").first().waitFor({ state: "hidden" });
+        } else {
+          await page.locator(".operations-virtual").waitFor();
+          assert.equal(
+            await page.locator('[data-path="/hello"]').count(),
+            0,
+            "The target must really be absent from the virtualized DOM before selection",
+          );
+        }
+      },
+    });
+    if (mode === "virtualized") await f.select("GET /filler-0");
+    const result = await f.run("select", { operation: "GET /hello" });
+    assert.equal(
+      result.outcome?.kind,
+      "success",
+      `${mode} selection must reveal the exact operation: ${JSON.stringify(result)}`,
+    );
+    assert.equal(
+      await f.page.locator('.opblock-get.is-open [data-path="/hello"]').count(),
+      1,
+    );
+    assert.deepEqual(
+      f.app.calls,
+      [],
+      "Navigation must not dispatch an API request",
+    );
+    if (mode === "virtualized") {
+      assert.equal(
+        await f.page.evaluate(() =>
+          window.ui.layoutSelectors.isShown(
+            ["operations", "default", "filler0"],
+            false,
+          ),
+        ),
+        false,
+        "The prior open operation must be closed before virtual navigation unmounts it",
+      );
+    }
+    await f.prepare();
+    assert.equal((await f.run("execute")).outcome?.kind, "success");
+    assert.deepEqual(
+      f.app.calls.map(({ method, path }) => ({ method, path })),
+      [{ method: "GET", path: "/hello" }],
+    );
+  });
+}
+
+for (const mode of ["filtered", "missing", "ambiguous"]) {
+  test(`Swagger ${mode} operation has a safe actionable selection error and no request`, async (t) => {
+    const f = await setup(t, {
+      beforeAdapter: async ({ page }) => {
+        if (mode === "filtered") {
+          await page.evaluate(() =>
+            window.ui.layoutActions.updateFilter("hidden-customer-filter"),
+          );
+          await page.locator(".opblock").first().waitFor({ state: "hidden" });
+        } else {
+          await page
+            .locator(".opblock-get")
+            .filter({ has: page.locator('[data-path="/hello"]') })
+            .evaluate((node, duplicate) => {
+              if (duplicate) node.after(node.cloneNode(true));
+              else node.remove();
+            }, mode === "ambiguous");
+        }
+      },
+    });
+    const result = await f.run("select", { operation: "GET /hello" });
+    assert.equal(result.ok, false);
+    assert.equal(result.error_code, `swagger_operation_${mode}`);
+    assert.doesNotMatch(
+      result.error,
+      /hidden-customer-filter|locator|private local diagnostics|data-path/,
+    );
+    assert.deepEqual(
+      f.app.calls,
+      [],
+      "Failed selection must never send an API request",
+    );
+    assert.equal(result.effect.status, "not_attempted");
+  });
+}
 
 for (const version of ["3.0.3", "3.1.0", "3.2.1"]) {
   test(`Swagger ${version} path, query and header inputs match the submitted request`, async (t) => {

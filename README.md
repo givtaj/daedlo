@@ -17,7 +17,7 @@ The [verification record](docs/verification.md) owns current publication status,
 measured acceptance and limits; [alpha delivery](docs/alpha-release.md) owns the
 product scope. Use the exact verified release kit and its installation instructions.
 
-The alpha.9 kit combines the live application/flow/results grid, bounded large
+The alpha.10 kit combines the live application/flow/results grid, bounded large
 state maps and explicit pending/stalled finalization with reusable Swagger API
 driving and masked password parameters. Existing integrations require the
 reviewed QA dependency migration and retain their accepted installation for
@@ -154,7 +154,7 @@ focused checks, full browser/release gates and review workflow. Installed-packag
 acceptance is a separate release gate; source checks do not establish customer
 acceptance, complete Roots replacement or remote CI success.
 
-## Swagger API driving — alpha.9
+## Swagger API driving — alpha.10
 
 A reusable [Swagger integration](integrations/swagger/README.md) reads OpenAPI
 3.0/3.1/3.2 catalogs and drives the supported request/response subset through
@@ -163,7 +163,7 @@ operation permissions, authentication and independent business evidence.
 The portable tools include the generic model source, isolated builder and
 standalone launcher. Independent Swagger UI fixtures, exact installed checks and
 actual Roots acceptance are recorded in [verification](docs/verification.md).
-The integration is included in the alpha.9 portable kit. Its compatibility table
+The integration is included in the alpha.10 portable kit. Its compatibility table
 lists unsupported features explicitly; the verification record distinguishes
 accepted artifacts from production publication.
 
