@@ -27,7 +27,9 @@ export async function createNinjaSupervisor({
     accepted = false,
     launching = false,
     startup = { phase: "stopped", cleanup: "complete" },
-    frontendStatus = frontend;
+    frontendStatus = frontend,
+    completedAbandonment = null,
+    childToken = null;
   const pending = new Map();
   async function orphan() {
     const r = await ninjaRead(marker, { optional: true });
@@ -78,6 +80,49 @@ export async function createNinjaSupervisor({
       cleanupPending: !!retained,
       startup,
       frontend: frontendStatus,
+    };
+  }
+  async function finishClose(reviewId) {
+    let timer;
+    const result = await Promise.race([
+      exited,
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              Error("Managed child did not exit; cleanup handle retained."),
+            ),
+          timeoutMs,
+        );
+      }),
+    ]).finally(() => clearTimeout(timer));
+    const record = await ninjaRead(marker, { optional: true });
+    if (
+      record?.status !== "closed" ||
+      record.token !== childToken ||
+      record.installationId !== installation?.id ||
+      (reviewId && record.recoveryId !== reviewId)
+    ) {
+      const e = Error(
+        "Managed child exited without complete cleanup; retained recovery record.",
+      );
+      e.code = "cleanup_incomplete";
+      throw e;
+    }
+    if (result.signal || result.code !== 0)
+      throw Error(
+        "Managed child was terminated; cleanup cannot be established.",
+      );
+    child = null;
+    childToken = null;
+    installation = null;
+    accepted = false;
+    exited = null;
+    launching = false;
+    startup = {
+      ...startup,
+      phase: startup.error ? "failed" : "stopped",
+      cleanup: "complete",
     };
   }
   return {
@@ -144,6 +189,7 @@ export async function createNinjaSupervisor({
         );
       await ninjaDirectory(root, { create: true });
       installation = receipt;
+      completedAbandonment = null;
       accepted = false;
       frontendStatus = frontend;
       launching = true;
@@ -153,6 +199,7 @@ export async function createNinjaSupervisor({
         history: ["bootstrap"],
       };
       const token = randomUUID();
+      childToken = token;
       const env = Object.fromEntries(
         [
           "PATH",
@@ -252,6 +299,31 @@ export async function createNinjaSupervisor({
     async retryEvidence() {
       return request("retryEvidence");
     },
+    async reviewAbandonment() {
+      return request("reviewAbandonment");
+    },
+    async abandon({ reviewId } = {}) {
+      if (typeof reviewId !== "string" || !/^[a-f0-9-]{36}$/.test(reviewId))
+        throw Object.assign(Error("Select an exact recovery review."), {
+          code: "stale_recovery_review",
+        });
+      if (!child && completedAbandonment?.reviewId === reviewId)
+        return structuredClone(completedAbandonment);
+      if (!child)
+        throw Object.assign(Error("No owned child has this recovery review."), {
+          code: "stale_recovery_review",
+        });
+      let result;
+      if (child.exitCode === null && child.connected)
+        result = await request("abandon", { reviewId });
+      await finishClose(reviewId);
+      completedAbandonment = result ?? {
+        closed: true,
+        abandoned: true,
+        reviewId,
+      };
+      return structuredClone(completedAbandonment);
+    },
     async close({ requireSafe = false } = {}) {
       if (!child) {
         if (await orphan())
@@ -263,41 +335,7 @@ export async function createNinjaSupervisor({
       let cleanup;
       if (child.exitCode === null && child.connected)
         cleanup = await request("close", { requireSafe });
-      let timer;
-      const result = await Promise.race([
-        exited,
-        new Promise((_, reject) => {
-          timer = setTimeout(
-            () =>
-              reject(
-                Error("Managed child did not exit; cleanup handle retained."),
-              ),
-            timeoutMs,
-          );
-        }),
-      ]).finally(() => clearTimeout(timer));
-      const record = await ninjaRead(marker, { optional: true });
-      if (record?.status !== "closed") {
-        const e = Error(
-          "Managed child exited without complete cleanup; retained recovery record.",
-        );
-        e.code = "cleanup_incomplete";
-        throw e;
-      }
-      if (result.signal)
-        throw Error(
-          "Managed child was terminated; cleanup cannot be established.",
-        );
-      child = null;
-      installation = null;
-      accepted = false;
-      exited = null;
-      launching = false;
-      startup = {
-        ...startup,
-        phase: startup.error ? "failed" : "stopped",
-        cleanup: "complete",
-      };
+      await finishClose();
       return cleanup;
     },
   };

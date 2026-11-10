@@ -26,6 +26,8 @@ function nativeAcceptanceFixture() {
     runtimeName: "@daedlo/runtime",
     runtimeVersion: "0.1.4-alpha.6",
     engineSha256: "f".repeat(64),
+    bundle: "/synthetic/verified-bundle",
+    expectedManifestSha256: "a".repeat(64),
   };
   const receipts = {
     native: {
@@ -51,6 +53,22 @@ function nativeAcceptanceFixture() {
     },
   };
   const calls = [];
+  receipts["native-abandonment"] = {
+    ...receipts["native-observation"],
+    checks: Array.from({ length: 6 }, (_, i) => `abandonment-${i}`),
+  };
+  receipts["native-model-migration"] = {
+    status: "PASS",
+    cleanup: "PASS",
+    toolsRoot: join(options.installedTools, "lib"),
+    runtimePath: options.runtimePath,
+    engineCrate: options.engineCrate,
+    bundle: {
+      version: options.runtimeVersion,
+      manifestSha256: options.expectedManifestSha256,
+    },
+    checks: Array.from({ length: 10 }, (_, i) => `migration-${i}`),
+  };
   const tap = (tests, changes = {}) =>
     "TAP version 13\n" +
     Object.entries({
@@ -67,6 +85,8 @@ function nativeAcceptanceFixture() {
   const logs = {
     "installed-native-startup": tap(1),
     "installed-native-observation": tap(2),
+    "installed-native-abandonment": tap(1),
+    "installed-native-model-migration": tap(1),
   };
   const dependencies = {
     run: (...args) => {
@@ -85,6 +105,8 @@ function nativeAcceptanceFixture() {
 for (const [suite, count] of [
   ["startup", 1],
   ["observation", 2],
+  ["abandonment", 1],
+  ["model-migration", 1],
 ]) {
   for (const [failure, totals] of [
     ["one skipped test", { pass: count - 1, skipped: 1 }],
@@ -115,7 +137,12 @@ test("installed native acceptance executes observation recovery with the exact s
   const result = runInstalledNativeAcceptance(f.options, f.dependencies);
   assert.deepEqual(
     f.calls.map(([name]) => name),
-    ["installed-native-startup", "installed-native-observation"],
+    [
+      "installed-native-startup",
+      "installed-native-observation",
+      "installed-native-abandonment",
+      "installed-native-model-migration",
+    ],
   );
   const observation = f.calls[1];
   assert.equal(
@@ -138,6 +165,21 @@ test("installed native acceptance executes observation recovery with the exact s
     f.options.enginePath,
   );
   assert.equal(result.nativeObservation.status, "PASS");
+  assert.equal(
+    f.calls[2][3].env.DAEDLO_NATIVE_ENGINE_PATH,
+    f.options.enginePath,
+  );
+  assert.equal(f.calls[3][3].env.DAEDLO_MIGRATION_BUNDLE, f.options.bundle);
+  assert.equal(
+    f.calls[3][3].env.DAEDLO_MIGRATION_MANIFEST_SHA256,
+    f.options.expectedManifestSha256,
+  );
+  assert.equal(
+    f.calls[3][3].env.DAEDLO_MIGRATION_ENGINE_CRATE,
+    f.options.engineCrate,
+  );
+  assert.equal(result.nativeAbandonment.status, "PASS");
+  assert.equal(result.nativeModelMigration.status, "PASS");
 });
 
 for (const variant of [

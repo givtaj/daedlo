@@ -43,6 +43,12 @@ unrecognized pages, pending effects or unavailable measurements must throw or
 return an unknown value, never reuse an earlier `false`. Native cleanup remains
 blocked while that state is unknown.
 
+The explicit [abandonment review](managed-abandonment.md) uses that same hook
+independently of model observation. A failed model can therefore remain failed
+while fresh draft and pending-effect safety permit owned cleanup. The hook must
+not return an old clean value or treat an empty visible form as proof that a
+pending operation is resolved. The ordinary Stop path keeps its existing guards.
+
 A typed application unavailable state belongs in the customer's Rust model. Its
 commands may all be disabled while the adapter measures current draft, pending
 operation and request safety independently. Recognizing an error page does not

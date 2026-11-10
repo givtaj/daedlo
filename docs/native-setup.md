@@ -135,6 +135,10 @@ After editing allowlisted source, use `refresh --config FILE`. It builds a new s
 using the exact accepted release's retained verified bundle, with no feed check or
 version upgrade, and runs the existing acceptance/health checks. It also compares
 the model descriptor; changed states/commands/recipes require a reviewed migration.
+Use [reviewed model changes](model-migration.md) to prepare and inspect the complete
+old/new descriptors, then explicitly activate that exact review in the same store.
+The accepted installation and rollback history remain retained. Registration model
+or descriptor-pin edits require stopping the old native owner first.
 Then `restart --config FILE` explicitly activates the ready candidate, from either
 a running or stopped project. Ordinary `start` keeps the selected installation and
 refuses stale authored source. A refresh doesn't overwrite the prior slot or edits.
@@ -252,7 +256,15 @@ claim or release it as its own. Status reads alone never resume a paused run.
 
 If the loaded adapter can no longer measure the page and no safe read-only route
 restores that measurement, there is no generic safe-stop shortcut. Keep the owner
-and evidence for integration-specific repair. `refresh` prepares a separate source
+and evidence for integration-specific repair. Tools containing the explicit
+[reviewed abandonment workflow](managed-abandonment.md) can drain an idle owned
+session when its existing draft-safety hook still establishes fresh independent
+draft and pending-effect safety. They retain the original uncertain result and
+archive the abandonment before cleanup. Unknown safety, active work or lost child
+communication still blocks that workflow. New tools cannot hot-replace an already
+running older controller.
+
+`refresh` prepares a separate source
 snapshot; it does not hot-reload code into the existing session, and `restart`
 still requires the normal safe boundary. A corrected adapter or new tools release
 therefore does not by itself recover an already running old adapter. Lost

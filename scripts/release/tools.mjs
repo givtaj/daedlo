@@ -32,6 +32,7 @@ const libraries = [
   "ninja-child",
   "ninja-server",
   "ninja-evidence",
+  "ninja-recovery",
   "native",
   "native-doctor",
   "native-session",
@@ -48,6 +49,8 @@ const documents = [
   "rename",
   "managed-integration",
   "evidence-reporting",
+  "model-migration",
+  "managed-abandonment",
 ];
 const starterFiles = [
   "README.md",

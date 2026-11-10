@@ -23,7 +23,33 @@ const commands = [
   "refresh",
   "restart",
   "retry-evidence",
+  "migrate-prepare",
+  "migrate-review",
+  "migrate-activate",
+  "abandon-review",
+  "abandon",
 ];
+const operationPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
+function commandArguments(command, { operation, reviewSha256, reviewId }) {
+  if (
+    (["migrate-review", "migrate-activate"].includes(command) &&
+      !operationPattern.test(operation ?? "")) ||
+    (command === "migrate-activate" &&
+      !/^[a-f0-9]{64}$/.test(reviewSha256 ?? "")) ||
+    (command === "abandon" && !operationPattern.test(reviewId ?? ""))
+  )
+    fail(
+      "usage",
+      "Supply the exact operation and review identity printed by the review command.",
+    );
+  return {
+    ...(["migrate-review", "migrate-activate"].includes(command)
+      ? { operation }
+      : {}),
+    ...(command === "migrate-activate" ? { reviewSha256 } : {}),
+    ...(command === "abandon" ? { reviewId } : {}),
+  };
+}
 async function toolsIdentity() {
   const root = dirname(fileURLToPath(import.meta.url));
   const files = (await fs.readdir(root))
@@ -55,7 +81,7 @@ function controlUrl(value) {
     );
   return url;
 }
-async function request(record, action, generation) {
+async function request(record, action, generation, arguments_ = {}) {
   const url = controlUrl(record.controlUrl);
   const response = await fetch(url.origin + "/native", {
     method: action ? "POST" : "GET",
@@ -66,7 +92,9 @@ async function request(record, action, generation) {
         ? { Origin: url.origin, "Content-Type": "application/json" }
         : {}),
     },
-    ...(action ? { body: JSON.stringify({ action, generation }) } : {}),
+    ...(action
+      ? { body: JSON.stringify({ action, generation, ...arguments_ }) }
+      : {}),
     // Commands are never automatically retried, including after a timeout.
     signal: AbortSignal.timeout(action ? 30 * 60 * 1000 : 5000),
   });
@@ -132,6 +160,15 @@ function handoff(value, record, reused) {
     evidence: value.native.evidence,
     blockers: value.status.blockers,
     operation: value.status.operation,
+    ...(value.migration ? { migration: value.migration } : {}),
+    ...(value.abandonment ? { abandonment: value.abandonment } : {}),
+    ...(value.action === "abandon-review" && value.abandonment
+      ? {
+          ok: true,
+          status: "review_required",
+          action: "abandon-review",
+        }
+      : {}),
   };
 }
 
@@ -141,6 +178,9 @@ export async function nativeCommand(
   configPath,
   {
     version,
+    operation,
+    reviewSha256,
+    reviewId,
     readConfig = readNinjaConfig,
     open = openNinja,
     doctor = async (path) =>
@@ -153,6 +193,11 @@ export async function nativeCommand(
 ) {
   if (signal?.aborted) fail("startup_cancelled", "Startup was cancelled.");
   if (!commands.includes(command)) fail("usage", "Unknown native command.");
+  const arguments_ = commandArguments(command, {
+    operation,
+    reviewSha256,
+    reviewId,
+  });
   configPath = resolve(configPath);
   if (command === "doctor") return { result: await doctor(configPath) };
   const { config, keys } = await readConfig(configPath, {
@@ -202,7 +247,12 @@ export async function nativeCommand(
       );
     if (["setup", "start", "status"].includes(command))
       return { result: handoff(current, existing, true) };
-    const changed = await request(existing, command, current.generation);
+    const changed = await request(
+      existing,
+      command,
+      current.generation,
+      arguments_,
+    );
     return { result: handoff(changed, existing, true) };
   }
   if (["status", "stop"].includes(command)) {
@@ -236,7 +286,7 @@ export async function nativeCommand(
       },
     };
   }
-  if (command === "retry-evidence")
+  if (["retry-evidence", "abandon-review", "abandon"].includes(command))
     fail(
       "not_running",
       "Start the native runner before requesting this action.",
@@ -406,6 +456,36 @@ export async function nativeCommand(
           available();
           return manager.refresh();
         },
+        prepareMigration: () => {
+          available();
+          return manager.prepareMigration();
+        },
+        reviewMigration: ({ operation }) => {
+          available();
+          return manager.reviewMigration(operation);
+        },
+        activateMigration: async ({ operation, reviewSha256 }) => {
+          available();
+          const result = await manager.activateMigration(operation, {
+            reviewSha256,
+            acknowledgeRestart: true,
+          });
+          startedSuccessfully = true;
+          recovery = false;
+          startup = { phase: "ready", cleanup: "pending" };
+          return result;
+        },
+        reviewAbandonment: () => {
+          available();
+          return manager.reviewAbandonment();
+        },
+        abandon: async ({ reviewId }) => {
+          available();
+          const result = await manager.abandon({ reviewId });
+          recovery = false;
+          startup = { ...startup, phase: "stopped", cleanup: "complete" };
+          return result;
+        },
         restart: async () => {
           available();
           const s = await manager.status();
@@ -492,11 +572,44 @@ export async function nativeCommand(
         },
       };
     }
+    if (["migrate-prepare", "migrate-review"].includes(command)) {
+      const migration =
+        command === "migrate-prepare"
+          ? await manager.prepareMigration()
+          : await manager.reviewMigration(operation);
+      await close();
+      return {
+        result: {
+          schemaVersion: 1,
+          status: "review_required",
+          ...(command === "migrate-prepare"
+            ? { operation: migration.operation }
+            : { migration }),
+        },
+      };
+    }
+    // A review refusal is not a failed startup. Validate before publishing a
+    // foreground owner, then revalidate again inside the guarded activation.
+    if (command === "migrate-activate") {
+      const migration = await manager.reviewMigration(operation);
+      if (migration.reviewSha256 !== reviewSha256)
+        fail(
+          "migration_review_required",
+          "Supply the matching SHA256 from the exact migration review.",
+        );
+    }
+    if (command === "restart" && state.operation?.status !== "ready")
+      fail("action_unavailable", "No validated candidate is ready.");
     await ensureServer();
     await onProgress?.(handoff(await request(record), record, false));
     if (cancellationRequested)
       fail("startup_cancelled", "Startup was cancelled before launch.");
-    if (command === "restart") {
+    if (command === "migrate-activate") {
+      await manager.activateMigration(operation, {
+        reviewSha256,
+        acknowledgeRestart: true,
+      });
+    } else if (command === "restart") {
       if (state.operation?.status !== "ready")
         fail("action_unavailable", "No validated candidate is ready.");
       await manager.activate(state.operation.id, { acknowledgeRestart: true });
@@ -583,17 +696,36 @@ export async function runNativeCli(
 ) {
   if (args.length === 1 && args[0] === "--help") {
     process.stdout.write(
-      "Daedlo native\n  daedlo-native doctor|setup|start|status|stop|refresh|restart|retry-evidence --config FILE\n  daedlo-native setup --config FILE --version VERSION\n\nStart owns a foreground runner; repeated start reconnects without replay.\nOpen the returned viewerUrl in Codex Browser; updateUrl opens Ninja-Update.\nKeep private control URLs and records local. Setup never upgrades an existing selection.\n",
+      "Daedlo native\n  daedlo-native doctor|setup|start|status|stop|refresh|restart|retry-evidence --config FILE\n  daedlo-native setup --config FILE --version VERSION\n  daedlo-native migrate-prepare --config FILE\n  daedlo-native migrate-review --config FILE --operation ID\n  daedlo-native migrate-activate --config FILE --operation ID --review-sha256 SHA256\n  daedlo-native abandon-review --config FILE\n  daedlo-native abandon --config FILE --review ID\n\nReview commands print private evidence; retain it locally. Migration activation and abandonment require the exact reviewed identity.\nStart and migrate-activate own a foreground runner; repeated start reconnects without replay.\nOpen the returned viewerUrl in Codex Browser; updateUrl opens Ninja-Update.\nKeep private control URLs and records local. Setup never upgrades an existing selection.\n",
     );
     return;
   }
+  const expectedOptions =
+    args[0] === "migrate-activate"
+      ? ["--operation", "--review-sha256"]
+      : args[0] === "migrate-review"
+        ? ["--operation"]
+        : args[0] === "abandon"
+          ? ["--review"]
+          : args[0] === "setup" && args.length === 5
+            ? ["--version"]
+            : [];
   if (
-    ![3, 5].includes(args.length) ||
+    args.length !== 3 + expectedOptions.length * 2 ||
     !commands.includes(args[0]) ||
     args[1] !== "--config" ||
-    (args.length === 5 && (args[0] !== "setup" || args[3] !== "--version"))
+    expectedOptions.some((option, index) => args[3 + index * 2] !== option)
   )
     fail("usage", "Use daedlo-native --help for supported commands.");
+  const options = {
+    ...(args[0] === "setup" ? { version: args[4] } : {}),
+    ...(["migrate-review", "migrate-activate"].includes(args[0])
+      ? { operation: args[4] }
+      : {}),
+    ...(args[0] === "migrate-activate" ? { reviewSha256: args[6] } : {}),
+    ...(args[0] === "abandon" ? { reviewId: args[4] } : {}),
+  };
+  commandArguments(args[0], options);
   let handle;
   const abort = new AbortController();
   const close = async () => {
@@ -613,7 +745,7 @@ export async function runNativeCli(
   process.on("SIGTERM", onSignal);
   try {
     handle = await command(args[0], args[2], {
-      version: args[4],
+      ...options,
       signal: abort.signal,
       onProgress: (value) =>
         process.stdout.write(

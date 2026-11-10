@@ -1,5 +1,48 @@
 # Verification record
 
+## Managed abandonment and reviewed model migration — 2026-11-10
+
+**Local source candidate; not published.** Ordinary Stop and Refresh retain their
+existing guards. Explicit abandonment reviews use current runtime lifecycle and
+fresh independent draft/pending-effect safety even when model observation fails.
+Immutable review, pre-cleanup and completion records preserve the original report;
+cleanup only drains owned resources and retains failed cleanup/evidence handles.
+Explicit model migration binds the full old/new descriptor, source, registration,
+installation receipts and generation to its review SHA256 before guarded activation.
+The previous installation, reports and rollback history remain retained.
+
+Meaningful failures were recorded before implementation: unsupported abandonment
+at the real managed-child boundary, rejected descriptor migration, native command
+dispatch, missing portable inventory and missing installed-browser gate dispatch.
+A real migration-browser run also exposed an ordinary Restart refusal incorrectly
+retaining a controller; preflight now refuses before publishing that controller.
+
+On macOS arm64, Node 24.22.2 and Chromium 158.0.8127.18, focused recovery, migration,
+native routing, package inventory and release-dispatch regressions pass. All 239
+runtime tests and 29 Rust checks pass (one existing ignored Rust check remains).
+Source syntax, types and formatting pass. Independent review found and verified
+fixes for stale recovery confirmation reuse, retained temporary-file cleanup,
+final draft-measurement ordering and native refusal diagnostics.
+
+Real Chromium source acceptance passed recovery with an uncertain saved result,
+unchanged canonical report bytes, refusal of unknown safety, zero replay, owned
+cleanup and attached-application preservation. Real installer/native migration
+against the retained verified alpha.10 bundle passed a Rust model-version and
+descriptor-pin change, saved readback, unchanged prior reports and visible rollback
+to the original model in the same store. These use independent synthetic fixtures.
+
+The full release/alpha contract run passed 722 tests; its one opt-in exact-bundle
+migration test is exercised separately, with the source-tools run described above.
+Exact candidate-package verification is **NOT RUN at this source checkpoint**.
+No release, deployment, existing customer incident
+recovery, customer business acceptance or normal Roots dependency promotion is
+claimed. New tools cannot hot-repair an older running controller; unavailable
+independent draft or pending-effect safety still blocks abandonment. See
+[abandonment](managed-abandonment.md) and [model migration](model-migration.md).
+
+Private red/green logs and browser receipts are retained under
+`artifacts/support-recovery/`; they are not public customer evidence.
+
 ## Local Compose documentation and website — 2026-11-10
 
 **PASS — local documentation and staged website checks.** The repository guide

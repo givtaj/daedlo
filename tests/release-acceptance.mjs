@@ -147,6 +147,8 @@ export function runInstalledNativeAcceptance(
     runtimeName,
     runtimeVersion,
     engineSha256,
+    bundle,
+    expectedManifestSha256,
   },
   { run, readReceipt = (path) => JSON.parse(fs.readFileSync(path)) },
 ) {
@@ -228,7 +230,58 @@ export function runInstalledNativeAcceptance(
     Array.isArray(observation.checks) && observation.checks.length >= 5,
     "All native observation recovery checks must run",
   );
+  const additional = {};
+  for (const [name, resultKey, outputVariable, minimumChecks] of [
+    ["abandonment", "nativeAbandonment", "DAEDLO_ABANDONMENT_OUTPUT", 6],
+    ["model-migration", "nativeModelMigration", "DAEDLO_MIGRATION_OUTPUT", 4],
+  ]) {
+    const directory = join(output, "native-" + name);
+    const log = run(
+      "installed-native-" + name,
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        join(repoRoot, `tests/release-native-${name}-browser.test.mjs`),
+      ],
+      {
+        env: {
+          DAEDLO_NATIVE_TOOLS_ROOT: join(installedTools, "lib"),
+          DAEDLO_NATIVE_RUNTIME_PATH: runtimePath,
+          DAEDLO_NATIVE_ENGINE_PATH: enginePath,
+          DAEDLO_MIGRATION_ENGINE_CRATE: engineCrate,
+          DAEDLO_MIGRATION_BUNDLE: bundle,
+          DAEDLO_MIGRATION_MANIFEST_SHA256: expectedManifestSha256,
+          [outputVariable]: directory,
+        },
+        timeout: 600000,
+      },
+    );
+    const tap = nativeTapResult(log, "installed-native-" + name, 1);
+    const receipt = readReceipt(join(directory, "result.json"));
+    assert.equal(receipt.status, "PASS");
+    assert.equal(receipt.cleanup, "PASS");
+    assert.equal(receipt.toolsRoot, join(installedTools, "lib"));
+    assert.equal(receipt.runtimePath, runtimePath);
+    assert.ok(
+      Array.isArray(receipt.checks) && receipt.checks.length >= minimumChecks,
+      `${name}: every acceptance group must execute`,
+    );
+    if (name === "abandonment") {
+      assert.equal(receipt.enginePath, enginePath);
+      assert.equal(receipt.engineSha256, engineSha256);
+      assert.equal(receipt.runtime.name, runtimeName);
+      assert.equal(receipt.runtime.version, runtimeVersion);
+    } else {
+      assert.match(expectedManifestSha256 ?? "", /^[a-f0-9]{64}$/);
+      assert.equal(receipt.bundle.manifestSha256, expectedManifestSha256);
+      assert.equal(receipt.bundle.version, runtimeVersion);
+      assert.equal(receipt.engineCrate, engineCrate);
+    }
+    additional[resultKey] = { status: "PASS", checks: receipt.checks, tap };
+  }
   return {
+    ...additional,
     nativeStartup: {
       status: "PASS",
       checks: native.checks,
@@ -699,6 +752,8 @@ export async function runReleaseAcceptance({
             runtimeName: pkg.name,
             runtimeVersion: pkg.version,
             engineSha256: result.engineExecutableSha256,
+            bundle,
+            expectedManifestSha256,
           },
           { run },
         ),
