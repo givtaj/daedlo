@@ -90,6 +90,104 @@ test("rejects private Codex thread links with only a path and rule report", asyn
   );
 });
 
+for (const [label, value] of [
+  ["macOS home", ["", "Users", "synthetic-person", "project"].join("/")],
+  ["Linux home", ["", "home", "synthetic-person", ".config"].join("/")],
+  [
+    "file URI home",
+    ["file:", "", "", "Users", "synthetic-person", "project"].join("/"),
+  ],
+  ["Windows home", ["C:", "Users", "Synthetic Person", "project"].join("\\")],
+  [
+    "JSON-escaped Windows home",
+    JSON.stringify(["C:", "Users", "synthetic-person", "project"].join("\\")),
+  ],
+  [
+    "Windows home with forward slashes",
+    ["D:", "Users", "synthetic-person", "project"].join("/"),
+  ],
+  [
+    "case-insensitive Windows home",
+    ["c:", "uSeRs", "synthetic-person", "project"].join("\\"),
+  ],
+]) {
+  test(`rejects a tracked ${label} without printing the personal path`, async (t) => {
+    const f = await fixture(t);
+    await f.write("docs/receipt.md", `Evidence: ${value}\n`);
+    const before = f.git("status", "--porcelain=v1", "-z");
+    const result = f.run();
+    assert.equal(result.status, 1, "A personal absolute home path must fail");
+    assert.match(result.stderr, /personal-home-path/);
+    assert.ok(!`${result.stdout}${result.stderr}`.includes(value));
+    assert.ok(!`${result.stdout}${result.stderr}`.includes("synthetic-person"));
+    assert.equal(f.git("status", "--porcelain=v1", "-z"), before);
+  });
+}
+
+for (const domain of [
+  "gmail.com",
+  "googlemail.com",
+  "outlook.com",
+  "hotmail.co.uk",
+  "live.com",
+  "icloud.com",
+  "yahoo.co.uk",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+]) {
+  test(`rejects a personal mailbox at ${domain} without printing it`, async (t) => {
+    const f = await fixture(t);
+    const address = ["synthetic.person+fixture", domain.toUpperCase()].join(
+      "@",
+    );
+    await f.write("docs/receipt.md", `Author: <${address}>\n`);
+    const result = f.run();
+    assert.equal(result.status, 1, "A personal mailbox address must fail");
+    assert.match(result.stderr, /personal-mailbox/);
+    assert.ok(!`${result.stdout}${result.stderr}`.includes(address));
+    assert.ok(!`${result.stdout}${result.stderr}`.includes("synthetic.person"));
+  });
+}
+
+test("allows home placeholders, web paths and public support addresses", async (t) => {
+  const f = await fixture(t);
+  await f.write(
+    "docs/public.md",
+    [
+      ["", "Users", "<username>", "project"].join("/"),
+      ["", "home", "$USER", "project"].join("/"),
+      ["C:", "Users", "%USERNAME%", "project"].join("\\"),
+      "$HOME/project",
+      "https://example.test/home/synthetic-person/project",
+      "https://api.github.com/users/synthetic-person",
+      "docs/home/synthetic-person/project",
+      "support@daedlo.com",
+      "noreply@github.com",
+      "12345678+synthetic-user@users.noreply.github.com",
+      "fixture@example.test",
+      ["fixture", "gmail.com.example.test"].join("@"),
+    ].join("\n"),
+  );
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test("allows API user routes and route-parameter placeholders", async (t) => {
+  const f = await fixture(t);
+  await f.write(
+    "docs/api.md",
+    [
+      "Route: /users/:id",
+      "Route: /users/synthetic-person",
+      "Route: /Users/:id",
+      "Route: /home/:username",
+    ].join("\n"),
+  );
+  const result = f.run();
+  assert.equal(result.status, 0, result.stderr);
+});
+
 test("rejects a tracked customer path without needing to open its contents", async (t) => {
   const f = await fixture(t);
   await f.write("customers/example/empty.txt", "");

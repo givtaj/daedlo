@@ -44,7 +44,10 @@ The instructions are distributed from this repository for Codex and Claude Code.
   upstream-review process; do not create automatic synchronization or monitoring.
 - Keep secrets, synthetic account credentials, raw session cookies, private
   traces, dependency installs and build artifacts out of Git. Hashes are not
-  anonymization. Only public metadata belongs in shared reports.
+  anonymization. Only public metadata belongs in shared reports. Use generic
+  workspace paths and role-based participant descriptions; omit personal contact
+  and account billing details. Use a GitHub noreply author email for new commits
+  and GitHub-created merges, without rewriting existing history.
 - Do not publish or change everyday Roots dependency pins without scope covering
   that promotion. Normal local implementation and isolated verification can
   proceed under the current authorization.

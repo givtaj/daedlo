@@ -277,9 +277,9 @@ const results = {
     published
       ? "Actual production HTTPS catalog and assets; local pinned Ed25519 public key, no injected fetch transport"
       : "Local ephemeral signed catalog with exact frozen ZIP bytes; no production feed/signing claim",
-    "Pinned Architecture Studio synthetic fixture; no WBF or everyday application access",
+    "Pinned Architecture Studio synthetic fixture; no external-customer or everyday application access",
     published
-      ? "Published release acceptance uses synthetic data; no WBF or clean-OS acceptance claim"
+      ? "Published release acceptance uses synthetic data; no external-customer or clean-OS acceptance claim"
       : "Candidate is unpublished; manager implementation is identified by toolsRoot and its file inventory",
   ],
 };

@@ -232,14 +232,14 @@ As of 23 October 2026, [probe 39947177085](https://github.com/givtaj/daedlo/acti
 received **44/44 HTTP 403 challenges**, covering both public origins and both
 user-agent variants, with no successful HTTP response. Dashboard inspection of
 the owned feed request identified the existing account-wide US country access
-rule. See [verification](verification.md) for the evidence and scope. The user subsequently
-approved a US Allow rule restricted to daedlo.com. Follow-up
+rule. See [verification](verification.md) for the evidence and scope. A subsequent
+authorized US Allow rule was restricted to daedlo.com. Follow-up
 [probe 39948105153](https://github.com/givtaj/daedlo/actions/runs/39948105153)
 returned 22/22 HTTP 200 on the apex and 22/22 HTTP 403 on the provider hostname;
 the account-wide rule is unchanged. Country Allow also bypasses custom and
 rate-limiting rules for matching Daedlo traffic, including future rules.
-The user's priority is Spain and the US. Baseline DE/FR/ES probes passed 6/6;
-NL received 2/2 challenges and the user declined an exception, so no NL rule changed.
+Delivery checks cover Spain and the US. Baseline DE/FR/ES probes passed 6/6;
+NL received 2/2 challenges; its challenge policy remained unchanged.
 Final generation-3 probes passed four exact, signature-verified feed GETs and
 four ZIP HEAD availability checks across two Spain and two US locations. Full
 archive-body integrity was verified separately by the original consumer. The

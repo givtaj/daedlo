@@ -16,6 +16,10 @@ import { join } from "node:path";
 // Rules recognize literal direct /c/ and /g/<id>[/project]/c/ conversation
 // routes on the two ChatGPT hosts, plus Codex thread deep links. Public share
 // URLs, bare UUIDs, and ordinary session/model identifiers are deliberately allowed.
+// Literal personal home paths and common consumer mailbox domains are rejected.
+// Use relative paths, home-variable placeholders and a public support address in
+// documentation. Domain matching is bounded; this does not identify every private
+// address or decide whether a published author's legal attribution is appropriate.
 // ASCII routes embedded in binary bytes are checked too. Encoded/obfuscated URLs,
 // compressed archives, image text, and other private metadata need separate review.
 // Run on a stable checkout: this is a focused review guard, not a complete secret
@@ -29,6 +33,21 @@ const rules = [
   {
     name: "private-codex-thread",
     pattern: /(?:^|[^a-z0-9+.-])codex:\/\/threads\/[a-z0-9_-]+/i,
+  },
+  {
+    name: "personal-home-path",
+    // Require an absolute path boundary, not a web route or relative path.
+    // Windows separators may be doubled in JSON/string literals. Placeholder
+    // usernames such as angle-bracket labels and environment variables are safe.
+    // Unix home-directory spelling is exact; lowercase user API routes are not
+    // macOS home paths. Colon-prefixed route parameters are not user names.
+    pattern:
+      /(?:^|[^a-zA-Z0-9._~%/\\-])(?:(?:[fF][iI][lL][eE]:\/\/)?\/(?:Users|home)\/[^\s/\\$%<>"'`{}:]+(?:\/|(?=$|[\s"'<>`]))|[a-zA-Z]:[\\/]+[uU][sS][eE][rR][sS][\\/]+[^\\/\s"'<>:*?|%${}][^\\/\r\n"'<>:*?|%${}]*(?:[\\/]|$))/m,
+  },
+  {
+    name: "personal-mailbox",
+    pattern:
+      /[a-z0-9._%+-]+@(?:gmail\.com|googlemail\.com|(?:outlook|hotmail|live|yahoo)\.(?:com|co\.uk|fr|de|es|it|ca|com\.au)|(?:icloud|me|mac|aol|ymail|msn|protonmail|mail|fastmail|hey|tuta|tutanota)\.com|proton\.me|gmx\.(?:com|de))(?![a-z0-9-]|\.[a-z0-9-])/i,
   },
 ];
 

@@ -22,10 +22,12 @@ force-push, recreate the repository, retarget tags or remove signatures to open
 access. Existing commits, release artifacts, checksums, notices, publisher trust
 and verification identities retain their original meaning.
 
-The reviewed history contains two historical private-chat identifiers in old
-documentation blobs. The review did not identify a conversation transcript or
-credential associated with them. Retain the recorded limitation without copying
-the identifiers into a new report. Recheck newly added material before launch;
+The reviewed history contains personal author-email metadata, local home paths
+and two historical private-chat identifiers in old documentation blobs. The
+review did not identify a conversation transcript or credential associated with
+the chat identifiers. Current-file sanitization does not remove these older
+objects or copies in GitHub metadata. Retain this limitation without copying
+private values into a new report. Recheck newly added material before launch;
 an unexpected credential or customer-data finding needs its own resolution.
 Keep the old rewrite preparation and local preservation bundles private. Local
 preservation is not an off-host backup. No history rewrite or GitHub Support
@@ -46,8 +48,11 @@ node scripts/repository-guardrails.mjs
 ```
 
 The metadata guard inspects tracked working-tree bytes. It rejects direct
-private-conversation links and customer path segments without printing matched
-content or opening customer material. It does not inspect untracked files,
+private-conversation links, personal home-directory paths, consumer-mailbox
+addresses and customer path segments without printing matched content or opening
+customer material. Use generic paths and synthetic example-domain addresses in
+examples. Mailbox detection covers a bounded list of consumer providers; it is
+not a classifier for every personal address. It does not inspect untracked files,
 compressed archives, image text, Git history or external GitHub surfaces.
 
 The `Public metadata and secrets` CI job also runs pinned Gitleaks 8.30.1 over
@@ -108,8 +113,8 @@ that every future contribution or historical artifact is free of sensitive data.
 
 Hosted CI must pass on the exact selected source. Each later source needs its own
 passing required checks. Local passes or earlier release CI cannot substitute for
-them; retain every required job and assertion. The 30 October account
-payment/spending-limit block is historical. No billing change was part of launch.
+them; retain every required job and assertion. The 30 October hosted CI
+account restriction is historical. No account changes were part of launch.
 
 ## Recorded owner decision and public-switch sequence
 

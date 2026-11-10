@@ -217,7 +217,7 @@ frameworks are not sealed. See [Operation Ninja-Update](operations/ninja-update.
 | Public delivery | GitHub prerelease with exactly three assets; 27 served assets byte-identical on each of both website origins; nine private paths return 404 on each origin; CSP, nosniff and cache policies checked | PASS |
 | Fresh published installer | All three HTTPS/GitHub assets match frozen bytes; exact START_HERE block passed with a fresh npm cache; ancestor workspace/repository manifests unchanged; all 37 installed tools files and public trust pin match | PASS |
 | Published customer update | Actual production HTTPS feed/assets and freshly downloaded tools; eight checkpoints: authenticated alpha.2 baseline, controlled rejection after real checks, normal alpha.3 discovery/upgrade, rollback, unchanged source/data/tools, four final reports, relaunch and cleanup | PASS; visible Updated/Reverted control and viewer inspection passed |
-| WBF and ordinary Roots adoption | No WBF fixture or everyday Roots promotion performed | NOT RUN / outside this release's acceptance claim |
+| External-customer and ordinary Roots adoption | No external-customer fixture or everyday Roots promotion performed | NOT RUN / outside this release's acceptance claim |
 
 GitHub publication completed at `2026-10-23T10:20:58Z`. The initial Cloudflare version
 `7a4d7da7-6f12-45c9-9f73-52ad898c3c52` served 100% of the existing Daedlo Worker;
@@ -263,8 +263,8 @@ provider. No injected fetch transport or production application data was used.
 
 The scoped alpha.3 delivery is complete. Next, onboard one external builder's
 agreed useful flow and negative case. Measure setup time,
-agent interventions and repeat-run success. WBF needs its own agreed disposable
-fixture and flows before claiming WBF preservation or upgrade acceptance.
+agent interventions and repeat-run success. Each customer needs an agreed
+disposable fixture and flows before claiming preservation or upgrade acceptance.
 Independent human onboarding, external customer adoption, Linux/Windows customer
 onboarding and Claude Code acceptance remain unproven. No invitation or customer
 message is implied by these release operations.

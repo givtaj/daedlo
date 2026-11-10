@@ -304,7 +304,7 @@ const result = {
   checks: [],
   cleanup: [],
   limits: [
-    "Independent synthetic notebook; no WBF, Roots or other customer checkout accessed",
+    "Independent synthetic notebook; no Roots or external-customer checkout accessed",
     "Existing host toolchains and matching Playwright Chromium; clean OS is not tested",
     productionHttps
       ? "Fixed production HTTPS feed and immutable downloads with bundled pinned public trust; no private publisher key or production mutation"
