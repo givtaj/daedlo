@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="See Daedlo's public preview verify a real editor flow: edit, save, reload, and inspect the evidence. Recorded on macOS with fresh dependency caches."
+    />
+    <meta name="theme-color" content="#f5f3ed" />
+    <meta
+      property="og:title"
+      content="A real save. Something to show. — Daedlo"
+    />
+    <meta
+      property="og:description"
+      content="A recorded real application run, using the public Daedlo preview. One save, verified against the response, API and disk."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://daedlo.com/demo.html" />
+    <link rel="canonical" href="https://daedlo.com/demo.html" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/demo.css" />
+    <title>A real save. Something to show. — Daedlo</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="34" height="34" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="/demo.html" aria-current="page">Real demo</a>
+        <a href="/guide.html">Integration guide</a>
+        <a href="/install.html" class="nav-guide"
+          >Get Daedlo <span aria-hidden="true">↗</span></a
+        >
+      </nav>
+    </header>
+    <main id="main" class="demo-main wrap">
+      <section class="demo-intro" aria-labelledby="demo-title">
+        <div>
+          <p class="eyebrow">
+            <span class="status-dot"></span> Recorded real application run
+          </p>
+          <h1 id="demo-title">
+            A real save.<br />Something to <span class="orange">show.</span>
+          </h1>
+          <p class="demo-lead">
+            We downloaded the public Daedlo kit, connected one existing editor
+            flow, and followed the save all the way to disk.
+          </p>
+        </div>
+        <aside class="demo-run-card" aria-label="Recorded run details">
+          <span class="demo-pass">Passed</span>
+          <dl>
+            <div>
+              <dt>Application</dt>
+              <dd>Architecture Studio</dd>
+            </div>
+            <div>
+              <dt>Daedlo</dt>
+              <dd>0.1.2-rc.1</dd>
+            </div>
+            <div>
+              <dt>Recorded</dt>
+              <dd><time datetime="2026-10-11">11 October 2026</time></dd>
+            </div>
+            <div>
+              <dt>Environment</dt>
+              <dd>macOS arm64</dd>
+            </div>
+          </dl>
+          <a class="text-link" href="/install.html"
+            >Try the same public kit <span aria-hidden="true">↗</span></a
+          >
+        </aside>
+      </section>
+
+      <section class="demo-recording" aria-labelledby="recording-title">
+        <div class="demo-section-heading">
+          <div>
+            <p class="section-number">01 / THE COMPLETED FLOW</p>
+            <h2 id="recording-title">Edit. Save. Reload. Verify.</h2>
+          </div>
+          <span class="demo-recorded-label"
+            >Recorded screenshot · not a live session</span
+          >
+        </div>
+        <figure class="demo-capture">
+          <a
+            href="/demo-verified-save.png"
+            aria-label="Open the full recorded screenshot of the completed five-stage flow"
+          >
+            <img
+              src="/demo-verified-save.png"
+              alt="Recorded Daedlo viewer with Architecture Studio showing the saved model, persisted revision 3, and the five-stage presentation marked Completed."
+              width="1265"
+              height="712"
+              fetchpriority="high"
+            />
+          </a>
+          <figcaption>
+            <span>Actual Daedlo viewer, captured after the five-stage run.</span
+            ><span
+              >Open image for full size <span aria-hidden="true">↗</span></span
+            >
+          </figcaption>
+        </figure>
+        <ol
+          class="demo-steps"
+          aria-label="The five recorded presentation stages"
+        >
+          <li><span>01</span>Open the editor</li>
+          <li><span>02</span>Set the name</li>
+          <li><span>03</span>Set the notes</li>
+          <li><span>04</span>Save and check</li>
+          <li><span>05</span>Reload and verify</li>
+        </ol>
+        <p class="demo-context">
+          The editor and persistence are real application behavior, tested with
+          disposable synthetic data. Architecture Studio’s topology is an
+          authored 3D simulation; its simulated jobs and performance are outside
+          this check.
+        </p>
+      </section>
+
+      <section class="demo-proof" aria-labelledby="proof-title">
+        <div class="demo-section-heading">
+          <div>
+            <p class="section-number">02 / LOOK PAST THE CLICK</p>
+            <h2 id="proof-title">What made it a pass?</h2>
+          </div>
+          <a class="text-link" href="/demo-evidence.json"
+            >Inspect the evidence summary <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="demo-proof-grid">
+          <article>
+            <span class="demo-proof-number">1</span>
+            <h3>One PUT. One revision.</h3>
+            <p>
+              The presentation made one PUT request. HTTP 200, response, API and
+              disk agreed on the exact saved values. Revision advanced from 2 to
+              3.
+            </p>
+          </article>
+          <article>
+            <span class="demo-proof-number">0</span>
+            <h3>No write for an empty name.</h3>
+            <p>
+              An empty name entered the invalid state. Save and Reload were
+              unavailable. Zero PUT requests; the revision stayed unchanged.
+            </p>
+          </article>
+          <article>
+            <span class="demo-proof-number">2</span>
+            <h3>Both fields survived.</h3>
+            <p>
+              After reload, reopening the editor verified the actual name and
+              notes against the persisted values, without another write.
+            </p>
+          </article>
+        </div>
+        <div class="demo-test-line">
+          <p>
+            <strong>13 Rust checks + 7 Node checks passed.</strong> The browser
+            flow and persistence checks provide separate evidence of the real
+            application outcome.
+          </p>
+          <span class="demo-pass">Verified</span>
+        </div>
+      </section>
+
+      <section class="demo-reopen" aria-labelledby="reopen-title">
+        <div class="demo-section-heading">
+          <div>
+            <p class="section-number">03 / OPEN IT AGAIN</p>
+            <h2 id="reopen-title">Still there after a reload.</h2>
+          </div>
+        </div>
+        <div class="demo-reopen-grid">
+          <figure class="demo-capture">
+            <a
+              href="/demo-restored-fields.png"
+              aria-label="Open the full recorded screenshot of the reopened editor and successful field verification"
+            >
+              <img
+                src="/demo-restored-fields.png"
+                alt="Recorded Daedlo viewer showing the reopened Architecture Studio editor, revision 3, and the successful outcome Editor opened with persisted model fields."
+                width="1265"
+                height="958"
+                loading="lazy"
+              />
+            </a>
+            <figcaption>
+              Recorded screenshot · editor reopened after reload.
+            </figcaption>
+          </figure>
+          <div class="demo-saved-fields">
+            <p class="eyebrow">Exact values verified by the check</p>
+            <dl>
+              <div>
+                <dt>Model name</dt>
+                <dd>Daedlo delivery pipeline — verified</dd>
+              </div>
+              <div>
+                <dt>Notes</dt>
+                <dd>Saved from a clean public Daedlo installation.</dd>
+              </div>
+              <div>
+                <dt>Persisted revision</dt>
+                <dd>3 <span>· unchanged on reopen</span></dd>
+              </div>
+            </dl>
+            <p>
+              The outcome confirms both fields in the reopened editor. The
+              screenshot shows the name and result; the notes field is below the
+              captured editor viewport.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo-scope" aria-labelledby="scope-title">
+        <div>
+          <p class="section-number">THE INSTALLATION BEHIND THE RUN</p>
+          <h2 id="scope-title">
+            The public kit.<br />Fresh dependency caches.
+          </h2>
+        </div>
+        <div class="demo-scope-copy">
+          <p>
+            The downloaded ZIP matched its published SHA-256. We installed the
+            runtime, Chromium and Rust dependencies into new, empty caches,
+            using existing Node.js 22.20.0 and Rust 1.96.0 toolchains. The
+            public runtime, engine crate and tools stayed unchanged.
+          </p>
+          <p>
+            A customer-authored Rust state model and JavaScript adapter
+            connected this application. The first run exposed integration issues
+            around readiness, selectors, invalid input and observing a save;
+            those were corrected and checked before this completed run.
+          </p>
+          <p>
+            This is one verified flow on macOS arm64. Linux, Windows and Claude
+            Code remain unverified for this acceptance. A clean OS installation,
+            automatic skill discovery, independent human onboarding, concurrent
+            editors and injected save failures were not tested.
+          </p>
+        </div>
+      </section>
+
+      <section class="demo-cta" aria-labelledby="try-title">
+        <div>
+          <p class="eyebrow">YOUR APPLICATION. YOUR DEFINITION OF WORKING.</p>
+          <h2 id="try-title">Bring one real flow.</h2>
+          <p>
+            Download the kit, give your coding agent the bundled instructions,
+            and connect a small feature you already understand.
+          </p>
+        </div>
+        <a class="button primary" href="/install.html"
+          >Install Daedlo <span aria-hidden="true">↓</span></a
+        >
+      </section>
+    </main>
+    <footer class="site-footer wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="28" height="28" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <p>Tools grow out of the work.</p>
+      <nav aria-label="Footer navigation">
+        <a href="/install.html">Download</a
+        ><a href="/guide.html">Integration guide</a
+        ><a href="/privacy.html">Privacy &amp; contact</a>
+      </nav>
+    </footer>
+  </body>
+</html>

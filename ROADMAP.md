@@ -12,8 +12,29 @@ the [contributor workflow](CONTRIBUTING.md).
 
 ## Near-term priorities
 
-- Finish the coordinated Daedlo naming transition while preserving existing
-  release artifacts, wire contracts and customer installations.
+The current downloadable alpha and its exact scope are listed in
+[releases](https://github.com/givtaj/daedlo/releases) and the
+[installation guide](https://daedlo.com/install). Development progress does not
+change an accepted installation or make a candidate available to customers.
+
+### Active development
+
+- **Persistent target history and recovery — in development.** Keep durable run
+  records in a customer-owned workspace and recover interrupted ownership without
+  replaying application actions. Journals and crash-recovery work are local
+  development; a SQLite target catalog, browsable multi-target history and exact
+  release acceptance remain further steps. These capabilities are not included
+  in the current public kit.
+- **Docker Compose service — in development.** Run Daedlo beside an application's
+  existing services, with explicit networking and ownership. Container startup,
+  browser access, restart and shutdown acceptance must complete before a supported
+  image or customer deployment is claimed. No public container delivery is
+  announced here.
+
+### Continuing contribution areas
+
+- Preserve existing release artifacts, wire contracts and customer installations
+  as the product evolves.
 - Make the manual contributor setup and independent fixture easy to reproduce;
   distinguish contributor-platform checks from customer-onboarding acceptance.
 - Improve explanations and accessibility of viewer controls without blurring

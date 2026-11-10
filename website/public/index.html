@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Daedlo is a visible, state-aware QA workbench. Define a feature's behavior, watch the real browser, and inspect the outcome. Born while building Roots."
+      content="Daedlo is an open-source, local QA workbench. Define a feature's behavior, watch the real browser, and inspect the outcome. Born while building Roots."
     />
     <meta name="theme-color" content="#f5f3ed" />
     <meta
@@ -14,7 +14,7 @@
     />
     <meta
       property="og:description"
-      content="A visible QA workbench, born while building Roots. Define the behavior. Watch it run. Inspect the outcome."
+      content="An open-source, local QA workbench, born while building Roots. Define the behavior. Watch it run. Inspect the outcome."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://daedlo.com/" />
@@ -40,13 +40,14 @@
         ><a href="/install.html" class="nav-guide"
           >Get started <span aria-hidden="true">↗</span></a
         >
+        <a href="https://github.com/givtaj/daedlo">GitHub</a>
       </nav>
     </header>
     <main id="main">
       <section class="hero wrap" aria-labelledby="hero-title">
         <div class="hero-copy">
           <p class="eyebrow">
-            <span class="status-dot"></span> A QA workbench for builders
+            <span class="status-dot"></span> Open-source QA for builders
             <span class="preview-tag">Assisted alpha</span>
           </p>
           <h1 id="hero-title">
@@ -60,55 +61,107 @@
           <div class="hero-actions">
             <a class="button primary" href="/install.html"
               >Start with Codex <span aria-hidden="true">→</span></a
-            ><a class="text-link" href="/demo.html"
-              >See the real demo <span aria-hidden="true">↘</span></a
+            ><a class="text-link" href="https://github.com/givtaj/daedlo"
+              >View on GitHub <span aria-hidden="true">↗</span></a
             >
           </div>
           <p class="hero-description">
-            Swagger UI driving supports a bounded subset of OpenAPI 3.0, 3.1 and
-            3.2 JSON. Choose allowed requests and inspect the response evidence.
+            Watch the application, follow the flow, and inspect the evidence.
+            Your definition of working stays connected to what actually
+            happened.
           </p>
           <p class="hero-footnote">
             0.1.4-alpha.10 · Assisted alpha.<br />
-            Clear connection status while you rebuild or restart your app. Run
-            authored checks without a model API key.
+            Clear connection status while you rebuild or restart your app.<br />
+            Run authored checks locally without a model API key.<br />
+            <a
+              href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+              >Apache-2.0 core</a
+            >
+            · No hosted account or seat payment required.
           </p>
         </div>
         <article class="real-demo-card" aria-labelledby="real-demo-title">
           <div class="real-demo-heading">
             <span class="section-number">RECORDED REAL RUN</span
-            ><span class="demo-date">11 OCT 2026</span>
+            ><span class="demo-date">9 NOV 2026</span>
           </div>
           <h2 id="real-demo-title">
-            Edit. Save. Reload.<br /><span class="orange">Verified.</span>
+            A keyboard save.<br /><span class="orange">Verified.</span>
           </h2>
-          <p>Public 0.1.2-rc.1 kit · Recorded Architecture Studio flow.</p>
+          <p>Roots · Recorded alpha.9 candidate flow.</p>
           <a
             class="demo-capture-link"
-            href="/demo.html"
-            aria-label="See the recorded Architecture Studio demo"
+            href="/demo.html#roots-recording"
+            aria-label="See the recorded Roots keyboard-save flow"
           >
             <img
-              src="/demo-verified-save.png"
-              alt="Actual Daedlo viewer after the five-step Architecture Studio presentation completed, showing persisted revision 3."
-              width="1265"
-              height="712"
+              src="/demo-roots-save.png"
+              alt="Recorded Daedlo viewer showing Roots, a saved experience and the ten-step keyboard-save flow marked Completed."
+              width="1440"
+              height="900"
               fetchpriority="high"
             />
           </a>
           <div class="demo-proof-strip">
-            <span><strong>1</strong> verified write</span
-            ><span><strong>3</strong> sources agree</span
-            ><span><strong>5</strong> completed steps</span>
+            <span><strong>10</strong> completed steps</span
+            ><span><strong>1</strong> new saved row</span
+            ><span><strong>Reload</strong> same row verified</span>
           </div>
           <p class="demo-recorded-note">
-            Recorded screenshot · Synthetic test data · macOS arm64<br />Save
-            response, API and disk matched; saved fields survived reload.
+            Recorded screenshot · Isolated synthetic data<br />Independent API
+            readback confirmed the save; the same row survived browser reload.
           </p>
-          <a class="text-link" href="/demo.html"
+          <a class="text-link" href="/demo.html#roots-recording"
             >Inspect the run and evidence <span aria-hidden="true">↗</span></a
           >
         </article>
+      </section>
+      <section
+        class="release-section wrap"
+        id="latest-release"
+        aria-labelledby="latest-release-title"
+      >
+        <div class="release-heading">
+          <div>
+            <p class="eyebrow">Available now · 0.1.4-alpha.10</p>
+            <h2 id="latest-release-title">More of the flow in view.</h2>
+          </div>
+          <a
+            class="text-link"
+            href="https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.10"
+            >Read the release notes <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="release-grid">
+          <article>
+            <span class="section-number">FOLLOW THE WORK</span>
+            <h3>Application. Flow. Results.</h3>
+            <p>
+              Keep the live application, authored steps and results together.
+              Explore larger state maps without losing the current flow.
+            </p>
+          </article>
+          <article>
+            <span class="section-number">DRIVE AN API</span>
+            <h3>Bring your Swagger UI.</h3>
+            <p>
+              Choose allowed requests and inspect response evidence. The
+              standalone integration supports a bounded subset of OpenAPI 3.0,
+              3.1 and 3.2 JSON. Declared password inputs stay masked and clear
+              after submission.
+            </p>
+          </article>
+          <article>
+            <span class="section-number">KEEP YOUR CONTEXT</span>
+            <h3>Clear status during app restarts.</h3>
+            <p>
+              See viewer, browser, application and image status separately. Keep
+              the last completed result visible while your app rebuilds;
+              connection checks never replay commands.
+            </p>
+          </article>
+        </div>
       </section>
       <section class="principles wrap" aria-label="How Daedlo works">
         <article>
@@ -210,6 +263,44 @@
             </p></noscript
           >
         </div>
+      </section>
+      <section
+        class="roadmap-section wrap"
+        id="roadmap"
+        aria-labelledby="roadmap-title"
+      >
+        <div class="release-heading">
+          <div>
+            <p class="eyebrow">Work in progress</p>
+            <h2 id="roadmap-title">What we’re building next.</h2>
+          </div>
+          <a
+            class="text-link"
+            href="https://github.com/givtaj/daedlo/blob/main/ROADMAP.md"
+            >Follow the public roadmap <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="roadmap-grid">
+          <article>
+            <p class="eyebrow">In development</p>
+            <h3>Persistent target workspaces</h3>
+            <p>
+              Keep run history with each target and inspect interrupted work
+              before deciding how to recover.
+            </p>
+          </article>
+          <article>
+            <p class="eyebrow">In development</p>
+            <h3>Docker Compose workflows</h3>
+            <p>
+              Run Daedlo alongside your application as a Docker Compose service.
+            </p>
+          </article>
+        </div>
+        <p class="roadmap-note">
+          These capabilities are not included in the current release. Follow
+          their progress in the roadmap; release dates are not yet promised.
+        </p>
       </section>
       <section class="teaching-teaser" aria-labelledby="teaching-teaser-title">
         <div class="teaching-teaser-grid wrap">
@@ -356,6 +447,17 @@
         ><a href="/teaching.html">Teaching mode</a
         ><a href="/guide.html">Integration guide</a
         ><a href="/privacy.html">Privacy &amp; contact</a>
+        <a href="https://github.com/givtaj/daedlo">GitHub</a>
+        <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
+        <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
+          >Contribute</a
+        >
+        <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
+          >Support</a
+        >
+        <a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+          >Apache-2.0</a
+        >
       </nav>
     </footer>
   </body>

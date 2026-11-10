@@ -151,7 +151,7 @@ test("copied prompt includes first-flow acceptance, preservation and managed-upd
     assert.match(prompt, pattern, `The copied prompt is missing ${label}.`);
 });
 
-test("canonical agent prompt appears before manual installation and uses customer-neutral project instructions", async () => {
+test("canonical agent prompt appears before manual installation and starts from the visitor's application", async () => {
   const html = await template();
   promptFrom(html);
   const position = html.indexOf('id="onboarding-prompt"');
@@ -162,11 +162,11 @@ test("canonical agent prompt appears before manual installation and uses custome
       `The prompt must precede ${id} instructions.`,
     );
   }
-  assert.match(html, /Open your application repository in Codex/);
+  assert.match(html, /open your application repository in Codex/i);
   assert.doesNotMatch(
     html,
-    /WBF/,
-    "Public onboarding must not identify a private pilot organization.",
+    /\bWBF\b/,
+    "Public installation must not require a named customer's project.",
   );
   assert.doesNotMatch(
     html,
