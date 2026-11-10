@@ -6,7 +6,7 @@
  *
  * prepare --private-key ABS --output FRESH_ABS [--checkpoint SIGNED_CATALOG]
  * verify --output ABS  (immediately before deployment; live baseline must match)
- * live --output ABS    (after deployment; verifies all served bytes/boundaries)
+ * live --output ABS [--wait-for-assets] (after deployment; verifies all bytes/boundaries)
  *
  * The workflow persists output/checkpoint before deployment. A checkpoint ahead
  * of the live feed is an operator-recovery condition, not permission to replay.
@@ -18,6 +18,8 @@ import { createPublicKey } from "node:crypto";
 import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
+import { performance } from "node:perf_hooks";
+import { setTimeout as delay } from "node:timers/promises";
 import { sha256 } from "./manifest.mjs";
 import { verifyNinjaCatalog, compareNinjaVersions } from "./ninja-catalog.mjs";
 import {
@@ -352,6 +354,45 @@ function httpStatusFailure(url, response, expected) {
       : "";
   return `Unexpected renewal HTTP status: ${path} status=${status} expected=${expected}${mitigation}`;
 }
+class RenewalHttpStatusError extends Error {
+  constructor(url, response, expected) {
+    super(httpStatusFailure(url, response, expected));
+    this.path = diagnosticPath(url);
+    this.status =
+      Number.isInteger(response.status) &&
+      response.status >= 100 &&
+      response.status <= 599
+        ? response.status
+        : "unknown";
+    this.expected = expected;
+    this.challenged = response.headers.get("cf-mitigated") === "challenge";
+  }
+}
+class LiveAvailabilityError extends Error {
+  constructor(code) {
+    super(`Live asset availability failed: ${code}`);
+    this.code = code;
+  }
+}
+const LIVE_AVAILABILITY_MS = 120000;
+const LIVE_AVAILABILITY_INTERVAL_MS = 5000;
+const LIVE_AVAILABILITY_ATTEMPTS = 25;
+function liveRemaining(s) {
+  if (!s.liveWindow) return 30000;
+  const remaining = Math.floor(s.liveWindow.deadline - s.liveWindow.now());
+  if (remaining <= 0) throw new LiveAvailabilityError("deadline_exceeded");
+  return remaining;
+}
+function liveWallClock(s) {
+  if (!s.liveWindow) return s.now;
+  return clock(
+    s.liveWindow.wallClock +
+      Math.ceil(s.liveWindow.now() - s.liveWindow.started),
+  );
+}
+async function discardResponse(response) {
+  await response.body?.cancel().catch(() => {});
+}
 function fail(message) {
   throw Error(message);
 }
@@ -486,7 +527,7 @@ async function fetchBytes(
 ) {
   if (!url.startsWith(ORIGIN + "/") || new URL(url).origin !== ORIGIN)
     fail("Unsupported renewal origin");
-  const signal = AbortSignal.timeout(30000);
+  const signal = AbortSignal.timeout(Math.min(30000, liveRemaining(s)));
   let response;
   try {
     response = await s.fetchImpl(url, {
@@ -495,7 +536,14 @@ async function fetchBytes(
       signal,
     });
   } catch (error) {
+    liveRemaining(s);
     throw networkFailure(url, s.stage, "headers", error, signal);
+  }
+  try {
+    liveRemaining(s);
+  } catch (error) {
+    await discardResponse(response);
+    throw error;
   }
   if (response.redirected || (response.url && response.url !== url))
     fail("Renewal response changed origin or URL");
@@ -505,10 +553,14 @@ async function fetchBytes(
       : url.slice(0, -5);
     if (new URL(response.headers.get("location") ?? "", url).href !== canonical)
       fail("Unexpected HTML canonical redirect");
+    await discardResponse(response);
     return fetchBytes(canonical, s, { maximum, status, date });
   }
-  if (response.status !== status)
-    fail(httpStatusFailure(url, response, status));
+  if (response.status !== status) {
+    const error = new RenewalHttpStatusError(url, response, status);
+    await discardResponse(response);
+    throw error;
+  }
   if (date) {
     const observed = Date.parse(response.headers.get("date") ?? "");
     if (!Number.isFinite(observed) || Math.abs(observed - s.now) > 5 * 60000)
@@ -527,8 +579,10 @@ async function fetchBytes(
       try {
         chunk = await reader.read();
       } catch (error) {
+        liveRemaining(s);
         throw networkFailure(url, s.stage, "body", error, signal);
       }
+      liveRemaining(s);
       const { done, value } = chunk;
       if (done) break;
       total += value.length;
@@ -995,10 +1049,8 @@ export async function verifyNinjaRenewal({ output } = {}, deps = {}) {
   };
 }
 /** Verify the exact newly deployed static tree and signed feed over real HTTPS. */
-export async function verifyLiveNinjaRenewal({ output } = {}, deps = {}) {
-  const s = settings(deps, "live"),
-    t = await trust(s),
-    p = await prepared(output, s, t);
+async function verifyLivePass(output, s, t) {
+  const p = await prepared(output, s, t);
   const checked = [];
   for (const file of p.manifest.files) {
     if (
@@ -1031,13 +1083,22 @@ export async function verifyLiveNinjaRenewal({ output } = {}, deps = {}) {
         bytes,
         publisher: "daedlo",
         trustedKeys: t.keys,
-        now: s.now,
+        now: liveWallClock(s),
         previousState: p.verified.checkpoint,
       });
     checked.push({ path: name, bytes: file.bytes, sha256: file.sha256 });
   }
   for (const path of PRIVATE_PATHS)
     await fetchBytes(ORIGIN + path, s, { status: 404, maximum: 1024 * 1024 });
+  liveRemaining(s);
+  if (s.liveWindow)
+    verifyNinjaCatalog({
+      bytes: p.catalog,
+      publisher: "daedlo",
+      trustedKeys: t.keys,
+      now: liveWallClock(s),
+      previousState: p.verified.checkpoint,
+    });
   return {
     schemaVersion: 1,
     status: "PASS",
@@ -1048,11 +1109,122 @@ export async function verifyLiveNinjaRenewal({ output } = {}, deps = {}) {
     assets: checked,
   };
 }
+/** Optional post-activation readiness window. Only missing public assets can wait;
+ * each attempt repeats the complete strict pass and has the same global deadline.
+ * This never redeploys, signs another catalog, or retries integrity/security failures.
+ */
+export async function verifyLiveNinjaRenewal(
+  { output, waitForAssets = false } = {},
+  deps = {},
+) {
+  if (typeof waitForAssets !== "boolean")
+    fail("Invalid live availability option");
+  const s = settings(deps, "live"),
+    t = await trust(s);
+  if (!waitForAssets) return verifyLivePass(output, s, t);
+  const now = deps.monotonicNow ?? (() => performance.now());
+  const sleep = deps.sleep ?? delay;
+  const started = now();
+  s.liveWindow = {
+    now,
+    started,
+    deadline: started + LIVE_AVAILABILITY_MS,
+    wallClock: s.now,
+  };
+  const elapsed = () => Math.max(0, Math.floor(now() - started));
+  const directory = await fs.mkdtemp(
+    join(await pathInfo(output, { directory: true }), "live-verification-"),
+  );
+  const journal = await fs.open(
+    join(directory, "events.jsonl"),
+    constants.O_CREAT |
+      constants.O_EXCL |
+      constants.O_WRONLY |
+      constants.O_NOFOLLOW,
+    0o600,
+  );
+  const record = async (event) => {
+    await journal.writeFile(
+      JSON.stringify({ schemaVersion: 1, ...event }) + "\n",
+    );
+    await journal.sync();
+  };
+  let attempts = 0;
+  const notFound = [];
+  try {
+    await record({
+      event: "started",
+      maximumMs: LIVE_AVAILABILITY_MS,
+      maximumAttempts: LIVE_AVAILABILITY_ATTEMPTS,
+    });
+    for (;;) {
+      liveRemaining(s);
+      s.now = liveWallClock(s);
+      attempts++;
+      let result;
+      try {
+        result = await verifyLivePass(output, s, t);
+      } catch (error) {
+        if (
+          !(error instanceof RenewalHttpStatusError) ||
+          error.status !== 404 ||
+          error.expected !== 200 ||
+          error.challenged
+        )
+          throw error;
+        const observation = {
+          attempt: attempts,
+          path: error.path,
+          status: 404,
+          elapsedMs: elapsed(),
+        };
+        notFound.push(observation);
+        await record({ event: "not_ready", ...observation });
+        if (attempts >= LIVE_AVAILABILITY_ATTEMPTS)
+          throw new LiveAvailabilityError("attempt_limit_exceeded");
+        await sleep(Math.min(LIVE_AVAILABILITY_INTERVAL_MS, liveRemaining(s)));
+        continue;
+      }
+      liveRemaining(s);
+      const availability = { attempts, elapsedMs: elapsed(), notFound };
+      await record({
+        event: "pass",
+        ...availability,
+        generation: result.generation,
+        catalogSha256: result.catalogSha256,
+        servedAssets: result.servedAssets,
+        privateBoundaries: result.privateBoundaries,
+      });
+      return { ...result, availability };
+    }
+  } catch (error) {
+    // Receipts are public CI artifacts: never serialize arbitrary messages/causes.
+    const failure =
+      error instanceof RenewalHttpStatusError
+        ? {
+            code: "http_status",
+            path: error.path,
+            status: error.status,
+            expected: error.expected,
+            challenged: error.challenged,
+          }
+        : {
+            code:
+              error instanceof LiveAvailabilityError
+                ? error.code
+                : "verification_failed",
+          };
+    await record({ event: "fail", attempts, elapsedMs: elapsed(), failure });
+    throw error;
+  } finally {
+    await journal.close();
+  }
+}
 export async function runNinjaRenewCli(args = process.argv.slice(2)) {
   const command = args.shift();
   if (!["prepare", "verify", "live"].includes(command))
     fail(
-      "Usage: ninja-renew.mjs prepare --private-key ABS --output FRESH_ABS [--checkpoint FILE] | verify|live --output ABS",
+      "Usage: ninja-renew.mjs prepare --private-key ABS --output FRESH_ABS [--checkpoint FILE] | verify --output ABS | live --output ABS [--wait-for-assets]",
     );
   const allowed =
     command === "prepare"
@@ -1060,8 +1232,13 @@ export async function runNinjaRenewCli(args = process.argv.slice(2)) {
       : ["--output"];
   const parsed = {};
   while (args.length) {
-    const key = args.shift(),
-      value = args.shift();
+    const key = args.shift();
+    if (command === "live" && key === "--wait-for-assets") {
+      if (Object.hasOwn(parsed, key)) fail("Invalid renewal CLI arguments");
+      parsed[key] = true;
+      continue;
+    }
+    const value = args.shift();
     if (!allowed.includes(key) || !value || Object.hasOwn(parsed, key))
       fail("Invalid renewal CLI arguments");
     parsed[key] = value;
@@ -1075,6 +1252,7 @@ export async function runNinjaRenewCli(args = process.argv.slice(2)) {
     output: parsed["--output"],
     privateKeyPath: parsed["--private-key"],
     checkpointPath: parsed["--checkpoint"],
+    waitForAssets: parsed["--wait-for-assets"] ?? false,
   };
   const result = await (
     command === "prepare"
