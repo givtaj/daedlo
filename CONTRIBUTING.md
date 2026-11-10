@@ -3,8 +3,8 @@
 Daedlo is a local browser QA workbench with a Rust application model and a
 Node/Playwright runtime. Useful contributions include reproducible bugs, clearer
 instructions, accessible viewer controls, contract tests and small fixes.
-The repository is preparing for community access; changing its visibility is a
-separate owner decision. The commands below work for anyone with source access.
+The repository is public; anyone can clone the source and propose a contribution.
+The commands below use the independent contributor fixture.
 
 You can develop and test the shared product without Codex, another AI agent,
 model API keys, Docker or access to the private Roots application. The independent

@@ -19,6 +19,18 @@ checkout and other worktrees remain preserved. This is an unpublished source
 candidate; exact installed-package verification, hosted CI, integration/release,
 and customer-side acceptance remain separate gates.
 
+## Public repository launch — 2026-11-10
+
+- [x] Refresh source/history, images, GitHub text and all available release/CI downloads.
+- [x] Verify exact-main CI, Apache-2.0 notices and contributor links.
+- [x] Open the existing repository with explicit owner authorization, retaining history and release identities.
+- [x] Apply and read back effective main rules, external-contributor approval and public security controls.
+- [x] Verify anonymous access and preserve the primary checkout, accepted alpha.7 and live Roots setup.
+
+The source repository is public. [Measured launch verification](verification.md#public-repository-launch--2026-11-10)
+records the bounded audit, actual settings and historical limitations. Source
+access does not promote customer dependencies or republish an installed kit.
+
 ## Alpha.9 production release — 2026-11-09
 
 - [x] Merge the tested generic Swagger source and corrected path validation.

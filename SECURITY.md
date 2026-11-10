@@ -1,7 +1,8 @@
 # Security policy
 
-Report a suspected vulnerability privately to
-[support@daedlo.com](mailto:support@daedlo.com) with the subject
+Report a suspected vulnerability through
+[GitHub private vulnerability reporting](https://github.com/givtaj/daedlo/security/advisories/new)
+or privately to [support@daedlo.com](mailto:support@daedlo.com) with the subject
 “Daedlo security report”. Do not open a public issue containing an unpatched
 vulnerability, credentials or customer data.
 

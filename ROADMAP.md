@@ -7,8 +7,8 @@ release dates or a claim that planned features already work.
 
 The [verification record](docs/verification.md) is the source of measured results.
 The [implementation plan](docs/plan.md) retains the development history and scoped
-acceptance decisions. Repository access remains private until the owner approves
-opening it.
+acceptance decisions. The repository is public and welcomes contributions under
+the [contributor workflow](CONTRIBUTING.md).
 
 ## Near-term priorities
 
