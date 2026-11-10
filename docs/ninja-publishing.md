@@ -30,19 +30,20 @@ Worker or domain permission is required. See verification for provisioning statu
 1. Complete source, exact-package and isolated application gates. Freeze one clean
    source revision and build the runtime/crate bundle, tools and public kit once.
    Add only sanitized verification metadata before freezing `release.json`.
-2. Run `node scripts/release/ninja-publisher.mjs sign --config /absolute/config.json`
-   from the reviewed source checkout. This is a maintainer tool; it is deliberately
-   excluded from the customer tools archive. The config supplies an explicit
-   private key path, exact three-file kit directories, publisher, origin, channel,
-   platform and interface contracts, generation, issue/expiry times, and a fresh
-   output directory. Use notes URL `https://daedlo.com/updates.html`.
-3. Stage the existing historical downloads and new kit into a separate website
-   tree with `website/scripts/stage-release.mjs`. Stage the signed catalog and
-   public PEM last with `website/scripts/stage-updates.mjs`. That stage independently
-   checks the pinned key, signature and each signed asset against the staged bytes.
-4. Run website checks and inspect the installation/update pages. Freeze the exact
-   public manifest and configuration; dry-run and deploy that tree to the existing
-   Daedlo Worker. Publish the same three-file kit as the versioned GitHub prerelease.
+2. Integrate reviewed source with exact-head CI and publish the exact three-file
+   kit as a GitHub prerelease at its frozen source commit. The repository is now
+   public; normal release publication needs no repository-visibility change.
+   Verify the tag and downloaded asset bytes against the frozen verification record.
+3. Prepare and review the matching publisher pins, website allowlist and customer
+   guidance in a separate publisher change. Preflight the complete staged website,
+   including historical downloads, current kit and signed catalog. Inspect its
+   installation/update pages at desktop and narrow widths.
+4. Merge the reviewed publisher change in the coordinated release window and
+   dispatch the existing renewal workflow with exactly one promotion input.
+   It restores the authenticated checkpoint, verifies every frozen asset, signs
+   and stages the feed, persists its new checkpoint, then uploads and activates
+   the exact checked version of the existing Daedlo Worker. The release-specific
+   section below defines the selected input and retained history.
 5. Verify the active deployment and every served asset on the canonical apex origin.
    Record the provider hostname's response separately under the approved access policy.
    Verify the downloaded catalog with the independently pinned public key. Run the
@@ -80,6 +81,9 @@ an already running adapter or bypasses unknown draft/pending-operation guards.
 
 ## Alpha.9 coordinated promotion
 
+This is the historical alpha.9 procedure, completed while the repository was
+private. The current alpha.10 procedure below uses the now-public repository.
+
 The prepared alpha.9 policy pins source
 `30d2a985964011c08d80db2e83a3716a2c151345` and the three immutable files in the
 verification record. Alpha.8 remains held and is not a required predecessor.
@@ -111,6 +115,46 @@ need the reviewed QA-only manifest/lock migration in `docs/ninja-update.md`.
 Swagger itself uses the shipped standalone integration; this promotion does not
 claim native managed Swagger onboarding. Password masking requires the explicit
 password parameter type and does not redact arbitrary application output.
+
+## Alpha.10 coordinated promotion
+
+Use the source commit and exact three-file identities in the frozen verification
+record. Alpha.10 keeps alpha.9's dependency closure and manager contract 2. Its
+managed acceptance uses the unmodified published alpha.9 tools through update,
+restart and rollback. The historical alpha.7 to alpha.9 dependency migration is
+not part of this upgrade; standalone Swagger remains outside native managed
+onboarding and updates.
+
+Keep this publisher change inactive until its publication window. Adding alpha.10
+to the active inventory makes ordinary renewal reject an alpha.9-only feed.
+The release owner has authorized review, merge and publication; follow the
+existing protected-PR and workflow gates without rebuilding accepted archives.
+
+1. Integrate the reviewed source with passing exact-head checks. Publish
+   `v0.1.4-alpha.10` as a prerelease in the public repository at the frozen source
+   commit, with only its exact ZIP, `SHA256SUMS` and `release.json`. Read back the
+   tag and asset sizes/digests before advancing.
+2. Merge the reviewed publisher policy, including the final source/file pins and
+   website inputs. Dispatch the default-branch renewal workflow with only
+   `promote_alpha10=true`; keep all five historical promotion selectors false.
+   The CLI equivalent is `ninja-promotion.mjs --promote-alpha10` with the existing
+   explicit private-key, fresh output and authenticated checkpoint paths.
+3. Retain all 24 earlier download files and the seven existing signed release
+   entries. The promoted catalog has eight entries: alpha.2 through alpha.7,
+   alpha.9 and alpha.10. Alpha.8 stays excluded. Preserve the same publisher key,
+   authenticated high-water history and existing Worker/domain configuration.
+4. Require checkpoint persistence before upload and another verified live baseline
+   before activation. Verify the exact active Worker version, complete public
+   manifest, signed feed and all three alpha.10 downloads over production HTTPS.
+   Do not substitute a local preview key or bypass expiry, history or signature checks.
+5. Verify the copied public installer and the production HTTPS alpha.9 to alpha.10
+   upgrade, restart and rollback drill using the retained published alpha.9 tools.
+   Preserve source, configuration, trust, data, previous installation and cleanup
+   receipts. Record customer-specific acceptance separately from these checks.
+
+The exact installed acceptance and public verification results belong in
+[verification](verification.md). Preparing this policy or merging source does not
+establish that publication or customer acceptance has completed.
 
 ## Automatic renewal
 
@@ -243,7 +287,6 @@ The checkpoint is mandatory after the initial, independently pinned generation 1
 `live --output /absolute/fresh-renewal` verifies the exact staged deployment after
 publication. Keep signing and private provider outputs outside Git and the public
 asset tree. Application rollback and publisher feed recovery are separate operations.
-
 
 ## Alpha.4 promotion through the existing publication lock
 

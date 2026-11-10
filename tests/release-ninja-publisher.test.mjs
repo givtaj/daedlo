@@ -592,3 +592,32 @@ test("publisher requires manager2 for renamed kits and retains immutable manager
     /release contract|override|manager/i,
   );
 });
+
+test("publisher orders alpha10 after alpha2 and alpha9 with strict SemVer precedence", async (t) => {
+  const f = await fixture(t);
+  const versions = ["0.1.4-alpha.10", "0.1.4-alpha.9"];
+  const directories = [];
+  for (const version of versions) {
+    const candidate = kit(() => {}, version, "daedlo");
+    const dir = join(f.root, version);
+    await fs.mkdir(dir);
+    await fs.writeFile(join(dir, `daedlo-${version}.zip`), candidate.zip);
+    await fs.writeFile(join(dir, "release.json"), candidate.metadata);
+    await fs.writeFile(join(dir, "SHA256SUMS"), candidate.checksums);
+    directories.push(dir);
+  }
+  await publish({
+    ...f.config,
+    kitDirectories: [...directories, f.kitPath],
+    releaseContracts: Object.fromEntries(
+      versions.map((version) => [version, { ...contracts, manager: 2 }]),
+    ),
+  });
+  const envelope = JSON.parse(
+    await fs.readFile(join(f.config.output, "preview.json")),
+  );
+  assert.deepEqual(
+    envelope.signed.releases.map((release) => release.version),
+    [version, "0.1.4-alpha.9", "0.1.4-alpha.10"],
+  );
+});

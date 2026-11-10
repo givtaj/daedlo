@@ -24,6 +24,10 @@ complete prompt, then inspect its first-flow and supported launch evidence.
 Swagger UI requests use the shipped standalone integration and explicit operation
 policy. Native managed Swagger onboarding and updates are unsupported; managed
 application integrations keep their registration and signed-update workflow.
+Alpha.10 explains development restarts through separate viewer, browser,
+application observation and image status. The alpha.9 to alpha.10 managed update
+keeps the published alpha.9 tools, dependency closure and manager contract 2;
+the older alpha.7 migration remains an explicitly historical path.
 The prompt is rendered from `templates/install.html` using the verified release
 URL and ZIP/tools/bundle digests. It has no kit-path placeholder. The homepage,
 integration guide and updates reference lead to this same journey. Manual
@@ -49,7 +53,7 @@ local artifact cache. For an unpublished preflight, use the release owner's
 verified local three-file directories instead of downloading them.
 
 ```sh
-for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3 0.1.4-alpha.4 0.1.4-alpha.5 0.1.4-alpha.6 0.1.4-alpha.7 0.1.4-alpha.9; do
+for daedlo_website_version in 0.1.2-rc.1 0.1.4-alpha.2 0.1.4-alpha.3 0.1.4-alpha.4 0.1.4-alpha.5 0.1.4-alpha.6 0.1.4-alpha.7 0.1.4-alpha.9 0.1.4-alpha.10; do
   mkdir -p "artifacts/website-inputs/$daedlo_website_version"
   for daedlo_website_file in "daedlo-$daedlo_website_version.zip" SHA256SUMS release.json; do
     curl --fail --show-error --location \
@@ -82,6 +86,9 @@ node website/scripts/stage-release.mjs --website-root website \
 node website/scripts/stage-release.mjs --website-root website \
   --release-dir artifacts/website-inputs/0.1.4-alpha.9 \
   --expected-version 0.1.4-alpha.9
+node website/scripts/stage-release.mjs --website-root website \
+  --release-dir artifacts/website-inputs/0.1.4-alpha.10 \
+  --expected-version 0.1.4-alpha.10
 
 # Before publication, use the release owner's signed catalog instead.
 curl --fail --show-error --proto '=https' \
@@ -90,12 +97,12 @@ curl --fail --show-error --proto '=https' \
 node website/scripts/stage-updates.mjs --website-root website \
   --catalog artifacts/website-inputs/preview.json \
   --public-key docs/update-trust/daedlo-release-2026-10.pem \
-  --expected-version 0.1.4-alpha.9
+  --expected-version 0.1.4-alpha.10
 ```
 
-Stage rc.1 and alpha.2–alpha.7 first, then alpha.9, followed by the signed preview feed.
-Alpha.8 remains held and is not part of the public inventory. Preserve all 21
-previous download files and all six signed alpha.2–alpha.7 entries. The final
+Stage rc.1 and alpha.2–alpha.7 first, then alpha.9 and alpha.10, followed by the signed preview feed.
+Alpha.8 remains held and is not part of the public inventory. Preserve all 24
+previous download files and all seven signed alpha.2–alpha.7 and alpha.9 entries. The final
 release step renders the current installation page. Feed staging renders
 `updates.html` with the exact public key pin and catalog expiry. Validate and
 review only after all releases and the feed are staged. The current ZIP identity comes from the release
@@ -113,7 +120,7 @@ Expected archive identities:
 | `0.1.4-alpha.3` | `f569bc0c84bf1b7ac5efe59c610916ac8ab0d5bb3322ed520114d8880262b190` |
 | `0.1.4-alpha.4` | `3676d52869a30fba57798afd64d64722b7c8ee1e622e56f52013adc4107a6e75` |
 
-Use the release owner's independently frozen alpha.9 identity for the new kit;
+Use the release owner's frozen verification record for the exact alpha.10 identity;
 do not copy a digest from an unverified download or rebuild an older archive.
 
 The alpha `release.json` must include its final sanitized `verification` record.
