@@ -1,5 +1,28 @@
 # Verification record
 
+## Local Compose documentation and website — 2026-11-10
+
+**PASS — local documentation and staged website checks.** The repository guide
+and website Compose page show local runtime/SDK builds from reviewed source
+`8c80eb3033f8d50907c00e7a635e6da70dc2d4ed`, an application model build and generic
+`app-portal` / `app-daedlo` services. They explicitly require the application's
+adapter/model and state that these commands do not publish images.
+
+All 87 website tests passed. Static acceptance checked 10 pages, 9 immutable
+release archives and 54 public entries. The Dockerfile and Compose snippets
+match between repo and site; shell syntax, Compose configuration, public
+metadata, customer-name scan and focused formatting checks passed. Chromium
+verified the homepage, integration and installation links to Compose at 1365px
+and 390px, with no horizontal page overflow or browser errors; desktop and narrow
+screenshots were inspected. Existing onboarding browser/clipboard checks passed
+against the unchanged alpha.10 kit and production signing trust.
+
+Receipts remain under ignored `artifacts/compose-docs/` and
+`artifacts/unified-onboarding/`. This documentation-only check did not rebuild
+container images or exercise a new application integration. The native container
+evidence below remains scoped to its recorded source and independent fixture;
+site publication and hosted CI are verified separately.
+
 ## Native Compose CI acceptance — 2026-11-10
 
 **PASS — native Linux ARM64 and AMD64.** [PR #42](https://github.com/givtaj/daedlo/pull/42)

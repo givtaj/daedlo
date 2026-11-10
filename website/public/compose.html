@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Build Daedlo images locally and add a browser QA service to your existing Docker Compose stack, with generic service names."
+    />
+    <meta name="theme-color" content="#f5f3ed" />
+    <link rel="canonical" href="https://daedlo.com/compose.html" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>Local Docker Compose — Daedlo</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="34" height="34" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="/demo.html">Real demo</a
+        ><a href="/index.html#story">Our story</a
+        ><a class="nav-guide" href="/install.html"
+          >Get started <span aria-hidden="true">↗</span></a
+        >
+        <a href="https://github.com/givtaj/daedlo">GitHub</a>
+      </nav>
+    </header>
+    <main class="guide-main wrap" id="main">
+      <p class="eyebrow">Local development / Docker Compose</p>
+      <h1>Your stack. One more service.</h1>
+      <p class="guide-intro">
+        Build Daedlo images locally from source, then add
+        <code>app-daedlo</code>
+        beside your existing application services. Its browser connects over the
+        Compose network; you open its viewer on your own computer.
+      </p>
+      <div class="guide-callout">
+        <p>
+          <strong>You build the Daedlo images locally.</strong> The tags below
+          identify images on your machine. There is no prebuilt Daedlo registry
+          image to pull, and these commands do not publish an image. Docker
+          still downloads the build's base images and locked dependencies.
+        </p>
+      </div>
+      <section class="guide-block" id="prerequisites">
+        <h2>Bring your application's integration</h2>
+        <p>
+          Start with Docker Compose available and your application's accepted
+          <code>qa/project.mjs</code>, <code>qa/adapter.mjs</code> and Rust
+          model in <code>qa/engine</code>. Daedlo supplies the runtime, Chromium
+          and viewer; your integration supplies the flows, selectors,
+          authentication and outcome checks. Your application can use any
+          language.
+        </p>
+        <p>
+          This example uses the generic service names
+          <code>app-portal</code> and <code>app-daedlo</code>. It assumes the
+          portal is already healthy, listens on internal port
+          <code>8080</code> and has a Compose healthcheck. Keep your existing
+          database, API and other service definitions. Need an integration
+          first? Follow the <a href="/guide.html">integration guide</a>.
+        </p>
+      </section>
+      <section class="guide-block" id="build">
+        <h2>1. Build the runtime and matching model SDK</h2>
+        <p>
+          Clone Daedlo separately from your application. This pins the source
+          used for both local images:
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Build Daedlo images locally"
+        ><code>git clone https://github.com/givtaj/daedlo.git
+cd daedlo
+git checkout 8c80eb3033f8d50907c00e7a635e6da70dc2d4ed
+
+docker build -f container/Dockerfile \
+  --target runtime -t daedlo-compose:local .
+docker build -f container/Dockerfile \
+  --target model-sdk -t daedlo-model-sdk:local .</code></pre>
+        <p>
+          Build for your Docker host's native architecture: ARM64 or AMD64. Both
+          native CI lanes have passed the independent Compose fixture. That
+          checks container compatibility; your own application flows still need
+          acceptance. The Rust model is compiled for Linux inside the image, so
+          no macOS binary is copied into the container.
+        </p>
+      </section>
+      <section class="guide-block" id="dockerfile">
+        <h2>2. Package your integration</h2>
+        <p>
+          Return to your application repository and add
+          <code>qa/Dockerfile.daedlo</code>. This example's model binary is
+          named <code>app-daedlo-engine</code>:
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Application Daedlo Dockerfile"
+        ><code>FROM daedlo-model-sdk:local AS model
+WORKDIR /work
+COPY --from=daedlo-model-sdk:local /opt/daedlo-sdk /work/daedlo
+COPY qa/engine /work/qa/engine
+RUN cargo build --locked --release \
+    --manifest-path /work/qa/engine/Cargo.toml \
+    --target-dir /work/model-target
+
+FROM daedlo-compose:local
+COPY --from=model \
+    /work/model-target/release/app-daedlo-engine \
+    /opt/daedlo/models/app-daedlo-engine
+COPY qa/project.mjs qa/adapter.mjs /opt/daedlo/project/
+ENV DAEDLO_ENGINE_PATH=/opt/daedlo/models/app-daedlo-engine</code></pre>
+        <p>
+          The model package has its own Cargo workspace and a committed
+          <code>Cargo.lock</code>. Its shared engine dependency resolves inside
+          the image with this path in <code>qa/engine/Cargo.toml</code>:
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Shared model dependency"
+        ><code>daedlo-engine = { path = "../../daedlo/crates/daedlo-engine" }</code></pre>
+        <p>
+          Your existing project module must read
+          <code>DAEDLO_ENGINE_PATH</code> into its <code>enginePath</code> and
+          <code>DAEDLO_TARGET_URL</code> into its <code>url</code>, and return
+          its existing <code>createAdapter</code>. These environment variables
+          do not override hardcoded project values. Copy any additional imported
+          adapter files and install additional dependencies with their lockfile.
+          Use a restricted application <code>.dockerignore</code> to keep
+          credentials, caches and private evidence out of the build context.
+        </p>
+      </section>
+      <section class="guide-block" id="compose">
+        <h2>3. Add the Compose service</h2>
+        <p>
+          Merge these entries into your existing <code>services</code> and
+          <code>volumes</code> sections in <code>compose.yaml</code>:
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Generic Docker Compose service"
+        ><code>services:
+  app-daedlo:
+    build:
+      context: .
+      dockerfile: qa/Dockerfile.daedlo
+    init: true
+    shm_size: 1gb
+    environment:
+      DAEDLO_TARGET_URL: http://app-portal:8080
+      DAEDLO_PUBLIC_ORIGIN: http://127.0.0.1:43100
+    ports:
+      - "127.0.0.1:43100:43100"
+    volumes:
+      - daedlo-evidence:/evidence
+    depends_on:
+      app-portal:
+        condition: service_healthy
+    stop_grace_period: 30s
+
+volumes:
+  daedlo-evidence:</code></pre>
+        <p>
+          Use the application's service name and internal container port. Inside
+          <code>app-daedlo</code>, <code>localhost</code> refers to Daedlo
+          itself. If your portal uses a custom network, attach Daedlo to that
+          same network. API calls, assets and authentication redirects also need
+          URLs reachable from the container's browser. Match your application's
+          actual HTTPS, certificate and secure-context requirements.
+        </p>
+      </section>
+      <section class="guide-block" id="run">
+        <h2>4. Build and start Daedlo</h2>
+        <p>
+          From the application repository, with the existing application already
+          running and healthy:
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Start the local Daedlo service"
+        ><code>docker compose up -d --build --wait --no-deps app-daedlo</code></pre>
+        <p>
+          Use the same <code>-p</code> and <code>-f</code> options as your
+          existing stack. <code>--no-deps</code> leaves dependency services
+          alone; it assumes they are ready. For a normal full-stack startup, use
+          your usual <code>docker compose up -d --build --wait</code> command.
+        </p>
+        <p>
+          Open <a href="http://127.0.0.1:43100">http://127.0.0.1:43100</a>
+          exactly. The viewer is published only on your computer's loopback
+          interface. Choose an authored flow in the viewer; startup does not
+          execute QA commands automatically.
+        </p>
+        <pre
+          class="install-code"
+          tabindex="0"
+          aria-label="Inspect and stop only Daedlo"
+        ><code># Follow Daedlo logs.
+docker compose logs -f app-daedlo
+
+# Stop only Daedlo; leave the application running.
+docker compose stop app-daedlo</code></pre>
+        <p>
+          The named volume retains <code>/evidence/session.json</code>, the
+          latest clean-shutdown report. A later clean shutdown replaces that
+          file; it is not a durable archive of every run. Preserve reports using
+          your integration's evidence archiving before removing the volume.
+        </p>
+      </section>
+      <section class="guide-block" id="reference">
+        <h2>Keep the source and integration together</h2>
+        <p>
+          Pin and rebuild the runtime and model SDK from the same source
+          revision, then rebuild your application image and repeat its
+          acceptance checks. This local source-build route is separate from the
+          downloadable macOS kit and its managed updates.
+        </p>
+        <p>
+          The
+          <a href="https://github.com/givtaj/daedlo/blob/main/docs/compose.md"
+            >repository Compose guide</a
+          >
+          includes the independent fixture, network and lifecycle contracts, and
+          verification details. Docker documents
+          <a href="https://docs.docker.com/compose/how-tos/networking/"
+            >Compose networking</a
+          >
+          and the
+          <a href="https://docs.docker.com/reference/cli/docker/compose/up/"
+            >startup options</a
+          >.
+        </p>
+      </section>
+      <a class="back-link" href="/guide.html"
+        >← Back to the integration guide</a
+      >
+    </main>
+    <footer class="site-footer wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="28" height="28" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <p>Tools grow out of the work.</p>
+      <nav aria-label="Footer navigation">
+        <a href="/install.html">Get started</a
+        ><a href="/privacy.html">Privacy &amp; contact</a>
+        <a href="https://github.com/givtaj/daedlo">GitHub</a>
+        <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
+        <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
+          >Contribute</a
+        >
+        <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
+          >Support</a
+        >
+        <a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+          >Apache-2.0</a
+        >
+      </nav>
+    </footer>
+  </body>
+</html>

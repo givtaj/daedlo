@@ -17,6 +17,7 @@ import { readStagedUpdates, UPDATE_TRUST } from "./stage-updates.mjs";
 export const PUBLIC_FILES = new Set([
   "index.html",
   "guide.html",
+  "compose.html",
   "privacy.html",
   "install.html",
   "updates.html",

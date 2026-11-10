@@ -129,11 +129,14 @@ fixtures and acceptance checks.
 
 ## Contribute from source
 
-To run Daedlo alongside an application's services, see the
-[Compose source candidate](docs/compose.md). It provides a local runtime image,
-Linux model build path and an `app-daedlo` service example. Its independent
-conformance fixture and measured verification are separate from customer acceptance
-and the published macOS kit.
+To add Daedlo to an existing development stack, follow the
+[local Docker Compose setup](docs/compose.md). Build the runtime and matching
+model SDK locally from the repository's Dockerfile, package your application's
+model and adapter, then add the generic `app-daedlo` service beside `app-portal`.
+The guide includes the build, start, viewer and stop commands. No prebuilt Daedlo
+registry image is required, and these commands do not push images. Native Linux
+ARM64 and AMD64 conformance checks are recorded separately from application
+acceptance and the published macOS kit.
 
 Use Node 24.22.2 (`.nvmrc`), npm 11.21.2 and the Rust 1.96.0 toolchain pinned
 in this repository. CI also selects Node 22.23.4; keep both supported lines on
