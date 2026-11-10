@@ -188,11 +188,20 @@ export async function runInstalledControls({
           to: '"./fake-engine.mjs"',
         });
       if (name === "cli-stalled-finalization.test.mjs")
-        substitutions.push({
-          kind: "installed-cli-location",
-          from: 'new URL("../src/cli.mjs", import.meta.url)',
-          to: `new URL(${JSON.stringify(pathToFileURL(join(installed, "src/cli.mjs")).href)})`,
-        });
+        substitutions.push(
+          {
+            kind: "installed-cli-location",
+            from: 'new URL("../src/cli.mjs", import.meta.url)',
+            to: `new URL(${JSON.stringify(pathToFileURL(join(installed, "src/cli.mjs")).href)})`,
+          },
+          {
+            kind: "installed-viewer-address-location",
+            from: '"../src/viewer/address.mjs"',
+            to: JSON.stringify(
+              pathToFileURL(join(installed, "src/viewer/address.mjs")).href,
+            ),
+          },
+        );
       if (name === "viewer-restart-browser.mjs")
         substitutions.push({
           kind: "evidence-location",

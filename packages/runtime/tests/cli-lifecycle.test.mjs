@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { createDriverSession, createResourceScope } from "../src/index.mjs";
+import { viewerAddress } from "../src/viewer/address.mjs";
 
 // Exercise the actual launcher control flow without starting a browser or server.
 // Only its module boundaries are replaced; the first regression uses the real
@@ -26,6 +27,7 @@ const launch = new AsyncFunction(
   "createDriverSession",
   "createResourceScope",
   "createViewer",
+  "viewerAddress",
   "process",
   "console",
   "injectedProject",
@@ -66,6 +68,7 @@ function harness(overrides = {}) {
     "/mock/project.mjs",
     "--report",
     "/mock/report.json",
+    ...(overrides.args ?? []),
   ];
   const calls = { browser: 0, session: 0, viewer: 0, attached: 0, reports: [] };
   const diagnostics = [];
@@ -123,6 +126,7 @@ function harness(overrides = {}) {
         },
       };
     },
+    viewerAddress,
     process,
     {
       log() {},
@@ -172,6 +176,85 @@ function harness(overrides = {}) {
     },
   };
 }
+
+test("CLI forwards explicit container bind and published viewer origin", async () => {
+  let viewerOptions;
+  const h = harness({
+    args: [
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "43100",
+      "--public-origin",
+      "http://127.0.0.1:43210",
+    ],
+    createViewer: (options) => {
+      viewerOptions = options;
+    },
+  });
+  try {
+    await assert.doesNotReject(() =>
+      bounded(Promise.race([h.ready.promise, h.run])),
+    );
+    assert.equal(viewerOptions.host, "0.0.0.0");
+    assert.equal(viewerOptions.port, 43100);
+    assert.equal(viewerOptions.publicOrigin, "http://127.0.0.1:43210");
+    h.process.emit("SIGTERM");
+    await bounded(h.run);
+    assert.equal(h.calls.attached, 0);
+    assert.equal(h.calls.browser, 1);
+    assert.equal(h.calls.viewer, 1);
+  } finally {
+    await h.dispose();
+  }
+});
+
+test("CLI rejects invalid container addressing before project startup or resource acquisition", async () => {
+  for (const args of [
+    ["--host", "0.0.0.0"],
+    ["--public-origin", "http://remote.example:43100"],
+    ["--public-origin", "http://127.0.0.1:43100/path"],
+    ["--public-origin", "http://user:private@127.0.0.1:43100"],
+  ]) {
+    let projectStarts = 0;
+    let browserLaunches = 0;
+    const h = harness({
+      args,
+      project() {
+        projectStarts++;
+        throw Error("A trusted startup action was reached");
+      },
+      launchBrowser() {
+        browserLaunches++;
+      },
+    });
+    try {
+      let rejected;
+      await bounded(
+        h.run.catch((error) => {
+          rejected = error;
+        }),
+      );
+      assert.equal(
+        projectStarts,
+        0,
+        "invalid viewer addressing must not invoke a project factory that may perform startup effects",
+      );
+      assert.equal(browserLaunches, 0);
+      assert.equal(
+        h.scope(),
+        undefined,
+        "invalid addressing must not acquire a resource scope",
+      );
+      assert.match(
+        rejected?.message ?? "",
+        /viewer public origin|public origin is required/,
+      );
+    } finally {
+      await h.dispose();
+    }
+  }
+});
 
 test("CLI exports the stopped active run only after endRun, preserving saved effects", async (t) => {
   const entered = deferred(),

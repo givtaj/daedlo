@@ -1,0 +1,31 @@
+# Independent conformance fixture; this is not customer acceptance.
+services:
+  notebook-app:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile
+      target: notebook-app
+    init: true
+    ports:
+      - "127.0.0.1:${DAEDLO_APP_PORT:-43101}:8080"
+    stop_grace_period: 30s
+  daedlo:
+    build:
+      context: ..
+      dockerfile: container/Dockerfile
+      target: notebook-driver
+    init: true
+    shm_size: 1gb
+    environment:
+      DAEDLO_TARGET_URL: http://notebook-app:8080
+      DAEDLO_PUBLIC_ORIGIN: http://127.0.0.1:${DAEDLO_VIEWER_PORT:-43100}
+    ports:
+      - "127.0.0.1:${DAEDLO_VIEWER_PORT:-43100}:43100"
+    volumes:
+      - evidence:/evidence
+    depends_on:
+      notebook-app:
+        condition: service_healthy
+    stop_grace_period: 30s
+volumes:
+  evidence:

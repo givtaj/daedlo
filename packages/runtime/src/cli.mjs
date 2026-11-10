@@ -3,6 +3,7 @@
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { writeFile } from "node:fs/promises";
+import { viewerAddress } from "./viewer/address.mjs";
 import {
   createDriverSession,
   createResourceScope,
@@ -10,6 +11,7 @@ import {
 } from "./index.mjs";
 
 const usage = `daedlo --project PATH [--port NUMBER] [--headed] [--report PATH]
+       [--host 127.0.0.1|0.0.0.0 --public-origin http://127.0.0.1:PUBLISHED_PORT]
 
 Start a trusted project's local Daedlo integration.
 The project module exports createProject({resources}) and returns:
@@ -18,6 +20,8 @@ or {url, createSession({page,context,resources,signal,ownSession})} returning a 
 The two creation routes are mutually exclusive. The CLI owns its new browser and registered fixture resources. Ctrl+C cleans them.
 Existing attached resources are preserved. The CLI does not automatically dispatch commands.
 Trusted project factories may perform explicitly configured startup actions.
+The viewer binds to loopback by default. Container binding requires an explicit
+public loopback origin and a Docker port published only on host 127.0.0.1.
 Optional environment:
   PLAYWRIGHT_MODULE  Playwright module URL or path resolved from the working directory.
   CHROMIUM           Browser executable path, passed unchanged to Playwright.
@@ -31,7 +35,15 @@ function options(args) {
       result.headed = true;
       continue;
     }
-    if (!["--project", "--port", "--report"].includes(args[i]))
+    if (
+      ![
+        "--project",
+        "--port",
+        "--report",
+        "--host",
+        "--public-origin",
+      ].includes(args[i])
+    )
       throw Error(`Unknown option: ${args[i]}`);
     const key = args[i].slice(2),
       value = args[++i];
@@ -40,10 +52,16 @@ function options(args) {
       if (!/^\d+$/.test(value) || Number(value) > 65535)
         throw Error("Port must be 0..65535");
       result.port = Number(value);
-    } else result[key] = resolve(value);
+    } else if (key === "host") {
+      if (!["127.0.0.1", "0.0.0.0"].includes(value))
+        throw Error("Host must be 127.0.0.1 or 0.0.0.0");
+      result.host = value;
+    } else if (key === "public-origin") result.publicOrigin = value;
+    else result[key] = resolve(value);
   }
   if (!result.project)
     throw Error("--project is required. Use --help for the project contract.");
+  viewerAddress(result.host ?? "127.0.0.1", result.publicOrigin);
   return result;
 }
 async function main() {
@@ -209,6 +227,8 @@ async function main() {
       context,
       session,
       port: opt.port,
+      host: opt.host,
+      publicOrigin: opt.publicOrigin,
       frontend: project.frontend,
     });
     resources.own(viewer, { label: "live viewer", close: (v) => v.close() });

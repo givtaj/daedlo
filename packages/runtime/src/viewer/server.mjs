@@ -1,6 +1,7 @@
 // Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 import http from "node:http";
 import { readFile } from "node:fs/promises";
+import { viewerAddress } from "./address.mjs";
 import { randomUUID } from "node:crypto";
 
 const MAX_BODY_BYTES = 16 * 1024;
@@ -160,8 +161,11 @@ export async function createViewer({
   context,
   session,
   port = 0,
+  host = "127.0.0.1",
+  publicOrigin,
   frontend,
 }) {
+  const address = viewerAddress(host, publicOrigin);
   const identity = frontendIdentity(frontend);
   if (!page || !context || !session)
     throw new TypeError("A page, context and driver session are required");
@@ -507,10 +511,13 @@ export async function createViewer({
       res.setHeader("Content-Security-Policy", CSP);
       res.setHeader("Referrer-Policy", "no-referrer");
       const actualPort = server.address()?.port;
-      const host = req.headers.host;
+      const requestHost = req.headers.host;
+      const expectedOrigin = address?.origin ?? `http://${requestHost}`;
       if (
-        host !== `127.0.0.1:${actualPort}` &&
-        host !== `localhost:${actualPort}`
+        address
+          ? requestHost !== address.host
+          : requestHost !== `127.0.0.1:${actualPort}` &&
+            requestHost !== `localhost:${actualPort}`
       ) {
         json(res, 403, {
           ok: false,
@@ -528,7 +535,7 @@ export async function createViewer({
           json(res, 200, await status());
         } else if (req.method === "GET" && path === "/events") {
           if (
-            (req.headers.origin && req.headers.origin !== `http://${host}`) ||
+            (req.headers.origin && req.headers.origin !== expectedOrigin) ||
             req.headers["sec-fetch-site"] === "cross-site"
           )
             return json(res, 403, {
@@ -560,7 +567,7 @@ export async function createViewer({
           ["/command", "/presentation", "/control"].includes(path)
         ) {
           if (
-            (req.headers.origin && req.headers.origin !== `http://${host}`) ||
+            (req.headers.origin && req.headers.origin !== expectedOrigin) ||
             req.headers["sec-fetch-site"] === "cross-site"
           ) {
             return json(res, 403, {
@@ -682,14 +689,14 @@ export async function createViewer({
     server.headersTimeout = 5000;
     await new Promise((resolve, reject) => {
       server.once("error", reject);
-      server.listen(port, "127.0.0.1", () => {
+      server.listen(port, host, () => {
         server.off("error", reject);
         resolve();
       });
     });
     if (disconnected || page.isClosed())
       throw Error("The browser disconnected while starting the viewer");
-    url = `http://127.0.0.1:${server.address().port}`;
+    url = address?.origin ?? `http://127.0.0.1:${server.address().port}`;
     heartbeat = setInterval(() => {
       for (const res of clients) sendFrame(res);
     }, 1000);

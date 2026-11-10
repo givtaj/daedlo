@@ -99,6 +99,11 @@ test("only ordinary modifications of the two non-shipped records take the light 
     "README.md",
     "skills/daedlo/SKILL.md",
     "packages/runtime/src/session.mjs",
+    "container/Dockerfile",
+    "container/compose.notebook.yaml",
+    "scripts/compose-ci.mjs",
+    "tests/compose-acceptance.mjs",
+    ".github/workflows/ci.yml",
     "new-guide.md",
     "docs/verification/new-record.md",
   ])
@@ -339,7 +344,9 @@ const packageScripts = JSON.parse(
 // the two npm entrypoints that can dispatch Swagger units/Rust/browser checks,
 // so invoking an aggregate script cannot hide duplicate work from the counts.
 function verificationCommands(node, expandScripts = true) {
-  const job = workflow.match(/  verify:\n([\s\S]*?)\n  public-metadata:/)?.[1];
+  const job = workflow.match(
+    /  verify:\n([\s\S]*?)(?=\n  [a-z][\w-]*:\n)/,
+  )?.[1];
   assert.ok(job, "Inspect the verify job if its structure changes");
   return job
     .split(/^      - name: /m)
@@ -387,7 +394,7 @@ test("Swagger Node units run once through npm test in each supported Node lane",
   assert.match(workflow, /node-version: \$\{\{ matrix\.version \}\}/);
   assert.equal(
     packageScripts.test,
-    "node --test packages/runtime/tests/*.test.mjs",
+    "node --test packages/runtime/tests/*.test.mjs tests/container-health.test.mjs tests/compose-ci*.test.mjs",
   );
   for (const node of [22, 24]) {
     assert.equal(
@@ -396,11 +403,12 @@ test("Swagger Node units run once through npm test in each supported Node lane",
       1,
     );
     assert.equal(
-      verificationCommands(node).filter((line) =>
-        /^node --test packages\/runtime\/tests\/(?:\*|swagger-\*)\.test\.mjs$/.test(
-          line,
-        ),
-      ).length,
+      verificationCommands(node)
+        .filter((line) => line.startsWith("node --test "))
+        .flatMap((line) => line.slice("node --test ".length).split(/\s+/))
+        .filter((path) =>
+          /^packages\/runtime\/tests\/(?:\*|swagger-\*)\.test\.mjs$/.test(path),
+        ).length,
       1,
       `Node ${node} must dispatch Swagger unit tests exactly once`,
     );

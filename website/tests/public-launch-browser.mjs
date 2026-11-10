@@ -294,9 +294,17 @@ export async function checkPublicLaunchBrowser({
         (await page.title()).includes(version),
         "Historical-demo CTA must arrive at the advertised current release.",
       );
-      assert.doesNotMatch(
-        await page.locator(".onboarding-steps").innerText(),
-        /\bWBF\b/i,
+      assert.equal(
+        (
+          await page
+            .locator(".onboarding-steps > li")
+            .first()
+            .locator("p")
+            .innerText()
+        )
+          .replace(/\s+/g, " ")
+          .trim(),
+        "Open your application repository in Codex. Choose one existing flow you want to verify.",
       );
       assert.equal(await page.locator("#onboarding-prompt").isVisible(), true);
       await layout("installation");

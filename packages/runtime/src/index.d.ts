@@ -343,6 +343,11 @@ export function createViewer(options: {
   context: BrowserContext;
   session: DriverSession;
   port?: number;
+  /** Default loopback. Container listeners require an explicit publicOrigin. */
+  host?: "127.0.0.1" | "0.0.0.0";
+  /** Exact canonical http://127.0.0.1:PORT or http://localhost:PORT; no path.
+   * Publish container ports on host loopback only. This viewer is unauthenticated. */
+  publicOrigin?: string;
   frontend?: FrontendIdentity;
 }): Promise<{ url: string; close(): Promise<void> }>;
 export function createResourceScope(): ResourceScope;

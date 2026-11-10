@@ -186,6 +186,99 @@ jobs:
             target/
           key: ${{ steps.cargo-cache.outputs.cache-primary-key }}
 
+  compose:
+    name: Native Compose browser (${{ matrix.arch }})
+    needs: public-metadata
+    if: ${{ !cancelled() }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      EXPECTED_ARCH: ${{ matrix.arch }}
+      COMPOSE_CI_OUTPUT: artifacts/compose-ci
+      METADATA_RESULT: ${{ needs.public-metadata.result }}
+      FULL_VERIFICATION: ${{ needs.public-metadata.outputs.full }}
+    steps:
+      - name: Check out source for verification and evidence
+        id: source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Initialize sanitized Compose evidence
+        if: always() && steps.source.outcome == 'success'
+        env:
+          CI_SOURCE_OUTCOME: ${{ steps.source.outcome }}
+        run: node scripts/compose-ci.mjs initialize
+      - name: Require a successful Compose verification decision
+        run: |
+          test "$METADATA_RESULT" = success
+          case "$FULL_VERIFICATION" in
+            true) echo "Native container builds and real Compose browser checks required." ;;
+            false) echo "Only non-shipped planning records changed. Compose builds and browser checks NOT RUN." ;;
+            *) echo "Missing or invalid verification decision."; exit 1 ;;
+          esac
+      - name: Set up Node for native Compose acceptance
+        if: needs.public-metadata.outputs.full == 'true'
+        id: toolchain
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.22.2"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install locked native acceptance dependencies
+        if: needs.public-metadata.outputs.full == 'true'
+        id: dependencies
+        run: |
+          npm install --global npm@11.21.2 --ignore-scripts --no-audit --no-fund
+          test "$(npm --version)" = "11.21.2"
+          npm ci
+      - name: Verify native Linux and Docker architecture
+        if: needs.public-metadata.outputs.full == 'true'
+        id: native
+        run: node scripts/compose-ci.mjs preflight
+      - name: Install the matching host inspection Chromium
+        if: needs.public-metadata.outputs.full == 'true'
+        id: chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build and verify reusable runtime and model SDK images
+        if: needs.public-metadata.outputs.full == 'true'
+        id: images
+        run: node scripts/compose-ci.mjs images
+      - name: Run the real Compose browser persistence and shutdown flow
+        if: needs.public-metadata.outputs.full == 'true'
+        id: acceptance
+        env:
+          DAEDLO_COMPOSE_OUTPUT: artifacts/compose-ci/private
+        run: npm run test:compose
+      - name: Finalize sanitized Compose evidence
+        if: always() && steps.source.outcome == 'success'
+        env:
+          CI_SOURCE_OUTCOME: ${{ steps.source.outcome }}
+          CI_TOOLCHAIN_OUTCOME: ${{ steps.toolchain.outcome }}
+          CI_DEPENDENCIES_OUTCOME: ${{ steps.dependencies.outcome }}
+          CI_NATIVE_OUTCOME: ${{ steps.native.outcome }}
+          CI_CHROMIUM_OUTCOME: ${{ steps.chromium.outcome }}
+          CI_IMAGES_OUTCOME: ${{ steps.images.outcome }}
+          CI_ACCEPTANCE_OUTCOME: ${{ steps.acceptance.outcome }}
+        run: node scripts/compose-ci.mjs summarize
+      # Whitelisted statuses and build identities only; no raw logs, screenshots,
+      # browser reports, application data or image publication.
+      - name: Retain sanitized Compose evidence
+        if: always() && steps.source.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: daedlo-compose-${{ matrix.arch }}-${{ github.sha }}
+          path: artifacts/compose-ci/summary.json
+          if-no-files-found: error
+          retention-days: 14
+
   public-metadata:
     name: Public metadata and secrets
     outputs:
@@ -204,7 +297,7 @@ jobs:
           node-version: "24.22.2"
           package-manager-cache: false
       - name: Test repository safeguards
-        run: node --test tests/public-metadata.test.mjs tests/repository-guardrails.test.mjs tests/release-ci-policy.test.mjs
+        run: node --test tests/public-metadata.test.mjs tests/repository-guardrails.test.mjs tests/release-ci-policy.test.mjs tests/compose-ci*.test.mjs
       - name: Select verification from the actual merge checkout
         id: selection
         run: node scripts/ci-select.mjs

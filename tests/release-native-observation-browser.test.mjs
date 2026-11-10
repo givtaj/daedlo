@@ -25,7 +25,7 @@ const enginePath = resolve(
 );
 const output = resolve(
   process.env.DAEDLO_OBSERVATION_OUTPUT ??
-    join(repo, "artifacts/wbf-observation"),
+    join(repo, "artifacts/native-observation"),
 );
 const runtimePackage = JSON.parse(
   await fs.readFile(join(dirname(runtimePath), "../package.json"), "utf8"),

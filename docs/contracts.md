@@ -186,6 +186,19 @@ viewer stops automatic observation; an explicit connection check can discover a
 new viewer instance on the same port without accepting an old in-flight status
 as recovery.
 
+Container callers may additionally provide `host:"0.0.0.0"` and `publicOrigin`.
+The default host remains `127.0.0.1`; a non-loopback bind requires an explicit
+canonical `http://127.0.0.1:PORT` or `http://localhost:PORT` origin. Ports must be
+nonzero and explicit (the normalized default HTTP port is not accepted). Paths,
+credentials, query strings, fragments and alternate host spellings are rejected
+before capture starts. The configured public origin supplies the returned URL
+and exact accepted Host and supplied Origin, allowing a different published port
+from the internal listener. Forwarded headers do not override these checks.
+As before, direct HTTP clients may omit Origin; cross-site fetch metadata is
+rejected. These checks are not authentication. Container ports must be published
+only on the developer host's loopback interface. The CLI exposes `--host` and
+`--public-origin`; see the [source Compose setup](https://github.com/givtaj/daedlo/blob/main/docs/compose.md).
+
 The alpha.6 viewer also previews each recipe's ordered command labels and
 groups recipes with identical starting steps into expandable shared paths. The
 comparison uses existing command IDs and complete JSON parameter values (object
