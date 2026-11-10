@@ -199,6 +199,54 @@ test("public repository read-only audit verifies effective controls without priv
   );
 });
 
+test("public audit accepts GitHub's observed pull-request defaults and rejects changes to them", async () => {
+  // GitHub returned these fields after creating the reviewed ruleset on 2026-11-10.
+  // Keep the API response independent of omissions in the prepared policy.
+  const observedDefaults = {
+    required_reviewers: [],
+    require_extra_approval_for_unattributed_changes: true,
+    allowed_merge_methods: ["merge", "squash", "rebase"],
+  };
+  function roundtrip(changes = {}) {
+    const f = publicFixture();
+    for (const rules of [
+      f.replies[`${root}/rulesets/42`].data.rules,
+      f.replies[`${root}/rules/branches/main?per_page=100`].data,
+    ]) {
+      Object.assign(
+        rules.find((rule) => rule.type === "pull_request").parameters,
+        structuredClone(observedDefaults),
+        changes,
+      );
+    }
+    return f;
+  }
+  const f = roundtrip();
+  const report = await runGuardrails(f);
+  assert.equal(
+    report.controls.mainProtection.status,
+    "PASS",
+    `Observed GitHub defaults must match the prepared policy: ${report.controls.mainProtection.reason}`,
+  );
+  assert.equal(report.status, "PASS");
+  assert.deepEqual(report.mutations, []);
+  assert.ok(f.calls.every((call) => call.method === "GET"));
+
+  for (const change of [
+    { required_reviewers: [{ type: "Team", id: 42 }] },
+    { require_extra_approval_for_unattributed_changes: false },
+    { allowed_merge_methods: ["merge"] },
+  ]) {
+    const changed = await runGuardrails(roundtrip(change));
+    assert.equal(changed.status, "NOT_READY");
+    assert.deepEqual(changed.controls.mainProtection, {
+      status: "FAIL",
+      reason: "MAIN_POLICY_DIFFERS",
+    });
+    assert.deepEqual(changed.mutations, []);
+  }
+});
+
 test("public audit refuses weaker or unobserved external-contributor approval", async () => {
   for (const [response, status] of [
     [
