@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runInstalledControls } from "./installed-controls-acceptance.mjs";
+import { verifyInstalledSwaggerChecks } from "./swagger-installed-acceptance.mjs";
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const safety = new Map([
@@ -21,8 +22,45 @@ const safety = new Map([
   ["installed-resource-ownership", 5],
   ["installed-viewer-finalization", 4],
   ["installed-active-run", 5],
-  ["installed-viewer-grid", 18],
+  ["installed-viewer-grid", 28],
+  ["installed-viewer-restart", 1],
 ]);
+
+const swaggerNavigationChecks = [
+  "installed collapsed operation selection sends no request before one authorized Execute",
+  "installed virtualized operation selection sends no request before one authorized Execute",
+  "installed filtered operation refuses selection without API dispatch",
+  "installed missing operation refuses selection without API dispatch",
+  "installed ambiguous operation refuses selection without API dispatch",
+  "installed HEAD response reports no write expected",
+];
+test("installed Swagger acceptance requires every navigation and read-result regression", () => {
+  const original = Array.from(
+    { length: 13 },
+    (_, index) => `retained-${index}`,
+  );
+  assert.doesNotThrow(() =>
+    verifyInstalledSwaggerChecks([...original, ...swaggerNavigationChecks]),
+  );
+  for (const name of swaggerNavigationChecks) {
+    assert.throws(() =>
+      verifyInstalledSwaggerChecks([
+        ...original,
+        ...swaggerNavigationChecks.filter((check) => check !== name),
+      ]),
+    );
+    assert.throws(
+      () =>
+        verifyInstalledSwaggerChecks([
+          ...original,
+          ...swaggerNavigationChecks.map((check) =>
+            check === name ? "unrelated replacement" : check,
+          ),
+        ]),
+      /required installed Swagger/,
+    );
+  }
+});
 
 function fixture(t, { corrupt, skipped, omitted } = {}) {
   const root = fs.realpathSync(
@@ -162,6 +200,11 @@ test("installed grid and active-run checks preserve source assertions and bind o
       "viewer-grid-browser.mjs",
       "../src/viewer/server.mjs",
     ],
+    [
+      "installed-viewer-restart",
+      "viewer-restart-browser.mjs",
+      "../src/index.mjs",
+    ],
   ]) {
     const invocation = invocations.find((value) => value.name === name);
     assert.ok(invocation, `${name}: required installed regression is absent`);
@@ -170,39 +213,66 @@ test("installed grid and active-run checks preserve source assertions and bind o
       "utf8",
     );
     const copied = fs.readFileSync(join(options.work, "tests", file), "utf8");
+    let expectedCopy = original.replace(
+      JSON.stringify(specifier),
+      '"@daedlo/runtime"',
+    );
+    if (name === "installed-viewer-restart")
+      expectedCopy = expectedCopy.replace(
+        'resolve("artifacts/dev-restart-alerts")',
+        "resolve(process.env.VIEWER_RESTART_OUTPUT)",
+      );
     assert.equal(
       copied,
-      original.replace(JSON.stringify(specifier), '"@daedlo/runtime"'),
+      expectedCopy,
       `${name}: application assertions must be copied without changes`,
     );
     const provenance = result.extendedProvenance.copiedChecks.find(
       (value) => value.name === file,
     );
-    assert.equal(provenance.importOnlySubstitution, true);
-    assert.deepEqual(provenance.substitutions, [
+    assert.equal(
+      provenance.importOnlySubstitution,
+      name !== "installed-viewer-restart",
+    );
+    const expectedSubstitutions = [
       {
         kind: "public-runtime-import",
         from: JSON.stringify(specifier),
         to: '"@daedlo/runtime"',
       },
-    ]);
+    ];
+    if (name === "installed-viewer-restart")
+      expectedSubstitutions.push({
+        kind: "evidence-location",
+        from: 'resolve("artifacts/dev-restart-alerts")',
+        to: "resolve(process.env.VIEWER_RESTART_OUTPUT)",
+      });
+    assert.deepEqual(provenance.substitutions, expectedSubstitutions);
     if (name === "installed-viewer-grid")
       assert.equal(
         invocation.env.VIEWER_GRID_OUTPUT,
         join(options.output, "installed-controls/viewer-grid"),
       );
+    if (name === "installed-viewer-restart")
+      assert.equal(
+        invocation.env.VIEWER_RESTART_OUTPUT,
+        join(options.output, "installed-controls/viewer-restart"),
+      );
   }
 });
 
-for (const failure of ["omitted", "skipped"])
-  test(`the ${failure} installed grid case cannot pass its receipt`, async (t) => {
-    const { options } = fixture(t, { [failure]: "installed-viewer-grid" });
-    await assert.rejects(runInstalledControls(options), /every case must/);
-    const receipt = JSON.parse(
-      fs.readFileSync(join(options.output, "installed-controls/results.json")),
-    );
-    assert.equal(receipt.status, "FAIL");
-  });
+for (const name of ["installed-viewer-grid", "installed-viewer-restart"])
+  for (const failure of ["omitted", "skipped"])
+    test(`the ${failure} ${name} case cannot pass its receipt`, async (t) => {
+      const { options } = fixture(t, { [failure]: name });
+      await assert.rejects(runInstalledControls(options), /every case must/);
+      const receipt = JSON.parse(
+        fs.readFileSync(
+          join(options.output, "installed-controls/results.json"),
+        ),
+      );
+      assert.equal(receipt.status, "FAIL");
+    });
 
 test("public package resolution cannot silently select another runtime entry", async (t) => {
   const { options } = fixture(t, {

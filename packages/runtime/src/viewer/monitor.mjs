@@ -1272,7 +1272,10 @@ function refresh() {
       )
         return;
       if (snapshot.lifecycle?.status === "ended") {
-        viewerEnded({ lifecycle: snapshot.lifecycle });
+        // Status and SSE may arrive in either order. Use the same captured
+        // terminal proof before closing the event stream; driver can still be
+        // an older observation that began before the viewer closed.
+        viewerEnded(snapshot.terminal || { lifecycle: snapshot.lifecycle });
         return;
       }
       const previous = latest;

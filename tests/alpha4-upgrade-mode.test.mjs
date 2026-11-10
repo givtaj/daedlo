@@ -38,6 +38,11 @@ for (const [label, args, pattern] of [
     /Duplicate upgrade acceptance argument/,
   ],
   [
+    "duplicate alpha.10 flag",
+    ["--alpha10-upgrade", "--alpha10-upgrade"],
+    /Duplicate upgrade acceptance argument/,
+  ],
+  [
     "dependency migration without alpha.9 mode",
     ["--alpha9-dependency-migration"],
     /Dependency migration requires explicit alpha.9 upgrade mode/,
@@ -256,6 +261,42 @@ for (const [label, args, baseline, candidate, pattern] of [
     "0.1.4-alpha.4",
     /Published alpha.6 baseline requires explicit alpha.7 upgrade mode/,
   ],
+  ...[
+    "--local-candidate",
+    "--alpha6-upgrade",
+    "--alpha7-upgrade",
+    "--alpha8-upgrade",
+    "--alpha9-upgrade",
+    "--alpha9-dependency-migration",
+    "--legacy-only",
+  ].map((flag) => [
+    `alpha.10 release mixed with ${flag}`,
+    ["--alpha10-upgrade", flag],
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.10",
+    /Alpha.10 upgrade mode cannot combine with another upgrade mode, dependency migration or legacy-only/,
+  ]),
+  [
+    "unreviewed alpha.10 baseline",
+    ["--alpha10-upgrade"],
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.10",
+    /Alpha.10 upgrade mode requires the published alpha.9 baseline/,
+  ],
+  [
+    "unreviewed alpha.10 candidate",
+    ["--alpha10-upgrade", "--production-https"],
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.11",
+    /Alpha.10 upgrade mode requires exactly 0.1.4-alpha.10/,
+  ],
+  [
+    "implicit alpha.9 baseline tools policy",
+    [],
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.10",
+    /Published alpha.9 baseline requires explicit alpha.10 upgrade mode/,
+  ],
 ]) {
   test(`upgrade mode rejects ${label} before acquiring resources`, async (t) => {
     const root = await fs.mkdtemp(join(tmpdir(), "alpha4-local-mode-test-"));
@@ -282,11 +323,17 @@ for (const [label, args, baseline, candidate, pattern] of [
   });
 }
 
-for (const [label, args] of [
-  ["local candidate", ["--local-candidate"]],
-  ["alpha.6 release", ["--alpha6-upgrade"]],
+for (const [label, args, baselineVersion, candidateVersion] of [
+  ["local candidate", ["--local-candidate"], "0.1.4-alpha.5", "0.1.4-alpha.6"],
+  ["alpha.6 release", ["--alpha6-upgrade"], "0.1.4-alpha.5", "0.1.4-alpha.6"],
+  [
+    "alpha.10 release",
+    ["--alpha10-upgrade"],
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.10",
+  ],
 ]) {
-  test(`${label} retains the independent published alpha.5 ZIP pin before any installation`, async (t) => {
+  test(`${label} retains the independent published ${baselineVersion} ZIP pin before any installation`, async (t) => {
     const root = await fs.mkdtemp(join(tmpdir(), "alpha5-pin-test-"));
     t.after(() => fs.rm(root, { recursive: true, force: true }));
     const baseline = join(root, "baseline"),
@@ -295,22 +342,22 @@ for (const [label, args] of [
     await fs.writeFile(
       join(baseline, "release.json"),
       JSON.stringify({
-        version: "0.1.4-alpha.5",
+        version: baselineVersion,
         source: { dirty: false },
         archive: {
-          file: "daedlo-0.1.4-alpha.5.zip",
+          file: `daedlo-${baselineVersion}.zip`,
           sha256: "a".repeat(64),
           bytes: 0,
         },
       }),
     );
-    await fs.writeFile(join(baseline, "daedlo-0.1.4-alpha.5.zip"), "");
+    await fs.writeFile(join(baseline, `daedlo-${baselineVersion}.zip`), "");
     await assert.rejects(
       execute(process.execPath, [harness, ...args], {
         env: {
           ...process.env,
-          DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.5",
-          DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.6",
+          DAEDLO_UPGRADE_BASELINE: baselineVersion,
+          DAEDLO_UPGRADE_CANDIDATE_VERSION: candidateVersion,
           ALPHA4_LEGACY_KIT: baseline,
           ALPHA4_LEGACY_SHA256: "a".repeat(64),
           ALPHA4_CANDIDATE_KIT: join(root, "candidate-must-not-read"),
@@ -330,8 +377,12 @@ for (const [label, args] of [
     assert.equal(receipt.reusePublishedTools, true);
     assert.equal(
       receipt.toolsPolicy,
-      "Keep exact published alpha.5 tools for baseline, upgrade, restart and rollback",
+      `Keep exact published ${baselineVersion.replace("0.1.4-", "")} tools for baseline, upgrade, restart and rollback`,
     );
+    if (label === "alpha.10 release") {
+      assert.equal(receipt.alpha10Upgrade, true);
+      assert.equal(receipt.dependencyMigration, false);
+    }
     assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
     assert.deepEqual(receipt.checks, []);
     assert.deepEqual(receipt.cleanup, []);
@@ -464,6 +515,18 @@ for (const [label, args, baseline, candidate] of [
     ["--alpha7-upgrade", "--production-https"],
     "0.1.4-alpha.6",
     "0.1.4-alpha.7",
+  ],
+  [
+    "explicit alpha.10 unchanged-tools upgrade",
+    ["--alpha10-upgrade"],
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.10",
+  ],
+  [
+    "explicit alpha.10 production upgrade",
+    ["--alpha10-upgrade", "--production-https"],
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.10",
   ],
 ]) {
   test(`${label} reaches the required kit gate without acquiring resources`, async (t) => {

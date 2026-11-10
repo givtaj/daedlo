@@ -10,6 +10,6 @@ default-run = "daedlo-starter-engine"
 [workspace]
 
 [dependencies]
-daedlo-engine = { path = "../../../crates/daedlo-engine", version = "=0.1.4-alpha.9" }
+daedlo-engine = { path = "../../../crates/daedlo-engine", version = "=0.1.4-alpha.10" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

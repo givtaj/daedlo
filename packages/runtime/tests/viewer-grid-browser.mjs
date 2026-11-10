@@ -385,6 +385,65 @@ test("development: a final close wins over late status and a new viewer can reco
   );
 });
 
+test("development: ended status preserves the final result before its close event arrives", async () => {
+  await withViewer(
+    "development-ended-status-first",
+    async ({ ui, viewer, calls }) => {
+      const earlier = await (
+        await ui.request.get(`${viewer.url}/status`)
+      ).json();
+      const lifecycle = {
+        id: earlier.lifecycle.id,
+        status: "ended",
+        endedAt: "2026-11-10T10:00:02.000Z",
+      };
+      const result = {
+        ...earlier.driver.lastResult,
+        runId: "latest-completed-run",
+        finishedAt: "2026-11-10T10:00:01.000Z",
+        outcome: {
+          kind: "success",
+          label: "The final stored draft was verified",
+        },
+      };
+      // Deliver the ended status before the actual server closes its SSE channel.
+      // Its in-flight driver snapshot can still describe the preceding run.
+      await ui.route("**/status", (route) =>
+        route.fulfill({
+          json: {
+            ...earlier,
+            connected: false,
+            lifecycle,
+            terminal: { lifecycle, lastResult: result },
+          },
+        }),
+      );
+      await ui.waitForFunction(
+        () =>
+          document.querySelector("#connection").textContent === "Viewer closed",
+      );
+      assert.equal(
+        await ui.locator("#result-identity").innerText(),
+        `Run ${result.runId} · Finished ${result.finishedAt}`,
+      );
+      assert.equal(
+        await ui.locator("#run-id").innerText(),
+        `Run ${result.runId}`,
+      );
+      assert.match(
+        await ui.locator("#outcome-label").innerText(),
+        /final stored draft/,
+      );
+      assert.equal(
+        await ui.locator('[data-command="open"]').isDisabled(),
+        true,
+      );
+      assert.deepEqual(calls, []);
+      await ui.unroute("**/status");
+    },
+  );
+});
+
 test("development: stable connection checks do not repeat live-region announcements", async () => {
   await withViewer(
     "development-accessible-status",

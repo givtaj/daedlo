@@ -32,6 +32,26 @@ export function requireInstalledSwagger(toolsRoot) {
       "Verified tools must ship complete Swagger integration: " + file,
     );
 }
+export function verifyInstalledSwaggerChecks(checks) {
+  assert.equal(
+    checks.length,
+    19,
+    "All installed Swagger acceptance groups must run",
+  );
+  assert.equal(new Set(checks).size, 19);
+  for (const required of [
+    "installed collapsed operation selection sends no request before one authorized Execute",
+    "installed virtualized operation selection sends no request before one authorized Execute",
+    "installed filtered operation refuses selection without API dispatch",
+    "installed missing operation refuses selection without API dispatch",
+    "installed ambiguous operation refuses selection without API dispatch",
+    "installed HEAD response reports no write expected",
+  ])
+    assert.ok(
+      checks.includes(required),
+      `Missing required installed Swagger regression: ${required}`,
+    );
+}
 export function cleanupInstalledSwaggerConsumer({
   temporary,
   ownedIdentity,
@@ -349,12 +369,7 @@ export async function runInstalledSwagger({
       enginePath: build.enginePath,
       output,
     });
-    assert.equal(
-      browserResult.checks.length,
-      13,
-      "All installed Swagger acceptance groups must run",
-    );
-    assert.equal(new Set(browserResult.checks).size, 13);
+    verifyInstalledSwaggerChecks(browserResult.checks);
     Object.assign(result, browserResult);
     result.runtimeInventory = verifyInstalledRuntime(
       selected.runtime.root,

@@ -4,7 +4,7 @@ This reusable integration teaches Daedlo to operate a Swagger UI API explorer.
 Roots is one customer acceptance fixture. The catalog, browser adapter and Rust
 model contain no Roots route names, accounts, database assumptions or business
 outcomes. The independent browser fixture uses different operations and schemas.
-The alpha.9 candidate ships this standalone integration in its portable tools.
+The alpha.10 candidate ships this standalone integration in its portable tools.
 Its release receipt records publication and exact installed verification; source
 checks alone do not establish a released kit. Older kits do not gain these files
 from a runtime-only update.
@@ -63,7 +63,7 @@ evidence establishes what was saved.
 
 Use the matching runtime, core crate and tools from one verified release. First
 follow the kit's `START_HERE.md` and [release verification guide](../../docs/releases.md).
-The commands below use alpha.9 filenames; replace the three absolute paths with
+The commands below use alpha.10 filenames; replace the three absolute paths with
 your verified tools installation, extracted bundle and a **new** private QA
 folder. They do not change the application's normal dependencies.
 
@@ -73,12 +73,12 @@ bundle_root=/absolute/verified/bundle
 qa_root=/absolute/project/.daedlo-local/swagger-alpha9
 mkdir "$qa_root"
 npm install --prefix "$qa_root" --workspaces=false --ignore-scripts --no-audit --no-fund \
-  "$bundle_root/daedlo-runtime-0.1.4-alpha.9.tgz"
+  "$bundle_root/daedlo-runtime-0.1.4-alpha.10.tgz"
 node "$qa_root/node_modules/playwright/cli.js" install chromium
 mkdir "$qa_root/vendor"
-tar -xzf "$bundle_root/daedlo-engine-0.1.4-alpha.9.crate" -C "$qa_root/vendor"
+tar -xzf "$bundle_root/daedlo-engine-0.1.4-alpha.10.crate" -C "$qa_root/vendor"
 node "$tools_root/integrations/swagger/build-model.mjs" \
-  --crate "$qa_root/vendor/daedlo-engine-0.1.4-alpha.9" \
+  --crate "$qa_root/vendor/daedlo-engine-0.1.4-alpha.10" \
   --output "$qa_root/swagger-build"
 ```
 

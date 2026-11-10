@@ -1,5 +1,13 @@
 # Implementation plan
 
+## Alpha.10 integration and release — 2026-11-10
+
+The owner authorized review, protected-PR merge and publication. Prepare the
+restart/status fixes as alpha.10, verify the exact installed runtime/tools/model
+and unchanged alpha.9 updater through restart and rollback, then publish the
+frozen kit through the existing signed feed and retained-history workflow.
+Record actual results in verification; customer-specific acceptance stays separate.
+
 ## Development restart and connection clarity — 2026-11-10
 
 The owner requested restart-friendly alerts and sidebar status circles for

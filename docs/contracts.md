@@ -167,7 +167,10 @@ Absent observation is unavailable. `lifecycle:{id,status,endedAt?}` identifies
 one viewer instance; status is `open|ended`. A same-origin, read-only GET
 `/events` stream emits `viewer-ended` on explicit viewer closure. Its payload
 contains the terminal lifecycle and, when the session can prove it has finalized,
-the latest completed public `lastResult`. Closing does not perform another
+the latest completed public `lastResult`. An ended `/status` response includes
+the same captured payload as `terminal:{lifecycle,lastResult?}`, separate from
+an older driver observation still in flight. Both delivery orders preserve the
+proven terminal result. Closing does not perform another
 application observation or close the attached session/browser. Delivery is best
 effort: loss without the event remains unknown, never proof of normal shutdown.
 

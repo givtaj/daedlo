@@ -1,10 +1,11 @@
-# Install the Daedlo 0.1.4-alpha.9 candidate
+# Install the Daedlo 0.1.4-alpha.10 candidate
 
-Alpha.9 is being prepared; alpha.7 remains the published release. Use the exact
-locally verified candidate kit and its receipt for isolated acceptance. Do not
-replace an accepted installation or infer publication from these instructions.
+Alpha.10 is being prepared; alpha.9 is the published baseline. Use the selected
+kit and its verification receipt. The live installation page identifies the
+currently published version; these source instructions alone do not establish
+publication or customer acceptance.
 
-This guide covers the Daedlo 0.1.4-alpha.9 kit. Its `release.json` records exact
+This guide covers the Daedlo 0.1.4-alpha.10 kit. Its `release.json` records exact
 artifact identities and scoped verification. Consult the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 for publication status; a guide alone does not establish public availability or
@@ -47,10 +48,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `daedlo-runtime-0.1.4-alpha.9.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
-| `daedlo-engine-0.1.4-alpha.9.crate` | Rust library source for the customer's application model                                                                |
+| `daedlo-runtime-0.1.4-alpha.10.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
+| `daedlo-engine-0.1.4-alpha.10.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `daedlo-tools-0.1.4-alpha.9.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
+| `daedlo-tools-0.1.4-alpha.10.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -104,14 +105,35 @@ customer models must opt into this type; ordinary `text` fields retain their
 behavior. Descriptor defaults and recipe literals are public metadata and must
 never hold credentials. Swagger UI may itself show private request/response data.
 
+## Development restarts and connection status
+
+The sidebar shows separate Viewer, Browser, Application and Live image statuses
+with icons, text and color. Application means the last matching model observation;
+it does not independently probe your API's health. During a rebuild, the viewer
+keeps the completed result and labels any retained image with its capture time.
+Transient transport loss shows Reconnecting, then Connection lost if it persists.
+An explicitly closed viewer shows Viewer closed.
+
+After restarting your API or site, use Check connection to refresh observations.
+Commands stay disabled until the current target and observation are usable.
+Reconnecting never replays an API request or resumes a write. If the viewer itself
+restarts at a different address, open that new address. Swagger selection can reveal
+collapsed or virtualized operations; an active Swagger filter is preserved and a
+hidden operation produces an actionable refusal.
+
 ## Updates and limits
 
-Alpha.9 changes Playwright's dependency closure. Existing alpha.7 managed
-integrations need the reviewed manifest/lock migration in the installed
-[update guide](ninja-update.md#alpha9-dependency-migration) before normal candidate
-preparation can pass. The previous accepted slot remains available for rollback.
-The standalone Swagger integration additionally requires the new tools/model
-files; a runtime-only update cannot install them.
+Alpha.10 keeps alpha.9's Playwright dependency closure and manager contract.
+Existing alpha.9 managed integrations use the normal Check, Install, Restart
+and Revert flow; no third-party dependency migration is required. Retain the
+previous accepted slot for rollback. Older alpha.7 integrations still need the
+reviewed manifest/lock migration described in the installed
+[update guide](ninja-update.md#alpha9-dependency-migration).
+
+For standalone Swagger, install the matching alpha.10 runtime, core and tools
+from the kit and rebuild the included model using its setup guide. Preserve the
+accepted integration until the rebuilt model and agreed flows pass; a runtime-only
+replacement cannot deliver the model's updated response wording.
 
 Alpha.3 adds Operation Ninja-Update. After assisted project registration, its
 separate local update screen checks the signed production catalog, installs and

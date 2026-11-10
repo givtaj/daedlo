@@ -188,6 +188,7 @@ export async function createViewer({
   const eventClients = new Set();
   const viewerId = randomUUID();
   let endedAt = null;
+  let terminalNotice = null;
   let terminalEvent = null;
   const lifecycle = () => ({
     id: viewerId,
@@ -322,14 +323,20 @@ export async function createViewer({
         server.closeAllConnections();
       });
   }
-  async function endObservers() {
-    if (!terminalEvent) {
+  function closeNotice() {
+    if (!terminalNotice) {
       const lastResult = completedResult(session);
-      terminalEvent = `event: viewer-ended\ndata: ${JSON.stringify({
+      // Capture proof once. An observation already in flight can finish after
+      // close begins; its driver snapshot must not replace this terminal result.
+      terminalNotice = {
         lifecycle: lifecycle(),
         ...(lastResult ? { lastResult } : {}),
-      })}\n\n`;
+      };
     }
+    return terminalNotice;
+  }
+  async function endObservers() {
+    terminalEvent ??= `event: viewer-ended\ndata: ${JSON.stringify(closeNotice())}\n\n`;
     await Promise.all(
       [...eventClients].map(
         (res) =>
@@ -432,6 +439,7 @@ export async function createViewer({
     return {
       frontend,
       lifecycle: lifecycle(),
+      ...(closed ? { terminal: closeNotice() } : {}),
       // This is observation availability, not an API health probe. A rebuild
       // may leave the controlled browser connected while observation fails.
       connections: { browser, application },

@@ -108,6 +108,11 @@ for the supported OpenAPI 3.0/3.1/3.2 JSON subset. Use that flow instead of writ
 a customer state model or registering a native manager. Managed Swagger startup is not included. Configure the actual docs/schema URLs and permitted operations;
 application-specific persistence evidence still belongs to the project.
 
+Alpha.10 retains alpha.9's dependency closure and manager contract. Existing
+alpha.9 managed integrations can use the normal candidate, Restart and Revert flow.
+Standalone Swagger upgrades require the matching runtime, core and tools plus a
+rebuilt model; follow the integration guide and retain the accepted installation.
+
 For existing alpha.7 managed integrations, alpha.9 changes Playwright's dependency
 closure. Follow the explicit QA manifest/lock migration in the installed
 `docs/ninja-update.md`; retain the accepted old installation and browser files.

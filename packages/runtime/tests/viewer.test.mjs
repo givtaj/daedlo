@@ -296,6 +296,55 @@ test("viewer close never promotes a result whose finalization is still pending",
   assert.equal("lastResult" in endedEvent(await stream.ended), false);
 });
 
+test("an in-flight ended status carries the same immutable terminal proof as the close event", async (t) => {
+  const { viewer, session, snapshot } = await start(t);
+  let releaseSnapshot;
+  let snapshotStarted;
+  const started = new Promise((resolve) => {
+    snapshotStarted = resolve;
+  });
+  const earlierSnapshot = structuredClone(snapshot);
+  earlierSnapshot.lastResult = { runId: "earlier-run", execution: "completed" };
+  session.snapshot = () =>
+    new Promise((resolve) => {
+      releaseSnapshot = () => resolve(earlierSnapshot);
+      snapshotStarted();
+    });
+  const result = {
+    ok: true,
+    execution: "completed",
+    runId: "final-run",
+    command: "write",
+    recipe: false,
+    startedAt: "2026-11-10T10:00:00.000Z",
+    finishedAt: "2026-11-10T10:00:01.000Z",
+    outcome: { kind: "success", label: "Final response verified" },
+    effect: { status: "not_attempted" },
+  };
+  session.report = (options) => {
+    // Let the already-running observation finish only after close begins.
+    releaseSnapshot();
+    return options?.runId
+      ? { runId: result.runId, lastResult: result }
+      : {
+          runId: result.runId,
+          lastResult: result,
+          completedRunIds: [result.runId],
+        };
+  };
+  const stream = await events(viewer.url);
+  const pending = request(`${viewer.url}/status`);
+  await started;
+  const closing = viewer.close();
+  const endedStatus = JSON.parse((await pending).body);
+  await closing;
+  const terminal = endedEvent(await stream.ended);
+  assert.equal(endedStatus.lifecycle.status, "ended");
+  assert.equal(endedStatus.driver.lastResult.runId, "earlier-run");
+  assert.deepEqual(endedStatus.terminal, terminal);
+  assert.equal(endedStatus.terminal.lastResult.runId, "final-run");
+});
+
 for (const scenario of ["newer active run", "malformed completed IDs"]) {
   test(`viewer close omits old completion with ${scenario}`, async (t) => {
     const { viewer, session } = await start(t);

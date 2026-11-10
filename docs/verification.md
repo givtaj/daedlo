@@ -1,5 +1,37 @@
 # Verification record
 
+## Alpha.10 review and release preparation — 2026-11-10
+
+**PASS — local review corrections and source checks. Installed release,
+hosted CI, publication and public upgrade checks are NOT RUN at this checkpoint.**
+The candidate incorporates the development restart/status and guarded Swagger
+selection changes below, plus the public-launch/protection changes from main
+`c3c4ff1ad88209b8eeadeda2e27cd82bbb46950e`. Version preparation selects
+`0.1.4-alpha.10`; alpha.9 remains the published baseline.
+
+Independent review found a final-result race when an ended status response arrived
+before the terminal event. Both new regressions genuinely failed: the status lacked
+terminal proof and the browser retained the preceding run. The server now captures
+one immutable terminal notice shared by status and event delivery. The complete
+affected viewer run passed 55 checks, including both new regressions, real app
+restart, no replay, stale/unknown states and attached-resource preservation.
+
+Package acceptance now requires all 28 grid cases and the real application-restart
+scenario against the installed runtime. The installed Swagger fixture requires
+19 groups including collapsed/virtualized navigation, filter preservation, safe
+missing/ambiguous refusal, exact authorized Execute and GET/HEAD result wording.
+The alpha.10 upgrade drill requires the pinned published alpha.9 baseline and keeps
+its original manager tools through candidate install, restart and rollback; its
+third-party dependency closure and manager contract are unchanged.
+
+Validation at this checkpoint: 316 combined runtime/installed-harness/upgrade-policy
+checks, 3 Swagger cleanup checks, 28 version/guardrail/CI policy checks, syntax,
+types, formatting and diff checks PASS. Browser evidence remains in ignored
+`artifacts/dev-restart-alerts/` and `artifacts/viewer-grid-20261106/`.
+Publication will use a clean frozen source and one exact package inventory;
+subsequent measured installed and production results must be recorded separately.
+
+
 ## Development restart alerts and Swagger selection — 2026-11-10
 
 **PASS — local source implementation and independent browser acceptance.**
