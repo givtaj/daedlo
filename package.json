@@ -6,9 +6,10 @@
     "packages/runtime"
   ],
   "scripts": {
-    "test": "node --test packages/runtime/tests/*.test.mjs",
+    "test": "node --test packages/runtime/tests/*.test.mjs tests/container-health.test.mjs tests/compose-ci*.test.mjs",
+    "test:compose": "node tests/compose-acceptance.mjs",
     "test:rust": "cargo test --workspace --locked",
-    "test:e2e": "node tests/acceptance.mjs",
+    "test:e2e": "node tests/acceptance.mjs && node --test tests/container-notebook-browser.mjs",
     "test:motion": "node --test packages/runtime/tests/motion-browser.mjs",
     "test:controls": "node --test packages/runtime/tests/control-boundary-browser.mjs",
     "test:cli": "node --test packages/runtime/tests/cli-factory-browser.mjs",
@@ -25,7 +26,7 @@
     "demo": "node examples/roots/serve.mjs",
     "check": "node scripts/check.mjs && npm run types && npm run format:check",
     "types": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target esnext --types node packages/runtime/src/index.d.ts packages/runtime/src/swagger/index.d.ts",
-    "format:check": "prettier --check packages/runtime/src packages/runtime/tests examples/notebook examples/starter examples/managed-starter tests/managed-starter-*.mjs tests/evidence-*.mjs tests/starter*.mjs tests/alpha4-*.mjs tests/fixtures/alpha4-upgrade tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/ci-select.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml integrations/swagger/*.mjs tests/swagger-*.mjs tests/fixtures/swagger-acceptance.mjs",
+    "format:check": "prettier --check scripts/compose-ci*.mjs tests/compose-ci*.test.mjs container tests/compose-acceptance.mjs tests/container-health.test.mjs tests/container-notebook-browser.mjs packages/runtime/src packages/runtime/tests examples/notebook examples/starter examples/managed-starter tests/managed-starter-*.mjs tests/evidence-*.mjs tests/starter*.mjs tests/alpha4-*.mjs tests/fixtures/alpha4-upgrade tests/acceptance.mjs tests/release-*.mjs scripts/check.mjs scripts/ci-select.mjs scripts/release package.json packages/runtime/package.json examples/roots/*.mjs examples/roots/*.html examples/roots/*.css examples/roots/tests .github/workflows/*.yml integrations/swagger/*.mjs tests/swagger-*.mjs tests/fixtures/swagger-acceptance.mjs",
     "demo:notebook": "node packages/runtime/src/cli.mjs --project examples/notebook/project.mjs",
     "roots:prepare": "node examples/roots/prepare-live.mjs",
     "roots:live": "node examples/roots/launch-live.mjs",
@@ -38,7 +39,8 @@
     "test:starter:unit": "node --test tests/starter-accounting.test.mjs tests/starter-installed-inventory.test.mjs",
     "test:managed-starter": "node tests/managed-starter-acceptance.mjs",
     "test:evidence": "node tests/evidence-reporting-acceptance.mjs",
-    "test:swagger": "node --test packages/runtime/tests/swagger-*.test.mjs && cargo test --locked --manifest-path integrations/swagger/engine/Cargo.toml && cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml && node --test packages/runtime/tests/swagger-browser.mjs"
+    "test:swagger": "node --test packages/runtime/tests/swagger-*.test.mjs && cargo test --locked --manifest-path integrations/swagger/engine/Cargo.toml && cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml && node --test packages/runtime/tests/swagger-browser.mjs",
+    "test:compose:fixture": "node --test tests/container-notebook-browser.mjs"
   },
   "devDependencies": {
     "@types/node": "24.13.4",

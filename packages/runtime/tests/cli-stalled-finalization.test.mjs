@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import { createDriverSession, createResourceScope } from "../src/index.mjs";
+import { viewerAddress } from "../src/viewer/address.mjs";
 
 // Execute the actual CLI shutdown/signal flow with its real session, protocol
 // process and resource scope. Browser and viewer boundaries are controlled here;
@@ -26,6 +27,7 @@ const launch = new AsyncFunction(
   "createDriverSession",
   "createResourceScope",
   "createViewer",
+  "viewerAddress",
   "process",
   "console",
   "injectedProject",
@@ -136,6 +138,7 @@ for (const phase of ["effect_evidence", "run_cleanup", "adapter_close"]) {
         ready.resolve();
         return { url: "mock:viewer", close: async () => calls.viewer++ };
       },
+      viewerAddress,
       process,
       {
         log() {},

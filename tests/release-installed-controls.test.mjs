@@ -179,6 +179,12 @@ test("installed acceptance schedules every new safety suite through the physical
   assert.ok(
     cli.includes(pathToFileURL(join(options.installed, "src/cli.mjs")).href),
   );
+  assert.ok(
+    cli.includes(
+      pathToFileURL(join(options.installed, "src/viewer/address.mjs")).href,
+    ),
+    "the CLI harness must use the validator from the same installed runtime",
+  );
 });
 
 test("an omitted or skipped installed safety case cannot pass its receipt", async (t) => {

@@ -163,10 +163,17 @@ test("canonical agent prompt appears before manual installation and starts from 
     );
   }
   assert.match(html, /open your application repository in Codex/i);
-  assert.doesNotMatch(
-    html,
-    /\bWBF\b/,
-    "Public installation must not require a named customer's project.",
+  const firstStep = html.match(
+    /<ol\b[^>]*class="onboarding-steps"[^>]*>\s*<li>([\s\S]*?)<\/li>/i,
+  )?.[1];
+  const firstInstruction = firstStep?.match(/<p>([\s\S]*?)<\/p>/i)?.[1];
+  assert.equal(
+    firstInstruction
+      ?.replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+    "Open your application repository in Codex. Choose one existing flow you want to verify.",
+    "Public installation must begin with the visitor's own application.",
   );
   assert.doesNotMatch(
     html,

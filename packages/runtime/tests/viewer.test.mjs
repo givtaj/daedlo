@@ -131,10 +131,10 @@ async function start(t, options = {}) {
 
 function request(
   url,
-  { method = "GET", headers = {}, body, chunked = false } = {},
+  { method = "GET", headers = {}, body, chunked = false, agent } = {},
 ) {
   return new Promise((resolve, reject) => {
-    const req = http.request(url, { method, headers }, (res) => {
+    const req = http.request(url, { method, headers, agent }, (res) => {
       const chunks = [];
       res.on("data", (chunk) => chunks.push(chunk));
       res.on("end", () =>
@@ -160,9 +160,9 @@ const post = (url, body, headers = {}) =>
     body: JSON.stringify(body),
   });
 
-function events(url) {
+function events(url, headers = {}) {
   return new Promise((resolve, reject) => {
-    const req = http.get(`${url}/events`, { agent: false }, (res) => {
+    const req = http.get(`${url}/events`, { agent: false, headers }, (res) => {
       let body = "";
       res.on("data", (chunk) => (body += chunk.toString()));
       const ended = new Promise((done, fail) => {
@@ -277,7 +277,9 @@ test("explicit viewer close publishes the completed result without reobserving o
   assert.deepEqual(calls, []);
   assert.equal(page.listenerCount("close"), 0);
   assert.equal(cdp.listenerCount("close"), 0);
-  await assert.rejects(request(`${viewer.url}/status`), {
+  // Probe the closed listener with a new connection, not an idle keepalive
+  // socket whose close notification can still be pending in the HTTP agent.
+  await assert.rejects(request(`${viewer.url}/status`, { agent: false }), {
     code: "ECONNREFUSED",
   });
 });
@@ -779,4 +781,171 @@ test("invalid frontend metadata fails before acquiring browser capture", async (
     }, /Invalid frontend/);
     assert.equal(f.cdp.calls.length, 0);
   }
+});
+
+test("container viewer preserves an explicit loopback origin across a remapped port", async (t) => {
+  const f = fixture();
+  // Forward bytes with the original Host and Origin, as a published container
+  // port does. The viewer must validate the public authority, not this hop.
+  let targetPort;
+  const published = http.createServer((req, res) => {
+    const upstream = http.request(
+      {
+        hostname: "127.0.0.1",
+        port: targetPort,
+        path: req.url,
+        method: req.method,
+        headers: req.headers,
+      },
+      (response) => {
+        res.writeHead(response.statusCode, response.headers);
+        response.pipe(res);
+      },
+    );
+    upstream.on("error", () => {
+      res.writeHead(502);
+      res.end();
+    });
+    req.pipe(upstream);
+  });
+  await new Promise((resolve) => published.listen(0, "127.0.0.1", resolve));
+  t.after(() => {
+    published.closeAllConnections();
+    return new Promise((resolve) => published.close(resolve));
+  });
+  const publicOrigin = `http://127.0.0.1:${published.address().port}`;
+  const reservation = http.createServer();
+  await new Promise((resolve) => reservation.listen(0, "127.0.0.1", resolve));
+  targetPort = reservation.address().port;
+  await new Promise((resolve) => reservation.close(resolve));
+  const viewer = await createViewer({
+    ...f,
+    host: "0.0.0.0",
+    port: targetPort,
+    publicOrigin,
+  });
+  t.after(() => viewer.close());
+  const state = await request(`${publicOrigin}/status`);
+  assert.equal(state.status, 200, "the mapped public port must be accepted");
+  assert.equal(JSON.parse(state.body).connected, true);
+  assert.equal(viewer.url, publicOrigin);
+  assert.notEqual(Number(new URL(publicOrigin).port), targetPort);
+  const lifecycleStream = await events(publicOrigin, { origin: publicOrigin });
+  assert.equal(
+    lifecycleStream.res.statusCode,
+    200,
+    "mapped same-origin lifecycle events must remain available",
+  );
+  const command = { id: "write", revision: "r1" };
+  assert.equal(
+    (await post(`${publicOrigin}/command`, command, { origin: publicOrigin }))
+      .status,
+    200,
+  );
+  assert.deepEqual(f.calls, [["command", command]]);
+  f.calls.length = 0;
+  for (const headers of [
+    { host: `127.0.0.1:${targetPort}` },
+    { host: `localhost:${published.address().port}` },
+    {
+      host: "attacker.example",
+      "x-forwarded-host": new URL(publicOrigin).host,
+    },
+    { origin: "https://attacker.example" },
+    { origin: `http://127.0.0.1:${targetPort}` },
+    { origin: "null" },
+    { "sec-fetch-site": "cross-site" },
+  ]) {
+    assert.equal(
+      (await request(`${publicOrigin}/events`, { headers })).status,
+      403,
+    );
+    for (const [path, body] of [
+      ["/command", command],
+      ["/presentation", { id: "tour", revision: "r1" }],
+      ["/control", { action: "resume" }],
+    ])
+      assert.equal(
+        (await post(`${publicOrigin}${path}`, body, headers)).status,
+        403,
+        `${path} must reject a foreign authority or origin`,
+      );
+  }
+  assert.deepEqual(
+    f.calls,
+    [],
+    "rejected requests must have no command effect",
+  );
+  await viewer.close();
+  assert.match(await lifecycleStream.ended, /event: viewer-ended/);
+  assert.equal((await request(`${publicOrigin}/status`)).status, 502);
+  assert.equal(f.cdp.calls.filter(([method]) => method === "detach").length, 1);
+});
+
+test("viewer rejects unsafe container addresses before acquiring browser capture", async (t) => {
+  const invalid = [
+    { host: "0.0.0.0" },
+    { host: "::" },
+    { host: "localhost" },
+    { host: "192.0.2.1" },
+    { host: null },
+    ...[
+      null,
+      "",
+      "http://127.0.0.1",
+      "http://127.0.0.1:0",
+      "http://127.0.0.1:80",
+      "http://127.0.0.1:65536",
+      "https://127.0.0.1:43100",
+      "http://127.0.0.1:43100/",
+      "http://127.0.0.1:43100/path",
+      "http://127.0.0.1:43100?token=private",
+      "http://127.0.0.1:43100#fragment",
+      "http://user:private@127.0.0.1:43100",
+      "http://attacker.example:43100",
+      "http://0.0.0.0:43100",
+      "http://127.1:43100",
+      "http://LOCALHOST:43100",
+      "http://localhost:043100",
+      "http://localhost:43100\n",
+    ].map((publicOrigin) => ({ host: "0.0.0.0", publicOrigin })),
+  ];
+  for (const options of invalid) {
+    const f = fixture();
+    await assert.rejects(async () => {
+      const viewer = await createViewer({ ...f, ...options });
+      t.after(() => viewer.close());
+    }, /Invalid viewer (host|public origin)|public origin is required/);
+    assert.equal(
+      f.cdp.calls.length,
+      0,
+      "invalid configuration must not capture",
+    );
+  }
+});
+
+test("default viewer keeps both loopback hostnames and exact same-origin mutations", async (t) => {
+  const { viewer, calls } = await start(t);
+  const port = new URL(viewer.url).port;
+  assert.equal(new URL(viewer.url).hostname, "127.0.0.1");
+  for (const host of [`127.0.0.1:${port}`, `localhost:${port}`]) {
+    assert.equal(
+      (await request(`${viewer.url}/status`, { headers: { host } })).status,
+      200,
+    );
+    assert.equal(
+      (
+        await post(
+          `${viewer.url}/control`,
+          { action: "pause" },
+          {
+            host,
+            origin: `http://${host}`,
+          },
+        )
+      ).status,
+      200,
+    );
+  }
+  assert.deepEqual(calls, [["pause"], ["pause"]]);
 });

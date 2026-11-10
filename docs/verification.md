@@ -1,5 +1,159 @@
 # Verification record
 
+## Compose PR candidate and recovered local Docker — 2026-11-10
+
+**PASS — current-source local Linux ARM64 Compose acceptance.** The candidate
+on `codex/compose-ci-20261110` is reconciled with main `db2a940` and keeps the
+alpha.10 package version. It is an unpublished source change, not a replacement
+for the published alpha.10 kit. The earlier alpha.9 evidence below is historical.
+
+The fresh run passed **all 13 checkpoints**, including non-root integration
+loading, exact published Host/Origin enforcement, real viewer frames and controls,
+one independently read saved record, graceful shutdown with sibling/data
+preservation, restart without command replay, final evidence export and cleanup
+of only this run's containers, network, volume and image tags. The 1440×1000
+viewer screenshot was inspected. Private receipts remain in the ignored
+`artifacts/compose-resume-20261110/` directory; no raw reports or screenshots are
+part of the PR or public CI artifacts.
+
+After the owner's Docker restart, the daemon responds as Linux ARM64 Docker
+29.8.1 with Compose 5.5.1. The host had about **17 GiB available before** the
+fresh build and **16 GiB afterward**. The previous interrupted build explicitly
+reported an image-export I/O error and `ENOSPC`; it is not a passing product run.
+The older Docker API HTTP 500 is no longer reproduced, but its original cause
+remains unconfirmed. No broad prune, unrelated-container cleanup or application
+service restart was performed for this verification.
+
+Source verification: `npm test` passed **294 tests** before the Compose-version
+gate regression was added; `npm run check` passed syntax, declarations and format.
+The final focused Compose/CI-policy tests passed **78 tests**, including 18
+version/disk cases. Two sandbox listener setup failures passed when rerun with
+local-listener permission. The Compose 5 regression genuinely failed first at
+the old v2-only gate; the parser now accepts documented compatible v2/v5 releases
+and rejects malformed or unknown versions without skipping disk/architecture checks.
+Earlier current-candidate release/alpha.4 contracts passed **675 tests**; the
+installed tools link checks passed **8 tests** after correcting the source-only
+Compose guide link. CLI configuration rejection and the mapped-origin event stream
+also have regression coverage from their original failing assertions.
+
+The new CI matrix uses native Ubuntu AMD64 and ARM64 runners, verifies matching
+host/daemon/image architectures, builds the reusable runtime and model SDK,
+launches their real Chromium and runs the complete Compose flow. Only a
+whitelisted status/source/image-identity summary is uploaded. **NOT RUN at this
+local checkpoint:** hosted CI, registry publication, merge, release and customer
+application acceptance.
+
+The current candidate's tracked/new source and filenames contain none of the
+owner-specified customer identifiers. The live homepage, installation page,
+integration guide and managed-updates page were checked in a browser with the
+same result. Direct HTTP probes returned 403 in this environment; the browser
+success is the live-page evidence. Historical Git objects and immutable published
+archives are outside this current-source scan.
+
+## Compose disk guard and successful-run cleanup — 2026-11-10
+
+**PASS — focused control-flow regressions, using fake Docker commands.** The
+unpublished Compose candidate now checks available host filesystem space before
+image builds, with a default minimum of 15 GiB, and cleans only its own successful
+run's image tags after evidence persistence and project teardown. Failed or
+interrupted tests retain resources and attempt a final driver report export;
+the fixture application stays running until successful teardown. Shared cache,
+reusable runtime/SDK images and earlier runs are not automatically pruned.
+
+The low-space regression first failed because the original CI image helper
+issued **two simulated build commands instead of zero**. It now passes, including
+a disk recheck before the second image. `node --test tests/compose-ci*.test.mjs`
+passes **47 tests**: storage measurement and endpoint failures, exact image
+ownership and references, partial cleanup receipts, disk-full evidence writes,
+failed/interrupted runs, missing host browser dependencies, evidence-directory
+reuse, CI summaries and workflow
+contracts. Harness subprocess tests invoke a fake Docker executable and require
+no installed Playwright or live Docker daemon. An initial sandbox loopback
+restriction was a setup failure; the permitted local-listener rerun passed.
+
+**NOT RUN:** Docker builds, real container/browser acceptance, hosted CI, release
+or publication. These results verify the guard and cleanup control flow, not a
+real build's disk budget or the Docker VM's internal free capacity. The existing
+dated Compose conformance evidence below predates this change.
+
+## Local Compose service candidate — 2026-11-10
+
+**PASS — local Linux ARM64 source-image conformance.** The owner requested a
+service such as `app-daedlo` in the application's Compose project. The
+[Compose guide](compose.md) covers the generic runtime image, matching model SDK,
+customer integration and independent two-service fixture. This is an unpublished
+candidate based on `1cb576a` in branch `codex/compose-service-20261110`, with local
+changes in an isolated worktree. Its package version remains alpha.9; these
+modified source bytes are not the previously published alpha.9 kit.
+
+Test-first evidence:
+
+- Viewer regression initially returned **403 instead of 200** for a mapped
+  public port; unsafe container configuration also lacked the required rejection.
+  The launcher initially rejected `--host` as unknown. The new explicit bind and
+  public-origin options now pass, while native loopback defaults remain unchanged.
+- Actual Compose save initially returned **unknown**. A separate real-browser
+  regression reproduced `crypto.randomUUID is not a function` at an insecure
+  HTTP service-name origin. The independent notebook now uses a 128-bit opaque
+  `crypto.getRandomValues` operation ID, retaining the same ID on retries. Its
+  regression proves one persisted record after repeated save.
+- The first forged-Host acceptance probe used Fetch, which normalized Host to
+  the destination. A local echo probe confirmed this test-client limitation.
+  The corrected `node:http` probe sends the forged header and observes **403**.
+  Failed run receipts remain under `artifacts/compose-1794305839888/` and
+  `artifacts/compose-1794306051380/`; neither is counted as a passing run.
+
+Measured checks:
+
+| Check | Result |
+| --- | --- |
+| Syntax, TypeScript, formatting and whitespace | PASS |
+| Node runtime and container-health tests | PASS, 237 tests |
+| Rust workspace tests / rustfmt / Clippy | PASS, 29 tests; one subprocess fixture intentionally ignored |
+| Independent native acceptance / HTTP-origin regression | PASS, eight acceptance groups and one new browser test |
+| Motion / controls / CLI / viewer / Ninja browser groups | PASS, 4 / 9 / 10 / 32 / 2 tests |
+| Generic runtime image: ESM import, UID 1000 and real Chromium launch | PASS, Linux ARM64, Node 24.22.2, Chromium 158.0.8127.18 |
+| Two-service Compose acceptance | PASS, all nine recorded checkpoints |
+| Rendered container viewer | PASS, inspected 1440×1000 browser screenshot |
+
+Compose acceptance proves a healthy browser/model connected to a separate app
+service, correct module resolution from the customer integration path, exact
+published Host/Origin enforcement, live frames and controls, one independently
+read saved record, clean exit code 0 and exported report, sibling/data preservation,
+restart without replay, and owned container/network/volume cleanup. The retained
+report marks the application **attached** and browser/session/viewer **closed**.
+The complete passing receipt, screenshot and shutdown report are under
+`artifacts/compose-1794306488661/`. The HTTP-origin red/green receipt is
+`artifacts/compose-notebook-regression-20261110.md`.
+
+Local images retained for review:
+
+- `daedlo-compose:compose-service-20261110`:
+  `sha256:a07f777dd1b6d11abb10dc204b0228c48a2705ec3bbd2b8556c4b18705acf2a5`.
+- `daedlo-model-sdk:compose-service-20261110`:
+  `sha256:cae07e5f1796ba667cc02ed0961ed4696032370afcfe6233b61d2f638355dcb6`.
+- Tested runtime source digest:
+  `9abc0fb5509c917e242048379d38e97837936e08ab6c235158aab1571b038683`;
+  Linux notebook engine:
+  `711ffa3a5f95cfa10f99ff9545d7e475a06f2ec9da7aa2546c1dfeeeb2985c92`.
+
+Initial sandbox listener failures were setup failures and were rerun with the
+required permission. Playwright's setup removed older unused Chromium cache
+revision 1234; both its full browser and headless shell were restored with cache
+garbage collection disabled and their paths verified. No application checkout,
+dependency pin or service was migrated. Local image/build caches remain retained.
+
+**BLOCKED — follow-up daemon inventory:** after the passing Compose teardown and
+generic-image smoke, a separate `docker ps` inventory request returned Docker API
+HTTP 500. The passing run retains explicit removal receipts for both containers,
+its network and evidence volume; the later inventory did not provide an additional
+confirmation. Docker Desktop was not restarted to hide this environment failure.
+
+**NOT RUN:** Customer acceptance, Linux AMD64, Windows,
+hosted CI, exact distributable release-kit acceptance and registry publication.
+Customer authentication, HTTPS/secure-context requirements, API origin layout and
+business evidence still require verification in that customer's integration.
+
 ## Current public metadata sanitization — 2026-11-10
 
 Current documentation and onboarding source now omit personal home paths,
@@ -1206,8 +1360,8 @@ and source pins. Publisher source CI, merge, public release/feed activation and
 actual HTTPS install/update/rollback remain pending at this checkpoint. The
 customer's live-session recovery and business acceptance remain unconfirmed.
 
-Ignored evidence roots: `artifacts/alpha7-*` in the frozen checkout and
-`artifacts/wbf-delivery/` in the integration checkout. Raw receipts and private
+Ignored evidence roots: `artifacts/alpha7-*` in the frozen checkout and a private
+delivery directory in the integration checkout. Raw receipts and private
 browser/consumer paths are not included in shared records.
 
 ## Alpha.7 release preparation — 2026-11-05
@@ -1243,7 +1397,7 @@ customer application pins remain outside the command.
 ## Native observation status and guarded recovery — 2026-11-05
 
 **PASS — local source regressions, independent review and Chromium conformance.**
-Work is isolated on `codex/wbf-observation-recovery`, based on shared main
+Work is isolated on a dedicated observation-recovery branch, based on shared main
 `16d050c8b4965ecd7e2acd52bf8d052b911866c4`. The preserved primary checkout and
 customer applications, installations, dependencies and live sessions were not
 used as fixtures or edited. At this historical source-only checkpoint,
@@ -1315,8 +1469,8 @@ is resolved. These are synthetic safety controls, not reproduction of a private
 application journal, a real uncertain save or operating-system sleep. Child-status
 timeout and retained orphan records are covered independently by supervisor tests.
 
-Local evidence is ignored under `artifacts/wbf-observation/`,
-`artifacts/alpha4-native/` and `artifacts/wbf-native-ninja-serial.tap`.
+Local evidence is retained in ignored observation and serial-run receipt paths,
+alongside `artifacts/alpha4-native/`. Private evidence path names are omitted.
 Actual customer incident cause, customer recovery/acceptance, hard-host-loss
 durability, complete exact-installed candidate acceptance, Node 24/remote CI,
 merge, publication and deployment were **NOT RUN** at this source checkpoint.
@@ -2426,7 +2580,7 @@ explicit promotion succeeds. Previous candidate results below are historical.
 The four improvements and integrated native setup are implemented and locally
 verified. **Unpublished; not yet cleared for production rollout.** Final runtime,
 engine, tools and kit came from clean source
-`5c66209166922db5ae732e0ba5841b350f1e090f` on `codex/alpha4-wbf`.
+`5c66209166922db5ae732e0ba5841b350f1e090f` on its isolated release branch.
 The source regression results in the preceding development checkpoint below cover
 the implementation. The final source change replaces fixture-specific labels with
 generic names and waits for the exact completed save before taking upgrade viewer

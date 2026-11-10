@@ -181,6 +181,12 @@
         body.dataset.operation = "";
         state("draft", "Unsaved changes.");
       }
+      function operationId() {
+        // getRandomValues also works at HTTP Compose service-name origins.
+        return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
+          byte.toString(16).padStart(2, "0"),
+        ).join("");
+      }
       for (const id of ["note", "category", "priority", "urgent"])
         $(id).addEventListener("input", changed);
       $("cancel").onclick = () => {
@@ -202,7 +208,7 @@
           state("validation", "Please write a note.");
           return;
         }
-        body.dataset.operation ||= crypto.randomUUID();
+        body.dataset.operation ||= operationId();
         state("saving", "Saving note…");
         try {
           const r = await fetch("/api/notes", {

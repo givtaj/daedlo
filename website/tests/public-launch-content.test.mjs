@@ -266,17 +266,19 @@ test("public Roots evidence admits only curated metadata without account values 
   );
 });
 
-test("public onboarding starts from the visitor's own application without a WBF-specific instruction", async () => {
+test("public onboarding starts from the visitor's own application", async () => {
   const install = await read("templates/install.html");
   const steps = install.match(
     /<ol\b[^>]*class=["'][^"']*onboarding-steps[^"']*["'][^>]*>([\s\S]*?)<\/ol>/i,
   )?.[1];
   assert.ok(steps, "Public onboarding needs its visible initial steps.");
   assert.match(text(steps), /(?:application|project|repository)/i);
-  assert.doesNotMatch(
-    text(steps),
-    /\bWBF\b/i,
-    "The public entry steps must work for a visitor's application, without a private customer instruction.",
+  const firstStep = steps.match(/<li\b[^>]*>([\s\S]*?)<\/li>/i)?.[1];
+  const firstInstruction = firstStep?.match(/<p>([\s\S]*?)<\/p>/i)?.[1];
+  assert.equal(
+    text(firstInstruction ?? ""),
+    "Open your application repository in Codex. Choose one existing flow you want to verify.",
+    "The public entry steps must begin with the visitor's own application.",
   );
 });
 

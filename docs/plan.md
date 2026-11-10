@@ -1,5 +1,23 @@
 # Implementation plan
 
+## Local Compose service candidate — 2026-11-10
+
+The owner requested Daedlo as a service such as `app-daedlo` alongside
+an application's PostgreSQL, API, Swagger and staff portal. Prepare a local source
+image with the existing runtime, Chromium and a customer-owned Linux model/adapter.
+Preserve the native path and keep Compose responsible for sibling services.
+
+- Add explicit container binding and published-loopback-origin validation.
+- Provide a generic runtime image, matching model SDK and customer Compose guide.
+- Verify the independent two-service fixture through real Chromium, save/readback,
+  shutdown evidence, sibling preservation and restart without replay.
+- Add native Linux ARM64 and AMD64 CI for runtime/SDK images and real Compose
+  browser acceptance, retaining only sanitized status and image-identity artifacts.
+- Local current-source acceptance and disk-safety checks pass; open the Compose
+  PR and verify both hosted architecture jobs. Record measured checks in
+  [verification](verification.md). Registry publication and actual customer
+  integration remain separate unrun work.
+
 ## Website public launch rounds — 2026-11-10
 
 - [x] R0: inspect live site/release and establish an isolated website owner.
