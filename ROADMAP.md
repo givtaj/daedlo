@@ -30,10 +30,6 @@ change an accepted installation or make a candidate available to customers.
   browser access, restart and shutdown acceptance must complete before a supported
   image or customer deployment is claimed. No public container delivery is
   announced here.
-- **Clearer development restart status and Swagger selection — release candidate.**
-  [PR #36](https://github.com/givtaj/daedlo/pull/36) prepares alpha.10. Publication,
-  exact installed checks and public upgrade verification remain distinct gates;
-  follow the release record for availability.
 
 ### Continuing contribution areas
 

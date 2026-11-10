@@ -905,16 +905,22 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
     await fs.readFile(join(repo, "website/public/onboarding.js")),
     "The new copy script must be staged and verified as exact public source bytes",
   );
-  const teachingAssets = ["teaching.html", "teaching.css"];
-  const teachingIdentities = [];
-  for (const name of teachingAssets) {
+  const curatedAssets = [
+    "teaching.html",
+    "teaching.css",
+    "demo-2026-10-11.html",
+    "demo-roots-evidence.json",
+    "demo-roots-save.png",
+  ];
+  const curatedIdentities = [];
+  for (const name of curatedAssets) {
     const source = await fs.readFile(join(repo, "website/public", name));
     assert.deepEqual(
       served.get(origin + "/" + name),
       source,
       `${name} must be staged as exact public source bytes`,
     );
-    teachingIdentities.push({
+    curatedIdentities.push({
       path: name,
       bytes: source.length,
       sha256: sha256(source),
@@ -956,16 +962,16 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
         ),
       ),
     ),
-    { status: "PASS", generation: 2, servedAssets: 30, privateBoundaries: 9 },
+    { status: "PASS", generation: 2, servedAssets: 33, privateBoundaries: 9 },
   );
   assert.deepEqual(
-    teachingAssets.map((name) =>
+    curatedAssets.map((name) =>
       live.assets.find((asset) => asset.path === name),
     ),
-    teachingIdentities,
-    "Live verification must report each teaching asset's exact source identity",
+    curatedIdentities,
+    "Live verification must report each curated asset's exact source identity",
   );
-  for (const name of teachingAssets) {
+  for (const name of curatedAssets) {
     const url = origin + "/" + name;
     const original = served.get(url);
     assert.ok(original.length > 0);

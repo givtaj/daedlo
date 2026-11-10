@@ -40,6 +40,15 @@ identical; the old HTML is retained as `demo-2026-10-11.html` under its original
 digest. The current demo index can therefore evolve without replacing that record.
 Private acceptance receipts and this task's coordination links stay outside Git.
 
+The first hosted website CI run
+[42797211331](https://github.com/givtaj/daedlo/actions/runs/42797211331) found a
+deployment-verifier fixture that still expected 30 served assets. The three new
+demo assets correctly increased that count to 33. The exact assertion reproduced
+locally before correction. The corrected fixture additionally checks source-byte
+identity and rejects same-length tampering for each new asset; all 101 affected
+renewal and promotion tests pass locally. Final combined alpha.10 site checks and
+production publication remain pending at this checkpoint.
+
 ## Alpha.10 frozen package and publication preparation — 2026-11-10
 
 **PASS — exact installed candidate, local upgrade/recovery, source PR CI and
