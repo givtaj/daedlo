@@ -87,6 +87,7 @@ jobs:
           cargo test --workspace --locked
           cargo fmt --manifest-path integrations/swagger/engine/Cargo.toml -- --check
           cargo clippy --manifest-path integrations/swagger/engine/Cargo.toml --all-targets --locked -- -D warnings
+          cargo test --locked --manifest-path integrations/swagger/engine/Cargo.toml
       - name: Build the independent Rust fixture
         if: needs.public-metadata.outputs.full == 'true'
         run: cargo build --workspace --locked
@@ -118,7 +119,8 @@ jobs:
           node --test tests/managed-starter-*.test.mjs
           npm run test:managed-starter
           npm run test:evidence
-          npm run test:swagger
+          cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml
+          node --test packages/runtime/tests/swagger-browser.mjs
       - name: Build an immutable candidate bundle from the clean checkout
         if: needs.public-metadata.outputs.full == 'true'
         id: bundle

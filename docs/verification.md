@@ -1,5 +1,27 @@
 # Verification record
 
+## Swagger CI command deduplication — 2026-11-10
+
+CI runs Swagger JavaScript units once through `npm test` on each supported
+Node version, and Swagger Rust tests once in the Node 24 Rust-check step.
+Both lanes retain their explicit Swagger engine build, source browser checks
+and exact-installed acceptance. The complete local `npm run test:swagger`
+command, dependency pins, cache policy and release/publisher workflows are
+unchanged.
+
+Regression-first verification on Node 24.22.2/npm 11.21.2 recorded two real
+assertion failures before the workflow edit: Node 22 dispatched Swagger units
+twice instead of once and dispatched Rust tests instead of leaving them to
+Node 24. The 54 focused CI-policy/metadata/guardrail checks then passed, as did
+source syntax/types/formatting, tracked public-metadata validation, workflow
+YAML parsing and whitespace checks. The policy tests count commands in each
+lane, retain source/build/installed coverage and protect the full local command.
+
+These local results verify CI wiring, not a new runtime or customer acceptance.
+Full source/browser/exact-installed results for the committed candidate are
+recorded on this change's PR. No execution-time or billing savings are claimed
+from this change; each source browser lane still needs a compiled engine.
+
 ## Alpha.9 production release — 2026-11-09
 
 **PASS — exact GitHub prerelease, production publication, actual HTTPS installation

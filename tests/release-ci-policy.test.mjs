@@ -331,18 +331,126 @@ test("Cargo caches exclude independent installed outputs and never bypass cargo 
   assert.doesNotMatch(workflow, /cache-hit[^\n]*\n\s+run: cargo/);
 });
 
-test("both supported Node lanes exercise Swagger source and exact installed delivery", () => {
+const packageScripts = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+).scripts;
+
+// Inspect the actual commands scheduled in each full-verification lane. Expand
+// the two npm entrypoints that can dispatch Swagger units/Rust/browser checks,
+// so invoking an aggregate script cannot hide duplicate work from the counts.
+function verificationCommands(node, expandScripts = true) {
+  const job = workflow.match(/  verify:\n([\s\S]*?)\n  public-metadata:/)?.[1];
+  assert.ok(job, "Inspect the verify job if its structure changes");
+  return job
+    .split(/^      - name: /m)
+    .slice(1)
+    .flatMap((step) => {
+      const run = step.match(/^        run: (.*)$/m);
+      if (!run) return [];
+      const condition = step.match(/^        if: (.*)$/m)?.[1];
+      if (condition) {
+        assert.ok(
+          [
+            "needs.public-metadata.outputs.full == 'true'",
+            "needs.public-metadata.outputs.full == 'true' && matrix.node == 24",
+          ].includes(condition),
+          `Inspect changed run condition: ${condition}`,
+        );
+        if (condition.endsWith("matrix.node == 24") && node !== 24) return [];
+      }
+      const lines =
+        run[1] === "|"
+          ? step
+              .slice(run.index + run[0].length + 1)
+              .split("\n")
+              .filter((line) => line.startsWith("          "))
+              .map((line) => line.trim())
+          : [run[1]];
+      return lines.flatMap((line) => {
+        const script =
+          line === "npm test"
+            ? "test"
+            : line === "npm run test:swagger"
+              ? "test:swagger"
+              : null;
+        return expandScripts && script
+          ? packageScripts[script].split(" && ")
+          : [line];
+      });
+    });
+}
+
+test("Swagger Node units run once through npm test in each supported Node lane", () => {
   assert.match(workflow, /node: \[22, 24\]/);
   assert.match(workflow, /version: "22\.23\.4"/);
   assert.match(workflow, /version: "24\.22\.2"/);
   assert.match(workflow, /node-version: \$\{\{ matrix\.version \}\}/);
-  assert.match(workflow, /npm run test:swagger/);
-  assert.match(
-    workflow,
-    /cargo clippy --manifest-path integrations\/swagger\/engine\/Cargo.toml --all-targets --locked -- -D warnings/,
+  assert.equal(
+    packageScripts.test,
+    "node --test packages/runtime/tests/*.test.mjs",
   );
-  assert.match(
-    workflow,
-    /tests\/swagger-installed-acceptance\.mjs', options\.bundle, tools\.archive, tools\.sha256, options\.expectedManifestSha256/,
-  );
+  for (const node of [22, 24]) {
+    assert.equal(
+      verificationCommands(node, false).filter((line) => line === "npm test")
+        .length,
+      1,
+    );
+    assert.equal(
+      verificationCommands(node).filter((line) =>
+        /^node --test packages\/runtime\/tests\/(?:\*|swagger-\*)\.test\.mjs$/.test(
+          line,
+        ),
+      ).length,
+      1,
+      `Node ${node} must dispatch Swagger unit tests exactly once`,
+    );
+  }
+});
+
+test("Swagger Rust checks run only once in the Node 24 lane", () => {
+  for (const node of [22, 24]) {
+    const commands = verificationCommands(node);
+    for (const command of [
+      "cargo fmt --manifest-path integrations/swagger/engine/Cargo.toml -- --check",
+      "cargo clippy --manifest-path integrations/swagger/engine/Cargo.toml --all-targets --locked -- -D warnings",
+      "cargo test --locked --manifest-path integrations/swagger/engine/Cargo.toml",
+    ]) {
+      assert.equal(
+        commands.filter((line) => line === command).length,
+        node === 24 ? 1 : 0,
+        `Node ${node}: ${command}`,
+      );
+    }
+  }
+});
+
+test("both lanes retain Swagger source build/browser and exact-installed checks, with the full local command unchanged", () => {
+  assert.deepEqual(packageScripts["test:swagger"].split(" && "), [
+    "node --test packages/runtime/tests/swagger-*.test.mjs",
+    "cargo test --locked --manifest-path integrations/swagger/engine/Cargo.toml",
+    "cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml",
+    "node --test packages/runtime/tests/swagger-browser.mjs",
+  ]);
+  for (const node of [22, 24]) {
+    const commands = verificationCommands(node);
+    for (const command of [
+      "cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml",
+      "node --test packages/runtime/tests/swagger-browser.mjs",
+    ]) {
+      assert.equal(
+        commands.filter((line) => line === command).length,
+        1,
+        `Node ${node}: ${command}`,
+      );
+    }
+    assert.equal(
+      commands.filter((line) =>
+        /^execFileSync\(process\.execPath, \['tests\/swagger-installed-acceptance\.mjs', options\.bundle, tools\.archive, tools\.sha256, options\.expectedManifestSha256/.test(
+          line,
+        ),
+      ).length,
+      1,
+      `Node ${node} must retain exact installed Swagger acceptance`,
+    );
+  }
 });
