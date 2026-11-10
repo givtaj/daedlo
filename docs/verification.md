@@ -17,6 +17,13 @@ and 390px, with no horizontal page overflow or browser errors; desktop and narro
 screenshots were inspected. Existing onboarding browser/clipboard checks passed
 against the unchanged alpha.10 kit and production signing trust.
 
+The first [PR CI run](https://github.com/givtaj/daedlo/actions/runs/42829457932)
+passed both native Compose lanes but failed both Node lanes on the publisher
+fixture's old asset count: expected 33, observed 34 after adding `compose.html`.
+The fixture now expects the additional page and includes it in the existing
+exact-byte and tamper-rejection checks. All 59 publisher renewal tests then
+passed locally; final hosted results belong to the updated PR head.
+
 Receipts remain under ignored `artifacts/compose-docs/` and
 `artifacts/unified-onboarding/`. This documentation-only check did not rebuild
 container images or exercise a new application integration. The native container

@@ -906,6 +906,7 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
     "The new copy script must be staged and verified as exact public source bytes",
   );
   const curatedAssets = [
+    "compose.html",
     "teaching.html",
     "teaching.css",
     "demo-2026-10-11.html",
@@ -962,7 +963,7 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
         ),
       ),
     ),
-    { status: "PASS", generation: 2, servedAssets: 33, privateBoundaries: 9 },
+    { status: "PASS", generation: 2, servedAssets: 34, privateBoundaries: 9 },
   );
   assert.deepEqual(
     curatedAssets.map((name) =>
