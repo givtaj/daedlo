@@ -46,6 +46,15 @@ at the metadata gate because synthetic home paths in a new disk test matched
 the privacy rule. The fixtures now use a neutral absolute path; the local
 metadata check reproduces the original failure and passes after correction.
 
+The second hosted run built and smoke-tested both native runtime/SDK image pairs,
+then reached healthy Compose services on both architectures. Acceptance correctly
+stopped because those Compose images had no implicit ownership labels. Explicit
+`io.daedlo.compose.project` and `io.daedlo.compose.service` build labels now bind
+each fixture image to its unique run. Regressions first failed for missing label
+declarations and namespaced capture/removal, then passed; missing or implicit-only
+labels still prevent cleanup. The focused safety/lifecycle/summary/workflow suite
+passed **61 tests**. Successful hosted Compose acceptance remains a separate gate.
+
 The current candidate's tracked/new source and filenames contain none of the
 owner-specified customer identifiers. The live homepage, installation page,
 integration guide and managed-updates page were checked in a browser with the

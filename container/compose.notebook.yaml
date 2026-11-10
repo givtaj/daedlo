@@ -5,6 +5,9 @@ services:
       context: ..
       dockerfile: container/Dockerfile
       target: notebook-app
+      labels:
+        io.daedlo.compose.project: ${COMPOSE_PROJECT_NAME:?Compose project name is required}
+        io.daedlo.compose.service: notebook-app
     init: true
     ports:
       - "127.0.0.1:${DAEDLO_APP_PORT:-43101}:8080"
@@ -14,6 +17,9 @@ services:
       context: ..
       dockerfile: container/Dockerfile
       target: notebook-driver
+      labels:
+        io.daedlo.compose.project: ${COMPOSE_PROJECT_NAME:?Compose project name is required}
+        io.daedlo.compose.service: daedlo
     init: true
     shm_size: 1gb
     environment:

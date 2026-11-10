@@ -256,12 +256,14 @@ async function inspectOwnedImage(project, expected, run) {
     ]),
   );
   const labels = inspected?.Config?.Labels;
+  // The fixture declares these image build labels explicitly. Compose's own
+  // labels vary by build backend/version and are not an ownership contract.
   if (
     !imageIdPattern.test(inspected?.Id ?? "") ||
     !Array.isArray(inspected.RepoTags) ||
     !inspected.RepoTags.includes(expected.tag) ||
-    labels?.["com.docker.compose.project"] !== project ||
-    labels?.["com.docker.compose.service"] !== expected.service
+    labels?.["io.daedlo.compose.project"] !== project ||
+    labels?.["io.daedlo.compose.service"] !== expected.service
   )
     throw Error(
       `Compose image ownership could not be verified for ${expected.tag}.`,
