@@ -1,5 +1,30 @@
 # Verification record
 
+## Native Compose CI acceptance — 2026-11-10
+
+**PASS — native Linux ARM64 and AMD64.** [PR #42](https://github.com/givtaj/daedlo/pull/42)
+head `db6221e84201ee9e19f39b84d78263b7a03bae4f` passed both native Compose jobs
+in [CI run 42818955717](https://github.com/givtaj/daedlo/actions/runs/42818955717),
+testing merge checkout `9eaa217d5ccc25dd656e194c33eabea9e424b521` against main
+`db2a940`. Both downloadable summary archives were read back: each contains only
+`summary.json`, reports `PASS` for all 21 prerequisite/scenario checks, and binds
+the same tested source commit to its architecture and two image identities.
+
+Both runners built the reusable runtime and model SDK, verified native Linux
+architecture, UID 1000, a real Chromium launch and the matching Rust compiler.
+The real Compose browser flow passed all 13 checkpoints on each architecture,
+including one independently read saved record, Host/Origin boundaries, sibling
+preservation, shutdown evidence, restart without command replay and exact owned
+image cleanup. No image was pushed to a registry; raw browser evidence was not
+uploaded as a public artifact.
+
+The full Node 22/24 source/browser/exact-installed jobs were still in progress
+at this checkpoint; their final result belongs to the current PR checks. This
+record is evidence for the named revision, not a claim about later commits,
+customer application acceptance, merge or a published release. The final source
+audit covered 441 committed filenames and 428 UTF-8 text files, including website
+source, with zero owner-specified customer identifiers.
+
 ## Compose PR candidate and recovered local Docker — 2026-11-10
 
 **PASS — current-source local Linux ARM64 Compose acceptance.** The candidate
