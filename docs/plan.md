@@ -13,10 +13,11 @@ Preserve the native path and keep Compose responsible for sibling services.
   shutdown evidence, sibling preservation and restart without replay.
 - Add native Linux ARM64 and AMD64 CI for runtime/SDK images and real Compose
   browser acceptance, retaining only sanitized status and image-identity artifacts.
-- Local current-source acceptance and disk-safety checks pass; open the Compose
-  PR and verify both hosted architecture jobs. Record measured checks in
-  [verification](verification.md). Registry publication and actual customer
-  integration remain separate unrun work.
+- Local current-source acceptance and disk-safety checks pass. [PR #42](https://github.com/givtaj/daedlo/pull/42)
+  is open and both hosted architecture jobs passed the full Compose flow.
+  [Verification](verification.md) binds the observed run and source revision;
+  final PR checks remain required before integration. Registry publication and
+  actual customer integration remain separate unrun work.
 
 ## Website public launch rounds — 2026-11-10
 
