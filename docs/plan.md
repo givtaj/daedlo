@@ -7,10 +7,11 @@
 - [x] R2: add released-capability highlights and a clearly separate development roadmap.
 - [x] R3: feature inspected Roots recording evidence with candidate provenance; archive the original demo HTML unchanged.
 - [x] R4: reconcile the final alpha.10 publisher, review the combined diff and verify exact staged assets and browser presentation.
-- [ ] R5: pass protected integration, publish through the existing workflow and verify the production site and retained download/feed identities.
+- [x] R5: pass protected integration, publish through the existing workflow and verify the production site and retained download/feed identities.
 
-R1–R3 have [local verification](verification.md#website-public-launch-update--2026-11-10).
-Production remains a separate measured gate. Runtime, storage and Compose work
+All rounds are complete, with [local verification](verification.md#website-public-launch-update--2026-11-10)
+and [production evidence](verification.md#website-public-launch-production--2026-11-10).
+Runtime, storage and Compose work
 retain their existing owners; the site must not describe their candidates as
 shipped until their release records establish delivery.
 
