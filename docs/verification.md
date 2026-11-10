@@ -26,7 +26,7 @@ service restart was performed for this verification.
 
 Source verification: `npm test` passed **294 tests** before the Compose-version
 gate regression was added; `npm run check` passed syntax, declarations and format.
-The final focused Compose/CI-policy tests passed **78 tests**, including 18
+The final committed Node suite passed **312 tests**. Focused Compose/CI-policy tests passed **78 tests**, including 18
 version/disk cases. Two sandbox listener setup failures passed when rerun with
 local-listener permission. The Compose 5 regression genuinely failed first at
 the old v2-only gate; the parser now accepts documented compatible v2/v5 releases
@@ -40,8 +40,11 @@ The new CI matrix uses native Ubuntu AMD64 and ARM64 runners, verifies matching
 host/daemon/image architectures, builds the reusable runtime and model SDK,
 launches their real Chromium and runs the complete Compose flow. Only a
 whitelisted status/source/image-identity summary is uploaded. **NOT RUN at this
-local checkpoint:** hosted CI, registry publication, merge, release and customer
-application acceptance.
+local checkpoint:** successful hosted architecture checks, registry publication,
+merge, release and customer application acceptance. The first hosted run stopped
+at the metadata gate because synthetic home paths in a new disk test matched
+the privacy rule. The fixtures now use a neutral absolute path; the local
+metadata check reproduces the original failure and passes after correction.
 
 The current candidate's tracked/new source and filenames contain none of the
 owner-specified customer identifiers. The live homepage, installation page,

@@ -36,7 +36,7 @@ function diskFixture(overrides = {}) {
     output: "/evidence",
     env: {},
     platform: "linux",
-    home: "/home/test",
+    home: "/fixture-home",
     async resolvePath(path) {
       return path;
     },
@@ -162,13 +162,13 @@ test("Docker context overrides DOCKER_HOST and remote endpoints fail closed", as
 });
 
 test("explicit Docker storage overrides defaults; macOS checks Docker.raw's actual filesystem", async () => {
-  const mac = diskFixture({ platform: "darwin", home: "/Users/test" });
+  const mac = diskFixture({ platform: "darwin", home: "/fixture-home" });
   const receipt = await assertComposeDiskSpace(mac.options);
   assert.ok(
     mac.stats.some(
       ([path]) =>
         path ===
-        "/Users/test/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw",
+        "/fixture-home/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw",
     ),
   );
   assert.match(receipt.scope, /host.*not.*virtual/i);
@@ -206,7 +206,7 @@ test("Linux Docker Desktop cannot treat a guest DockerRootDir as host storage", 
     run: (_command, args) => {
       calls.push(args);
       if (args[0] === "context")
-        return "unix:///home/test/.docker/desktop/docker.sock";
+        return "unix:///fixture-home/.docker/desktop/docker.sock";
       if (args.includes("{{.OperatingSystem}}")) return "Docker Desktop";
       if (args.includes("{{.DockerRootDir}}")) return "/var/lib/docker";
       throw Error("Unexpected command");
@@ -228,7 +228,7 @@ test("Linux Docker Desktop cannot treat a guest DockerRootDir as host storage", 
 
   const explicit = diskFixture({
     env: {
-      DOCKER_HOST: "unix:///home/test/.docker/desktop/docker.sock",
+      DOCKER_HOST: "unix:///fixture-home/.docker/desktop/docker.sock",
       DAEDLO_DOCKER_DISK_PATH: "/mnt/docker-desktop/Docker.raw",
     },
     run: () => {
