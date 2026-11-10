@@ -10,11 +10,16 @@ const read = (path) => readFile(resolve(website, path), "utf8");
 const flat = (html) => html.replace(/\s+/g, " ");
 
 test("homepage release label matches the current runtime release", async () => {
-  const runtime = JSON.parse(await readFile(
-    resolve(sourceWebsite, "../packages/runtime/package.json"), "utf8",
-  ));
+  const runtime = JSON.parse(
+    await readFile(
+      resolve(sourceWebsite, "../packages/runtime/package.json"),
+      "utf8",
+    ),
+  );
   assert.ok(
-    (await read("public/index.html")).includes(`${runtime.version} · Assisted alpha.`),
+    (await read("public/index.html")).includes(
+      `${runtime.version} · Assisted alpha.`,
+    ),
     "The public release label must not lag the release being staged.",
   );
 });
@@ -60,13 +65,16 @@ test("native supervisor fixes require a separate tools bootstrap and current saf
   assert.match(updates, /observation failure/i);
   assert.match(updates, /runtime update[^.]*keeps[^.]*tools/i);
   assert.match(updates, /safely stop[^.]*authenticated[^.]*owner/i);
-  assert.match(updates, /same configuration[^.]*store[^.]*trust[^.]*checkpoint/i);
+  assert.match(
+    updates,
+    /same configuration[^.]*store[^.]*trust[^.]*checkpoint/i,
+  );
   assert.match(updates, /cannot[^.]*hot-reload[^.]*adapter/i);
   const install = flat(await read("templates/install.html"));
   assert.match(install, /failed observation[^.]*stopped ownership/i);
 });
 
-test("recorded demo and prior preview keep their copied bytes", async () => {
+test("archived demo and prior preview retain their original copied bytes", async () => {
   const baseline = JSON.parse(
     await readFile(
       resolve(sourceWebsite, "tests/fixtures/historical-public-files.json"),
@@ -75,13 +83,15 @@ test("recorded demo and prior preview keep their copied bytes", async () => {
   );
   const retained = baseline.files;
   assert.equal(retained.length, 11);
+  // The public-launch update makes demo.html an index of recordings. Retain the
+  // exact original page at its dated archive URL; never replace its old digest.
   for (const f of retained)
     assert.equal(
       createHash("sha256")
-        .update(await readFile(resolve(website, f.path)))
+        .update(await readFile(resolve(website, f.archivedPath ?? f.path)))
         .digest("hex"),
       f.sha256,
-      `${f.path}: historic evidence/download must be immutable`,
+      `${f.archivedPath ?? f.path}: historic evidence/download must be immutable`,
     );
 });
 

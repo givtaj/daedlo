@@ -151,7 +151,7 @@ test("copied prompt includes first-flow acceptance, preservation and managed-upd
     assert.match(prompt, pattern, `The copied prompt is missing ${label}.`);
 });
 
-test("canonical agent prompt appears before manual installation and identifies WBF only as an opened project", async () => {
+test("canonical agent prompt appears before manual installation and starts from the visitor's application", async () => {
   const html = await template();
   promptFrom(html);
   const position = html.indexOf('id="onboarding-prompt"');
@@ -162,8 +162,12 @@ test("canonical agent prompt appears before manual installation and identifies W
       `The prompt must precede ${id} instructions.`,
     );
   }
-  assert.match(html, /WBF/);
-  assert.match(html, /open[\s\S]{0,160}WBF|WBF[\s\S]{0,160}open/i);
+  assert.match(html, /open your application repository in Codex/i);
+  assert.doesNotMatch(
+    html,
+    /\bWBF\b/,
+    "Public installation must not require a named customer's project.",
+  );
   assert.doesNotMatch(
     html,
     /<blockquote\b/i,
@@ -178,7 +182,10 @@ test("copied prompt routes native execution through its managed session and pres
     ["managed contract", /docs\/managed-integration\.md/],
     ["evidence contract", /docs\/evidence-reporting\.md/],
     ["exact session", /return the exact session[^.]*injected runtime/i],
-    ["asynchronous proof before finalization", /await[\s\S]{0,100}adapter\.effectStatus\(\)[^.]*before[^.]*finaliz/i],
+    [
+      "asynchronous proof before finalization",
+      /await[\s\S]{0,100}adapter\.effectStatus\(\)[^.]*before[^.]*finaliz/i,
+    ],
     ["separate later proof", /later proof[^.]*separate[^.]*original report/i],
     ["bounded reports", /16 completed reports[^.]*200 events/i],
     ["native immediate archive", /native[^.]*archive[^.]*immediate/i],
@@ -186,7 +193,10 @@ test("copied prompt routes native execution through its managed session and pres
     ["no replay", /without replaying[^.]*action/i],
   ])
     assert.match(prompt, pattern, `The copied prompt is missing ${label}.`);
-  assert.doesNotMatch(prompt, /(?:complete|unlimited) (?:run |event )?history/i);
+  assert.doesNotMatch(
+    prompt,
+    /(?:complete|unlimited) (?:run |event )?history/i,
+  );
 });
 
 test("update setup points to the canonical install prompt instead of maintaining another prompt", async () => {

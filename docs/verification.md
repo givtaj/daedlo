@@ -1,5 +1,71 @@
 # Verification record
 
+## Website public launch update — 2026-11-10
+
+**LOCAL PASS; publication NOT RUN.** An isolated website candidate based on
+`c3c4ff1` adds public source/contributor/release routes, generic application
+onboarding, current-release highlights and a separately labelled development
+roadmap. Storage and Compose remain in development; teaching remains planned.
+The alpha.10 release owner is a separate integration dependency. This checkpoint
+uses the published alpha.9 artifacts and does not claim alpha.10 delivery.
+
+| Check | Observed result |
+| --- | --- |
+| Regression baseline | Five public visitor assertions failed before implementation: missing source/contributor route, release section and roadmap, customer-specific entry steps, and the historical demo's same-kit CTA. A later Roots-recording assertion failed before that section was added. These were assertion failures, not setup/import errors. |
+| Website suite | PASS: 83 tests, including release staging, signed-update trust, historical bytes, current copy, recording provenance and pinned Roots image/curated metadata integrity. Existing customer-name assertions were replaced with equivalent application-specific acceptance requirements for public visitors. |
+| Staged inputs | PASS: 24 public release files across eight versions matched the independent publisher pins; signed catalog generation 28 verified under the existing production public key. No release was rebuilt. |
+| Static acceptance | PASS: nine pages, real allowlisted local links, eight verified release archives and 50 public entries. |
+| Existing onboarding browser | PASS: 14 Chromium checks covering desktop/narrow layouts, exact clipboard payload, denial fallback, no-JavaScript guidance, update/bootstrap links and copied installer family. |
+| Public visitor browser | PASS: 14 Chromium checks covering desktop/narrow layouts, keyboard source/contributor navigation, released/roadmap distinctions, recording provenance, evidence JSON, image dimensions and current installation. GitHub navigation was intercepted locally; these checks do not establish live external destination availability. |
+| Visual inspection | PASS: inspected actual desktop/narrow homepage and roadmap captures and the recorded Roots image. No horizontal overflow occurred in the measured layouts. |
+| Independent provenance review | PASS: curated Roots evidence and copied image matched original run and byte-continuity receipts; no account values, credentials, private paths or raw traces were added. |
+| Public destinations and source checks | PASS: six anonymous HTTPS GitHub destinations returned 200; repository syntax, TypeScript, formatting and public-metadata checks passed. |
+| Cleanup | Owned browsers and loopback servers closed. The first sandboxed browser attempt was blocked before the scenario by loopback permissions; the permitted rerun passed. A new harness's CSS-uppercase version extraction was corrected before its passing run. |
+| Hosted CI and production | NOT RUN for this website candidate. Reconcile the active release/publisher, verify the final candidate, then use the existing protected PR and publisher path. |
+
+The newer product image records the Roots `keyboard-saved` recipe on 9 November
+using candidate `32f11d42e027edf49066bac393cb9ddb558b79f9`. All ten steps completed;
+independent readback verified one new saved row, unchanged prior rows, and the same
+row after browser reload with no extra reload mutation. The recipe save count
+excludes fixture preparation. The non-Swagger runtime/core were verified unchanged
+through published alpha.9 source `30d2a985964011c08d80db2e83a3716a2c151345`.
+This is recorded candidate evidence, not an alpha.10 capture or a new customer
+acceptance run. It does not prove application-service/database restart recovery.
+
+The unedited image SHA-256 is
+`053dcc221fb4f11f8f93193ba6bc7706c675f0943c8554b0b09bec180144c1e9`.
+Its curated public summary is `website/public/demo-roots-evidence.json`.
+The original October 11 Architecture Studio screenshots and JSON remain byte
+identical; the old HTML is retained as `demo-2026-10-11.html` under its original
+digest. The current demo index can therefore evolve without replacing that record.
+Private acceptance receipts and this task's coordination links stay outside Git.
+
+The first hosted website CI run
+[42797211331](https://github.com/givtaj/daedlo/actions/runs/42797211331) found a
+deployment-verifier fixture that still expected 30 served assets. The three new
+demo assets correctly increased that count to 33. The exact assertion reproduced
+locally before correction. The corrected fixture additionally checks source-byte
+identity and rejects same-length tampering for each new asset; all 101 affected
+renewal and promotion tests pass locally.
+
+**Final alpha.10 website candidate: LOCAL PASS; website publication pending.**
+Reconciled with merged publisher `a581aac`. The three public alpha.10 files match
+all independent publisher pins and the frozen inputs exactly. Production catalog
+generation 29 verifies under the unchanged pinned public key. The final staged
+website passes all 87 website tests and static acceptance for nine pages, nine
+release archives and 53 public entries. Both Chromium journeys pass all 14 checks
+each, including exact alpha.10 clipboard/installer content and desktop/narrow
+visitor navigation. Actual final homepage and installation captures were inspected;
+owned browsers and loopback servers closed. Source syntax/types/format and public
+metadata checks pass. Independent copy, provenance and verifier-delta reviews
+found no blocking issue. The recording is still explicitly an alpha.9 candidate;
+the alpha.10 public installer is not presented as the kit used in that recording.
+
+[Website PR #38](https://github.com/givtaj/daedlo/pull/38) targets main. Its final
+required hosted checks, protected merge, website publication and production
+readback are separate pending gates. Alpha.10 package publication and customer
+upgrade verification remain owned by the release record.
+
 ## Alpha.10 production release — 2026-11-10
 
 **PASS — public prerelease, signed production feed, fresh public installation

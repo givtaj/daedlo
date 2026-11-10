@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-11-09",
+  "status": "PASS",
+  "application": "Roots",
+  "fixture": "Isolated application with synthetic QA data",
+  "recording": {
+    "kind": "Recorded candidate acceptance, not a live session",
+    "candidateVersion": "0.1.4-alpha.9",
+    "candidateSource": "32f11d42e027edf49066bac393cb9ddb558b79f9",
+    "publishedSource": "30d2a985964011c08d80db2e83a3716a2c151345",
+    "continuity": "The non-Swagger runtime and core used by this flow were verified unchanged through the published alpha.9 source. This image was captured on the earlier candidate, not the final package or alpha.10."
+  },
+  "flow": {
+    "recipe": "keyboard-saved",
+    "label": "Save with the keyboard on mobile",
+    "steps": 10,
+    "execution": "completed",
+    "applicationEffect": "saved"
+  },
+  "independentEvidence": {
+    "recipeSaveMutationDelta": 1,
+    "exactlyOneNewRow": true,
+    "priorRowsUnchanged": true,
+    "sameSavedRowAfterBrowserReload": true,
+    "reloadMutationDelta": 0
+  },
+  "capture": {
+    "path": "/demo-roots-save.png",
+    "sha256": "053dcc221fb4f11f8f93193ba6bc7706c675f0943c8554b0b09bec180144c1e9",
+    "width": 1440,
+    "height": 900,
+    "description": "Unedited recorded Daedlo viewer after the Roots keyboard-save recipe completed"
+  },
+  "limits": [
+    "Browser reload persistence; no application-service or database restart",
+    "No complete Roots parity or everyday dependency promotion",
+    "The one-save count concerns the selected recipe, not fixture preparation",
+    "Recorded alpha.9 candidate evidence; not an alpha.10 acceptance claim"
+  ]
+}
