@@ -1,5 +1,51 @@
 # Verification record
 
+## Website public launch production — 2026-11-10
+
+**PASS — protected integration, production activation, independent live
+readback and post-merge CI.**
+[PR #38](https://github.com/givtaj/daedlo/pull/38) merged as
+`074f56c42e82e3685f66bf4621708aeba2ff3f93`. Its tree exactly matches independently
+reviewed head `6d28da94224c30d100444a0ac8a5a5b43b46f130`, reconciled with the completed
+alpha.10 release record on `a86bbbb`. All three required checks passed in
+[PR CI](https://github.com/givtaj/daedlo/actions/runs/42800304483).
+[Merged-source CI](https://github.com/givtaj/daedlo/actions/runs/42802122163)
+also passed metadata/secrets and both Node 22/24 source, browser and installed-kit
+lanes on the exact deployed source.
+
+The existing [production renewal workflow](https://github.com/givtaj/daedlo/actions/runs/42802207702)
+passed on that exact merged revision with all six promotion flags false. It
+restored the authenticated generation-29 checkpoint, retained all eight release
+entries unchanged, and persisted generation 30 before Cloudflare mutation.
+Worker `daedlo` version `05b1d581-a4ae-47fb-9e32-55a6da9aef61` was activated at
+100%; deployment `650c20b7-c451-475b-a44e-a9cd53050f9d` was verified at
+10:48:57 UTC. The public catalog envelope SHA-256 is
+`df401e32b2dd9d47a06e6c354331e71ebb359e091a6481a42012f0a8c99f59b9`.
+
+Independent HTTPS readback passed at 10:50:22 UTC: all 51 served assets match the
+reviewed source and freshly rendered signed-feed pages, including all 27 immutable
+download files, the original archived demo HTML and images, and the new curated
+Roots recording. Signing trust, retained entries, cache/security headers and all
+nine private-path 404 checks passed. The renewal did not rebuild or promote a kit.
+
+The real public website passed 20 Chromium checks at desktop 1365px and narrow
+390px: public source/current-release/roadmap labels, demo and archive navigation,
+the original 1440-by-900 Roots image and candidate provenance, current alpha.10
+onboarding, exact native clipboard contents and horizontal layout. No page errors
+occurred. Production homepage and archive captures were inspected. Two early
+readback attempts measured an image and archive layout before their resources
+finished loading; bounded image-completion and page-load waits corrected the
+harness while retaining the exact dimensions and overflow assertions. A separate
+fully loaded archive inspection confirmed width 390px with no overflow. No site
+code change or blind retry was needed. Every owned browser closed.
+
+Local receipts remain in ignored `artifacts/website-public-launch-20261110/`:
+`production-assets-uqcW6O/results.json` and
+`production-browser-l988IF/results.json`. The private coordination checklist and
+chat links remain outside Git. The main dirty checkout and live customer
+integrations were preserved. This is website verification; no new customer
+application acceptance or everyday Roots dependency promotion is claimed.
+
 ## Website public launch update — 2026-11-10
 
 **LOCAL PASS; publication NOT RUN.** An isolated website candidate based on
