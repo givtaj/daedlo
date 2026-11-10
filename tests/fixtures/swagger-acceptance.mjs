@@ -468,7 +468,11 @@ export async function runSwaggerBrowserAcceptance({
         };
       app.configure(document);
       await open(
-        { allowOperations: ["GET /hello"], timeoutMs: 1000 },
+        {
+          allowOperations: ["GET /hello"],
+          allowWrites: [],
+          timeoutMs: 1000,
+        },
         async () => {
           if (mode === "collapsed") {
             await page.evaluate(() =>
@@ -537,7 +541,11 @@ export async function runSwaggerBrowserAcceptance({
     app.configure(specification("3.2.1"));
     for (const mode of ["filtered", "missing", "ambiguous"]) {
       await open(
-        { allowOperations: ["GET /hello"], timeoutMs: 1000 },
+        {
+          allowOperations: ["GET /hello"],
+          allowWrites: [],
+          timeoutMs: 1000,
+        },
         async () => {
           if (mode === "filtered") {
             await page.evaluate(() =>
@@ -583,7 +591,7 @@ export async function runSwaggerBrowserAcceptance({
       head: { responses: { 200: { description: "Headers only" } } },
     };
     app.configure(headDocument);
-    await open({ allowOperations: ["HEAD /head"] });
+    await open({ allowOperations: ["HEAD /head"], allowWrites: [] });
     const beforeHead = app.calls.length;
     await select("HEAD /head");
     await prepare({});
