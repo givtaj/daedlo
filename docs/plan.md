@@ -14,6 +14,17 @@ Production remains a separate measured gate. Runtime, storage and Compose work
 retain their existing owners; the site must not describe their candidates as
 shipped until their release records establish delivery.
 
+## Alpha.10 published — 2026-11-10
+
+The reviewed restart/status and Swagger fixes are merged through PR #36; PR #37
+pins the accepted kit and signed publisher. The GitHub prerelease, public install
+page and signed update feed now offer alpha.10 with every historical download
+retained. Independent public installation and the complete production HTTPS
+upgrade/restart/rollback drill are verified. Merged CI is linked separately in the
+verification record. The release
+keeps alpha.9's manager contract and third-party dependencies unchanged.
+
+
 ## Alpha.10 integration and release — 2026-11-10
 
 The owner authorized review, protected-PR merge and publication. Prepare the
