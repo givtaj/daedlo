@@ -1,5 +1,31 @@
 # Verification record
 
+## Publisher CLI correction — 2026-11-10
+
+**FAIL — production preparation; no upload or activation.** After
+[PR #44](https://github.com/givtaj/daedlo/pull/44) merged at
+`54a41e77cd22c3a2970d9b7039dc0793240d8f24`,
+[publisher run 42902240054](https://github.com/givtaj/daedlo/actions/runs/42902240054)
+restored the authenticated generation-32 checkpoint, then failed with
+`Unsupported renewal option`. The CLI supplied the new live-only `waitForAssets`
+field to `prepare`, whose strict option validation rejected it. The run issued
+no new catalog/checkpoint, skipped upload and activation, and removed its temporary
+signing key. The existing production deployment was unchanged.
+
+The regression was reproduced through the real CLI parser and dispatcher with a
+valid synthetic signing/asset fixture, before correcting its option forwarding.
+The correction gives preparation only its signing/checkpoint options and gives
+live verification the availability option only when explicitly requested. The
+preparation API still rejects unknown options. These CLI checks supplement the
+stage-function tests that passed without detecting the wiring error.
+
+**PASS — local correction checks.** Node 24.22.2 passed all 92 renewal tests,
+including nine CLI cases, and 275 related publisher, checkpoint, catalog,
+promotion, website-update and repository-policy tests. Syntax, declarations,
+formatting, public metadata and diff whitespace passed. Independent source review
+found no actionable defect. A successful production run of the correction is
+**NOT RUN at this local checkpoint**; the failed run remains retained separately.
+
 ## Publisher availability check — 2026-11-10
 
 **Observed deployment success followed by a failed live check.**

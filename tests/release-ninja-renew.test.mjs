@@ -13,6 +13,7 @@ import {
 } from "../scripts/release/ninja-catalog.mjs";
 import {
   prepareNinjaRenewal,
+  runNinjaRenewCli,
   verifyNinjaRenewal,
   verifyLiveNinjaRenewal,
 } from "../scripts/release/ninja-renew.mjs";
@@ -356,6 +357,211 @@ async function fixture(
   };
 }
 const prep = (f) => prepareNinjaRenewal(f.options, f.dependencies);
+async function captureRenewalCli(args, dependencies) {
+  const output = [];
+  await runNinjaRenewCli(args, {
+    ...dependencies,
+    writeOutput: (text) => output.push(text),
+  });
+  assert.equal(output.length, 1);
+  assert.ok(output[0].endsWith("\n"));
+  return JSON.parse(output[0]);
+}
+
+test("renewal CLI prepare routes only preparation options and writes the prepared result", async (t) => {
+  const f = await fixture(t);
+  const output = [];
+  await runNinjaRenewCli(
+    [
+      "prepare",
+      "--private-key",
+      f.privateKeyPath,
+      "--output",
+      f.options.output,
+    ],
+    { ...f.dependencies, writeOutput: (text) => output.push(text) },
+  );
+  assert.equal(output.length, 1);
+  const result = JSON.parse(output[0]);
+  assert.equal(result.status, "PREPARED");
+  assert.equal(result.generation, 2);
+  const checkpoint = await fs.readFile(
+    join(f.options.output, "checkpoint/catalog.json"),
+  );
+  const verified = verifyNinjaCatalog({
+    bytes: checkpoint,
+    publisher: "daedlo",
+    trustedKeys: [{ id: keyId, publicKey: f.keys.publicKey }],
+    now,
+  });
+  assert.equal(verified.catalog.generation, result.generation);
+  assert.ok(f.requests.length > 0);
+});
+
+test("renewal CLI prepare forwards the durable signed checkpoint", async (t) => {
+  const f = await fixture(t);
+  f.signed.generation = 2;
+  const retained = f.envelope();
+  f.bodies.set(feed, retained);
+  const checkpointPath = join(f.root, "retained-catalog.json");
+  await fs.writeFile(checkpointPath, retained);
+  const args = [
+    "prepare",
+    "--private-key",
+    f.privateKeyPath,
+    "--output",
+    f.options.output,
+  ];
+  const rejectedOutput = [];
+  await assert.rejects(
+    runNinjaRenewCli([...args], {
+      ...f.dependencies,
+      writeOutput: (text) => rejectedOutput.push(text),
+    }),
+    /Durable signed checkpoint required/,
+  );
+  assert.deepEqual(rejectedOutput, []);
+  const result = await captureRenewalCli(
+    [...args, "--checkpoint", checkpointPath],
+    f.dependencies,
+  );
+  assert.equal(result.status, "PREPARED");
+  assert.equal(result.generation, 3);
+  assert.equal(result.baselineSha256, sha256(retained));
+  const receipt = JSON.parse(
+    await fs.readFile(join(f.options.output, "checkpoint/receipt.json")),
+  );
+  assert.equal(receipt.generation, 3);
+  assert.equal(
+    receipt.catalogSha256,
+    sha256(
+      await fs.readFile(join(f.options.output, "checkpoint/catalog.json")),
+    ),
+  );
+  assert.deepEqual(await fs.readFile(checkpointPath), retained);
+});
+
+test("renewal CLI verify checks the prepared tree and unchanged live baseline", async (t) => {
+  const f = await fixture(t);
+  await prep(f);
+  const result = await captureRenewalCli(
+    ["verify", "--output", f.options.output],
+    f.dependencies,
+  );
+  const receipt = JSON.parse(
+    await fs.readFile(join(f.options.output, "renewal-receipt.json")),
+  );
+  assert.equal(result.status, "PASS");
+  assert.equal(result.generation, receipt.generation);
+  assert.equal(result.catalogSha256, receipt.catalogSha256);
+  assert.equal(result.manifestFiles, receipt.manifest.files.length);
+  f.signed.generation = 2;
+  f.bodies.set(feed, f.envelope());
+  const rejectedOutput = [];
+  await assert.rejects(
+    runNinjaRenewCli(["verify", "--output", f.options.output], {
+      ...f.dependencies,
+      writeOutput: (text) => rejectedOutput.push(text),
+    }),
+    /changed|drift|baseline/i,
+  );
+  assert.deepEqual(rejectedOutput, []);
+});
+
+test("renewal CLI live remains strict unless availability waiting is selected", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  const result = await captureRenewalCli(
+    ["live", "--output", f.options.output],
+    f.live.dependencies,
+  );
+  assert.equal(result.status, "PASS");
+  assert.equal(result.servedAssets, 34);
+  assert.equal(result.privateBoundaries, 9);
+  assert.equal(Object.hasOwn(result, "availability"), false);
+  let misses = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html") {
+      misses++;
+      return new Response("", { status: 404 });
+    }
+  };
+  const rejectedOutput = [];
+  await assert.rejects(
+    runNinjaRenewCli(["live", "--output", f.options.output], {
+      ...f.live.dependencies,
+      writeOutput: (text) => rejectedOutput.push(text),
+    }),
+    /status=404 expected=200/,
+  );
+  assert.equal(misses, 1);
+  assert.deepEqual(rejectedOutput, []);
+  assert.deepEqual(f.live.sleeps, []);
+  assert.deepEqual(await liveAvailabilityEvents(f), []);
+});
+
+test("renewal CLI live forwards availability waiting and retains the failed observation", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let reads = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html" && reads++ === 0)
+      return new Response("", { status: 404 });
+  };
+  const result = await captureRenewalCli(
+    ["live", "--output", f.options.output, "--wait-for-assets"],
+    f.live.dependencies,
+  );
+  assert.equal(result.status, "PASS");
+  assert.equal(result.servedAssets, 34);
+  assert.deepEqual(result.availability, {
+    attempts: 2,
+    elapsedMs: 5000,
+    notFound: [
+      { attempt: 1, path: "/compose.html", status: 404, elapsedMs: 0 },
+    ],
+  });
+  assert.deepEqual(f.live.sleeps, [5000]);
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.deepEqual(
+    receipt.events.map((event) => event.event),
+    ["started", "not_ready", "pass"],
+  );
+});
+
+test("renewal CLI rejects misplaced or duplicated availability flags before resources", async (t) => {
+  for (const [label, command, flags] of [
+    ["prepare availability flag", "prepare", ["--wait-for-assets"]],
+    ["verify availability flag", "verify", ["--wait-for-assets"]],
+    [
+      "duplicate live availability flag",
+      "live",
+      ["--wait-for-assets", "--wait-for-assets"],
+    ],
+  ]) {
+    await t.test(label, async (t) => {
+      const f = await fixture(t);
+      const output = [];
+      await assert.rejects(
+        runNinjaRenewCli(
+          [
+            command,
+            "--output",
+            f.options.output,
+            ...(command === "prepare"
+              ? ["--private-key", f.privateKeyPath]
+              : []),
+            ...flags,
+          ],
+          { ...f.dependencies, writeOutput: (text) => output.push(text) },
+        ),
+        /Invalid renewal CLI arguments/,
+      );
+      assert.equal(f.requests.length, 0);
+      assert.deepEqual(output, []);
+      await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+    });
+  }
+});
+
 test("renewal refuses an unknown held alpha8 promotion selector before resources", async (t) => {
   const f = await fixture(t);
   await assert.rejects(

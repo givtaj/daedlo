@@ -1220,7 +1220,10 @@ export async function verifyLiveNinjaRenewal(
     await journal.close();
   }
 }
-export async function runNinjaRenewCli(args = process.argv.slice(2)) {
+export async function runNinjaRenewCli(
+  args = process.argv.slice(2),
+  deps = {},
+) {
   const command = args.shift();
   if (!["prepare", "verify", "live"].includes(command))
     fail(
@@ -1250,18 +1253,23 @@ export async function runNinjaRenewCli(args = process.argv.slice(2)) {
     fail("Missing required renewal CLI argument");
   const input = {
     output: parsed["--output"],
-    privateKeyPath: parsed["--private-key"],
-    checkpointPath: parsed["--checkpoint"],
-    waitForAssets: parsed["--wait-for-assets"] ?? false,
   };
+  if (command === "prepare") {
+    input.privateKeyPath = parsed["--private-key"];
+    input.checkpointPath = parsed["--checkpoint"];
+  } else if (command === "live" && parsed["--wait-for-assets"]) {
+    input.waitForAssets = true;
+  }
   const result = await (
     command === "prepare"
       ? prepareNinjaRenewal
       : command === "verify"
         ? verifyNinjaRenewal
         : verifyLiveNinjaRenewal
-  )(input);
-  process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+  )(input, deps);
+  const writeOutput =
+    deps.writeOutput ?? process.stdout.write.bind(process.stdout);
+  await writeOutput(JSON.stringify(result, null, 2) + "\n");
 }
 if (
   process.argv[1] &&
