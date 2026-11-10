@@ -1,5 +1,80 @@
 # Verification record
 
+## Development restart alerts and Swagger selection — 2026-11-10
+
+**PASS — local source implementation and independent browser acceptance.**
+Candidate branch `codex/dev-restart-alerts-20261110` starts at `d614e6f` in
+`artifacts/worktrees/dev-restart-alerts-20261110`; unrelated primary-checkout,
+Roots and other worktree changes were preserved. No customer service or data was
+used, and no package, website or customer dependency was promoted.
+
+The sidebar reports Viewer, Browser, Application observation and Live image with
+colored circles, icons and text. An observed application outage keeps the working
+viewer/browser/image separate from unavailable application observation. Actions
+are disabled until fresh observations return. Failed status transport immediately
+marks observation stale, uses Reconnecting before persistent Connection lost,
+and does not replace a completed run result. Invalid status and rendering errors
+have separate safe reasons. One primary notice replaces duplicate warnings;
+retained images include their last capture time. Initial/unobserved and explicitly
+closed states are neutral rather than false green or inferred process failure.
+
+A same-origin read-only lifecycle stream announces explicit viewer closure. A
+final result requires current-run identity and an immutable completed-run report;
+pending/older results cannot be promoted. Late status cannot revive the closed
+instance; Check connection can discover a new instance at the same address.
+The latest completed result is retained even if the final status poll was missed.
+Closure retains attached resources, and failed capture cleanup remains retryable.
+The connection check never reloads the target, resumes a recipe or replays a write.
+
+Swagger uses its supported layout navigation once to reveal a collapsed or
+virtualized operation, then checks the exact method/path before selection. Filters
+are preserved; filtered, missing, ambiguous and unsupported selection have static
+safe errors. Read-only success says no write expected; HTTP success on writes
+still does not establish persistence. Raw exception details remain private, and
+the generic adapter error no longer implies a saved diagnostic file exists.
+
+Regression-first evidence in `artifacts/dev-restart-alerts/` includes genuine
+browser assertions for a completed heading being replaced on application stop,
+missing reconnect/status behavior, collapsed operation rejection, virtualized
+selection failure, and the Rust GET/HEAD persistence wording. A later real-session
+assertion caught an unpolled completed result being lost during viewer closure;
+the result and execution summary now agree. Initial sandbox EPERM/browser-launch
+failures and an oversized Swagger fixture were setup failures, not product
+reproductions. Their receipts remain separate. Two existing mismatch tests were
+updated to assert the same warning and no-dispatch behavior in the consolidated
+notice; those focused reruns passed with the underlying safety assertions intact.
+
+Final checks used Node 24.22.2/npm 11.21.2 and Rust 1.96.0 on macOS arm64:
+
+| Check | Result |
+| --- | --- |
+| Runtime Node suite, including Swagger and lifecycle units | PASS, 233 tests |
+| Rust workspace contracts | PASS, 29 checks; 1 existing ignored check |
+| Swagger Rust model | PASS, 19 tests |
+| JavaScript syntax, TypeScript declarations, Prettier | PASS |
+| Workspace and Swagger rustfmt/Clippy | PASS |
+| Affected viewer browser matrix | PASS across 56 cases: 54 first-pass, 2 mismatch-notice cases after their selector update |
+| Full Swagger real-browser suite | PASS, 26 tests, including selecting from an already-open virtualized catalog |
+| Motion, execution controls, CLI and update UI browser checks | PASS, 25 tests |
+| Independent notebook acceptance | PASS, 8 scenario groups |
+| Repository metadata, guardrail and CI-policy tests | PASS, 54 tests |
+
+The real restart fixture stops its own HTTP application, keeps the attached
+browser/viewer open, restarts the same port and proves the prior write count does
+not increase. It then completes a new run with status polling blocked and closes
+the viewer, verifying the exact final run identity and non-running progress state.
+Desktop rebuild/closed screenshots and 732px/390px layouts were visually inspected;
+the browser matrix also covers 747px, 920px and 1440px layouts. Screenshot evidence
+is in `artifacts/dev-restart-alerts/` and
+`artifacts/viewer-grid-20261106/run-C84yi7/` within this candidate worktree.
+
+**NOT RUN:** exact installed-package acceptance, hosted CI, publication and actual
+customer-side acceptance. The implementation does not hot-reload adapter/model
+code, infer API health from an unchanged page, automatically reload an application,
+or reconcile an uncertain write after a restart. A new viewer address still needs
+to be opened if its process restarts on another port. Existing alpha.9 remains
+the published artifact; this record describes different local source bytes.
+
 ## Swagger CI command deduplication — 2026-11-10
 
 CI runs Swagger JavaScript units once through `npm test` on each supported

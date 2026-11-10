@@ -144,6 +144,79 @@ a {
   color: #a9c0b5;
   margin-bottom: 15px;
 }
+.connection-panel h2 {
+  margin-bottom: 10px;
+}
+.connection-channels {
+  display: grid;
+  gap: 9px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.connection-channels li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: #b9c9c3;
+}
+.channel-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+.channel-name,
+.channel-value {
+  display: block;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.channel-name {
+  color: #b9c9c3;
+}
+.channel-value {
+  font-weight: 550;
+}
+.connection-channels [data-status="success"] {
+  color: #9ed9af;
+}
+.connection-channels [data-status="warning"] {
+  color: #f0c778;
+}
+.connection-channels [data-status="error"] {
+  color: #ffa899;
+}
+.connection-channels [data-status="neutral"] {
+  color: #aebcb6;
+}
+.connection-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.connection-notice button {
+  flex: none;
+  font-size: 11px;
+  padding: 6px 10px;
+}
+.connection-notice[data-severity="neutral"] {
+  color: #526469;
+  border-color: #d5ddd7;
+  background: #f3f6f3;
+}
+.connection-notice[data-severity="error"] {
+  color: #8b4032;
+  border-color: #dfb8ac;
+  background: #fff2ec;
+}
 .state-tree,
 .state-tree ul {
   list-style: none;
@@ -312,6 +385,14 @@ main {
 .live-dot.offline {
   background: #bd8470;
   box-shadow: 0 0 0 4px #f0e7df;
+}
+.live-dot[data-status="neutral"] {
+  background: #87968d;
+  box-shadow: 0 0 0 4px #e9eeea;
+}
+.live-dot[data-status="warning"] {
+  background: #ad853e;
+  box-shadow: 0 0 0 4px #f3eddf;
 }
 .workspace-grid {
   display: grid;
@@ -1475,5 +1556,25 @@ main > .notice {
   * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar > .connection-panel {
+    display: block;
+  }
+  .connection-panel h2 {
+    margin-bottom: 7px;
+  }
+  .connection-channels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+  }
+  .connection-notice {
+    align-items: flex-start;
+  }
+  .connection-notice button {
+    white-space: normal;
+    max-width: 100px;
   }
 }

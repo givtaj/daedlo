@@ -8,6 +8,30 @@ For source setup, the independent fixture and required checks, start with
 private Roots source, Docker or an AI agent. The customer-specific workflow below
 applies only when working on that integration with access to its pinned source.
 
+## Restarting an application during development
+
+Keep the viewer and its controlled browser open while rebuilding or restarting
+the application. The sidebar separates the viewer connection, browser connection,
+application observation and browser image. A fresh application observation is
+not an independent API health check. The adapter determines which facts it can
+observe; a page can remain visible while its API is unavailable.
+
+Unavailable observations disable actions without changing the last completed
+run's result. After the application returns, fresh status reads restore readiness
+when the loaded adapter recognizes the page again. **Check connection** only
+reads status; it never reloads the application, submits a request from a recipe,
+or repeats an earlier command. If the application needs navigation or a reload,
+preserve any draft first and use its normal recovery path. An interrupted write
+still requires its own outcome and persistence reconciliation before another run.
+
+An explicit viewer close shows **Viewer closed** in already-open viewers that
+receive its closing event. Unexpected transport loss remains **Reconnecting** or
+**Connection lost**, never an inferred clean shutdown. Closing a viewer does not
+close its attached browser, driver or application. If the viewer process itself
+was restarted on another port, open its newly printed URL. A fixed-port
+replacement can be discovered with **Check connection**. Changing source or
+compiling an adapter does not hot-replace the adapter in an existing session.
+
 ## Stable usage and candidate development
 
 Roots keeps using its last accepted driver. Before the first external candidate is

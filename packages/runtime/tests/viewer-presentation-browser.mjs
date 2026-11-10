@@ -321,7 +321,8 @@ test("presentation viewer renders human pacing and operates controls without rep
     snapshot.connected = false;
     await ui.waitForFunction(
       () =>
-        document.querySelector("#connection").textContent === "Disconnected",
+        document.querySelector("#connection").textContent ===
+        "Waiting for application",
     );
     assert.equal(
       await ui.locator('[data-presentation="tour"]').isDisabled(),

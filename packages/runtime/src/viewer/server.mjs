@@ -1,6 +1,7 @@
 // Browser Driver adaptation of the Roots driver: generalized model, execution and viewer interfaces; later lifecycle and reporting changes. See THIRD_PARTY_NOTICES.md and licenses/Apache-2.0.txt at the package root.
 import http from "node:http";
 import { readFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 
 const MAX_BODY_BYTES = 16 * 1024;
 const BOUNDARY = "browser-driver-frame";
@@ -10,6 +11,87 @@ const isObject = (value) =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 const validId = (value) =>
   typeof value === "string" && value.length > 0 && value.length <= 256;
+
+// A close notice carries only the public result, never the session report or
+// arbitrary fields supplied by a custom facade. Completed-run evidence is
+// necessary: lastResult can exist while its finalization is still pending.
+function completedResult(session) {
+  try {
+    const report = session.report?.();
+    const runId = report?.lastResult?.runId;
+    if (
+      !validId(runId) ||
+      report?.runId !== runId ||
+      !Array.isArray(report?.completedRunIds) ||
+      !report.completedRunIds.includes(runId)
+    )
+      return;
+    const completed = session.report({ runId });
+    const result = completed?.lastResult;
+    if (
+      completed?.runId !== runId ||
+      result?.runId !== runId ||
+      !["completed", "rejected", "failed", "stopped"].includes(
+        result.execution,
+      ) ||
+      !Number.isFinite(Date.parse(result.finishedAt))
+    )
+      return;
+    const fields = (value, keys) =>
+      Object.fromEntries(
+        keys
+          .filter(
+            (key) =>
+              ["string", "number", "boolean"].includes(typeof value?.[key]) ||
+              value?.[key] === null,
+          )
+          .map((key) => [key, value[key]]),
+      );
+    const safe = fields(result, [
+      "ok",
+      "execution",
+      "runId",
+      "command",
+      "recipe",
+      "startedAt",
+      "finishedAt",
+      "error_code",
+      "error",
+      "cleanupFailed",
+    ]);
+    if (result.outcome)
+      safe.outcome = fields(result.outcome, ["kind", "label"]);
+    if (result.effect) {
+      safe.effect = fields(result.effect, ["status"]);
+      if (Array.isArray(result.effect.operations))
+        safe.effect.operations = result.effect.operations
+          .slice(0, 16)
+          .map((operation) => fields(operation, ["id", "label", "status"]));
+    }
+    for (const key of ["cleanupError", "interruptionError"])
+      if (result[key]) safe[key] = fields(result[key], ["error_code", "error"]);
+    if (result.presentation)
+      safe.presentation = fields(result.presentation, [
+        "id",
+        "title",
+        "status",
+        "phase",
+        "stage",
+        "total",
+        "stageId",
+        "stageTitle",
+        "explanation",
+        "holdMs",
+        "remainingMs",
+        "manual",
+        "reason",
+      ]);
+    return safe;
+  } catch {
+    // An unavailable report cannot prevent owned viewer cleanup or imply that a
+    // still-finalizing run completed. The client retains its last known result.
+  }
+}
 
 function frontendIdentity(value) {
   if (value === undefined) return null;
@@ -103,6 +185,15 @@ export async function createViewer({
     ),
   );
   const clients = new Set();
+  const eventClients = new Set();
+  const viewerId = randomUUID();
+  let endedAt = null;
+  let terminalEvent = null;
+  const lifecycle = () => ({
+    id: viewerId,
+    status: endedAt ? "ended" : "open",
+    ...(endedAt ? { endedAt } : {}),
+  });
   let cdp,
     server,
     frame,
@@ -231,10 +322,53 @@ export async function createViewer({
         server.closeAllConnections();
       });
   }
+  async function endObservers() {
+    if (!terminalEvent) {
+      const lastResult = completedResult(session);
+      terminalEvent = `event: viewer-ended\ndata: ${JSON.stringify({
+        lifecycle: lifecycle(),
+        ...(lastResult ? { lastResult } : {}),
+      })}\n\n`;
+    }
+    await Promise.all(
+      [...eventClients].map(
+        (res) =>
+          new Promise((resolve) => {
+            if (res.destroyed || res.writableEnded) return resolve();
+            const done = () => {
+              clearTimeout(timer);
+              res.off("close", done);
+              res.off("error", done);
+              resolve();
+            };
+            // Give connected readers a bounded chance to receive the terminal
+            // notice before closeAllConnections; receipt is never inferred by UI.
+            const timer = setTimeout(done, 250);
+            res.once("close", done);
+            res.once("error", done);
+            try {
+              res.end(terminalEvent, done);
+            } catch {
+              done();
+            }
+          }),
+      ),
+    );
+    eventClients.clear();
+  }
   async function close() {
     if (closing) return closing;
     closed = true;
+    endedAt ??= new Date().toISOString();
     closing = (async () => {
+      try {
+        await endObservers();
+      } catch {
+        // A notification failure is a lost connection, not authority to skip
+        // owned cleanup. Readers only claim closure after receiving the event.
+      } finally {
+        eventClients.clear();
+      }
       // Always tear down HTTP, even when capture cleanup rejects.
       const results = await Promise.allSettled([cleanupCapture(), closeHttp()]);
       const errors = results
@@ -289,15 +423,19 @@ export async function createViewer({
       };
     }
     const frontend = frontendStatus(driver);
+    const browser = !closed && !disconnected && !page.isClosed();
+    const application =
+      browser &&
+      frontend?.matchesTarget !== false &&
+      frontend?.matchesModel !== false &&
+      driver.connected === true;
     return {
       frontend,
-      connected:
-        frontend?.matchesTarget !== false &&
-        frontend?.matchesModel !== false &&
-        !closed &&
-        !disconnected &&
-        !page.isClosed() &&
-        driver.connected !== false,
+      lifecycle: lifecycle(),
+      // This is observation availability, not an API health probe. A rebuild
+      // may leave the controlled browser connected while observation fails.
+      connections: { browser, application },
+      connected: application,
       frames,
       updatedAt,
       viewers: clients.size,
@@ -380,6 +518,24 @@ export async function createViewer({
           res.end(asset.body);
         } else if (req.method === "GET" && path === "/status") {
           json(res, 200, await status());
+        } else if (req.method === "GET" && path === "/events") {
+          if (
+            (req.headers.origin && req.headers.origin !== `http://${host}`) ||
+            req.headers["sec-fetch-site"] === "cross-site"
+          )
+            return json(res, 403, {
+              ok: false,
+              error: "Same-origin requests are required",
+            });
+          res.writeHead(200, {
+            "Content-Type": "text/event-stream; charset=utf-8",
+            Connection: "keep-alive",
+          });
+          res.flushHeaders();
+          if (closed) return res.end(terminalEvent || ": viewer closed\n\n");
+          eventClients.add(res);
+          res.on("close", () => eventClients.delete(res));
+          res.write(": viewer connected\n\n");
         } else if (req.method === "GET" && path === "/stream") {
           if (disconnected || closed)
             return json(res, 409, { ok: false, error: "Browser disconnected" });

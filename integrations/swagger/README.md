@@ -41,6 +41,24 @@ schema assertions and request encodings fail closed, with static capability
 reasons. A successful HTTP/schema check says that the response matched the
 transport contract. It does not establish the business outcome or persistence.
 
+Operation selection supports collapsed groups and Swagger UI 5.34.1's virtualized
+catalog. When the exact method/path is not visible, the adapter uses Swagger's
+layout navigation once to expand its group and reveal its row, then waits for a
+single visible match within the configured timeout. Navigation and selection use
+the shared guarded execution facade; neither submits an API request. Swagger
+pages without the needed navigation capability can still select an already
+visible operation. For a hidden operation on those pages, expand its group and
+bring it into view before selecting it.
+
+An active filter is preserved. A filtered-out, missing or ambiguous operation
+produces a specific safe error with a next action; the adapter does not guess a
+match, clear a filter, repeat Execute, or bypass Swagger with a direct request.
+Expected adapter errors use static diagnostic codes and messages without raw
+locators, request values or authentication details. A successful GET/HEAD says
+“Documented API response verified; no write expected.” Successful mutation
+responses retain the separate persistence limit until independent effect
+evidence establishes what was saved.
+
 ## Start from the verified installed kit
 
 Use the matching runtime, core crate and tools from one verified release. First

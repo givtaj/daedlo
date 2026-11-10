@@ -134,6 +134,7 @@ async function withViewer(
       viewport: viewport ?? { width: 1440, height: 900 },
     });
     ui = await monitor.newPage();
+    ui.setDefaultTimeout(5000);
     await ui.goto(viewer.url);
     await ui.waitForFunction(
       () => document.querySelector("#connection").textContent === "Connected",
@@ -141,7 +142,7 @@ async function withViewer(
     await ui.waitForFunction(
       () => document.querySelector("#browser-image").naturalWidth > 0,
     );
-    await run({ ui, snapshot, calls, viewer });
+    await run({ ui, snapshot, calls, viewer, application });
   } finally {
     if (ui && !ui.isClosed())
       await ui.screenshot({
@@ -162,6 +163,393 @@ async function assertAboveFold(ui, selector) {
     `${selector} must remain above the fold: ${JSON.stringify(box)}`,
   );
 }
+
+test("development: a brief restart preserves the run result and reconnects without replay", async () => {
+  await withViewer(
+    "development-reconnecting",
+    async ({ ui, snapshot, calls }) => {
+      snapshot.execution = "completed";
+      await ui.waitForFunction(
+        () =>
+          document.querySelector("#execution-state").textContent ===
+          "Completed",
+      );
+      await ui.route("**/status", (route) => route.abort("failed"));
+      await ui.waitForFunction(
+        () =>
+          document.querySelector("#connection").textContent === "Reconnecting",
+        null,
+        { timeout: 2000 },
+      );
+      assert.equal(
+        await ui.locator("#execution-state").innerText(),
+        "Completed",
+        "Losing the viewer must not rewrite the last run's execution",
+      );
+      assert.match(
+        await ui.locator("#outcome-label").innerText(),
+        /prior stored draft was verified/,
+      );
+      assert.equal(
+        await ui.locator('[data-command="open"]').isDisabled(),
+        true,
+      );
+      assert.equal(
+        await ui.locator("#stream-error").isVisible(),
+        false,
+        "Connection notice must not be duplicated over the retained image",
+      );
+      assert.match(
+        await ui.locator("#mirror-status").innerText(),
+        /last captured frame.*\d\d:\d\d/i,
+      );
+      assert.equal(
+        await ui.locator('[data-channel="viewer"]').getAttribute("data-status"),
+        "warning",
+      );
+      assert.match(
+        await ui.locator('[data-channel="browser"]').innerText(),
+        /Unknown/,
+      );
+      await ui.unroute("**/status");
+      await ui.getByRole("button", { name: "Check connection" }).click();
+      await ui.waitForFunction(
+        () => document.querySelector("#connection").textContent === "Connected",
+      );
+      assert.deepEqual(
+        calls,
+        [],
+        "A connection check and recovery only observe; they never replay a command",
+      );
+    },
+  );
+});
+
+test("development: persistent connection loss is actionable and preserves completed evidence", async () => {
+  await withViewer("development-connection-lost", async ({ ui, calls }) => {
+    await ui.route("**/status", (route) => route.abort("failed"));
+    await ui.waitForFunction(
+      () =>
+        document.querySelector("#connection").textContent === "Connection lost",
+      null,
+      { timeout: 8000 },
+    );
+    assert.equal(
+      await ui.locator('[data-channel="viewer"]').getAttribute("data-status"),
+      "error",
+    );
+    assert.match(
+      await ui.locator("#connection-error").innerText(),
+      /restart|running/i,
+    );
+    assert.match(
+      await ui.locator("#outcome-label").innerText(),
+      /prior stored draft was verified/,
+    );
+    assert.equal(await ui.locator('[data-command="open"]').isDisabled(), true);
+    assert.equal(await ui.locator("#command-count").innerText(), "0 available");
+    assert.deepEqual(calls, []);
+  });
+});
+
+test("development: a hung status response times out and makes retained state stale", async () => {
+  await withViewer("development-status-timeout", async ({ ui, calls }) => {
+    await ui.route("**/status", () => new Promise(() => {}));
+    await ui.waitForFunction(
+      () =>
+        document.querySelector("#connection").textContent === "Reconnecting",
+      null,
+      { timeout: 5000 },
+    );
+    assert.equal(
+      await ui.locator("#connection-error").getAttribute("data-reason"),
+      "status_timeout",
+    );
+    assert.equal(await ui.locator('[data-command="open"]').isDisabled(), true);
+    assert.equal(
+      await ui.locator('#state-tree [aria-current="true"]').count(),
+      0,
+    );
+    assert.deepEqual(calls, []);
+    await ui.unrouteAll({ behavior: "ignoreErrors" });
+  });
+});
+
+test("development: malformed status and rendering failures are not reported as network outages", async () => {
+  await withViewer("development-invalid-status", async ({ ui, calls }) => {
+    await ui.route("**/status", (route) => route.fulfill({ json: [] }));
+    await ui.waitForFunction(
+      () =>
+        document.querySelector("#connection-error").dataset.reason ===
+        "status_invalid",
+      null,
+      { timeout: 2000 },
+    );
+    assert.match(
+      await ui.locator("#connection-error").innerText(),
+      /invalid.*status|status.*invalid/i,
+    );
+    assert.equal(await ui.locator('[data-command="open"]').isDisabled(), true);
+    await ui.unroute("**/status");
+    await ui.waitForFunction(
+      () => document.querySelector("#connection").textContent === "Connected",
+    );
+    await ui.route("**/status", async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.frontend.ownership = null;
+      await route.fulfill({ json: body });
+    });
+    await ui.waitForFunction(
+      () =>
+        document.querySelector("#connection-error").dataset.reason ===
+        "render_failed",
+      null,
+      { timeout: 2000 },
+    );
+    assert.match(
+      await ui.locator("#connection-error").innerText(),
+      /display|render/i,
+    );
+    assert.equal(await ui.locator('[data-command="open"]').isDisabled(), true);
+    await ui.unroute("**/status");
+    await ui.waitForFunction(
+      () => document.querySelector("#connection").textContent === "Connected",
+    );
+    assert.equal(await ui.locator('[data-command="open"]').isEnabled(), true);
+    assert.deepEqual(calls, []);
+  });
+});
+
+test("development: a final close wins over late status and a new viewer can reconnect", async () => {
+  await withViewer(
+    "development-lifecycle-race",
+    async ({ ui, viewer, calls }) => {
+      await ui.waitForFunction(
+        () => document.body.dataset.lifecycleEvents === "connected",
+      );
+      const original = await (
+        await ui.request.get(`${viewer.url}/status`)
+      ).json();
+      let release;
+      let received;
+      const intercepted = new Promise((resolve) => {
+        received = resolve;
+      });
+      await ui.route("**/status", async (route) => {
+        received();
+        await new Promise((resolve) => {
+          release = resolve;
+        });
+        await route.fulfill({ json: original });
+      });
+      await intercepted;
+      await viewer.close();
+      await ui.waitForFunction(
+        () =>
+          document.querySelector("#connection").textContent === "Viewer closed",
+      );
+      release();
+      await ui.waitForFunction(
+        () => !document.querySelector("#check-connection").disabled,
+      );
+      assert.equal(
+        await ui.locator("#connection").innerText(),
+        "Viewer closed",
+        "An open status sampled before closure must not resurrect the ended viewer",
+      );
+      assert.equal(
+        await ui.locator('[data-command="open"]').isDisabled(),
+        true,
+      );
+      await ui.unroute("**/status");
+      await ui.route("**/status", (route) =>
+        route.fulfill({
+          json: {
+            ...original,
+            lifecycle: { id: "replacement-viewer", status: "open" },
+          },
+        }),
+      );
+      await ui.getByRole("button", { name: "Check connection" }).click();
+      await ui.waitForFunction(
+        () => document.querySelector("#connection").textContent === "Connected",
+      );
+      assert.equal(await ui.locator('[data-command="open"]').isEnabled(), true);
+      assert.deepEqual(
+        calls,
+        [],
+        "A new viewer identity requires a fresh observation, never a replay",
+      );
+    },
+  );
+});
+
+test("development: stable connection checks do not repeat live-region announcements", async () => {
+  await withViewer(
+    "development-accessible-status",
+    async ({ ui, snapshot }) => {
+      await ui.waitForFunction(
+        () =>
+          document.querySelector('[data-channel="image"] .channel-value')
+            .textContent === "Live",
+      );
+      await ui.evaluate(() => {
+        window.connectionTextChanges = 0;
+        const observer = new MutationObserver((records) => {
+          window.connectionTextChanges += records.length;
+        });
+        for (const id of ["connection-channels", "connection-detail"])
+          observer.observe(document.getElementById(id), {
+            subtree: true,
+            childList: true,
+            characterData: true,
+          });
+      });
+      await ui.waitForResponse((response) =>
+        response.url().endsWith("/status"),
+      );
+      await ui.waitForResponse((response) =>
+        response.url().endsWith("/status"),
+      );
+      await ui.evaluate(() => new Promise(requestAnimationFrame));
+      assert.equal(
+        await ui.evaluate(() => window.connectionTextChanges),
+        0,
+        "Unchanged status text must not be rewritten on every poll",
+      );
+      snapshot.connected = false;
+      await ui.waitForFunction(() => window.connectionTextChanges > 0);
+      assert.match(
+        await ui.locator('[data-channel="application"]').innerText(),
+        /Unavailable/,
+      );
+    },
+  );
+});
+
+test("development: an image arriving before initial status cannot claim a connected viewer", async () => {
+  await withViewer(
+    "development-initial-status",
+    async ({ ui, viewer, calls }) => {
+      const status = await (
+        await ui.request.get(`${viewer.url}/status`)
+      ).json();
+      let release;
+      await ui.route("**/status", async (route) => {
+        await new Promise((resolve) => {
+          release = resolve;
+        });
+        await route.fulfill({ json: status });
+      });
+      await ui.reload();
+      await ui.evaluate(() =>
+        document
+          .querySelector("#browser-image")
+          .dispatchEvent(new Event("load")),
+      );
+      assert.equal(await ui.locator("#connection").innerText(), "Connecting");
+      assert.equal(
+        await ui.locator('[data-channel="viewer"]').getAttribute("data-status"),
+        "neutral",
+      );
+      assert.equal(
+        await ui.locator("#live-dot").getAttribute("data-status"),
+        "neutral",
+      );
+      release();
+      await ui.waitForFunction(
+        () => document.querySelector("#connection").textContent === "Connected",
+      );
+      await ui.unroute("**/status");
+      assert.deepEqual(calls, []);
+    },
+  );
+});
+
+test("development: observation loss keeps the reachable viewer separate from application health", async () => {
+  await withViewer(
+    "development-observation-unavailable",
+    async ({ ui, snapshot, calls }) => {
+      snapshot.connected = false;
+      snapshot.error = "Application observation is unavailable.";
+      await ui.waitForFunction(
+        () =>
+          document.querySelector('[data-channel="application"]')?.dataset
+            .status === "warning",
+        null,
+        { timeout: 2000 },
+      );
+      assert.match(
+        await ui.locator('[data-channel="viewer"]').innerText(),
+        /Connected/,
+      );
+      assert.match(
+        await ui.locator('[data-channel="browser"]').innerText(),
+        /Connected/,
+      );
+      assert.match(
+        await ui.locator('[data-channel="application"]').innerText(),
+        /Unavailable/,
+      );
+      assert.doesNotMatch(
+        await ui.locator("#connection-channels").innerText(),
+        /API healthy|site healthy/i,
+      );
+      assert.equal(
+        await ui.locator('[data-command="open"]').isDisabled(),
+        true,
+      );
+      assert.deepEqual(calls, []);
+    },
+  );
+});
+
+test("development: a known viewer close is neutral and preserves its attached browser and result", async () => {
+  await withViewer(
+    "development-viewer-closed",
+    async ({ ui, viewer, application, calls }) => {
+      await ui.waitForFunction(
+        () => document.body.dataset.lifecycleEvents === "connected",
+      );
+      await viewer.close();
+      await ui.waitForFunction(
+        () =>
+          document.querySelector("#connection").textContent === "Viewer closed",
+        null,
+        { timeout: 2000 },
+      );
+      assert.equal(application.isClosed(), false);
+      assert.equal(
+        await ui.locator('[data-channel="viewer"]').getAttribute("data-status"),
+        "neutral",
+      );
+      assert.match(
+        await ui.locator("#outcome-label").innerText(),
+        /prior stored draft was verified/,
+      );
+      assert.equal(await ui.locator("#stream-error").isVisible(), false);
+      assert.equal(
+        await ui.locator("#command-count").innerText(),
+        "0 available",
+      );
+      assert.equal(
+        await ui.locator("#live-dot").getAttribute("data-status"),
+        "neutral",
+      );
+      assert.equal(
+        await ui.locator('[data-command="open"]').isDisabled(),
+        true,
+      );
+      await ui.getByRole("button", { name: "Check connection" }).click();
+      assert.equal(
+        await ui.locator("#connection").innerText(),
+        "Viewer closed",
+      );
+      assert.deepEqual(calls, []);
+    },
+  );
+});
 
 test("frontend identity is compact by default and keeps details available", async () => {
   await withViewer("frontend-identity", async ({ ui }) => {
@@ -296,8 +684,8 @@ async function assertDisconnectedMirror(ui) {
     await ui.locator("#mirror-status").innerText(),
     /last captured frame/i,
   );
-  assert.equal(await ui.locator("#stream-error").isVisible(), true);
-  assert.match(await ui.locator("#stream-error").innerText(), /disconnected/i);
+  assert.equal(await ui.locator("#stream-error").isVisible(), false);
+  assert.equal(await ui.locator("#connection-error").isVisible(), true);
   assert.doesNotMatch(
     await ui.locator("#frame-status").innerText(),
     /watching/i,
@@ -329,11 +717,19 @@ async function assertDisconnectedMirror(ui) {
 test("disconnected status identifies retained imagery and removes stale current state", async () => {
   await withViewer("disconnected-status", async ({ ui, snapshot, calls }) => {
     snapshot.connected = false;
+    await ui.route("**/status", async (route) => {
+      const response = await route.fetch();
+      const status = await response.json();
+      status.connections = { browser: false, application: false };
+      await route.fulfill({ json: status });
+    });
     await ui.waitForFunction(
       () =>
-        document.querySelector("#connection").textContent === "Disconnected",
+        document.querySelector("#connection").textContent ===
+        "Browser unavailable",
     );
     await assertDisconnectedMirror(ui);
+    await ui.unroute("**/status");
     snapshot.connected = true;
     await ui.waitForFunction(
       () => document.querySelector("#connection").textContent === "Connected",
@@ -360,7 +756,7 @@ test("failed status transport makes a retained frame stale and recovery never re
     await ui.route("**/status", (route) => route.abort("failed"));
     await ui.waitForFunction(
       () =>
-        document.querySelector("#connection").textContent === "Disconnected",
+        document.querySelector("#connection").textContent === "Reconnecting",
     );
     await assertDisconnectedMirror(ui);
     await ui.screenshot({
@@ -393,9 +789,14 @@ test("an image stream failure is labelled unavailable independently of status", 
     await ui.evaluate(() => {
       document.querySelector("#browser-image").src = "/stream?injected-failure";
     });
-    await ui.locator("#stream-error").waitFor({ state: "visible" });
+    await ui.waitForFunction(
+      () =>
+        document.querySelector("#connection-error").dataset.reason ===
+        "image_unavailable",
+    );
+    assert.equal(await ui.locator("#stream-error").isVisible(), false);
     assert.match(
-      await ui.locator("#stream-error").innerText(),
+      await ui.locator("#connection-error").innerText(),
       /image unavailable/i,
     );
     assert.doesNotMatch(
@@ -468,7 +869,7 @@ test("edge: status recovery cannot certify an unrecovered image stream", async (
     await ui.route("**/status", (route) => route.abort("failed"));
     await ui.waitForFunction(
       () =>
-        document.querySelector("#connection").textContent === "Disconnected",
+        document.querySelector("#connection").textContent === "Reconnecting",
     );
     assert.ok(
       await ui

@@ -1,5 +1,24 @@
 # Implementation plan
 
+## Development restart and connection clarity — 2026-11-10
+
+The owner requested restart-friendly alerts and sidebar status circles for
+developers who rebuild APIs/sites during a session. The local candidate separates
+viewer/browser/application observation/image status, retains completed results,
+reports explicit viewer closure, and recovers through fresh reads without replay.
+Swagger selection reveals collapsed/virtualized operations through its guarded
+layout navigation, supplies safe actionable errors, and explains read-only success
+without suggesting a failed persistence check.
+
+Implementation and local Node/Rust/browser verification are complete on
+`codex/dev-restart-alerts-20261110`, based on `d614e6f`, in
+`artifacts/worktrees/dev-restart-alerts-20261110`. See the dated verification
+entry for actual failing assertions, passing checks and limits. Independent review
+covered lifecycle/result attribution and guarded Swagger navigation. The primary
+checkout and other worktrees remain preserved. This is an unpublished source
+candidate; exact installed-package verification, hosted CI, integration/release,
+and customer-side acceptance remain separate gates.
+
 ## Alpha.9 production release — 2026-11-09
 
 - [x] Merge the tested generic Swagger source and corrected path validation.

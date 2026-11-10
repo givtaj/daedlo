@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { DriverError } from "../errors.mjs";
 import {
   buildRequest,
   getOperation,
@@ -18,7 +19,58 @@ const canonical = (value) =>
   );
 export const swaggerDigest = (document) =>
   createHash("sha256").update(canonical(document)).digest("hex");
-const problem = (message) => new Error(message);
+// Only adapter-authored static text may cross the public error boundary. Never
+// forward Playwright errors, locators, inputs, responses or authentication values.
+const problems = new Map([
+  [
+    "An explicit HTTP(S) URL without credentials is required.",
+    "swagger_invalid_url",
+  ],
+  [
+    "Swagger and API schema must share the configured origin.",
+    "swagger_origin_mismatch",
+  ],
+  ["Invalid Swagger request timeout.", "swagger_invalid_timeout"],
+  [
+    "Swagger driving requires a browser context without service workers.",
+    "swagger_service_worker",
+  ],
+  ["Request must be valid JSON.", "swagger_invalid_request"],
+  ["Request inputs are invalid or unsupported.", "swagger_invalid_request"],
+  ["Swagger parameter control is unsupported.", "swagger_unsupported_control"],
+  [
+    "Operation execution is not allowed by the project profile.",
+    "swagger_operation_denied",
+  ],
+  ["Prepared Swagger inputs changed.", "swagger_inputs_changed"],
+  ["No matching Swagger response was observed.", "swagger_response_missing"],
+  [
+    "Swagger request did not match the prepared operation.",
+    "swagger_request_mismatch",
+  ],
+  ["Swagger response cleanup is incomplete.", "cleanup_incomplete"],
+]);
+const problem = (message) =>
+  new DriverError(
+    problems.get(message) ?? "swagger_adapter_error",
+    problems.has(message)
+      ? message
+      : "Swagger could not complete this step. Inspect the current Swagger page before choosing another action.",
+  );
+const selectionProblem = (kind) =>
+  new DriverError(
+    `swagger_operation_${kind}`,
+    {
+      filtered:
+        "The active Swagger filter hides this operation. Clear or change the filter, then select it again.",
+      missing:
+        "The selected operation is not visible in Swagger. Check that this page renders the operation, then select it again.",
+      ambiguous:
+        "Swagger shows more than one match for this operation. Resolve the duplicate operation views before selecting it.",
+      unsupported:
+        "This Swagger page cannot reveal the selected operation automatically. Expand its group and bring it into view, then select it again.",
+    }[kind],
+  );
 const safeUrl = (value) => {
   const u = new URL(value);
   if (!["http:", "https:"].includes(u.protocol) || u.username || u.password)
@@ -132,6 +184,72 @@ export async function createSwaggerAdapter({
     page.locator(`.opblock-${operation.method.toLowerCase()}`).filter({
       has: page.locator(`[data-path=${JSON.stringify(operation.path)}]`),
     });
+  async function revealOperation(operation, execution) {
+    const target = block(operation);
+    if ((await target.count()) > 1) throw selectionProblem("ambiguous");
+    if ((await target.count()) === 1 && (await target.isVisible()))
+      return target;
+    // Swagger UI 5 virtualizes long catalogs. Its own layout navigation reveals
+    // a row that does not exist in the DOM yet; scrolling a missing locator
+    // cannot do that. Derive its navigation key from the exact method/path.
+    const navigation = await page.evaluate(
+      ({ method, path }) => {
+        const ui = window.ui;
+        if (
+          typeof ui?.specSelectors?.taggedOperations !== "function" ||
+          typeof ui?.layoutActions?.show !== "function" ||
+          typeof ui?.layoutActions?.scrollToVirtualizedOperation !== "function"
+        )
+          return { problem: "unsupported" };
+        try {
+          const matches = [];
+          ui.specSelectors.taggedOperations().forEach((group, tag) => {
+            group.get("operations").forEach((entry) => {
+              if (entry.get("path") !== path || entry.get("method") !== method)
+                return;
+              const raw = entry.get("operation");
+              const id =
+                raw.get("__originalOperationId") ||
+                raw.get("operationId") ||
+                ui.fn?.opId?.(raw, path, method) ||
+                entry.get("id");
+              if (typeof tag === "string" && typeof id === "string")
+                matches.push(["operations", tag, id]);
+            });
+          });
+          if (matches.length > 1) return { problem: "ambiguous" };
+          if (!matches.length)
+            return {
+              problem: ui.layoutSelectors?.currentFilter?.()
+                ? "filtered"
+                : "missing",
+            };
+          return { key: matches[0] };
+        } catch {
+          return { problem: "unsupported" };
+        }
+      },
+      { method: operation.method.toLowerCase(), path: operation.path },
+    );
+    if (navigation.problem) throw selectionProblem(navigation.problem);
+    await execution.effect(() =>
+      page.evaluate((key) => {
+        window.ui.layoutActions.show(["operations-tag", key[1]], true);
+        window.ui.layoutActions.scrollToVirtualizedOperation(key);
+      }, navigation.key),
+    );
+    try {
+      // One navigation request, then a bounded observation wait. No retry of
+      // navigation, selection or Execute, and no direct API request fallback.
+      await target.waitFor({ state: "visible", timeout: timeoutMs });
+    } catch {
+      throw selectionProblem(
+        (await target.count()) > 1 ? "ambiguous" : "missing",
+      );
+    }
+    if ((await target.count()) !== 1) throw selectionProblem("ambiguous");
+    return target;
+  }
   async function measured() {
     return page.evaluate(() => {
       const root = document.querySelector(".swagger-ui");
@@ -161,7 +279,14 @@ export async function createSwaggerAdapter({
         spec = window.ui?.specSelectors?.specJson?.()?.toJS?.() ?? null;
       } catch {}
       return {
-        ready: Boolean(root && document.querySelector(".opblock")),
+        // An initialized catalog can have no rendered rows when every tag is
+        // collapsed, filtered out, or virtualized. The pinned schema check is
+        // separate and still gates every selection/action.
+        ready: Boolean(
+          root &&
+            spec?.paths &&
+            typeof window.ui?.specSelectors?.taggedOperations === "function",
+        ),
         spec,
         key: method && path ? `${method} ${path}` : null,
         ambiguous: opened.length > 1,
@@ -398,10 +523,10 @@ export async function createSwaggerAdapter({
     async select({ operation: key }, execution) {
       const operation = getOperation(catalog, key);
       const opened = page.locator(".opblock.is-open .opblock-summary-control");
-      while (await opened.count()) await execution.click(opened.first());
-      await execution.click(
-        block(operation).locator(".opblock-summary-control"),
-      );
+      for (let remaining = await opened.count(); remaining > 0; remaining--)
+        await execution.click(opened.first());
+      const target = await revealOperation(operation, execution);
+      await execution.click(target.locator(".opblock-summary-control"));
       await execution.effect(async () => {
         prepared = null;
         response = null;

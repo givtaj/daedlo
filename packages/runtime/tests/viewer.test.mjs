@@ -160,6 +160,198 @@ const post = (url, body, headers = {}) =>
     body: JSON.stringify(body),
   });
 
+function events(url) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(`${url}/events`, { agent: false }, (res) => {
+      let body = "";
+      res.on("data", (chunk) => (body += chunk.toString()));
+      const ended = new Promise((done, fail) => {
+        res.on("end", () => done(body));
+        res.on("error", fail);
+      });
+      resolve({ res, ended, body: () => body });
+    });
+    req.on("error", reject);
+  });
+}
+
+function endedEvent(body) {
+  const event = body
+    .split("\n\n")
+    .find((entry) => entry.startsWith("event: viewer-ended\n"));
+  assert.ok(event, "explicit close must deliver a viewer-ended event");
+  return JSON.parse(event.split("\ndata: ")[1]);
+}
+
+test("status separates viewer, browser, and fresh application observation through a restart", async (t) => {
+  const { viewer, snapshot, session, page, calls } = await start(t);
+  const status = async () =>
+    JSON.parse((await request(`${viewer.url}/status`)).body);
+  const first = await status();
+  assert.equal(first.lifecycle?.status, "open");
+  assert.match(first.lifecycle.id, /^[0-9a-f-]{36}$/);
+  assert.deepEqual(first.connections, { browser: true, application: true });
+  snapshot.connected = false;
+  let current = await status();
+  assert.deepEqual(current.connections, { browser: true, application: false });
+  assert.equal(current.connected, false);
+  snapshot.connected = true;
+  current = await status();
+  assert.deepEqual(current.connections, { browser: true, application: true });
+  assert.equal(current.lifecycle.id, first.lifecycle.id);
+  assert.deepEqual(
+    calls,
+    [],
+    "observing restart recovery must not dispatch actions",
+  );
+  session.snapshot = async () => ({});
+  current = await status();
+  assert.equal(
+    current.connected,
+    false,
+    "missing observation cannot imply readiness",
+  );
+  assert.equal(current.connections.application, false);
+  session.snapshot = async () => {
+    throw Error("unpublished-metadata");
+  };
+  current = await status();
+  assert.deepEqual(current.connections, { browser: true, application: false });
+  assert.doesNotMatch(JSON.stringify(current), /unpublished-metadata/);
+  page.emit("close");
+  current = await status();
+  assert.deepEqual(current.connections, { browser: false, application: false });
+});
+
+test("explicit viewer close publishes the completed result without reobserving or closing attached resources", async (t) => {
+  const { viewer, session, calls, page, cdp } = await start(t);
+  const state = JSON.parse((await request(`${viewer.url}/status`)).body);
+  const result = {
+    ok: true,
+    execution: "completed",
+    runId: "completed-run",
+    command: "write",
+    recipe: false,
+    startedAt: "2026-11-10T10:00:00.000Z",
+    finishedAt: "2026-11-10T10:00:01.000Z",
+    outcome: {
+      kind: "success",
+      label: "Response verified",
+      extra: "unpublished-metadata",
+    },
+    effect: { status: "not_attempted", extra: "unpublished-metadata" },
+    extra: "unpublished-metadata",
+  };
+  session.report = (options) =>
+    options?.runId === result.runId
+      ? {
+          runId: result.runId,
+          lastResult: result,
+          identity: { extra: "unpublished-metadata" },
+        }
+      : {
+          runId: result.runId,
+          lastResult: result,
+          completedRunIds: [result.runId],
+          extra: "unpublished-metadata",
+        };
+  session.snapshot = () =>
+    assert.fail("close must not observe a restarting application");
+  const stream = await events(viewer.url);
+  assert.equal(stream.res.statusCode, 200);
+  assert.match(stream.res.headers["content-type"], /text\/event-stream/);
+  await Promise.all([viewer.close(), viewer.close()]);
+  const body = await stream.ended;
+  const event = endedEvent(body);
+  assert.equal(event.lifecycle.id, state.lifecycle.id);
+  assert.equal(event.lifecycle.status, "ended");
+  assert.ok(Number.isFinite(Date.parse(event.lifecycle.endedAt)));
+  assert.equal(event.lastResult.runId, result.runId);
+  assert.deepEqual(event.lastResult.outcome, {
+    kind: "success",
+    label: "Response verified",
+  });
+  assert.deepEqual(event.lastResult.effect, { status: "not_attempted" });
+  assert.doesNotMatch(body, /unpublished-metadata/);
+  assert.equal((body.match(/event: viewer-ended/g) || []).length, 1);
+  assert.deepEqual(calls, []);
+  assert.equal(page.listenerCount("close"), 0);
+  assert.equal(cdp.listenerCount("close"), 0);
+  await assert.rejects(request(`${viewer.url}/status`), {
+    code: "ECONNREFUSED",
+  });
+});
+
+test("viewer close never promotes a result whose finalization is still pending", async (t) => {
+  const { viewer, session } = await start(t);
+  session.report = () => ({
+    runId: "pending-run",
+    lastResult: { runId: "pending-run", execution: "completed", ok: true },
+    completedRunIds: [],
+    finalization: { status: "pending" },
+  });
+  const stream = await events(viewer.url);
+  assert.equal(stream.res.statusCode, 200);
+  await viewer.close();
+  assert.equal("lastResult" in endedEvent(await stream.ended), false);
+});
+
+for (const scenario of ["newer active run", "malformed completed IDs"]) {
+  test(`viewer close omits old completion with ${scenario}`, async (t) => {
+    const { viewer, session } = await start(t);
+    const result = {
+      runId: "old-run",
+      execution: "completed",
+      ok: true,
+      finishedAt: "2026-11-10T10:00:01.000Z",
+    };
+    session.report = (options) =>
+      options?.runId
+        ? { runId: "old-run", lastResult: result }
+        : {
+            runId: scenario === "newer active run" ? "new-run" : "old-run",
+            lastResult: result,
+            completedRunIds:
+              scenario === "newer active run" ? ["old-run"] : "old-run",
+          };
+    const stream = await events(viewer.url);
+    await viewer.close();
+    assert.equal("lastResult" in endedEvent(await stream.ended), false);
+  });
+}
+
+test("browser loss leaves the observer open and does not claim deliberate viewer closure", async (t) => {
+  const { viewer, page } = await start(t);
+  const stream = await events(viewer.url);
+  assert.equal(stream.res.statusCode, 200);
+  page.emit("close");
+  const status = JSON.parse((await request(`${viewer.url}/status`)).body);
+  assert.equal(status.lifecycle.status, "open");
+  assert.equal(stream.res.complete, false);
+  assert.doesNotMatch(stream.body(), /viewer-ended/);
+  await viewer.close();
+  assert.equal(endedEvent(await stream.ended).lifecycle.status, "ended");
+});
+
+test("lifecycle observation rejects foreign origins and mutation methods", async (t) => {
+  const { viewer, calls } = await start(t);
+  for (const headers of [
+    { origin: "https://foreign.invalid" },
+    { "sec-fetch-site": "cross-site" },
+    { host: "foreign.invalid" },
+  ]) {
+    assert.equal(
+      (await request(`${viewer.url}/events`, { headers })).status,
+      403,
+    );
+  }
+  assert.equal(
+    (await post(`${viewer.url}/events`, { action: "resume" })).status,
+    404,
+  );
+  assert.deepEqual(calls, []);
+});
+
 test("serves a generic descriptor-driven viewer and a fresh snapshot without inline scripts", async (t) => {
   const { viewer } = await start(t);
   const html = await request(viewer.url);

@@ -112,10 +112,30 @@ test("viewer labels concurrent frontends and refuses a target mismatch without r
     await ui.locator('[data-command-id="inspect"]').waitFor();
     assert.deepEqual(calls, [], "reload must not replay a flow");
     await viewers[1].page.goto("about:blank");
-    await ui.locator("#frontend-warning").waitFor({ state: "visible" });
+    await ui
+      .locator('#connection-error[data-reason="target_mismatch"]')
+      .waitFor({ state: "visible" });
+    assert.equal(
+      await ui.locator("#connection").innerText(),
+      "Target mismatch",
+    );
+    assert.match(
+      await ui.locator("#connection-error").innerText(),
+      /Target or model mismatch/,
+    );
+    assert.equal(
+      await ui.locator("#frontend-warning").isVisible(),
+      false,
+      "The primary notice must not be duplicated",
+    );
     assert.equal(
       await ui.locator('button[data-command="inspect"]').isDisabled(),
       true,
+    );
+    assert.deepEqual(
+      calls,
+      [],
+      "A mismatched target never dispatches or replays a flow",
     );
     assert.equal(
       (await (await fetch(viewers[0].url + "/status")).json()).connected,

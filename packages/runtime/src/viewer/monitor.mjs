@@ -12,6 +12,9 @@ const title = (value) =>
   text(value)
     .replaceAll("_", " ")
     .replace(/^./, (letter) => letter.toUpperCase());
+const setText = (element, value) => {
+  if (element.textContent !== value) element.textContent = value;
+};
 const node = (tag, className, content) => {
   const element = document.createElement(tag);
   if (className) element.className = className;
@@ -26,7 +29,14 @@ let latest,
   advancePending = false,
   streamFailed = false,
   awaitingStream = false,
-  lastStreamRetry = 0;
+  lastStreamRetry = 0,
+  connectionIssue = null,
+  statusFresh = false,
+  refreshPending = null,
+  lifecycleEvents = null;
+const endedLifecycles = new Set();
+const STATUS_TIMEOUT_MS = 3000;
+const RECONNECT_GRACE_MS = 5000;
 const commandViews = new Map(),
   recipeViews = new Map(),
   presentationViews = new Map(),
@@ -581,7 +591,7 @@ function updateAvailability() {
   for (const [id, view] of commandViews) {
     const state = driver?.commands?.find((command) => command.id === id);
     const enabled = Boolean(state?.enabled);
-    if (enabled) available++;
+    if (enabled && !blocked) available++;
     view.button.disabled = Boolean(blocked || !enabled);
     view.form.classList.toggle("unavailable", !enabled);
     view.reason.textContent =
@@ -774,9 +784,14 @@ function renderObservation(driver, connected) {
   document.querySelector(".sidebar").dataset.observation = connected
     ? "current"
     : "stale";
-  $("observation-status").textContent = connected
-    ? "Current observation"
-    : "Last observed · disconnected";
+  setText(
+    $("observation-status"),
+    connected
+      ? "Current observation"
+      : stateId
+        ? "Last observed · observation unavailable"
+        : "Observation unavailable",
+  );
   for (const [id, view] of stateViews) {
     view.entry.classList.toggle("active", connected && id === stateId);
     view.entry.classList.toggle(
@@ -791,13 +806,35 @@ function renderObservation(driver, connected) {
     driver.descriptor?.states?.find((state) => state.id === stateId)?.label ||
     stateId ||
     "Unknown application state";
-  $("state-label").textContent = connected
-    ? stateLabel
-    : `Last observed: ${stateLabel}`;
+  setText(
+    $("state-label"),
+    connected
+      ? stateLabel
+      : stateId
+        ? `Last observed: ${stateLabel}`
+        : "Application observation unavailable",
+  );
+}
+
+function imageConnected(snapshot = latest) {
+  return Boolean(
+    statusFresh && (snapshot?.connections?.browser ?? snapshot?.connected),
+  );
+}
+
+function observedTime(value) {
+  const time = new Date(value);
+  return value && Number.isFinite(time.getTime())
+    ? time.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : "time unavailable";
 }
 
 function renderImage() {
-  const connected = Boolean(latest?.connected);
+  const connected = imageConnected();
   const received = $("browser-image").naturalWidth > 0;
   // A failed initial request can finish before this module installs its listener.
   if ($("browser-image").complete && !received) streamFailed = true;
@@ -810,36 +847,229 @@ function renderImage() {
         : "waiting";
   document.querySelector(".browser-panel").dataset.imageState = state;
   $("mirror-status").textContent = {
-    disconnected: received ? "Last captured frame" : "Disconnected",
+    disconnected: received
+      ? `Last captured frame · ${observedTime(latest?.updatedAt)}`
+      : "No image available",
     unavailable: "Image unavailable",
     waiting: "Waiting for image",
     live: "Live mirror",
   }[state];
+  $("mirror-status").title = latest?.updatedAt
+    ? `Last captured ${latest.updatedAt}`
+    : "Capture time unavailable";
   $("browser-image").alt =
     state === "live"
       ? "Live mirror of the controlled browser; use the command panel to interact"
       : "Last captured browser image; current appearance is not confirmed";
-  $("stream-error").hidden = state === "live";
-  $("stream-error-title").textContent = {
-    disconnected: received
-      ? "Last captured frame — disconnected"
-      : "Browser disconnected — no image available",
-    unavailable: "Browser image unavailable",
-    waiting: "Waiting for a browser image",
-    live: "",
-  }[state];
-  $("stream-error-detail").textContent =
-    state === "disconnected"
-      ? "The image and observation are not current. Reconnecting never replays commands."
-      : state === "unavailable"
-        ? "The driver is connected, but the browser image is unavailable."
-        : "The controlled browser will appear here when an image arrives.";
+  // Keep the application visible. One primary notice explains connection issues;
+  // the image's compact label says whether this is a retained frame.
+  $("stream-error").hidden = true;
   $("frame-status").textContent =
     state === "live"
-      ? "Watching controlled session"
-      : state === "disconnected"
-        ? "Disconnected"
-        : $("mirror-status").textContent;
+      ? "Watching controlled browser"
+      : $("mirror-status").textContent;
+}
+
+function channel(id, status, value) {
+  const row = document.querySelector(`[data-channel="${id}"]`);
+  row.dataset.status = status;
+  setText(row.querySelector(".channel-value"), value);
+  setText(
+    row.querySelector(".channel-icon"),
+    {
+      success: "✓",
+      warning: "!",
+      error: "×",
+      neutral: "○",
+    }[status],
+  );
+}
+
+function renderConnection() {
+  const ended = latest?.lifecycle?.status === "ended";
+  const issue = connectionIssue;
+  const lost = issue && Date.now() - issue.since >= RECONNECT_GRACE_MS;
+  const imageState =
+    document.querySelector(".browser-panel").dataset.imageState;
+  let label = latest?.connected ? "Connected" : "Connecting";
+  let detail = "";
+  let severity = latest?.connected ? "success" : "warning";
+  let reason = "";
+  if (ended) {
+    label = "Viewer closed";
+    severity = "neutral";
+    reason = "viewer_closed";
+    detail = `Viewer closed at ${observedTime(latest.lifecycle.endedAt)}. The last recorded result is retained. This does not mean the application or browser was closed.`;
+    channel("viewer", "neutral", "Closed");
+  } else if (issue) {
+    reason = issue.code;
+    const invalid = issue.code === "status_invalid";
+    const rendering = issue.code === "render_failed";
+    label = invalid
+      ? "Status unavailable"
+      : rendering
+        ? "Display error"
+        : lost
+          ? "Connection lost"
+          : "Reconnecting";
+    severity = invalid || rendering || lost ? "error" : "warning";
+    detail = invalid
+      ? "The viewer returned an invalid status response. Check the viewer process and its local diagnostics."
+      : rendering
+        ? "The viewer could not display the latest status. Check local diagnostics or reload the viewer."
+        : lost
+          ? "Cannot reach the local viewer. Check that its process is running. If restarting it, open its current viewer address."
+          : "Waiting for the local viewer. If rebuilding or restarting, keep this page open; connection checks continue automatically.";
+    detail += " Commands are disabled; reconnecting never replays them.";
+    channel("viewer", severity, label);
+  } else if (!statusFresh) {
+    label = "Connecting";
+    severity = "neutral";
+    channel("viewer", "neutral", "Connecting");
+  } else {
+    channel("viewer", "success", "Connected");
+    if (!latest?.connected) {
+      const mismatch =
+        latest?.frontend?.matchesTarget === false ||
+        latest?.frontend?.matchesModel === false;
+      label = mismatch
+        ? "Target mismatch"
+        : latest?.connections?.browser === false
+          ? "Browser unavailable"
+          : "Waiting for application";
+      severity =
+        mismatch || latest?.connections?.browser === false
+          ? "error"
+          : "warning";
+      reason = mismatch
+        ? "target_mismatch"
+        : latest?.driver?.error_code || "observation_unavailable";
+      detail =
+        latest?.connections?.browser === false
+          ? "The controlled browser is unavailable. Reopen the browser through the driver, then check the connection."
+          : latest?.frontend?.matchesTarget === false ||
+              latest?.frontend?.matchesModel === false
+            ? "Target or model mismatch. Inspect the selected application before continuing."
+            : "Application observation is unavailable. If the site or API is rebuilding or restarting, wait for it to return. Actions become available after a fresh observation. No command is replayed.";
+    } else if (imageState === "unavailable") {
+      severity = "warning";
+      reason = "image_unavailable";
+      detail =
+        "Browser image unavailable. The driver is connected; the read-only image stream will reconnect automatically.";
+    }
+  }
+  if (!statusFresh || ended) {
+    channel("browser", "neutral", "Unknown");
+    channel("application", "neutral", "Unknown");
+  } else {
+    const browser =
+      latest?.connections?.browser ?? (latest?.connected ? true : null);
+    const application = latest?.connections?.application ?? latest?.connected;
+    channel(
+      "browser",
+      browser === true ? "success" : browser === false ? "error" : "neutral",
+      browser === true
+        ? "Connected"
+        : browser === false
+          ? "Disconnected"
+          : "Unknown",
+    );
+    channel(
+      "application",
+      application ? "success" : "warning",
+      application ? "Current" : "Unavailable",
+    );
+  }
+  channel(
+    "image",
+    imageState === "live"
+      ? "success"
+      : imageState === "unavailable" || imageState === "waiting"
+        ? "warning"
+        : "neutral",
+    {
+      live: "Live",
+      unavailable: "Unavailable",
+      waiting: "Waiting",
+      disconnected: "Last image",
+    }[imageState],
+  );
+  setText($("connection"), label);
+  $("connection").classList.toggle(
+    "connected",
+    Boolean(latest?.connected && !issue && !ended),
+  );
+  $("connection").dataset.status = severity;
+  $("live-dot").classList.toggle("offline", imageState !== "live");
+  $("live-dot").dataset.status =
+    imageState === "live"
+      ? "success"
+      : ended || !statusFresh
+        ? "neutral"
+        : "warning";
+  $("connection-error").hidden = !detail;
+  $("connection-error").dataset.reason = reason;
+  $("connection-error").dataset.severity = severity;
+  setText($("connection-detail"), detail);
+  $("check-connection").disabled = Boolean(refreshPending);
+  // The single notice already covers mismatch, without a second warning band.
+  $("frontend-warning").hidden = true;
+}
+
+function staleObservation() {
+  statusFresh = false;
+  if (latest) latest = { ...latest, connected: false };
+  const driver = latest?.driver || {};
+  renderPresentation(driver, false);
+  renderObservation(driver, false);
+  renderFlow(driver, false);
+  if (driver.busy) {
+    $("execution-state").textContent =
+      "Last observed: " +
+      (currentFinalization(driver)
+        ? "Finalizing"
+        : title(driver.execution || "running"));
+    $("active-outcome-label").textContent =
+      "Live observation unavailable; final application outcome unknown";
+  }
+  renderImage();
+  updateAvailability();
+  renderConnection();
+}
+
+function renderExecution(driver, connected) {
+  $("execution-state").textContent = currentFinalization(driver)
+    ? "Finalizing"
+    : driver.paused
+      ? "Driver paused"
+      : title(
+          typeof driver.execution === "object"
+            ? driver.execution.status
+            : driver.execution || "idle",
+        );
+  $("run-id").textContent = driver.runId ? `Run ${text(driver.runId)}` : "";
+  $("speed").value = driver.speed || "normal";
+  const progress = driver.progress;
+  const index = progress?.completed ?? progress?.index ?? progress?.step ?? 0;
+  const total = progress?.total || 0;
+  $("progress-bar").classList.toggle("running", Boolean(driver.busy));
+  $("progress-bar").classList.toggle("paused", Boolean(driver.paused));
+  $("progress-label").textContent =
+    progress?.label ||
+    (total
+      ? `Step ${index} of ${total}`
+      : driver.busy
+        ? "Executing and observing the application…"
+        : driver.lastResult?.runId && driver.lastResult.runId === driver.runId
+          ? "Run finished; step progress unavailable"
+          : "Ready for a command");
+  renderResults(driver);
+  if (!connected && driver.busy) {
+    $("execution-state").textContent =
+      `Last observed: ${$("execution-state").textContent}`;
+    $("active-outcome-label").textContent =
+      "Live observation unavailable; final application outcome unknown";
+  }
 }
 
 function render(snapshot) {
@@ -872,8 +1102,10 @@ function render(snapshot) {
       ? "Target or model mismatch. Commands are disabled for this frontend."
       : "";
   }
-  const recovered = latest?.connected === false && snapshot.connected;
+  const recovered =
+    !imageConnected() && (snapshot.connections?.browser ?? snapshot.connected);
   latest = snapshot;
+  statusFresh = true;
   if (recovered) reconnectImage();
   const driver = snapshot.driver || {};
   if (driver.descriptor) {
@@ -904,18 +1136,6 @@ function render(snapshot) {
     startingPresentation = false;
     message("Presentation running…");
   }
-  $("connection").textContent = snapshot.connected
-    ? "Connected"
-    : "Disconnected";
-  $("connection").classList.toggle("connected", snapshot.connected);
-  $("live-dot").classList.toggle("offline", !snapshot.connected);
-  $("connection-error").hidden = snapshot.connected;
-  $("connection-error").textContent =
-    driver.error ||
-    "The controlled browser or driver is unavailable. Commands are disabled.";
-  $("frame-status").textContent = snapshot.connected
-    ? "Watching controlled session"
-    : "Connection unavailable";
   $("frame-count").textContent = `${snapshot.frames || 0} frames`;
   renderObservation(driver, snapshot.connected);
   fillFacts($("display-facts"), driver.display || []);
@@ -926,44 +1146,12 @@ function render(snapshot) {
       value,
     })),
   );
-  $("execution-state").textContent = currentFinalization(driver)
-    ? "Finalizing"
-    : driver.paused
-      ? "Driver paused"
-      : title(
-          typeof driver.execution === "object"
-            ? driver.execution.status
-            : driver.execution || "idle",
-        );
-  $("run-id").textContent = driver.runId ? `Run ${text(driver.runId)}` : "";
-  $("speed").value = driver.speed || "normal";
-  const progress = driver.progress;
-  const index = progress?.completed ?? progress?.index ?? progress?.step ?? 0;
-  const total = progress?.total || 0;
-  $("progress-bar").classList.toggle("running", Boolean(driver.busy));
-  $("progress-bar").classList.toggle("paused", Boolean(driver.paused));
-  $("progress-label").textContent =
-    progress?.label ||
-    (total
-      ? `Step ${index} of ${total}`
-      : driver.busy
-        ? "Executing and observing the application…"
-        : "Ready for a command");
-  renderResults(driver);
-  if (!snapshot.connected) {
-    $("execution-state").textContent = "Connection unavailable";
-    if (driver.busy)
-      $("active-outcome-label").textContent =
-        "Connection unavailable; final application outcome unknown";
-  }
+  renderExecution(driver, snapshot.connected);
   renderFlow(driver, snapshot.connected);
   renderImage();
+  renderConnection();
   updateAvailability();
-  if (
-    streamFailed &&
-    snapshot.connected &&
-    Date.now() - lastStreamRetry > 5000
-  ) {
+  if (streamFailed && imageConnected() && Date.now() - lastStreamRetry > 5000) {
     reconnectImage();
   }
 }
@@ -977,31 +1165,142 @@ function reconnectImage() {
   $("browser-image").src = `/stream?reconnect=${lastStreamRetry}`;
 }
 
-async function refresh() {
-  try {
-    const response = await fetch("/status", { cache: "no-store" });
-    if (!response.ok) throw Error("Viewer status unavailable");
-    render(await response.json());
-  } catch {
-    if (latest) latest = { ...latest, connected: false };
-    $("connection").textContent = "Disconnected";
-    $("connection").classList.remove("connected");
-    $("connection-error").textContent =
-      "The local viewer is unavailable. Existing commands are never replayed when it reconnects.";
-    $("connection-error").hidden = false;
-    $("live-dot").classList.add("offline");
-    const driver = latest?.driver || {};
-    renderPresentation(driver, false);
-    renderObservation(driver, false);
-    renderFlow(driver, false);
-    renderImage();
-    $("execution-state").textContent = "Connection unavailable";
-    if (driver.busy)
-      $("active-outcome-label").textContent =
-        "Connection unavailable; final application outcome unknown";
-    updateAvailability();
-  }
+function validStatus(snapshot) {
+  const object = (value) =>
+    value && typeof value === "object" && !Array.isArray(value);
+  return (
+    object(snapshot) &&
+    typeof snapshot.connected === "boolean" &&
+    object(snapshot.driver) &&
+    (!snapshot.lifecycle ||
+      (object(snapshot.lifecycle) &&
+        typeof snapshot.lifecycle.id === "string" &&
+        snapshot.lifecycle.id.length > 0 &&
+        ["open", "ended"].includes(snapshot.lifecycle.status))) &&
+    (!snapshot.connections ||
+      (object(snapshot.connections) &&
+        typeof snapshot.connections.browser === "boolean" &&
+        typeof snapshot.connections.application === "boolean"))
+  );
 }
+
+function viewerEnded(payload) {
+  const lifecycle = payload?.lifecycle;
+  if (
+    !lifecycle ||
+    typeof lifecycle.id !== "string" ||
+    lifecycle.status !== "ended" ||
+    (latest?.lifecycle?.id && latest.lifecycle.id !== lifecycle.id)
+  )
+    return;
+  endedLifecycles.add(lifecycle.id);
+  if (endedLifecycles.size > 16)
+    endedLifecycles.delete(endedLifecycles.values().next().value);
+  const driver = { ...latest?.driver };
+  // The server proves this is its current run and a completed immutable report.
+  // Closing can race a poll, so its final run may be unseen in the viewer.
+  if (payload.lastResult?.runId) {
+    // A terminal result proves completion, not the last step observed by a poll.
+    driver.progress = {};
+    driver.runId = payload.lastResult.runId;
+    driver.activeRun = null;
+    driver.finalization = null;
+    driver.presentation = payload.lastResult.presentation || null;
+    driver.paused = false;
+    driver.lastResult = payload.lastResult;
+    driver.execution = payload.lastResult.execution;
+    driver.busy = false;
+    renderExecution(driver, false);
+  }
+  latest = { ...latest, connected: false, lifecycle, driver };
+  connectionIssue = null;
+  lifecycleEvents?.close();
+  lifecycleEvents = null;
+  staleObservation();
+}
+
+function subscribeLifecycle() {
+  if (lifecycleEvents) return;
+  lifecycleEvents = new EventSource("/events");
+  lifecycleEvents.addEventListener("open", () => {
+    document.body.dataset.lifecycleEvents = "connected";
+  });
+  lifecycleEvents.addEventListener("viewer-ended", (event) => {
+    try {
+      viewerEnded(JSON.parse(event.data));
+    } catch {
+      /* Keep polling if an event is invalid. */
+    }
+  });
+  // Older viewers can omit this channel. Status remains the source of availability.
+}
+
+function refresh() {
+  if (refreshPending) return refreshPending;
+  refreshPending = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), STATUS_TIMEOUT_MS);
+    let snapshot;
+    let reason;
+    try {
+      const response = await fetch("/status", {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) throw Error("Status request failed");
+      try {
+        snapshot = await response.json();
+      } catch {
+        reason = controller.signal.aborted
+          ? "status_timeout"
+          : "status_invalid";
+      }
+      if (!reason && !validStatus(snapshot)) reason = "status_invalid";
+    } catch {
+      reason = controller.signal.aborted
+        ? "status_timeout"
+        : "status_transport";
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (!reason) {
+      const id = snapshot.lifecycle?.id;
+      // A final lifecycle event wins over any already-running open status read.
+      if (
+        endedLifecycles.has(id) ||
+        (latest?.lifecycle?.status === "ended" && !id)
+      )
+        return;
+      if (snapshot.lifecycle?.status === "ended") {
+        viewerEnded({ lifecycle: snapshot.lifecycle });
+        return;
+      }
+      const previous = latest;
+      connectionIssue = null;
+      try {
+        render(snapshot);
+        subscribeLifecycle();
+      } catch {
+        latest = previous;
+        reason = "render_failed";
+      }
+    }
+    if (reason && latest?.lifecycle?.status !== "ended") {
+      connectionIssue = {
+        code: reason,
+        since: connectionIssue?.since ?? Date.now(),
+      };
+      staleObservation();
+    }
+  })().finally(() => {
+    refreshPending = null;
+    renderConnection();
+  });
+  $("check-connection").disabled = true;
+  return refreshPending;
+}
+
+$("check-connection").addEventListener("click", () => void refresh());
 
 for (const action of ["pause", "resume", "stop"])
   $("" + action).addEventListener("click", async () => {
@@ -1048,14 +1347,17 @@ $("browser-image").addEventListener("error", () => {
   streamFailed = true;
   awaitingStream = false;
   renderImage();
+  renderConnection();
 });
 $("browser-image").addEventListener("load", () => {
   streamFailed = false;
   awaitingStream = false;
   renderImage();
+  renderConnection();
 });
 async function poll() {
-  await refresh();
+  if (latest?.lifecycle?.status !== "ended") await refresh();
   setTimeout(poll, 500);
 }
+subscribeLifecycle();
 void poll();
