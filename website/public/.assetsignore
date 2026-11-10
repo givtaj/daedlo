@@ -5,6 +5,7 @@
 # Reviewed public pages and local assets.
 !/index.html
 !/guide.html
+!/compose.html
 !/privacy.html
 !/install.html
 !/demo.html

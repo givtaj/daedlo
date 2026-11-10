@@ -43,6 +43,15 @@ without JavaScript the prompt and guidance remain visible and the button is hidd
 No project information is collected or sent by this page. Site acceptance does
 not establish that the prompt has onboarded an external customer application.
 
+## Local Docker Compose guide
+
+`/compose` documents source-built local runtime and model SDK images plus a
+service added to an existing application stack. It uses generic service names,
+pins its source revision and requires the application's existing model and
+adapter. It does not publish or require a prebuilt Daedlo registry image.
+The homepage footer, integration guide and installation page link to this route;
+the downloadable macOS kit and managed-update journey remain separate.
+
 ## Reproduce the release website
 
 Git contains the approved source, including local text, styles, scripts, the mark,
