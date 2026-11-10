@@ -37,6 +37,62 @@ still exist in published history and may be copied into GitHub metadata. Current
 file/PR edits and future author configuration do not erase those copies. The
 current-tree checks above must not be reported as a history-wide privacy clearance.
 
+## Alpha.10 frozen package and publication preparation — 2026-11-10
+
+**PASS — exact installed candidate, local upgrade/recovery, source PR CI and
+protected source integration. Publisher CI and production publication remain PENDING.**
+Frozen package source is `61163084f9b02ec2448eee04c7aebc4994075936`.
+[Source PR #36](https://github.com/givtaj/daedlo/pull/36) carries the restart/status
+and Swagger fixes. Source CI [run 42793518729](https://github.com/givtaj/daedlo/actions/runs/42793518729)
+passed both Node 22/24 lanes and metadata/secrets. PR #36 merged as
+`fce9f473859bac89d98f1f03b0e7ee47f9d6ce48`; its tree exactly matches the frozen
+source. Main-branch CI [run 42795257194](https://github.com/givtaj/daedlo/actions/runs/42795257194)
+is checked separately before publication.
+The runtime/core archives are identical to the preliminary `21e67ff` kit; the final
+bundle/tools receipts bind the corrected source. Only the final kit will publish.
+
+| Immutable public file | Bytes | SHA-256 |
+| --- | --- | --- |
+| `daedlo-0.1.4-alpha.10.zip` | 366928 | `543ab597a1c5d30af7d9b12cefa6dec8a01bed2e985426056f5fed57ea8a0c29` |
+| `release.json` | 6951 | `87190840350b08caca0c5c279bd4c6364cea021ee13c7c500947f1d2a6eed033` |
+| `SHA256SUMS` | 92 | `009e217bc512ecae1b9c0af6c5b384f6a6d8288a4aa0bf42ab3d209e60e20206` |
+
+Bundle manifest SHA-256: `86edbe5687a0878563953f6f12e7aabb1de7c490efcd733adf94b70458739413`.
+Tools SHA-256: `65047250a9b670c2148aed10afcdfb62dce324ab79daf89f2393e43dee51c304`.
+The external metadata records prepublication acceptance; the ZIP is frozen and
+later publisher/documentation commits do not rebuild it.
+
+| Gate | Measured result |
+| --- | --- |
+| Exact installed runtime/core/tools | PASS: 8 independent browser groups, 147 safety assertions in 17 groups, 28 grid cases and the real application restart; 13 native startup and 5 native observation checks; all owned cleanup PASS |
+| Exact installed Swagger | PASS: all 19 groups, including collapsed/virtualized navigation, preserved filter, missing/ambiguous refusal, no extra dispatch, GET/HEAD copy and write uncertainty; rebuilt shipped model and cleanup PASS |
+| Shipped starter and references | PASS: 16 starter, 9 evidence and 8 managed reference groups; complete runtime/tools inventory verified; cleanup PASS |
+| Alpha.9 upgrade/recovery | PASS: all 7 checkpoints with the unchanged published alpha.9 updater and manager contract 2; final alpha.10 candidate, fresh-manager restart, full alpha.9 slot rollback, preserved source/configuration/trust/data and reports; all 5 owned resources closed |
+| Staged website | PASS: all 79 tests, 8 pages/9 archives/50 assets, 14 browser/clipboard checks and 12 desktop/tablet/narrow inspections; exact DOM installer in a nested workspace preserves ancestor files; Wrangler 4.158.0 dry-run scanned exactly 50 files; owned cleanup PASS |
+| Publisher policy | PASS: 224 tests, all 64 selector combinations, strict SemVer ordering and unchanged 24 historical asset pins/trust; independent review found no blocking logic issue |
+| Production delivery | NOT RUN at this checkpoint; exact GitHub draft readback verified separately before public promotion |
+
+The early source CI run `42792712492` failed because the licensing test still
+expected alpha.9; the exact version assertion was updated to alpha.10. The first
+installed Swagger attempt failed during new fixture setup: a read-only operation
+list inherited an unrelated write permission. Cleanup passed; those scenarios
+were NOT RUN in that attempt. Explicit empty write permissions fixed the fixture,
+and all 19 groups then passed against both preliminary and final kits.
+
+The starter harness also had a version whitelist that omitted alpha.10's extra
+references. A genuine failing regression showed no reference dispatch. The
+publisher change extends the unshipped harness and all 35 contract checks pass.
+The corrected harness ran all references against the frozen final kit; no product
+package was changed or rebuilt for that harness correction.
+
+Local receipts are retained in ignored source artifacts `alpha10-frozen-6116308/`
+and publisher artifacts `alpha10-starter-references/`. Installed UI screenshots
+were inspected: sidebar states stay separate and completed results remain visible
+during an application rebuild. Scope is macOS arm64 with pinned Node 24.22.2,
+Rust 1.96.0, Playwright 1.65.0 and Chromium 158. Customer private applications,
+clean-OS onboarding and everyday Roots dependency promotion are outside this check.
+
+
 ## Alpha.10 review and release preparation — 2026-11-10
 
 **PASS — local review corrections and source checks. Installed release,

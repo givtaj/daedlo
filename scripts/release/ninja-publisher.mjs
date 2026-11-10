@@ -32,6 +32,7 @@ import { sha256 } from "./manifest.mjs";
 import { releaseNames } from "./names.mjs";
 import {
   ninjaCatalogSigningBytes,
+  compareNinjaVersions,
   verifyNinjaCatalog,
   downloadNinjaKit,
 } from "./ninja-catalog.mjs";
@@ -398,7 +399,7 @@ export async function publishNinjaCatalog(config, { now = Date.now() } = {}) {
     });
   }
   if (unusedOverrides.size) fail("Unused per-release contract override");
-  releases.sort((a, b) => a.version.localeCompare(b.version, "en"));
+  releases.sort((a, b) => compareNinjaVersions(a.version, b.version));
   if (previousVerified) {
     for (const entry of previousVerified.catalog.releases) {
       const next = releases.find((r) => r.version === entry.version);

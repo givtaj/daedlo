@@ -49,6 +49,7 @@ for (const version of [
   "0.1.4-alpha.7",
   "0.1.4-alpha.8",
   "0.1.4-alpha.9",
+  "0.1.4-alpha.10",
 ]) {
   test(`${version} runs both installed references and retains their receipts`, async () => {
     const fixture = references();
@@ -105,7 +106,7 @@ test("alpha.8 cannot skip a failed installed evidence reference", async () => {
   assert.equal(result.managedReference, undefined);
 });
 
-for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
+for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9", "0.1.4-alpha.10"])
   for (const [name, alter] of [
     [
       "failed evidence",
@@ -161,7 +162,7 @@ for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
     });
   }
 
-for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
+for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9", "0.1.4-alpha.10"])
   for (const field of ["status", "cleanup"]) {
     test(`${version} failed managed ${field} cannot pass and retains both receipts`, async () => {
       const fixture = references();
@@ -180,7 +181,7 @@ for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
     });
   }
 
-for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9"])
+for (const version of ["0.1.4-alpha.6", "0.1.4-alpha.9", "0.1.4-alpha.10"])
   test(`${version} reference exceptions propagate without a replacement success receipt`, async () => {
     const fixture = references();
     const failure = new Error("Reference could not complete");

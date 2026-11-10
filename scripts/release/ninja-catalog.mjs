@@ -115,7 +115,8 @@ function versionParts(value) {
     preview: match[4]?.split(".") || [],
   };
 }
-function compare(left, right) {
+/** Strict SemVer precedence for authenticated release inventory ordering. */
+export function compareNinjaVersions(left, right) {
   const a = versionParts(left),
     b = versionParts(right);
   for (let i = 0; i < 3; i++)
@@ -390,9 +391,9 @@ export function selectNinjaRelease(
     .filter(
       (r) =>
         (channel === "preview" || r.channel === "stable") &&
-        compare(r.version, currentVersion) > 0,
+        compareNinjaVersions(r.version, currentVersion) > 0,
     )
-    .sort((a, b) => compare(b.version, a.version));
+    .sort((a, b) => compareNinjaVersions(b.version, a.version));
   for (const release of candidates)
     if (!compatibility(release, platform, contracts).length)
       return frozen({

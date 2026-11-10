@@ -19,7 +19,7 @@ import { dirname, isAbsolute, join, parse, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { sha256 } from "./manifest.mjs";
-import { verifyNinjaCatalog } from "./ninja-catalog.mjs";
+import { verifyNinjaCatalog, compareNinjaVersions } from "./ninja-catalog.mjs";
 import {
   inspectPublisherKey,
   publishNinjaCatalog,
@@ -42,6 +42,7 @@ const ALPHA4 = "0.1.4-alpha.4",
   ALPHA6 = "0.1.4-alpha.6",
   ALPHA7 = "0.1.4-alpha.7",
   ALPHA9 = "0.1.4-alpha.9",
+  ALPHA10 = "0.1.4-alpha.10",
   DAY = 86400000;
 const CONTRACTS = {
   manager: 1,
@@ -80,14 +81,36 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
     version: ALPHA9,
     sourceCommit: "30d2a985964011c08d80db2e83a3716a2c151345",
   },
+  alpha10Promotion: {
+    version: ALPHA10,
+    sourceCommit: "61163084f9b02ec2448eee04c7aebc4994075936",
+  },
   releaseContracts: {
     "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.5": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.6": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.7": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.9": { ...CONTRACTS, manager: 2 },
+    "0.1.4-alpha.10": { ...CONTRACTS, manager: 2 },
   },
   assets: {
+    "0.1.4-alpha.10": {
+      "daedlo-0.1.4-alpha.10.zip": {
+        bytes: 366928,
+        sha256:
+          "543ab597a1c5d30af7d9b12cefa6dec8a01bed2e985426056f5fed57ea8a0c29",
+      },
+      "release.json": {
+        bytes: 6951,
+        sha256:
+          "87190840350b08caca0c5c279bd4c6364cea021ee13c7c500947f1d2a6eed033",
+      },
+      SHA256SUMS: {
+        bytes: 92,
+        sha256:
+          "009e217bc512ecae1b9c0af6c5b384f6a6d8288a4aa0bf42ab3d209e60e20206",
+      },
+    },
     "0.1.4-alpha.9": {
       "daedlo-0.1.4-alpha.9.zip": {
         bytes: 358374,
@@ -247,10 +270,11 @@ const HTTP_DIAGNOSTIC_PATHS = new Set([
   ),
   "/updates/preview.json",
   `/updates/keys/${KEY}.pem`,
-  ...[...VERSIONS, ALPHA4, ALPHA5, ALPHA6, ALPHA7, ALPHA9].flatMap((version) =>
-    [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"].map(
-      (name) => `/downloads/${version}/${name}`,
-    ),
+  ...[...VERSIONS, ALPHA4, ALPHA5, ALPHA6, ALPHA7, ALPHA9, ALPHA10].flatMap(
+    (version) =>
+      [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"].map(
+        (name) => `/downloads/${version}/${name}`,
+      ),
   ),
   ...PRIVATE_PATHS,
 ]);
@@ -391,6 +415,7 @@ function settings(deps = {}, stage) {
     ...(Object.hasOwn(policy.assets, ALPHA6) ? [ALPHA6] : []),
     ...(Object.hasOwn(policy.assets, ALPHA7) ? [ALPHA7] : []),
     ...(Object.hasOwn(policy.assets, ALPHA9) ? [ALPHA9] : []),
+    ...(Object.hasOwn(policy.assets, ALPHA10) ? [ALPHA10] : []),
   ];
   if (
     (Object.hasOwn(policy.assets, ALPHA5) &&
@@ -401,6 +426,8 @@ function settings(deps = {}, stage) {
       !Object.hasOwn(policy.assets, ALPHA6)) ||
     (Object.hasOwn(policy.assets, ALPHA9) &&
       !Object.hasOwn(policy.assets, ALPHA7)) ||
+    (Object.hasOwn(policy.assets, ALPHA10) &&
+      !Object.hasOwn(policy.assets, ALPHA9)) ||
     !isDeepStrictEqual(Object.keys(policy.assets).sort(), [...versions].sort())
   )
     fail("Unsupported pinned renewal release inventory");
@@ -415,7 +442,9 @@ function settings(deps = {}, stage) {
   for (const version of versions.slice(1)) {
     const expected = {
       ...CONTRACTS,
-      manager: [ALPHA4, ALPHA5, ALPHA6, ALPHA7, ALPHA9].includes(version)
+      manager: [ALPHA4, ALPHA5, ALPHA6, ALPHA7, ALPHA9, ALPHA10].includes(
+        version,
+      )
         ? 2
         : 1,
     };
@@ -532,7 +561,9 @@ function history(bytes, s, t, previousState = null) {
     now: issued,
     previousState,
   });
-  const versions = verified.catalog.releases.map((r) => r.version).sort();
+  const versions = verified.catalog.releases
+    .map((r) => r.version)
+    .sort(compareNinjaVersions);
   if (
     !s.versions
       .slice(VERSIONS.length - 1)
@@ -581,6 +612,7 @@ function requireBaselineInventory(
   promoteAlpha6 = false,
   promoteAlpha7 = false,
   promoteAlpha9 = false,
+  promoteAlpha10 = false,
 ) {
   if (
     typeof promoteAlpha4 !== "boolean" ||
@@ -588,26 +620,30 @@ function requireBaselineInventory(
     typeof promoteAlpha6 !== "boolean" ||
     typeof promoteAlpha7 !== "boolean" ||
     typeof promoteAlpha9 !== "boolean" ||
+    typeof promoteAlpha10 !== "boolean" ||
     [
       promoteAlpha4,
       promoteAlpha5,
       promoteAlpha6,
       promoteAlpha7,
       promoteAlpha9,
+      promoteAlpha10,
     ].filter(Boolean).length > 1
   )
     fail("Only one explicit release promotion may be selected");
-  const selected = promoteAlpha9
-    ? ALPHA9
-    : promoteAlpha7
-      ? ALPHA7
-      : promoteAlpha6
-        ? ALPHA6
-        : promoteAlpha5
-          ? ALPHA5
-          : promoteAlpha4
-            ? ALPHA4
-            : null;
+  const selected = promoteAlpha10
+    ? ALPHA10
+    : promoteAlpha9
+      ? ALPHA9
+      : promoteAlpha7
+        ? ALPHA7
+        : promoteAlpha6
+          ? ALPHA6
+          : promoteAlpha5
+            ? ALPHA5
+            : promoteAlpha4
+              ? ALPHA4
+              : null;
   if (
     selected &&
     (!s.versions.includes(selected) || s.versions.at(-1) !== selected)
@@ -615,7 +651,9 @@ function requireBaselineInventory(
     fail(
       "Release promotion requires its explicitly pinned next release inventory",
     );
-  const actual = verified.catalog.releases.map((r) => r.version).sort();
+  const actual = verified.catalog.releases
+    .map((r) => r.version)
+    .sort(compareNinjaVersions);
   const complete = s.versions.slice(1);
   if (isDeepStrictEqual(actual, complete)) return;
   // A promotion adds exactly one reviewed next release. It cannot skip a pinned predecessor,
@@ -633,6 +671,7 @@ async function baseline(
   promoteAlpha6,
   promoteAlpha7,
   promoteAlpha9,
+  promoteAlpha10,
 ) {
   const response = await fetchBytes(FEED, s, { date: true });
   const retained = checkpointPath
@@ -647,6 +686,7 @@ async function baseline(
     promoteAlpha6,
     promoteAlpha7,
     promoteAlpha9,
+    promoteAlpha10,
   );
   if (retained) {
     for (const release of retained.catalog.releases)
@@ -702,6 +742,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha6 = false,
     promoteAlpha7 = false,
     promoteAlpha9 = false,
+    promoteAlpha10 = false,
     ...unknown
   } = {},
   deps = {},
@@ -722,6 +763,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha6,
     promoteAlpha7,
     promoteAlpha9,
+    promoteAlpha10,
   );
   const sourceBefore = await inventory(s.sourceRoot, SOURCE_FILES);
   await fs.mkdir(output, { mode: 0o700 });
@@ -824,6 +866,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha6,
     promoteAlpha7,
     promoteAlpha9,
+    promoteAlpha10,
     status: "PREPARED",
     generation: pub.generation,
     baselineGeneration: prior.catalog.generation,
@@ -885,6 +928,7 @@ async function prepared(output, s, t) {
     receipt.promoteAlpha6 ?? false,
     receipt.promoteAlpha7 ?? false,
     receipt.promoteAlpha9 ?? false,
+    receipt.promoteAlpha10 ?? false,
   );
   const next = history(catalog, s, t, old.checkpoint);
   requireBaselineInventory(next, s, false);

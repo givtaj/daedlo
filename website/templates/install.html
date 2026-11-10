@@ -328,6 +328,32 @@ NODE
           </dl>
         </section>
       </details>
+      <section class="guide-block" aria-labelledby="development-restarts-title">
+        <h2 id="development-restarts-title">
+          Keep context while your app restarts
+        </h2>
+        <p>
+          Alpha.10 separates viewer, browser, application observation and live
+          image status with labelled icons. If your API or site is rebuilding,
+          unavailable observations disable actions while the last completed run
+          keeps its result. A visible page does not establish API health; the
+          adapter must observe the facts your flow requires.
+        </p>
+        <p>
+          <strong>Check connection</strong> is read-only. Fresh observations can
+          make actions available again; reconnecting never replays an earlier
+          command or reloads your application. Preserve drafts before any manual
+          reload and reconcile an interrupted write before running it again.
+        </p>
+        <p>
+          <strong>Viewer closed</strong> confirms an explicit viewer close,
+          which does not itself close an attached browser or application.
+          Unexpected connection loss shows <strong>Reconnecting</strong>, then
+          <strong>Connection lost</strong>. If the viewer restarts on another
+          port, open its newly printed URL. Source changes do not replace an
+          adapter already loaded in a session.
+        </p>
+      </section>
       <details class="onboarding-details">
         <summary>Release checks and alpha history</summary>
         <div class="guide-callout release-verification">
@@ -350,11 +376,18 @@ NODE
           <h2 id="alpha-changes-title">What changed in this alpha</h2>
           <ul>
             <li>
-              Alpha.9 adds reusable Swagger UI driving for a bounded subset of
-              OpenAPI 3.0, 3.1 and 3.2 JSON. Allowed requests run through the
-              visible explorer; unsupported capabilities fail closed. A
-              successful HTTP response does not prove business success or
-              persistence.
+              Alpha.10 keeps run results separate from connection alerts and
+              labels stale images. Swagger selection reveals supported collapsed
+              or virtualized operations and gives clearer recovery guidance when
+              an operation cannot be selected. Read-only request results explain
+              that persistence was not attempted.
+            </li>
+            <li>
+              Alpha.9 introduced reusable Swagger UI driving for a bounded
+              subset of OpenAPI 3.0, 3.1 and 3.2 JSON. Allowed requests run
+              through the visible explorer; unsupported capabilities fail
+              closed. A successful HTTP response does not prove business success
+              or persistence.
             </li>
             <li>
               Explicit password parameters are masked in the viewer and cleared

@@ -44,6 +44,32 @@
           project.
         </p>
       </section>
+      <section class="guide-block" aria-labelledby="alpha10-upgrade-title">
+        <h2 id="alpha10-upgrade-title">From alpha.9 to alpha.10</h2>
+        <p>
+          Alpha.10 uses the same dependency closure and manager contract 2 as
+          alpha.9. Keep your existing published alpha.9 tools for this managed
+          upgrade; no dependency migration or tools bootstrap is required.
+          Preserve the same configuration, registration, store, publisher trust
+          and signed checkpoint, plus the accepted installation for recovery.
+        </p>
+        <p>
+          Choose
+          <strong>Check for updates → Install update → Restart Daedlo</strong>
+          in the existing manager. Restart only at a safe boundary after the
+          registered checks pass, then verify your application's agreed flow.
+          <strong>Revert update</strong> returns to the previous verified
+          installation; it does not undo application writes.
+        </p>
+        <p>
+          This release distinguishes the viewer connection, browser, application
+          observation and live image while your API or site restarts. Completed
+          run results remain intact and reconnecting never replays a command.
+          <a href="/install.html#development-restarts-title"
+            >Read the restart guidance.</a
+          >
+        </p>
+      </section>
       <section class="guide-block" aria-labelledby="swagger-updates-title">
         <h2 id="swagger-updates-title">
           Swagger uses the standalone integration
@@ -55,12 +81,6 @@
           isolation. Native managed Swagger onboarding and updates are
           unsupported; the managed instructions below apply to registered
           application integrations.
-        </p>
-        <p>
-          The supported release path moves from alpha.7 to alpha.9 with a
-          separate verified tools bootstrap. Alpha.8 was held and is not a
-          required upgrade step. Preserve alpha.7 recovery files and use the
-          same configuration, store, publisher trust and signed checkpoint.
         </p>
       </section>
       <section class="guide-block" aria-labelledby="setup-title">
@@ -89,22 +109,30 @@
         </p>
       </section>
       <section class="guide-block" aria-labelledby="native-tools-title">
-        <h2 id="native-tools-title">Update the native tools separately</h2>
+        <h2 id="native-tools-title">
+          Earlier installations: alpha.7 to alpha.9
+        </h2>
         <p>
-          Native status now distinguishes observation failure, an unreachable
-          child and unknown draft safety from a stopped owner. A runtime update
-          keeps the existing tools, so this fix requires a separate tools
-          bootstrap using the verified kit on the
+          The earlier alpha.7 to alpha.9 migration requires a separate verified
+          tools bootstrap. Alpha.8 was held and is not a required upgrade step.
+          Preserve alpha.7 recovery files; this historical migration is separate
+          from the normal alpha.9 to alpha.10 upgrade above.
+        </p>
+        <p>
+          Alpha.7 native status distinguishes observation failure, an
+          unreachable child and unknown draft safety from a stopped owner. A
+          runtime update keeps the existing tools, so this fix requires a
+          separate tools bootstrap using the verified kit on the
           <a href="/install.html#manual">installation page</a>.
         </p>
         <p>
-          Alpha.9 changes the Playwright dependency closure. An existing managed
-          integration needs the explicit QA manifest and lock migration in the
-          installed <code>docs/ninja-update.md</code>. Keep a snapshot and
-          restore path, retain the previous browser and installation, then
-          repeat the application's acceptance before activation. Keep normal
-          application dependencies unchanged; do not bypass a compatibility
-          refusal.
+          Moving from alpha.7 to alpha.9 changes the Playwright dependency
+          closure. That earlier managed integration needs the explicit QA
+          manifest and lock migration in the installed
+          <code>docs/ninja-update.md</code>. Keep a snapshot and restore path,
+          retain the previous browser and installation, then repeat the
+          application's acceptance before activation. Keep normal application
+          dependencies unchanged; do not bypass a compatibility refusal.
         </p>
         <p>
           Safely stop the authenticated old owner, then start the separately

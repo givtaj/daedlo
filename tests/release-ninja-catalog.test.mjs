@@ -12,6 +12,7 @@ import {
 } from "../scripts/release/manifest.mjs";
 import {
   ninjaCatalogSigningBytes,
+  compareNinjaVersions,
   verifyNinjaCatalog,
   selectNinjaRelease,
   fetchNinjaCatalog,
@@ -730,4 +731,40 @@ test("new provider advertises renamed-package manager2 capability without changi
   assert.equal(NINJA_CONTRACTS.manager, 2);
   for (const key of ["launcher", "nodeAdapter", "rustModel", "protocol"])
     assert.equal(NINJA_CONTRACTS[key], 1);
+});
+
+test("release ordering uses strict SemVer including alpha10 and large numeric identifiers", () => {
+  const ordered = [
+    "0.1.4-alpha",
+    "0.1.4-alpha.2",
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.10",
+    "0.1.4-alpha.9007199254740993",
+    "0.1.4-alpha.beta",
+    "0.1.4-beta",
+    "0.1.4",
+    "0.1.10",
+    "0.10.0",
+    "1.0.0",
+  ];
+  assert.deepEqual([...ordered].reverse().sort(compareNinjaVersions), ordered);
+  for (const version of ordered)
+    assert.equal(compareNinjaVersions(version, version), 0);
+  for (const invalid of [
+    "0.1.4-alpha.01",
+    "00.1.4",
+    "v0.1.4",
+    "0.1.4+build",
+    "0.1.4-alpha..10",
+    "0.1.4-",
+  ]) {
+    assert.throws(
+      () => compareNinjaVersions(invalid, "0.1.4"),
+      /Invalid release version/,
+    );
+    assert.throws(
+      () => compareNinjaVersions("0.1.4", invalid),
+      /Invalid release version/,
+    );
+  }
 });
