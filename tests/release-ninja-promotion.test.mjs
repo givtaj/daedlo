@@ -44,9 +44,42 @@ test("alpha9 CLI recognizes only its explicit selector and reaches credential va
   );
 });
 
+test("alpha10 CLI recognizes only its explicit selector and reaches credential validation without transport", () => {
+  let error;
+  try {
+    execFileSync(
+      process.execPath,
+      [
+        fileURLToPath(
+          new URL("../scripts/release/ninja-promotion.mjs", import.meta.url),
+        ),
+        "--promote-alpha10",
+        "--private-key",
+        args.privateKeyPath,
+        "--output",
+        args.output,
+        "--checkpoint",
+        args.checkpointPath,
+      ],
+      { env: { ...process.env, GITHUB_TOKEN: "" }, stdio: "pipe" },
+    );
+  } catch (value) {
+    error = value;
+  }
+  assert.match(
+    error?.stderr?.toString() ?? "",
+    /Promotion requires a GitHub credential/,
+  );
+});
+
 for (const selectors of [
   ["--promote-alpha8"],
-  ["--promote-alpha10"],
+  ["--promote-alpha11"],
+  ["--promote-alpha10", "true"],
+  ["--promote-alpha10", "--promote-alpha10"],
+  ["--promote-alpha9", "--promote-alpha10"],
+  ["--promote-alpha10", "--release", "0.1.4-alpha.7"],
+  ["--release", "0.1.4-alpha.10"],
   ["--promote-alpha9", "true"],
   ["--promote-alpha9", "--promote-alpha9"],
   ["--promote-alpha9", "--release", "0.1.4-alpha.7"],
@@ -118,7 +151,9 @@ test("production policy pins alpha9 independently and excludes held alpha8", () 
 test("alpha9 preparation preserves every historical asset, contract, source and trust pin", () => {
   const p = PRODUCTION_RENEWAL_POLICY;
   const historical = Object.fromEntries(
-    Object.entries(p.assets).filter(([version]) => version !== "0.1.4-alpha.9"),
+    Object.entries(p.assets).filter(
+      ([version]) => !["0.1.4-alpha.9", "0.1.4-alpha.10"].includes(version),
+    ),
   );
   assert.deepEqual(Object.keys(historical).sort(), [
     "0.1.2-rc.1",
@@ -132,7 +167,7 @@ test("alpha9 preparation preserves every historical asset, contract, source and 
   assert.equal(Object.values(historical).flatMap(Object.keys).length, 21);
   const releaseContracts = Object.fromEntries(
     Object.entries(p.releaseContracts).filter(
-      ([version]) => version !== "0.1.4-alpha.9",
+      ([version]) => !["0.1.4-alpha.9", "0.1.4-alpha.10"].includes(version),
     ),
   );
   assert.equal(
@@ -290,15 +325,17 @@ function fixture(candidateVersion = version) {
       state.prepared++;
       assert.deepEqual(options, {
         ...args,
-        [version.endsWith("alpha.9")
-          ? "promoteAlpha9"
-          : version.endsWith("alpha.7")
-            ? "promoteAlpha7"
-            : version.endsWith("alpha.6")
-              ? "promoteAlpha6"
-              : version.endsWith("alpha.5")
-                ? "promoteAlpha5"
-                : "promoteAlpha4"]: true,
+        [version.endsWith("alpha.10")
+          ? "promoteAlpha10"
+          : version.endsWith("alpha.9")
+            ? "promoteAlpha9"
+            : version.endsWith("alpha.7")
+              ? "promoteAlpha7"
+              : version.endsWith("alpha.6")
+                ? "promoteAlpha6"
+                : version.endsWith("alpha.5")
+                  ? "promoteAlpha5"
+                  : "promoteAlpha4"]: true,
       });
       assert.equal(renewalDeps.policy, policy);
       for (const [name, bytes] of files) {
@@ -742,4 +779,149 @@ test("alpha9 refuses a tag that differs from its independently pinned package so
     /tag target does not match pinned source/,
   );
   assert.equal(f.state.prepared, 0);
+});
+
+test("alpha10 explicit promotion authenticates its own frozen source and retained selector", async () => {
+  const f = fixture("0.1.4-alpha.10");
+  f.policy.alpha10Promotion = f.policy.promotion;
+  delete f.policy.promotion;
+  const result = await prepareNinjaPromotion(
+    { ...args, promoteAlpha10: true },
+    f.deps,
+  );
+  assert.equal(result.status, "PREPARED");
+  assert.equal(f.state.prepared, 1);
+  assert.ok(
+    f.calls.some((c) => c.url.endsWith("/git/ref/tags/v0.1.4-alpha.10")),
+  );
+  assert.ok(!f.calls.some((c) => /alpha\.[4-9](?:\D|$)/.test(c.url)));
+});
+
+test("alpha10 promotion requires independent pins and refuses mixed or nonboolean selectors before transport", async () => {
+  for (const change of [
+    (f) => delete f.policy.alpha10Promotion,
+    (f) => (f.policy.alpha10Promotion.sourceCommit = "main"),
+    ...["daedlo-0.1.4-alpha.10.zip", "release.json", "SHA256SUMS"].map(
+      (name) => (f) => delete f.policy.assets["0.1.4-alpha.10"][name],
+    ),
+  ]) {
+    const f = fixture("0.1.4-alpha.10");
+    f.policy.alpha10Promotion = f.policy.promotion;
+    delete f.policy.promotion;
+    change(f);
+    await assert.rejects(
+      prepareNinjaPromotion({ ...args, promoteAlpha10: true }, f.deps),
+      /reviewed candidate/,
+    );
+    assert.equal(f.calls.length, 0);
+  }
+  for (const options of [
+    { promoteAlpha10: "true" },
+    { promoteAlpha5: true, promoteAlpha10: true },
+    { promoteAlpha6: true, promoteAlpha10: true },
+    { promoteAlpha7: true, promoteAlpha10: true },
+    { promoteAlpha9: true, promoteAlpha10: true },
+    { promoteAlpha5: true, promoteAlpha6: true, promoteAlpha10: true },
+  ]) {
+    const f = fixture("0.1.4-alpha.10");
+    await assert.rejects(
+      prepareNinjaPromotion({ ...args, ...options }, f.deps),
+      /Promotion/,
+    );
+    assert.equal(f.calls.length, 0);
+  }
+});
+
+test("alpha10 refuses a tag that differs from its independently pinned package source", async () => {
+  const f = fixture("0.1.4-alpha.10");
+  f.policy.alpha10Promotion = f.policy.promotion;
+  delete f.policy.promotion;
+  f.state.ref.object.sha = "c".repeat(40);
+  await assert.rejects(
+    prepareNinjaPromotion({ ...args, promoteAlpha10: true }, f.deps),
+    /tag target does not match pinned source/,
+  );
+  assert.equal(f.state.prepared, 0);
+});
+
+test("alpha10 preparation preserves every historical pin including alpha9 and publisher trust", () => {
+  const p = PRODUCTION_RENEWAL_POLICY;
+  const historical = Object.fromEntries(
+    Object.entries(p.assets).filter(
+      ([version]) => version !== "0.1.4-alpha.10",
+    ),
+  );
+  const releaseContracts = Object.fromEntries(
+    Object.entries(p.releaseContracts).filter(
+      ([version]) => version !== "0.1.4-alpha.10",
+    ),
+  );
+  assert.deepEqual(Object.keys(historical).sort(), [
+    "0.1.2-rc.1",
+    "0.1.4-alpha.2",
+    "0.1.4-alpha.3",
+    "0.1.4-alpha.4",
+    "0.1.4-alpha.5",
+    "0.1.4-alpha.6",
+    "0.1.4-alpha.7",
+    "0.1.4-alpha.9",
+  ]);
+  assert.equal(Object.values(historical).flatMap(Object.keys).length, 24);
+  assert.equal(
+    sha256(
+      Buffer.from(
+        JSON.stringify({
+          assets: Object.entries(historical).sort(([a], [b]) =>
+            a.localeCompare(b),
+          ),
+          releaseContracts,
+          promotions: [
+            p.promotion,
+            p.alpha5Promotion,
+            p.alpha6Promotion,
+            p.alpha7Promotion,
+            p.alpha9Promotion,
+          ],
+          publicKeyPemSha256: p.publicKeyPemSha256,
+          initialCheckpoint: p.initialCheckpoint,
+        }),
+      ),
+    ),
+    "391aaa3ae2e416bdc2bbe6b6ad70473d2312bd7073577c1b82a7f2004f753d39",
+  );
+});
+
+test("production policy pins alpha10 to the exact frozen source and three accepted files", () => {
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.alpha10Promotion, {
+    version: "0.1.4-alpha.10",
+    sourceCommit: "61163084f9b02ec2448eee04c7aebc4994075936",
+  });
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.assets["0.1.4-alpha.10"], {
+    "daedlo-0.1.4-alpha.10.zip": {
+      bytes: 366928,
+      sha256:
+        "543ab597a1c5d30af7d9b12cefa6dec8a01bed2e985426056f5fed57ea8a0c29",
+    },
+    "release.json": {
+      bytes: 6951,
+      sha256:
+        "87190840350b08caca0c5c279bd4c6364cea021ee13c7c500947f1d2a6eed033",
+    },
+    SHA256SUMS: {
+      bytes: 92,
+      sha256:
+        "009e217bc512ecae1b9c0af6c5b384f6a6d8288a4aa0bf42ab3d209e60e20206",
+    },
+  });
+  assert.deepEqual(
+    PRODUCTION_RENEWAL_POLICY.releaseContracts["0.1.4-alpha.10"],
+    {
+      manager: 2,
+      launcher: 1,
+      nodeAdapter: 1,
+      rustModel: 1,
+      protocol: 1,
+      capabilities: ["recipeContext:1"],
+    },
+  );
 });

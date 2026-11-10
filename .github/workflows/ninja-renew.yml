@@ -25,6 +25,10 @@ on:
         description: Publish the reviewed and pinned alpha.9 kit from retained alpha.7
         type: boolean
         default: false
+      promote_alpha10:
+        description: Publish the reviewed and pinned alpha.10 kit from retained alpha.9
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -55,9 +59,10 @@ jobs:
           PROMOTE_ALPHA6: ${{ inputs.promote_alpha6 && 'true' || 'false' }}
           PROMOTE_ALPHA7: ${{ inputs.promote_alpha7 && 'true' || 'false' }}
           PROMOTE_ALPHA9: ${{ inputs.promote_alpha9 && 'true' || 'false' }}
+          PROMOTE_ALPHA10: ${{ inputs.promote_alpha10 && 'true' || 'false' }}
         run: |
-          case "$PROMOTE_ALPHA4:$PROMOTE_ALPHA5:$PROMOTE_ALPHA6:$PROMOTE_ALPHA7:$PROMOTE_ALPHA9" in
-            false:false:false:false:false|true:false:false:false:false|false:true:false:false:false|false:false:true:false:false|false:false:false:true:false|false:false:false:false:true) ;;
+          case "$PROMOTE_ALPHA4:$PROMOTE_ALPHA5:$PROMOTE_ALPHA6:$PROMOTE_ALPHA7:$PROMOTE_ALPHA9:$PROMOTE_ALPHA10" in
+            false:false:false:false:false:false|true:false:false:false:false:false|false:true:false:false:false:false|false:false:true:false:false:false|false:false:false:true:false:false|false:false:false:false:true:false|false:false:false:false:false:true) ;;
             *) exit 1 ;;
           esac
       - name: Set up Node
@@ -78,7 +83,7 @@ jobs:
       - name: Check renewal and publication safety before credential scope
         run: |
           node --test tests/release-ninja-catalog.test.mjs tests/release-ninja-publisher.test.mjs tests/release-ninja-renew.test.mjs tests/release-ninja-promotion.test.mjs tests/release-ninja-checkpoint.test.mjs website/tests/updates.test.mjs website/tests/stage-release.test.mjs
-          node_modules/.bin/prettier --check .github/workflows/ninja-renew.yml scripts/release/ninja-checkpoint.mjs scripts/release/ninja-renew.mjs scripts/release/ninja-promotion.mjs tests/release-ninja-promotion.test.mjs tests/release-ninja-checkpoint.test.mjs tests/release-ninja-renew.test.mjs
+          node_modules/.bin/prettier --check .github/workflows/ninja-renew.yml scripts/release/ninja-catalog.mjs scripts/release/ninja-publisher.mjs tests/release-ninja-catalog.test.mjs tests/release-ninja-publisher.test.mjs scripts/release/ninja-checkpoint.mjs scripts/release/ninja-renew.mjs scripts/release/ninja-promotion.mjs tests/release-ninja-promotion.test.mjs tests/release-ninja-checkpoint.test.mjs tests/release-ninja-renew.test.mjs
       - name: Restore authenticated renewal high-water checkpoint
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -93,6 +98,7 @@ jobs:
           NINJA_PROMOTE_ALPHA6: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha6 && 'true' || 'false' }}
           NINJA_PROMOTE_ALPHA7: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha7 && 'true' || 'false' }}
           NINJA_PROMOTE_ALPHA9: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha9 && 'true' || 'false' }}
+          NINJA_PROMOTE_ALPHA10: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha10 && 'true' || 'false' }}
         run: |
           set -euo pipefail
           umask 077
@@ -117,6 +123,8 @@ jobs:
             node scripts/release/ninja-promotion.mjs --release 0.1.4-alpha.7 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           elif test "$NINJA_PROMOTE_ALPHA9" = "true"; then
             node scripts/release/ninja-promotion.mjs --promote-alpha9 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+          elif test "$NINJA_PROMOTE_ALPHA10" = "true"; then
+            node scripts/release/ninja-promotion.mjs --promote-alpha10 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           else
             node scripts/release/ninja-renew.mjs prepare --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           fi
