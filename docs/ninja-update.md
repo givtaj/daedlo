@@ -104,7 +104,7 @@ be supplied from the actual accepted integration:
 ```
 
 The publisher fields are production values; project paths, hooks and model remain
-a schema illustration, not a ready registration or a WBF fixture. Copy the bundled
+a schema illustration, not a ready registration or a customer fixture. Copy the bundled
 public PEM beside this configuration, or use its explicit installed path. Add all
 transitively imported source and relevant project-owned files. The store must be
 disjoint from the source, initially empty or already owned by this project.
@@ -237,5 +237,5 @@ or replace immutable release artifacts. No client-side background installation
 or trust-key replacement is enabled.
 
 Publication and live-feed evidence belong to the selected release receipt.
-Windows/Linux customer acceptance and WBF's own agreed fixture remain separate
+Windows/Linux customer acceptance and each customer's agreed fixture remain separate
 onboarding gates.

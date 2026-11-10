@@ -1,5 +1,42 @@
 # Verification record
 
+## Current public metadata sanitization — 2026-11-10
+
+Current documentation and onboarding source now omit personal home paths,
+private participant associations, cross-project personal priorities and account
+billing details. Role-based wording preserves the dated technical results,
+fixture limits, artifact identities and local evidence references. Operator and
+copyright notices remain unchanged. Three existing PR descriptions (#4, #9 and
+#22) received equivalent narrow wording updates, each verified by API readback.
+
+The tracked-file metadata guard now rejects literal personal home paths and
+addresses at a bounded set of consumer mailbox providers. It still reports only
+file/rule names. Generic placeholders, public support/noreply addresses and API
+route parameters remain allowed. This is a focused guard, not universal PII
+classification or a scan of commit-author metadata.
+
+| Check | Actual result |
+| --- | --- |
+| Regression-first metadata checks | Six home-path and ten consumer-address cases failed before implementation; review then reproduced and fixed a route-placeholder false positive. Final metadata suite: 39/39 PASS. |
+| Affected repository and website checks | 100/100 PASS: metadata, repository safeguards, CI selection policy, onboarding and update-template checks. The two website wording assertions genuinely failed before sanitizing the templates. |
+| Source checks | Syntax, strict types, formatting, current-tree metadata and whitespace checks PASS. |
+| Local Chromium copy/layout inspection | Install and updates templates checked at 1280px and 390px; all four assertions and visible screenshot inspections PASS. Synthetic preview metadata; all requests fulfilled locally or blocked, owned browser closed. |
+| Unstaged full website suite | 143 PASS / 4 FAIL because this clean clone lacks staged release metadata/assets and the release-specific homepage preparation. These are staging prerequisites, not a new deployed-site verification. |
+| Hosted integration CI | NOT RUN at this source checkpoint; the protected PR and resulting main runs provide later evidence. |
+
+The task-owned clone and the primary repository's local Git author email use a
+GitHub noreply address; linked worktrees share the primary setting. Independent
+clones and GitHub web-created commits need their own author-email selection.
+The original dirty checkout, customer installations and concurrent release work
+were preserved. No website deployment, release republishing or customer promotion
+was performed by this cleanup.
+
+**Historical erasure: NOT RUN.** The standing retained-history decision remains
+in force: older author-email metadata, home paths and two private-chat identifiers
+still exist in published history and may be copied into GitHub metadata. Current
+file/PR edits and future author configuration do not erase those copies. The
+current-tree checks above must not be reported as a history-wide privacy clearance.
+
 ## Alpha.10 review and release preparation — 2026-11-10
 
 **PASS — local review corrections and source checks. Installed release,
@@ -680,7 +717,7 @@ image-injection timeout was replaced by a genuine post-load stream-failure
 assertion; neither is counted as a failing product scenario. Only test-owned
 fixtures, browsers and viewers were started and closed.
 
-**NOT RUN / outside this candidate:** WBF or Roots business-flow acceptance,
+**NOT RUN / outside this candidate:** customer or Roots business-flow acceptance,
 installed-package acceptance, release publication, ordinary dependency promotion
 and remote CI. This changes source only; official alpha.7 assets and the user's
 live application sessions are unchanged. Separate pending finalization work must
@@ -1127,7 +1164,7 @@ current-head hosted CI and any release decision remain open. Recorded digests:
 
 Full local receipts retain compiled model/engine, package and actual browser
 identities and per-group logs. They contain only disposable conformance fixtures,
-not WBF source or business data. WBF site/flow permission, selected positive/negative
+not customer source or business data. Customer site/flow permission, selected positive/negative
 rehearsal and both participant sessions remain BLOCKED/NOT RUN. No customer acceptance,
 new managed upgrade/rollback drill or complete package-release gate is established.
 
@@ -1136,44 +1173,44 @@ new managed upgrade/rollback drill or complete package-release gate is establish
 **PASS — read-only reconciliation and planning preparation, not product or user
 acceptance.** The [first-week checklist](plan.md#november-17-pilot-checklist--prepared-2026-10-30)
 owns the work queue. This section records the evidence boundary without replacing
-the historical records below or any existing WBF acceptance ledger.
+the historical records below or any existing customer acceptance ledger.
 
-The monthly focus was checked against the owner's October 30 agreed review and
-project/account/CI handoff records. Private page/chat references stay out of shared
-artifacts; the repository PRs, runs and source paths below identify technical evidence.
-Aidin nominated a QA teammate from WBF to review QA of WBF websites. No external
-session, outreach, private application access or application fault scenario was
-performed or inferred. Exact website/flow, environment, data permission and dates
-remain unconfirmed. Existing WBF integration/model/records must be inspected and
-reused where available; prior feedback does not prove installation or acceptance.
+The October 30 scope and CI handoff records were checked for this pilot.
+The repository PRs, runs and source paths below identify technical evidence;
+private coordination records remain separate. A customer QA participant was
+nominated. No external session, outreach, private application access or application
+fault scenario was performed or inferred. Exact website/flow, environment, data
+permission and dates remained unconfirmed. Existing customer integration/model/
+records must be inspected and reused where available; prior feedback does not
+prove installation or acceptance.
 
 | Evidence boundary | Status | Actual October 30 observation / limitation |
 | --- | --- | --- |
 | Canonical source | PASS | GitHub `main` is `16d050c8b4965ecd7e2acd52bf8d052b911866c4`; tree `ea9b59c73d0106b27e3964e5329cfd9e5e9a70de`. #19/#20/#21 are merged, with merge commits `284d6d8`, `fa51fdf` and `16d050c8`. No new merge performed. |
 | Historical combined CI | PASS, historical | [PR run 40882393846](https://github.com/givtaj/daedlo/actions/runs/40882393846) and [push run 40882385093](https://github.com/givtaj/daedlo/actions/runs/40882385093) still show success at `6a8f979829d1082474ef94d96c9494e9e028bc67`. Local Git confirms its tree equals current main. This is not a successful run on the main commit itself. |
-| Current main CI | BLOCKED | [Run 40884518820](https://github.com/givtaj/daedlo/actions/runs/40884518820), attempt 1, is marked failure. All three current check annotations say the job was not started because of account payments/spending limits. These are unavailable test results, not exercised assertion failures. |
+| Current main CI | BLOCKED | [Run 40884518820](https://github.com/givtaj/daedlo/actions/runs/40884518820), attempt 1, is marked failure. All three current check annotations report that an account restriction prevented the job from starting. These are unavailable test results, not exercised assertion failures. |
 | #22 source/review | PASS for implementation identity; NOT RUN for formal review | [PR #22](https://github.com/givtaj/daedlo/pull/22) remains open, mergeable, at `19f9caeca5aa6d50e45e6bd4cc9c9ebcdab65b50`, based on current main; no submitted PR reviews. A bounded read-only source/harness review found no additional demonstrated runtime defect; this does not replace independent current-head review. |
-| #22 hosted CI | BLOCKED | [Run 40933635218](https://github.com/givtaj/daedlo/actions/runs/40933635218) still shows all three jobs marked failure with no test steps. Current annotations confirm the same account gate prevented start. No rerun or billing change made. |
-| Actions renewal | NOT RUN for renewed availability | The Oct 29 account review reported included compute renewal Nov 1 at 01:00 Europe/Madrid. This date is historical account evidence, not proof future jobs will start; recheck after that time. |
-| #22 local checks | PASS, historical source only | PR body and its branch's dated verification record report 181 runtime tests, 55 browser TAP tests, 26 Rust tests, eight notebook groups and 63 owner/guard contracts, plus source/lint/metadata checks. No product checks rerun in this planning task; no installed-kit or WBF acceptance inferred. |
+| #22 hosted CI | BLOCKED | [Run 40933635218](https://github.com/givtaj/daedlo/actions/runs/40933635218) still shows all three jobs marked failure with no test steps. Current annotations confirm the same account gate prevented start. No rerun or account-setting change made. |
+| Actions availability | NOT RUN for restored availability | Hosted CI remained unavailable because of an account restriction. Recheck actual job execution after the restriction is resolved; an expected restoration is not a passing result. |
+| #22 local checks | PASS, historical source only | PR body and its branch's dated verification record report 181 runtime tests, 55 browser TAP tests, 26 Rust tests, eight notebook groups and 63 owner/guard contracts, plus source/lint/metadata checks. No product checks rerun in this planning task; no installed-kit or customer acceptance inferred. |
 | Public installer | PASS for visible offered version only | Browser read of [Get started](https://daedlo.com/install) still offers `0.1.4-alpha.6` for macOS arm64/Codex and lists ZIP digest `536476e8a3f160d58b269873ffb6da55820e804357a95aa0f4358c9d5a515123`. No ZIP downloaded or bytes reverified here. [Alpha.6 record](alpha-release.md) identifies source `9f1210053c09ead91e0e71c3b3423c560a818ca1`, predating #19–#22. |
 | Installed safety-suite replay (F2) | BLOCKED — confirmed static gap; replay NOT RUN | At reviewed #22, `tests/installed-controls-acceptance.mjs` copies older CLI/finalization/control suites; `tests/release-acceptance.mjs` adds frontend/recipe-paths browser checks. A1-specific, A2, A3 and new stalled-hook suites are not all replayed against installed bytes. `viewer-finalization-browser.mjs` directly imports source. No new runtime failure or failing executable assertion is claimed; the plan requires a regression before the proposed harness fix. |
 | Source safety-suite registration | PASS — static inspection | CI explicitly runs A1/A3, and `viewer-presentation-browser.mjs` imports the finalization browser suite, reached by `test:viewer`. #22 retains all job bodies while restricting duplicate triggers. Static inspection does not establish hosted execution. |
 | Candidate packaging/lifecycle (P) | NOT RUN | No candidate version chosen, bundle built, package installed, browser flow exercised or new UI presentation verified. Exact runtime/tools/crate/model/browser receipts and lifecycle rehearsals remain required. |
-| WBF participant gate (U) | BLOCKED | Participant context nominated; availability, macOS arm64/Codex, website/flow/negative case, authorized disposable environment and first/repeat dates outstanding. Every unobserved participant result remains NOT RUN. |
+| Customer participant gate (U) | BLOCKED | Participant context nominated; availability, macOS arm64/Codex, website/flow/negative case, authorized disposable environment and first/repeat dates outstanding. Every unobserved participant result remains NOT RUN. |
 
 The required pilot kit includes #19 control authorization, #20 run attribution,
 #21 retryable viewer cleanup and #22 stalled finalization/ownership. A successful
 future source run or immutable build alone does not complete the package gate.
 Linux CI does not establish macOS package acceptance or a fresh-machine claim.
 
-### Participant observations to retain in WBF's designated private record
+### Participant observations to retain in the customer's designated private record
 
-This is a record schema, not a second WBF results ledger. Owner is the WBF QA
-participant with Codex observing; every row depends on the confirmed scope and
-technically verified package. Evidence/source is the actual session observation,
-canonical reports and WBF's independent assertions. Fill the corresponding private
-record after observation; share only a sanitized gate summary here.
+This is a record schema, not a second customer results ledger. Owner is the
+customer QA participant with Codex observing; every row depends on the confirmed
+scope and technically verified package. Evidence/source is the actual session
+observation, canonical reports and the customer's independent assertions. Fill the
+private record after observation; share only a sanitized gate summary here.
 
 | Observation | Status | Verification / finish condition |
 | --- | --- | --- |
@@ -1183,13 +1220,11 @@ record after observation; share only a sanitized gate summary here.
 | Safe negative case | NOT RUN | Agreed rejection plus independent no-write assertion; no unagreed application fault injection. |
 | Evidence and cleanup | NOT RUN | Participant finds/understands useful current-run report, distinguishes previous/pending evidence, reads durable archive and truncation; owned cleanup verified and attached resources preserved or incomplete handles retained. |
 | Later-day repeat and handoff | NOT RUN | Actual later date, reconnect without replay, intended repeat, duplicate rules, retained prior evidence and another chat resuming from the handoff verified. |
-| Usefulness/reuse and decision | NOT RUN | Participant's own trust/usefulness assessment and intended reuse; Aidin's week-one decision linked to observed results or exact unmet gates. |
+| Usefulness/reuse and decision | NOT RUN | Participant's own trust/usefulness assessment and intended reuse; the maintainer's pilot decision linked to observed results or exact unmet gates. |
 
 Preparation used an isolated owned clone on `codex/november-week-one`, based on
-the verified main commit, at
-`/Users/aidin/.codex/worktrees/november-week-one/daedlo`. It does not share the
-primary checkout's index. The primary remains at `7e3e48dd`, 82 commits behind
-verified main, with its dirty work preserved. Existing worktrees and all Roots
+the verified main commit, with a separate index from the primary checkout.
+The primary remains at `7e3e48dd`, 82 commits behind verified main, with its dirty work preserved. Existing worktrees and all Roots
 installations/services/sessions were left alone. Current onboarding source uses
 `skills/daedlo/SKILL.md`; the primary's `skills/browser-driver/SKILL.md` is older.
 Both instruction versions were read; no old kit or customized skill was rewritten.
@@ -1197,7 +1232,7 @@ Both instruction versions were read; no old kit or customized skill was rewritte
 Planning validation: **PASS** for final public-metadata scan, whitespace, new local
 link targets and preservation of every prior plan/verification section. An initial
 metadata check rejected private chat links; those references were removed before
-the passing scan. Independent plan review corrected unsupported WBF installation
+the passing scan. Independent plan review corrected unsupported customer installation
 assumptions and the rehearsal dependency. Primary preservation: **PASS**, same
 HEAD, index, Git status and all 306 tracked/untracked file contents and modes.
 No runtime, Rust, browser, installed-kit or participant tests were rerun.
@@ -1269,10 +1304,10 @@ ID `1391092739`, default branch `main`, visibility **private**:
   existing private-plan restriction. The prepared ruleset is not applied.
   Public-contributor workflow approval is unavailable while private (HTTP 422).
 - **BLOCKED / no CI steps ran:** main [run 40884518820](https://github.com/givtaj/daedlo/actions/runs/40884518820)
-  has three failed jobs. The GitHub check annotation explicitly says jobs were
-  not started because account payments failed or the spending limit must be
-  increased. This is not a failing test assertion. Passing local checks and prior
-  alpha.6 release CI do not establish passing hosted CI on this source.
+  has three failed jobs. The GitHub check annotation reports that an account
+  restriction prevented jobs from starting. This is not a failing test assertion.
+  Passing local checks and prior alpha.6 release CI do not establish passing
+  hosted CI on this source.
 - **NOT ESTABLISHED:** public-repository native secret scanning, push protection
   and private vulnerability reporting. The API did not expose a current security
   feature configuration; the audit tool explicitly does not establish these.
@@ -1629,7 +1664,7 @@ This closes deployment verification for the diagnostics change below. It does no
 identify the historical network failure's cause or inject a production fault.
 No release kit was rebuilt or republished. The customer-run checklist is merged
 in source for future tools distributions; the published alpha.6 kit is unchanged.
-External customer execution and support correspondence remain separate; no WBF
+External customer execution and support correspondence remain separate; no customer
 application access, installation or new support message was performed.
 
 ## Renewal diagnostics and external customer acceptance guidance — 2026-10-28
@@ -1668,7 +1703,7 @@ only `red-confirmed.tap` is the five-test behavioral baseline.
 
 **NOT RUN:** deployment of this diagnostics change, a new kit release, and customer
 application acceptance. No runtime, Rust, browser UI or application behavior changed,
-so no new browser/Rust acceptance is claimed. WBF owns its private application and
+so no new browser/Rust acceptance is claimed. The customer owns its private application and
 runs its registration, business, frontend-isolation, navigation-fault and managed
 update/rollback checks; upstream conformance and support guidance do not close those
 gates. No customer source access, installation or support message was performed.
@@ -1726,7 +1761,7 @@ metadata/secrets PASS in
 | Ordinary renewal | PASS after documented recovery: generation 17 → 18, retained checkpoint restored from the failed attempt, unchanged release entries, 39 public assets and nine private boundaries verified |
 | Owned resource cleanup | PASS: three managers, acceptance browser and notebook app closed; website browser closed and disposable installer fixture removed |
 | Authorized support follow-up | PASS: existing-thread reply sent after publication and final renewal verification; SENT label, reply threading, body and actual sender headers read back; correspondence remains private |
-| Customer integration | NOT RUN: WBF registration, business flows, customer upgrade/rollback and complete fault coverage remain application-owned |
+| Customer integration | NOT RUN: customer registration, business flows, customer upgrade/rollback and complete fault coverage remain application-owned |
 
 [Promotion 40685647198](https://github.com/givtaj/daedlo/actions/runs/40685647198)
 restored generation 15 and persisted generation 16 before any deployment mutation.
@@ -1761,9 +1796,9 @@ payload SHA-256 is `f7e1fd208064284a9362ac2c75308f638205cc09af508c85d8d17b9ff3ae
 Worker version `caff0d2c-cac1-49f9-a81c-900181c4e260` was verified at 100% in
 deployment `ce82bd36-7257-480a-b332-e8f6a1b060a8`; all live assets, security checks
 and temporary-key cleanup passed. This does not relabel the earlier failed run.
-The authorized WBF reply was sent afterward with update/rollback instructions
+The authorized customer reply was sent afterward with update/rollback instructions
 and the remaining application acceptance scope; actual SENT headers and body were
-verified in the original conversation. No WBF installation was accessed or promoted.
+verified in the original conversation. No customer installation was accessed or promoted.
 
 Release-harness regressions were reproduced before implementation: alpha.6
 production mode was rejected (seven new failures), and both installed reference
@@ -1860,7 +1895,7 @@ Ignored evidence is under `artifacts/shared-flow-panel/pr-review` and
 snapshot-receipt.json,drill/run-uVewz7/result.json}`. This drill uses an ephemeral
 local signed catalog and injected transport with the independent notebook. It
 does not establish production transport, a clean operating system, application
-process restart, native launcher startup or WBF acceptance. Multi-branch viewer
+process restart, native launcher startup or customer acceptance. Multi-branch viewer
 behavior is covered by the separate browser suite; the lifecycle drill retains
 the existing singleton model.
 
@@ -2538,7 +2573,7 @@ Limits: existing macOS arm64 Node/Rust/browser toolchains were used. Initial set
 used the real native API with an ephemeral signed-catalog transport serving frozen
 public bytes; reconnection/status/stop/refresh/restart used the installed CLI.
 Production-feed discovery was not re-run. Fresh-OS dependency installation,
-Windows/Linux, manual-auth onboarding, WBF and everyday Roots promotion remain
+Windows/Linux, manual-auth onboarding, customer acceptance and everyday Roots promotion remain
 NOT RUN. The native layer does not remove host sandbox policy or guarantee that a
 permission is granted permanently. Follow [native setup](native-setup.md) for the
 project handoff, retained tools/browser caches, source refresh and future updates.
@@ -2561,7 +2596,7 @@ unchanged. No customer model, flow, adapter or data migration is involved.
 | Shared-worktree source check | Syntax and types PASS; full formatting check FAIL on the pre-existing, unrelated untracked `tests/release-ninja-acceptance-cleanup.test.mjs`. It remains untouched and excluded from this change. |
 | Clean source and release suite | PASS at `01641786fa756c85540d4e3b3fcf470f7a5a85b9`: source syntax, types and formatting; 321/321 release tests. A disposable clean clone excludes the unrelated untracked test. |
 | Clean package build and notices | PASS: alpha.4 runtime, crate, tools and combined ZIP build from clean source. Exact four-file notice comparisons pass at five boundaries, including the embedded skill. All package declarations are Apache-2.0. |
-| Installed package acceptance | PASS on macOS arm64 with Node 22.20.0 and Rust 1.96.0: eight real Chromium groups, 10 CLI cases, 25 finalization cases and nine control cases; owned cleanup PASS. This is independent-fixture acceptance, not WBF onboarding or published-release acceptance. |
+| Installed package acceptance | PASS on macOS arm64 with Node 22.20.0 and Rust 1.96.0: eight real Chromium groups, 10 CLI cases, 25 finalization cases and nine control cases; owned cleanup PASS. This is independent-fixture acceptance, not customer onboarding or published-release acceptance. |
 | CI | PASS, Node 22 and 24, [run 39999144306](https://github.com/givtaj/browser-driver/actions/runs/39999144306): source, browser and exact packaged-consumer gates. [PR #6](https://github.com/givtaj/browser-driver/pull/6) merged as `bf7d86acec0cca207f58d8d118af98ccf3d1599b`. |
 | Site publication | PASS, [run 40000221353](https://github.com/givtaj/browser-driver/actions/runs/40000221353) published the licence notice from the merged source through the existing renewal workflow; all workflow steps, active-deployment verification and temporary-key cleanup passed. |
 
@@ -2595,12 +2630,12 @@ GitHub Release, registry publication, feed entry or customer installation occurr
 ## Unified website onboarding — published and verified, 2026-10-23
 
 The canonical `/install` journey now puts one complete Codex prompt before manual
-references. It covers verified installation, the opened project (including WBF),
+references. It covers verified installation, the opened application project,
 one accepted flow plus negative/persistence/relaunch evidence, and Ninja-Update
 registration. Home, guide and updates lead to that same entrypoint; updates no
 longer contains a competing setup prompt. The frozen alpha.3 kit and historical
 public evidence remain unchanged. This entry records website acceptance; actual
-WBF installation, project acceptance and its upgrade/rollback drills are **NOT RUN**.
+customer installation, project acceptance and its upgrade/rollback drills are **NOT RUN**.
 
 | Check | Actual result |
 | --- | --- |
@@ -2848,8 +2883,8 @@ Evidence remains in ignored `artifacts/ninja-production/`: final package receipt
 `exact-installed/`, `published-installer/`, `customer-prepublication/`,
 `customer-published/`, website checks and both live read-backs. Supported acceptance
 is macOS arm64 with existing toolchains/caches and a pinned Architecture Studio
-synthetic fixture. WBF, clean OS setup, Linux/Windows customer onboarding and Claude
-Code onboarding are **NOT RUN**. Runtime rollback does not undo application writes.
+synthetic fixture. Customer acceptance, clean OS setup, Linux/Windows customer
+onboarding and Claude Code onboarding are **NOT RUN**. Runtime rollback does not undo application writes.
 Browser identity checks do not seal linked frameworks. No everyday Roots checkout,
 dependency pins or services were changed.
 
@@ -2919,7 +2954,7 @@ At this earlier local checkpoint, the catalog tests used an ephemeral explicitly
 trusted signing key, including the exact published alpha.2 ZIP, and the production
 update feed/signing key was unconfigured. See the subsequent publication above.
 Browser receipts bind executable SHA-256 and observed version; they do not seal
-the external browser distribution/frameworks. WBF was not accessed or accepted.
+the external browser distribution/frameworks. No customer system was accessed or accepted.
 Publication, customer onboarding and cross-platform acceptance remain separate.
 
 ## Operation Ninja-Update design review — 2026-10-23
@@ -2935,7 +2970,7 @@ The proposed managed updater preserves customer model/adapter source and data,
 rebuilds derived artifacts separately, validates the selected combination, and
 retains the previous complete installation. Compatibility preflight cannot reuse
 ordinary CLI startup against production: the customer factory and navigation
-precede model validation. NINJA-01 through NINJA-06 remain planned. No WBF system
+precede model validation. NINJA-01 through NINJA-06 remain planned. No customer system
 was accessed, no upgrade UI was added, and no new release or promotion occurred.
 
 ## Public assisted alpha 0.1.4-alpha.2 — 2026-10-21
@@ -3487,7 +3522,7 @@ source/package checks below retain their original version and scope.
 The earlier clean-release target was `0.1.1-rc.4`; it was not published. It supersedes the local rc.3
 candidates without reusing their artifact identities. User scope is a private
 release that an agent can download and mount in a separate customer QA directory;
-no actual WBF application onboarding or portal implementation is included.
+no actual customer application onboarding or portal implementation is included.
 
 | Check | Result | Evidence and scope |
 | --- | --- | --- |
@@ -3513,7 +3548,7 @@ The final clean source identity, exact installed-runtime CLI browser checks,
 portable installation outside the workspace, final remote CI and published-asset
 verification are recorded after source freeze in the
 [release receipt](https://github.com/givtaj/browser-driver/releases/tag/v0.1.1-rc.4).
-This source record does not assert those later outcomes, WBF readiness for a
+This source record does not assert those later outcomes, customer readiness for a
 specific flow, or promotion of any everyday customer dependency. Existing rc.2
 and rc.3 customer evidence below remains tied to its original bytes.
 

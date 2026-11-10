@@ -374,7 +374,7 @@ test("update instructions explain pinned trust, one-time registration, expiry an
     /leaves the installed version running/,
     /existing local rollback available/,
     /unsaved or unknown browser drafts/,
-    /WBF needs its own/,
+    /Each customer needs its own/,
     /Linked browser frameworks are not sealed/,
   ])
     assert.match(template.replace(/\s+/g, " "), pattern);

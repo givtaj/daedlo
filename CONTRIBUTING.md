@@ -99,8 +99,8 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 ```
 
 For a focused Node regression, run `node --test path/to/the-test.test.mjs`. The current-tree privacy check is
-`node scripts/check-public-metadata.mjs`; it rejects private conversation links
-and tracked customer material. See [public launch controls](docs/public-launch.md)
+`node scripts/check-public-metadata.mjs`; it rejects private conversation links,
+personal home paths, consumer-mailbox addresses and tracked customer material. See [public launch controls](docs/public-launch.md)
 for the separate historical review and repository settings.
 Documentation-only edits usually need link/command review and formatting checks,
 not a new behavior test. Explain what you actually checked in the pull request.
@@ -182,8 +182,15 @@ are not prerequisites for an ordinary core contribution.
    entrypoint changes together under one integration owner. Recheck affected
    behavior after a material review change.
 
-Keep credentials, cookies, customer data, private traces, dependency installations
-and build output out of commits and issues. Synthetic account credentials are
+Use your GitHub noreply address for commit metadata in this repository. Set it
+with `git config --local user.email` in each independent clone, then inspect
+`git var GIT_AUTHOR_IDENT` before committing. Choose the noreply address for
+GitHub-created merges too; local Git configuration does not control GitHub web
+commits. Changing the setting does not alter existing commits.
+
+Keep personal home paths, private contact details, internal participant planning,
+account billing details, credentials, cookies, customer data, private traces,
+dependency installations and build output out of commits and issues. Synthetic account credentials are
 still private. Share a minimal fixture or sanitized evidence; hashing a private
 value does not anonymize it. Never run a candidate against somebody else's live
 application or change their accepted dependencies as a side effect.

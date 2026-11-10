@@ -33,7 +33,7 @@ installation and historical release evidence remain in collapsed references.
 Clipboard denial selects the full prompt and reports a manual-copy fallback;
 without JavaScript the prompt and guidance remain visible and the button is hidden.
 No project information is collected or sent by this page. Site acceptance does
-not establish that the prompt has onboarded WBF or another customer application.
+not establish that the prompt has onboarded an external customer application.
 
 ## Reproduce the release website
 

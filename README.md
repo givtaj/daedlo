@@ -92,7 +92,7 @@ application's dependencies, data and working tools. The application keeps its ow
 language; its integration supplies a native Rust model, a JavaScript adapter,
 fixture instructions and assertions for the outcome that matters.
 
-1. Open the application repository in Codex (the WBF repository for WBF).
+1. Open your application repository in Codex.
 2. Copy the single prompt from [Get started](https://daedlo.com/install#agent).
    The agent verifies and installs the kit, reads its complete skill, connects the
    first flow and prepares the project's managed-update registration.

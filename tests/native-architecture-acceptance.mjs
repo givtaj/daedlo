@@ -82,7 +82,7 @@ const result = {
     "Existing macOS arm64 toolchains, matching Playwright browser and package caches",
     "Exact native tools identified separately from immutable public alpha.3 runtime/crate",
     "Ephemeral local signed-catalog transport for initial setup; no production-feed or publication claim",
-    "Pinned Architecture Studio application with synthetic isolated data; no WBF or everyday customer access",
+    "Pinned Architecture Studio application with synthetic isolated data; no external-customer or everyday application access",
     "Native CLI reconnect/status/stop; initial setup uses the same native API with only fetch transport injected",
   ],
 };

@@ -30,8 +30,8 @@ integration files, 23 registered files and installed tools remained unchanged;
 four final reports recorded closed owned resources and the surviving attached
 application. Relaunch and final owned cleanup passed. This is representative
 synthetic application acceptance, not independent human onboarding.
-NINJA-06's publication portion is complete; **WBF onboarding is NOT RUN**, and WBF
-and everyday Roots resources remain untouched.
+NINJA-06's publication portion is complete; **external-customer onboarding is NOT RUN**;
+external-customer and everyday Roots resources remain untouched.
 
 The frozen site passed 49 tests and seven-page/three-archive acceptance. Live
 readback matched 27 served assets on each of both origins; nine private paths
@@ -54,15 +54,15 @@ and explicit user setup.
 
 ## Outcome
 
-A person using Daedlo for WBF can see a compatible release, press **Install update**,
+A person using Daedlo with their application can see a compatible release, press **Install update**,
 and continue with the same project definitions and data. Installation prepares a
 new version separately. Activation uses a verified, complete project installation;
 the previous working installation remains available.
 
-WBF is the intended use case, not a verified integration in this record. This
-design does not require access to WBF data to implement the shared mechanism.
-Its acceptance will need an agreed WBF fixture and existing flows before a WBF
-upgrade can be called verified.
+An external customer's application is the intended use case; this record does
+not verify that integration. Implementing the shared mechanism does not require
+access to customer data. Customer upgrade acceptance needs an agreed fixture
+and existing flows.
 
 The product contract is: **updating Daedlo preserves your authored project and
 data; a replacement becomes active only after compatibility and the project's
@@ -102,15 +102,15 @@ Sources: [release commands](../../scripts/release/commands.mjs),
 | Owner | Contents | Update rule |
 | --- | --- | --- |
 | Daedlo release | Runtime, viewer, shared Rust crate, standard tooling and versioned agent guidance | Install verified new bytes in a new managed release directory |
-| WBF project | Model/state source, recipes, adapter/selectors/evidence hooks, presentations, flow catalogue, configuration and custom instructions | Preserve authored bytes; never regenerate, overwrite or silently migrate them |
-| Derived installation | Compiled WBF model executable, resolved adapter dependencies, runtime/browser dependencies and generated build/launch metadata | Rebuild into a separate project installation from the recorded source and dependency inputs |
+| Customer project | Model/state source, recipes, adapter/selectors/evidence hooks, presentations, flow catalogue, configuration and custom instructions | Preserve authored bytes; never regenerate, overwrite or silently migrate them |
+| Derived installation | Compiled customer model executable, resolved adapter dependencies, runtime/browser dependencies and generated build/launch metadata | Rebuild into a separate project installation from the recorded source and dependency inputs |
 | Persistent local records | Project registrations, accepted version pins, reports and upgrade history | Store outside release directories; preserve schema readability and previous records |
-| WBF application | Business data, services, credentials, sessions and ordinary application dependencies | Outside updater ownership; no migrations, resets, service restarts or dependency edits |
+| Customer application | Business data, services, credentials, sessions and ordinary application dependencies | Outside updater ownership; no migrations, resets, service restarts or dependency edits |
 
 Project source can remain in its existing directory layout. A proposed registration
 manifest points to it; it does not move the project into the Daedlo installation.
 Shared release bytes may be cached once, while each project pins its own complete
-installation. Installing for WBF must not upgrade Roots or another project.
+installation. Installing for one project must not upgrade Roots or another project.
 
 The local managed store contains immutable release directories, separate derived
 project installations, current/previous project selections, operation journals
@@ -144,7 +144,7 @@ The existing `recipe_only` Rust field illustrates the distinction: a Rust struct
 literal may need a source change even when the JSON protocol remains version 1.
 
 The shared crate is compiled into the customer's engine. Updating it normally
-means building a new executable from the **same WBF model source**, with the
+means building a new executable from the **same customer model source**, with the
 candidate crate and isolated dependency/build output. Record exact source,
 toolchain, dependency locks, crate and executable identities. Original manifests,
 locks and build outputs are preserved; any generated dependency overlay belongs
@@ -216,7 +216,7 @@ When source changes after validation, the plan is stale: prepare and validate ag
 Retain a private immutable integration snapshot with the previous installation so
 later edits do not invalidate rollback silently. Running a historical snapshot
 must be visible to the user. Selection rollback does not restore a database or
-claim compatibility with unrelated subsequent WBF application changes.
+claim compatibility with unrelated subsequent customer application changes.
 
 Installing and restarting must distinguish durable project definitions/reports
 from volatile browser drafts and login state. Never claim an arbitrary browser
@@ -238,7 +238,7 @@ The rows below retain the acceptance requirements. The delivery status above and
 [verification record](../verification.md) own current results. Earlier local
 source and installed-package acceptance at `4948b81bf5d57de71888aeca0293a24288a0373b`
 remains historical; the published package is the separately frozen `558366b6`
-identity. NINJA-06 still requires WBF-specific onboarding despite public release.
+identity. NINJA-06 still requires customer-specific onboarding despite public release.
 See the
 [managed client guide](../ninja-update.md) for supported interfaces and bootstrap.
 
@@ -250,7 +250,7 @@ See the
 | NINJA-03 | Prepare, compatibility, acceptance, atomic activation and rollback | Build/handler/protocol/behavior failures retain old runnable version; stale source and concurrent installers refuse; interrupted download/build/commit/recovery remains usable |
 | NINJA-04 | Local update screen and actions | Real-browser Available → Install → Validate → Ready → Restart → Updated and Revert flows; busy run/dirty draft deferred; no automatic application effects |
 | NINJA-05 | Real application preservation proof | Accepted Architecture Studio flow upgraded from exact alpha.2 to a new candidate, failed-upgrade and rollback runs; unchanged source, exact save/no-write evidence, reports, relaunch and attached-service survival |
-| NINJA-06 | WBF onboarding and release | WBF's own agreed fixture/flows pass before claiming WBF upgrade acceptance; exact package/CI/UI checks, documented bootstrap and public installation proof before publication |
+| NINJA-06 | External-customer onboarding and release | The customer's agreed fixture/flows pass before claiming customer upgrade acceptance; exact package/CI/UI checks, documented bootstrap and public installation proof before publication |
 
 For new behavior, first record genuine failing assertions, then implement and
 verify without weakening them. Core unit/fault tests use an independent fixture;
@@ -262,5 +262,5 @@ previous releases while referenced by active sessions or rollback selections.
 The first managed-updater installation is assisted: alpha.2 has no update button
 that can bootstrap itself. After that registration, compatible future releases
 can use the requested Install update experience. The later authorized alpha.3
-publication is recorded above. It installed nothing into WBF, did not promote
-Roots and did not enable monitoring.
+publication is recorded above. It did not install into an external customer's
+application, promote Roots or enable monitoring.
