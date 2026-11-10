@@ -1,5 +1,49 @@
 # Verification record
 
+## Public repository launch — 2026-11-10
+
+**PASS — the existing repository is public.** The owner authorized opening
+`givtaj/daedlo`, repository ID `1391092739`, after refreshing the exposure review.
+GitHub confirmed public visibility at **08:57 UTC** on 10 November. Source at the
+switch was `d614e6f90407c1ea687cd29f11bc9ab3a3e5a168`; all three required checks
+passed in [run 42783720178](https://github.com/givtaj/daedlo/actions/runs/42783720178).
+The history, tags, release bytes and publisher trust were retained. No new kit,
+website deployment or customer dependency promotion was performed.
+
+| Check | Measured result |
+| --- | --- |
+| Source and retained refs | PASS: 30 remote heads, nine tags, 29 PR heads and available PR merge refs; 141 reachable commits screened with verified Gitleaks 8.30.1, zero findings. Final advertised refs matched the audited inventory |
+| Images and metadata | PASS: 12 raster images visually inspected and one SVG reviewed; historical media matched that inventory. No new private conversation links or customer paths |
+| GitHub text | PASS: complete pagination of 34 issue records including 29 PRs, one comment, nine release notes, labels and topics; 55 unique prose documents reviewed. No review/commit comments or linked media; wiki and Discussions disabled. Final text delta unchanged |
+| Public download exposure | PASS: all 38 release assets, 123 surviving Actions artifacts and 196 run-attempt log archives downloaded. API sizes/digests matched all 161 assets/artifacts; log digests recorded independently. Zero unavailable listed objects or identity mismatches |
+| Nested content | PASS: 530 unique containers, 6,539 entries and 2,306 decoded text files screened; zero unsafe or uninspected entries, binary/media leaves or secret findings. All 200 privacy-pattern matches were the same synthetic metadata-regression test title |
+| Licensing and contributor links | PASS: actual 414-file source validates Apache-2.0 plus complete legacy MIT and third-party notices; all 74 final local targets across ten contributor documents resolve |
+| Focused launch checks | PASS: 68 metadata, repository-policy, public-licensing and CI-policy tests, including the observed public-ruleset response regression |
+| Main protection | PASS: active [Daedlo main ruleset](https://github.com/givtaj/daedlo/rules/26927561), effective rules read back; PRs, resolved conversations, up-to-date branches and all three GitHub Actions check contexts required; no deletion, force push or bypass actor |
+| Actions and security | PASS: GitHub-owned Actions only, SHA pinning, read-only workflow tokens, workflow PR approval disabled, approval required for all external contributors, and dependency alerts enabled. Native secret scanning, push protection and private vulnerability reporting enabled and read back |
+| Anonymous access | PASS: unauthenticated repository API, repository page, README, CONTRIBUTING, license and security-policy links; all 414 files in the independently downloaded public source archive matched the launch commit. Public response omitted authenticated-only credential metadata |
+| Preservation | PASS: all 307 recorded primary-checkout files, HEAD and status unchanged; accepted alpha.7's 111 files, three links and Roots launcher unchanged. No live Roots service or dependency was modified |
+
+GitHub briefly locked settings writes while completing the visibility transition;
+the initial ruleset request returned HTTP 403. After its lock readback cleared,
+the authorized protections were applied and independently checked. The prepared
+ruleset now explicitly records GitHub's returned pull-request defaults; the
+strict audit retains its exact policy comparison. The genuine initial audit
+mismatch and regression evidence are retained privately alongside the successful
+readback. Documentation changes follow the same required PR checks.
+
+Coverage is bounded to the recorded source and available GitHub surfaces through
+the final inventory window, including the completed launch-source CI run. Deleted
+or unlisted expired objects cannot be inspected. The two previously accepted
+historical private-chat identifiers remain in ten old documentation blobs; no
+new credential or transcript was identified, and their values are not repeated.
+Authenticated API transport metadata is excluded from public-download claims;
+its temporary credential field was removed from retained audit responses. Raw
+responses, matches and downloads remain outside Git. Security-feature enablement
+is configuration evidence, not a claim that native historical scanning has
+completed. Source access, installed release acceptance and customer acceptance
+remain distinct.
+
 ## Swagger CI command deduplication — 2026-11-10
 
 CI runs Swagger JavaScript units once through `npm test` on each supported

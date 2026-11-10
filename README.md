@@ -68,10 +68,9 @@ published kits keep their original `browser-driver` names and instructions.
 Wire/report identifiers remain compatible. Read the [naming migration guide](docs/rename.md)
 for CLI aliases, package imports and the required new-tools bootstrap before an
 alpha.3 installation can use the renamed tools. Source naming does not imply a new
-registry publication or customer dependency promotion. The repository is being
-prepared for community contributions and stays private until the owner approves
-opening access. The [public-launch checklist](docs/public-launch.md) records the
-retained-history decision, required checks and final settings readback.
+registry publication or customer dependency promotion. The repository is public
+and welcomes community contributions. The [public-launch record](docs/public-launch.md)
+records the retained-history decision, exposure review and repository protections.
 
 Alpha.5 retains [safe validation diagnostics](docs/contracts.md), a
 [small tested starter](examples/starter/README.md), and named frontend startup

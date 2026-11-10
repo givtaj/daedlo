@@ -5,8 +5,9 @@ selected kit's `release.json` records exact source and artifact identities and
 scoped verification. Current publication results belong in the
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md);
 customer upgrade and rollback results belong in that project's handoff.
-The repository stays private until the owner separately approves public access;
-the [public-launch checklist](https://github.com/givtaj/daedlo/blob/main/docs/public-launch.md) owns the current preparation gates.
+The repository is public; the
+[public-launch record](https://github.com/givtaj/daedlo/blob/main/docs/public-launch.md)
+records its exposure review, preserved history and repository protections.
 
 ## Names and compatibility
 

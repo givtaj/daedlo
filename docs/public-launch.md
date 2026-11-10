@@ -1,17 +1,18 @@
 # Public launch controls
 
-Daedlo is preparing to open the existing `givtaj/daedlo` repository, stable ID
-`1391092739`, on `github.com`. It remains **private** until the owner approves
-the visibility switch. Preparation does not publish another kit, deploy the
-website or promote customer dependencies. Current release and licensing records
-are [alpha delivery](alpha-release.md) and [licensing scope](licensing.md).
+The existing `givtaj/daedlo` repository, stable ID `1391092739`, became **public**
+on 10 November 2026 with the owner's authorization. The repository, history and
+published release identities are preserved. Opening source does not publish
+another kit, deploy the website or promote customer dependencies. Current release
+and licensing records are [alpha delivery](alpha-release.md) and
+[licensing scope](licensing.md).
 
-The [6 November integration checkpoint](verification.md#pr-23-private-preparation-integration--2026-11-06)
-records current source checks and the retained-private scope. The
-[30 October exposure audit](verification.md#open-source-preparation--2026-10-30)
-retains its original date, inventory and limitations; those external surfaces
-must be refreshed before any future public-access decision. Earlier dated
-verification sections are historical observations, not the current checklist.
+The [10 November launch verification](verification.md#public-repository-launch--2026-11-10)
+records the refreshed exposure inventory, exact source, effective protections and
+anonymous access checks. The [6 November integration checkpoint](verification.md#pr-23-private-preparation-integration--2026-11-06)
+and [30 October exposure audit](verification.md#open-source-preparation--2026-10-30)
+retain their original dates, private-repository scope and limitations. Earlier
+dated verification sections are historical observations, not current access status.
 
 ## Retain history and published identities
 
@@ -30,7 +31,7 @@ Keep the old rewrite preparation and local preservation bundles private. Local
 preservation is not an off-host backup. No history rewrite or GitHub Support
 request is part of this launch plan.
 
-## Source and exposure checks before the decision
+## Source and exposure checks
 
 Use a clean, isolated checkout of the selected current source. Preserve the
 ordinary checkout's dirty drafts; its older evaluation-license candidate does
@@ -71,7 +72,7 @@ requirement. Customer applications and their separately authored integrations
 remain separate. Broad customer adoption, teaching mode, billing and wider
 platform support are not prerequisites for opening this source.
 
-## Read-only audit and current private controls
+## Read-only audit and repository protections
 
 The repository audit is read-only by default and fixes the GitHub host,
 repository ID/name and default branch. It supports the same repository while
@@ -88,9 +89,9 @@ Retain read-only workflow tokens, disabled workflow PR approvals, no third-party
 or wildcard Actions exceptions, and dependency vulnerability alerts. While
 private, fork workflows, write tokens and secret sharing remain disabled.
 
-The prepared [main ruleset](../.github/main-ruleset.json) is not enforcement.
-Private personal-repository protections are currently blocked by GitHub's plan;
-the owner declined a paid-plan change. The ruleset requires:
+The [main ruleset](../.github/main-ruleset.json) is active and its effective rules
+were read back after the public switch. The earlier private-plan restriction no
+longer applies; no paid-plan change was needed. The ruleset requires:
 
 - Pull requests, resolved review conversations and an up-to-date branch.
 - `Source and packaged consumer (Node 22)`, `Source and packaged consumer (Node 24)`
@@ -100,15 +101,17 @@ the owner declined a paid-plan change. The ruleset requires:
 The approval count remains zero for the single-maintainer repository; a maintainer
 cannot approve their own PR. Revisit this when another maintainer joins.
 
-Hosted CI must pass on the exact selected source. The 30 October account
-payment/spending-limit block is historical: all three required jobs passed on
-PR #22's merged main source `b3d4e575` in
-[run 42190090935](https://github.com/givtaj/daedlo/actions/runs/42190090935).
-Each later source still needs its own passing required checks. Local passes or
-earlier release CI cannot substitute for them; retain every required job and
-assertion. No billing change is part of this preparation.
+Workflows from **all external contributors** require maintainer approval. Native
+secret scanning, push protection and private vulnerability reporting are enabled;
+their actual readback is recorded in verification. Configuration does not imply
+that every future contribution or historical artifact is free of sensitive data.
 
-## Final owner decision and public-switch sequence
+Hosted CI must pass on the exact selected source. Each later source needs its own
+passing required checks. Local passes or earlier release CI cannot substitute for
+them; retain every required job and assertion. The 30 October account
+payment/spending-limit block is historical. No billing change was part of launch.
+
+## Recorded owner decision and public-switch sequence
 
 1. Review the exact source/PR and current verification. Resolve unexpected
    exposure findings and required CI failures or unavailable evidence. Retain
