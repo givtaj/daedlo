@@ -1,5 +1,70 @@
 # Verification record
 
+## Alpha.10 production release — 2026-11-10
+
+**PASS — public prerelease, signed production feed, fresh public installation
+and production HTTPS upgrade/restart/rollback.**
+
+The [GitHub prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.10)
+was published at 10:11:55 UTC. Its tag points directly to frozen package source
+`61163084f9b02ec2448eee04c7aebc4994075936`; all three uploaded assets were downloaded
+independently and matched the frozen inventory below. The published package was
+not rebuilt by the publisher or later record commits.
+
+[Source PR #36](https://github.com/givtaj/daedlo/pull/36) merged as
+`fce9f473859bac89d98f1f03b0e7ee47f9d6ce48`, with exact tree equality to the frozen
+source. Its [PR CI](https://github.com/givtaj/daedlo/actions/runs/42793518729) and
+[main CI](https://github.com/givtaj/daedlo/actions/runs/42795257194) passed both
+Node 22.23.4/24.22.2 source/browser/installed lanes and metadata/secrets.
+[Publisher PR #37](https://github.com/givtaj/daedlo/pull/37) merged as
+`a581aac989b00611efefe716a3c88b10bc11d9d3`; its tree exactly matches reviewed head
+`d61334cd830158b5eec3a65a06050ca37118d56d`.
+[Publisher PR CI](https://github.com/givtaj/daedlo/actions/runs/42795823268) passed
+all three jobs; [publisher main CI](https://github.com/givtaj/daedlo/actions/runs/42798170969)
+is tracked separately.
+
+[Production promotion](https://github.com/givtaj/daedlo/actions/runs/42798205663)
+passed on the exact merged publisher revision. It restored authenticated generation
+28 from run 42685561447 (no trust bootstrap), persisted generation 29 before
+Cloudflare mutation, and activated Worker `daedlo` version
+`db94251a-0209-4ecd-9475-33e62441f7be` at 100%. Active deployment
+`9402a866-0c15-4c20-b959-a7c24eda057f` was verified at 10:20:43 UTC.
+The signed catalog contains eight entries, preserves all seven prior entries,
+and expires `2026-11-17T10:20:30.362Z`. Its served envelope SHA-256 is
+`fd209f84a6ff3df5627e218c0abac4c03b6f72fbe4971763442b6bfc38774fd2`.
+
+Independent production HTTPS verification passed all 24 historical and three
+alpha.10 file pins, signing trust, headers and private-path boundaries. The
+actual public pages passed 79 website tests, 8-page/9-archive/50-asset inspection
+and 27 live browser/clipboard/layout checks. The unchanged installer copied from
+the real browser DOM installed the exact alpha.10 tools in a fresh nested
+workspace; ancestor manifests and locks remained unchanged. Desktop/tablet/narrow
+restart and upgrade screenshots were inspected, and browser cleanup passed.
+
+The production HTTPS recovery drill passed all seven checkpoints using both kits
+independently downloaded from the public site and the pinned production signing
+trust. The unchanged published alpha.9 manager/tools discovered and installed the
+exact alpha.10 candidate, a fresh manager restarted it, and Revert restored the
+complete retained alpha.9 slot. Configuration, trust/checkpoint, source/model,
+notebook data and immutable reports were preserved. No dependency migration or
+tools bootstrap occurred. All five owned resources closed. The application stayed
+running during this manager recovery drill; the separate real HTTP application
+restart scenario is covered by the exact installed viewer acceptance.
+
+The runtime's development restart tests prove completed-result preservation and
+no replay across a real HTTP application restart. Application observation remains
+separate from API health. Swagger selection and uncertain-write reporting retain
+their guarded execution boundaries. Customer application acceptance remains
+separate; no private customer repository, API or credentials were accessed.
+
+Receipts remain in ignored publisher `artifacts/post-publication/`, including
+`live-6116308-01/post-publication-receipt.json`, the authenticated checkpoint and
+promotion log. Production recovery is retained in source artifacts
+`alpha10-production-upgrade-6116308/run-xeSZRV/result.json`. Scope is the pinned
+macOS arm64 toolchain and independent fixtures;
+clean-OS and customer-specific onboarding are not claimed.
+
+
 ## Alpha.10 frozen package and publication preparation — 2026-11-10
 
 **PASS — exact installed candidate, local upgrade/recovery, source PR CI and
