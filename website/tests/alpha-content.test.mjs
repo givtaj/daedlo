@@ -55,7 +55,10 @@ test("alpha install explains concrete changes and remaining onboarding limits", 
   assert.match(html, /0\.1\.2-rc\.1[^<]*11 October 2026/i);
   assert.doesNotMatch(html, /Verified on macOS arm64/);
   assert.match(html, /Previous alpha\.2 release checks on 21 October 2026/i);
-  assert.doesNotMatch(html, /pending|will include a dated verification/i);
+  assert.doesNotMatch(
+    html,
+    /publication pending|will include a dated verification/i,
+  );
   assert.match(html, /Release &amp; verification metadata/);
   assert.match(html, /dated verification record/i);
 });

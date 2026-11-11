@@ -8,9 +8,9 @@ const website = resolve(process.env.DAEDLO_WEBSITE_ROOT ?? source);
 const read = (file) => readFile(resolve(website, file), "utf8");
 const flat = (text) => text.replace(/\s+/g, " ");
 
-test("alpha10 homepage retains bounded reusable Swagger support", async () => {
+test("alpha11 homepage retains bounded reusable Swagger support", async () => {
   const html = flat(await read("public/index.html"));
-  assert.match(html, /0\.1\.4-alpha\.10 · Assisted alpha\./);
+  assert.match(html, /0\.1\.4-alpha\.11 · Assisted alpha\./);
   assert.match(html, /Swagger UI/);
   assert.match(html, /OpenAPI 3\.0, 3\.1 and 3\.2/);
   assert.match(html, /bounded|supported subset/i);

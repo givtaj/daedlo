@@ -29,6 +29,10 @@ on:
         description: Publish the reviewed and pinned alpha.10 kit from retained alpha.9
         type: boolean
         default: false
+      promote_alpha11:
+        description: Publish the reviewed and pinned alpha.11 kit from retained alpha.10
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -60,9 +64,10 @@ jobs:
           PROMOTE_ALPHA7: ${{ inputs.promote_alpha7 && 'true' || 'false' }}
           PROMOTE_ALPHA9: ${{ inputs.promote_alpha9 && 'true' || 'false' }}
           PROMOTE_ALPHA10: ${{ inputs.promote_alpha10 && 'true' || 'false' }}
+          PROMOTE_ALPHA11: ${{ inputs.promote_alpha11 && 'true' || 'false' }}
         run: |
-          case "$PROMOTE_ALPHA4:$PROMOTE_ALPHA5:$PROMOTE_ALPHA6:$PROMOTE_ALPHA7:$PROMOTE_ALPHA9:$PROMOTE_ALPHA10" in
-            false:false:false:false:false:false|true:false:false:false:false:false|false:true:false:false:false:false|false:false:true:false:false:false|false:false:false:true:false:false|false:false:false:false:true:false|false:false:false:false:false:true) ;;
+          case "$PROMOTE_ALPHA4:$PROMOTE_ALPHA5:$PROMOTE_ALPHA6:$PROMOTE_ALPHA7:$PROMOTE_ALPHA9:$PROMOTE_ALPHA10:$PROMOTE_ALPHA11" in
+            false:false:false:false:false:false:false|true:false:false:false:false:false:false|false:true:false:false:false:false:false|false:false:true:false:false:false:false|false:false:false:true:false:false:false|false:false:false:false:true:false:false|false:false:false:false:false:true:false|false:false:false:false:false:false:true) ;;
             *) exit 1 ;;
           esac
       - name: Set up Node
@@ -99,6 +104,7 @@ jobs:
           NINJA_PROMOTE_ALPHA7: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha7 && 'true' || 'false' }}
           NINJA_PROMOTE_ALPHA9: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha9 && 'true' || 'false' }}
           NINJA_PROMOTE_ALPHA10: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha10 && 'true' || 'false' }}
+          NINJA_PROMOTE_ALPHA11: ${{ github.event_name == 'workflow_dispatch' && inputs.promote_alpha11 && 'true' || 'false' }}
         run: |
           set -euo pipefail
           umask 077
@@ -125,6 +131,8 @@ jobs:
             node scripts/release/ninja-promotion.mjs --promote-alpha9 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           elif test "$NINJA_PROMOTE_ALPHA10" = "true"; then
             node scripts/release/ninja-promotion.mjs --promote-alpha10 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
+          elif test "$NINJA_PROMOTE_ALPHA11" = "true"; then
+            node scripts/release/ninja-promotion.mjs --promote-alpha11 --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           else
             node scripts/release/ninja-renew.mjs prepare --private-key "$key_file" --output "$RUNNER_TEMP/daedlo-renewal" "${checkpoint[@]}"
           fi

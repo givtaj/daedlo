@@ -82,7 +82,7 @@ an already running adapter or bypasses unknown draft/pending-operation guards.
 ## Alpha.9 coordinated promotion
 
 This is the historical alpha.9 procedure, completed while the repository was
-private. The current alpha.10 procedure below uses the now-public repository.
+private. The current alpha.11 procedure below uses the now-public repository.
 
 The prepared alpha.9 policy pins source
 `30d2a985964011c08d80db2e83a3716a2c151345` and the three immutable files in the
@@ -155,6 +155,55 @@ existing protected-PR and workflow gates without rebuilding accepted archives.
 The exact installed acceptance and public verification results belong in
 [verification](verification.md). Preparing this policy or merging source does not
 establish that publication or customer acceptance has completed.
+
+## Alpha.11 coordinated promotion
+
+Use the clean source commit and exact three-file identities in the frozen
+verification record. Alpha.11 adds reviewed managed-session abandonment and model
+migration in the **release tools**. It keeps alpha.10's dependency closure and
+manager contract 2. A runtime-only update cannot add these commands or change an
+already running older controller. Unknown draft, pending-effect or owner safety
+continues to block cleanup; a tools bootstrap cannot bypass those guards.
+
+Keep the publisher change inactive until its coordinated publication window.
+Adding alpha.11 to the active inventory makes ordinary renewal reject an
+alpha.10-only feed. Finish the source, exact-package and isolated upgrade gates,
+then follow the protected-PR and workflow gates without rebuilding accepted
+archives:
+
+1. Integrate reviewed source with passing exact-head checks. Publish the exact
+   ZIP, `SHA256SUMS` and sanitized, frozen `release.json` as public prerelease
+   `v0.1.4-alpha.11` at the frozen source commit. Read back the tag and all three
+   asset sizes/digests before advancing.
+2. Merge the reviewed publisher policy with those final source/file pins and
+   website inputs. Dispatch the default-branch renewal workflow with only
+   `promote_alpha11=true`; keep all six historical selectors false. The CLI
+   equivalent is `ninja-promotion.mjs --promote-alpha11` with the existing explicit
+   private-key, fresh output and authenticated checkpoint paths.
+3. Retain all 27 earlier download files and eight existing signed release entries.
+   The promoted catalog has nine entries: alpha.2 through alpha.7, alpha.9,
+   alpha.10 and alpha.11. Alpha.8 stays excluded. Preserve the publisher key,
+   authenticated high-water history and existing Worker/domain configuration.
+4. Require checkpoint persistence before upload and another verified live baseline
+   before activation. Verify the exact active Worker version, complete public
+   manifest, signed feed and all three alpha.11 downloads over production HTTPS.
+   The bounded post-activation asset wait retains each failed observation and does
+   not issue another catalog generation or deploy again. Preserve failed receipts;
+   use the failure-recovery procedure below when a checkpoint is already issued.
+5. Verify the copied public installer and the production HTTPS mixed-version
+   upgrade drill: published alpha.9 tools with alpha.10 runtime/engine, separate
+   alpha.11 tools bootstrap, alpha.11 runtime upgrade, restart, complete alpha.10
+   slot rollback and retained alpha.9-tools fallback. Retain the same registration,
+   configuration, store, publisher trust, checkpoint and all prior evidence bytes.
+   Safely stop the authenticated older owner before reopening with new tools.
+
+The installed recovery and migration checks use an independent synthetic fixture.
+They do not establish recovery of a customer's original uncertain operation or
+customer application acceptance. Original failed run evidence stays unchanged;
+later independent verification is a separate record. See
+[reviewed abandonment](managed-abandonment.md), [model migration](model-migration.md)
+and [verification](verification.md) for the exact scope and measured results.
+Preparing this policy does not establish public availability.
 
 ## Automatic renewal
 

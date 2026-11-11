@@ -85,3 +85,9 @@
 !/downloads/0.1.4-alpha.10/daedlo-0.1.4-alpha.10.zip
 !/downloads/0.1.4-alpha.10/SHA256SUMS
 !/downloads/0.1.4-alpha.10/release.json
+
+# Exact reviewed recovery and model migration release.
+!/downloads/0.1.4-alpha.11/
+!/downloads/0.1.4-alpha.11/daedlo-0.1.4-alpha.11.zip
+!/downloads/0.1.4-alpha.11/SHA256SUMS
+!/downloads/0.1.4-alpha.11/release.json
