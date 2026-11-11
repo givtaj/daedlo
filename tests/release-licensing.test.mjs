@@ -10,7 +10,7 @@ const read = (path) => fs.readFile(join(root, path), "utf8");
 test("next release declares Apache-2.0 consistently without reusing alpha.3", async () => {
   const runtime = JSON.parse(await read("packages/runtime/package.json"));
   assert.equal(runtime.license, "Apache-2.0");
-  assert.equal(runtime.version, "0.1.4-alpha.10");
+  assert.equal(runtime.version, "0.1.4-alpha.11");
   const lock = JSON.parse(await read("package-lock.json")).packages[
     "packages/runtime"
   ];
