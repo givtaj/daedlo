@@ -1,20 +1,29 @@
 # Verification record
 
-## Alpha.11 final candidate verification — 2026-11-11
+## Alpha.11 publication and public verification — 2026-11-11
 
-**Local exact-package acceptance PASS; not published.** The final third candidate
-for `0.1.4-alpha.11` is frozen from clean source
+**PASS — published and independently verified.** The `0.1.4-alpha.11` kit is
+frozen from clean source
 `8ddd8d7f770f3a6c7e14315ebee3164d45a9ac33`. Earlier candidate packages and failed
 checks remain retained as historical evidence; their identities are not the
-release candidate. Existing alpha.10 public files remain immutable.
+released kit. Existing alpha.10 public files remain immutable.
 
 [Source PR #46](https://github.com/givtaj/daedlo/pull/46) passed all five required
 checks in [CI run 42988617296](https://github.com/givtaj/daedlo/actions/runs/42988617296),
 including Node 22.23.4/24.22.2, metadata/secrets and native Compose on AMD64/ARM64.
 It merged as `83d87f451f2d81557602cfc2004de01ae86525a0`; the merge tree is identical
-to the frozen source tree. At this checkpoint,
-[main CI 42990442769](https://github.com/givtaj/daedlo/actions/runs/42990442769)
-is **IN PROGRESS**. PR checks and main checks are recorded separately.
+to the frozen source tree.
+[Main CI 42990442769](https://github.com/givtaj/daedlo/actions/runs/42990442769)
+also passed all five jobs on that merged source; independent GitHub API readback
+confirmed the exact head and completed results. PR and main checks are recorded
+separately.
+
+The public [GitHub prerelease v0.1.4-alpha.11](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.11)
+was published at **09:05:04 UTC on 11 November 2026**, targeting the frozen
+`8ddd8d7f770f3a6c7e14315ebee3164d45a9ac33` source. Its exact three asset names,
+sizes and GitHub-reported digests match the frozen identities below. This
+GitHub release is separate from promotion of the production website and signed
+update feed.
 
 Final-source local checks passed 771 release-contract tests, with one intentional
 opt-in exact-bundle test skipped in that aggregate and exercised by installed
@@ -59,11 +68,88 @@ website staged from this final kit passed 92 tests and 18 browser checks. Deskto
 and narrow previews were inspected, with owned browser/server cleanup complete.
 The preview used an ephemeral test signing key, not the production publisher key.
 
-Publisher hosted CI, promotion, production deployment, independent public HTTPS
-download/installation and the public mixed-version upgrade drill are **NOT RUN**
-at this checkpoint. Customer incident recovery and application-specific acceptance
-remain **NOT RUN**; no customer private repository, credentials or API was accessed.
-The historical sections below retain their original candidate identities and scope.
+[Publisher PR #47](https://github.com/givtaj/daedlo/pull/47) passed
+[CI run 42991524209](https://github.com/givtaj/daedlo/actions/runs/42991524209) at
+`5866fc7f83199104b0d1ff13586b4a8d0f53b056`, then merged as
+`3df43f13bc4e57214e2c3f3f28b3cb6597eb1e88`.
+[Merged-main CI 42993402023](https://github.com/givtaj/daedlo/actions/runs/42993402023)
+passed all five jobs. Independent GitHub API readback confirmed the PR head,
+merge identity, PR result and all five main-job conclusions.
+
+The release owner dispatched a single alpha.11 promotion,
+[run 42995273905, attempt 1](https://github.com/givtaj/daedlo/actions/runs/42995273905),
+at that exact publisher merge. It passed preparation, staging, checkpoint
+persistence, upload, activation, active-deployment identity and live file/security
+checks. Authenticated catalog generation **33 advanced to 34**; no retry or second
+dispatch occurred. The original checkpoint ZIP was downloaded from artifact
+`13843766627` without reconstruction and matched GitHub's reported SHA-256:
+`aaa2af2b9f70d3dc2efbdda5fbf62f90b5920581deee31930218bfd2f0137d0f` (2358 bytes).
+The contained catalog's signature independently verifies with the unchanged
+production trust pin; the catalog contains nine releases and expires at
+**2026-11-18 09:28:00.757 UTC**.
+
+| Promotion identity | Verified value |
+| --- | --- |
+| Catalog generation | 34 |
+| Catalog file SHA-256 | `6c9845c6531ed9343bd58b7453645744b45d68960eca1530f57e35e820846ffa` |
+| Signed payload SHA-256 | `074087eac6d60461ee630944ab4e3075f4ea9b72be538ab6f21e75ad312355a4` |
+| Active Worker version | `f07f8fde-917b-4b9a-8652-2364d867102b` |
+| Deployment | `4e13e9f5-dc25-49f6-97ce-0319f9365c23`, 100% |
+| Active identity checked | 2026-11-11 09:28:14.123 UTC |
+
+The active-deployment JSON is the exact output of the workflow's successful
+Cloudflare identity-check step. It is retained alongside the completed raw log,
+API run/job/artifact records and original checkpoint ZIP. The independent
+public whole-site check remains separate from these publisher workflow results.
+
+**Independent production website verification PASS.** The canonical apex was
+checked against a reconstructed manifest of 58 entries: all 55 served files
+matched exact expected bytes, ten HTML routes followed only their expected
+canonical redirects, and all nine private paths returned 404. The signed catalog,
+checkpoint, unchanged public key, cache/security policies, eight retained signed
+release entries and added alpha.11 entry all matched. Historical downloads remained
+unchanged. This is the independently recorded public result, separate from the
+publisher workflow's own live checks.
+
+**Public copied-installer acceptance PASS on fresh attempt 02.** All three
+anonymous HTTPS downloads matched the frozen identities. The visible onboarding
+prompt advertised the exact frozen ZIP URL and digest; the visible tools block
+matched the kit's unchanged `START_HERE` installer.
+Executing that exact installer with an empty npm cache passed offline installation;
+all 82 installed tool files, the source receipt and production trust pin matched.
+Both ancestor manifests and directory inventories remained unchanged. All five
+checks passed; the installer exited successfully and the owned browser closed.
+
+Attempt 01 remains a **failed browser-helper setup**, before installer execution.
+The helper tried to click the nested tools disclosure while the outer manual
+section was collapsed; downloaded bytes had already passed integrity checks.
+A focused check of the actual public DOM reproduced the failing visibility
+assertion. Normal visible clicks on the outer and then inner disclosure exposed
+the exact installer without force or hidden-state mutation. The corrected helper
+ran in a fresh attempt 02. The original failed receipt and published website/package
+bytes remain unchanged.
+
+**Production HTTPS mixed-version upgrade PASS.** The actual signed generation-34
+feed and immutable downloads passed all eight checkpoints, with all six owned
+resources closed. Published alpha.9 tools first ran the alpha.10 runtime/engine;
+verified alpha.11 tools reopened the same accepted slot, then upgraded to the
+alpha.11 runtime. A fresh manager restarted that installation, rollback restored
+the complete alpha.10 slot, and retained alpha.9 tools reopened it and passed a
+real negative/save flow. Source, both tools packages, configuration, store, trust,
+checkpoint, data, original reports and history stayed preserved; seven lifecycle
+reports were retained. This uses an independent synthetic application and real
+production HTTPS, without a private publisher key or production mutation.
+
+The public installer and upgrade used the existing macOS arm64 toolchains and
+matching Chromium. **Clean-OS installation is NOT RUN.** The upgrade's application
+process remained separate from driver/manager restarts; these checks do not claim
+persistence across an application-process restart. Frozen `release.json` retains
+its prepublication verification scope; this record adds later public results
+without rebuilding the kit or replacing any of its three published files.
+
+Customer incident recovery and application-specific acceptance remain **NOT RUN**;
+no customer private repository, credentials or API was accessed. The historical
+sections below retain their original candidate identities and scope.
 
 ## Managed abandonment and reviewed model migration — 2026-11-10
 
