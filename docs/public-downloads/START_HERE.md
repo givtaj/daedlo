@@ -100,7 +100,7 @@ delete ownership records or replay a save to make an upgrade proceed.
 From this extracted kit root, use the new native entrypoint with your existing
 absolute configuration path (replace `/same/absolute/FILE`):
 
-```sh
+```console
 node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs doctor --config /same/absolute/FILE
 node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs start --config /same/absolute/FILE
 node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs status --config /same/absolute/FILE
