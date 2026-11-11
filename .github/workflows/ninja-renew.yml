@@ -204,7 +204,16 @@ jobs:
           console.log(JSON.stringify(receipt));
           NODE
       - name: Verify the live feed, exact public assets and security policies
-        run: node scripts/release/ninja-renew.mjs live --output "$RUNNER_TEMP/daedlo-renewal"
+        id: live
+        run: node scripts/release/ninja-renew.mjs live --output "$RUNNER_TEMP/daedlo-renewal" --wait-for-assets
+      - name: Retain sanitized live verification observations
+        if: always() && (steps.live.outcome == 'success' || steps.live.outcome == 'failure')
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ninja-live-verification-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/daedlo-renewal/live-verification-*/events.jsonl
+          if-no-files-found: warn
+          retention-days: 90
       - name: Remove any remaining temporary signing key
         if: always()
         run: |

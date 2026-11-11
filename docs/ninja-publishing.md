@@ -185,7 +185,8 @@ inventory in `scripts/release/ninja-renew.mjs`.
 Before deployment, the job checks the complete staged site, seals its manifest,
 and persists `catalog.json` plus its exact public digest receipt as the Actions
 artifact `ninja-renewal-checkpoint-<attempt>`. Only those two public files are
-uploaded to Actions. Artifacts are retained for 90 days. Failed runs and prior
+included in the checkpoint artifact. Artifacts are retained for 90 days. Failed
+runs and prior
 attempts count toward the high-water mark; missing, expired, deleted or ambiguous
 history stops publication. Do not delete the latest checkpoint or its run.
 
@@ -195,6 +196,24 @@ routes or domains. Verification checks the active version through Cloudflare's
 API and compares all served assets, signature, cache rules, security headers and
 private-path boundaries on the production apex origin. Check the workflow result and
 its verified generation/expiry, not just a green upload step.
+
+After activation is confirmed, the workflow enables `live --wait-for-assets`.
+An expected public asset returning HTTP 404 can wait up to **120 seconds total**,
+with a five-second interval and at most 25 attempts. Each attempt starts the full
+strict verification again; success requires every expected asset and private-path
+boundary to pass in one complete attempt before the shared deadline. Approved
+HTML canonical redirects remain supported. A permanent 404 fails the run.
+Other HTTP errors, challenges, network failures, changed bytes, invalid or expired
+signatures, incorrect cache/security headers and exposed private paths fail
+immediately. The wait does not deploy again or issue another catalog generation.
+
+The workflow retains `ninja-live-verification-<attempt>` for 90 days on success or
+failure. Its append-only JSONL observations include reviewed request paths, attempt
+counts, elapsed time and the final outcome; they exclude response bodies, raw
+errors, request queries and credentials. These observations supplement the signed
+checkpoint and original workflow log. A later passing run never changes an earlier
+failure into success. The 120-second limit is publisher policy, not a provider
+availability guarantee.
 
 ## Failure recovery and credential rotation
 
@@ -285,8 +304,11 @@ node scripts/release/ninja-renew.mjs verify --output /absolute/fresh-renewal
 
 The checkpoint is mandatory after the initial, independently pinned generation 1.
 `live --output /absolute/fresh-renewal` verifies the exact staged deployment after
-publication. Keep signing and private provider outputs outside Git and the public
-asset tree. Application rollback and publisher feed recovery are separate operations.
+publication in one strict attempt. Add `--wait-for-assets` only for the bounded
+post-activation check described above; each invocation creates its own
+`live-verification-*/events.jsonl` under that output directory. Keep signing and
+private provider outputs outside Git and the public asset tree. Application
+rollback and publisher feed recovery are separate operations.
 
 ## Alpha.4 promotion through the existing publication lock
 

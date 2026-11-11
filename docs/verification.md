@@ -68,6 +68,69 @@ Private red/green logs and browser receipts are retained under
 `artifacts/support-recovery/installed-acceptance/results.json`. They are not
 public customer evidence.
 
+## Publisher CLI correction — 2026-11-10
+
+**FAIL — production preparation; no upload or activation.** After
+[PR #44](https://github.com/givtaj/daedlo/pull/44) merged at
+`54a41e77cd22c3a2970d9b7039dc0793240d8f24`,
+[publisher run 42902240054](https://github.com/givtaj/daedlo/actions/runs/42902240054)
+restored the authenticated generation-32 checkpoint, then failed with
+`Unsupported renewal option`. The CLI supplied the new live-only `waitForAssets`
+field to `prepare`, whose strict option validation rejected it. The run issued
+no new catalog/checkpoint, skipped upload and activation, and removed its temporary
+signing key. The existing production deployment was unchanged.
+
+The regression was reproduced through the real CLI parser and dispatcher with a
+valid synthetic signing/asset fixture, before correcting its option forwarding.
+The correction gives preparation only its signing/checkpoint options and gives
+live verification the availability option only when explicitly requested. The
+preparation API still rejects unknown options. These CLI checks supplement the
+stage-function tests that passed without detecting the wiring error.
+
+**PASS — local correction checks.** Node 24.22.2 passed all 92 renewal tests,
+including nine CLI cases, and 275 related publisher, checkpoint, catalog,
+promotion, website-update and repository-policy tests. Syntax, declarations,
+formatting, public metadata and diff whitespace passed. Independent source review
+found no actionable defect. A successful production run of the correction is
+**NOT RUN at this local checkpoint**; the failed run remains retained separately.
+
+## Publisher availability check — 2026-11-10
+
+**Observed deployment success followed by a failed live check.**
+[Publisher run 42832924750](https://github.com/givtaj/daedlo/actions/runs/42832924750)
+uploaded the reviewed Compose page and activated the exact Worker version at
+100%. Activation readback completed at `14:20:31.953Z`; the immediate live check
+failed at `14:20:32.467Z` with `/compose.html status=404 expected=200`. Later
+verification, without another deployment, passed all 52 served-file digests,
+the signed generation-32 catalog, cache/security headers and nine private-path
+boundaries. The first retained successful Compose response was at `14:21:16Z`.
+This supports a transient availability explanation; the original failed response
+does not identify its edge, so the provider-side cause and exact recovery interval
+remain unconfirmed. The original failed run and durable checkpoint are preserved.
+
+**PASS — local regression reproduced and corrected.** Before implementation,
+a valid prepared fixture returning one public 404 followed by exact asset bytes
+failed with the same HTTP status assertion. With the bounded post-activation
+availability check, that fixture passes after repeating the full strict check.
+Ordinary `live` verification remains a single strict attempt; only the production
+workflow's explicit `--wait-for-assets` mode allows the documented public-404 wait.
+The wait shares one 120-second deadline across requests, bodies and attempts, and
+records sanitized observations separately from the signed renewal checkpoint.
+
+On Node 24.22.2, all **83 renewal tests** and **239 related catalog, checkpoint,
+publisher, promotion, CI-policy and repository-metadata tests** passed. Coverage
+includes a permanent 404, the shared deadline and attempt cap, canonical redirects,
+late responses, signature expiry during waiting and at the end of verification,
+complete-pass rechecks, body cancellation, fatal integrity/security/transport
+failures and separate sanitized journals. Syntax, declarations, formatting,
+public metadata and diff whitespace passed. Independent review found no actionable
+defect. These are deterministic publisher checks; no browser UI changed.
+
+Hosted candidate CI and a production run of this fix are **NOT RUN at this local
+checkpoint**. The incident's later successful asset check does not establish that
+the changed publisher has run in production. No new release or image publication
+is part of this change.
+
 ## Local Compose documentation and website — 2026-11-10
 
 **PASS — local documentation and staged website checks.** The repository guide

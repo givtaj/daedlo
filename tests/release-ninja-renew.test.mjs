@@ -13,6 +13,7 @@ import {
 } from "../scripts/release/ninja-catalog.mjs";
 import {
   prepareNinjaRenewal,
+  runNinjaRenewCli,
   verifyNinjaRenewal,
   verifyLiveNinjaRenewal,
 } from "../scripts/release/ninja-renew.mjs";
@@ -356,6 +357,211 @@ async function fixture(
   };
 }
 const prep = (f) => prepareNinjaRenewal(f.options, f.dependencies);
+async function captureRenewalCli(args, dependencies) {
+  const output = [];
+  await runNinjaRenewCli(args, {
+    ...dependencies,
+    writeOutput: (text) => output.push(text),
+  });
+  assert.equal(output.length, 1);
+  assert.ok(output[0].endsWith("\n"));
+  return JSON.parse(output[0]);
+}
+
+test("renewal CLI prepare routes only preparation options and writes the prepared result", async (t) => {
+  const f = await fixture(t);
+  const output = [];
+  await runNinjaRenewCli(
+    [
+      "prepare",
+      "--private-key",
+      f.privateKeyPath,
+      "--output",
+      f.options.output,
+    ],
+    { ...f.dependencies, writeOutput: (text) => output.push(text) },
+  );
+  assert.equal(output.length, 1);
+  const result = JSON.parse(output[0]);
+  assert.equal(result.status, "PREPARED");
+  assert.equal(result.generation, 2);
+  const checkpoint = await fs.readFile(
+    join(f.options.output, "checkpoint/catalog.json"),
+  );
+  const verified = verifyNinjaCatalog({
+    bytes: checkpoint,
+    publisher: "daedlo",
+    trustedKeys: [{ id: keyId, publicKey: f.keys.publicKey }],
+    now,
+  });
+  assert.equal(verified.catalog.generation, result.generation);
+  assert.ok(f.requests.length > 0);
+});
+
+test("renewal CLI prepare forwards the durable signed checkpoint", async (t) => {
+  const f = await fixture(t);
+  f.signed.generation = 2;
+  const retained = f.envelope();
+  f.bodies.set(feed, retained);
+  const checkpointPath = join(f.root, "retained-catalog.json");
+  await fs.writeFile(checkpointPath, retained);
+  const args = [
+    "prepare",
+    "--private-key",
+    f.privateKeyPath,
+    "--output",
+    f.options.output,
+  ];
+  const rejectedOutput = [];
+  await assert.rejects(
+    runNinjaRenewCli([...args], {
+      ...f.dependencies,
+      writeOutput: (text) => rejectedOutput.push(text),
+    }),
+    /Durable signed checkpoint required/,
+  );
+  assert.deepEqual(rejectedOutput, []);
+  const result = await captureRenewalCli(
+    [...args, "--checkpoint", checkpointPath],
+    f.dependencies,
+  );
+  assert.equal(result.status, "PREPARED");
+  assert.equal(result.generation, 3);
+  assert.equal(result.baselineSha256, sha256(retained));
+  const receipt = JSON.parse(
+    await fs.readFile(join(f.options.output, "checkpoint/receipt.json")),
+  );
+  assert.equal(receipt.generation, 3);
+  assert.equal(
+    receipt.catalogSha256,
+    sha256(
+      await fs.readFile(join(f.options.output, "checkpoint/catalog.json")),
+    ),
+  );
+  assert.deepEqual(await fs.readFile(checkpointPath), retained);
+});
+
+test("renewal CLI verify checks the prepared tree and unchanged live baseline", async (t) => {
+  const f = await fixture(t);
+  await prep(f);
+  const result = await captureRenewalCli(
+    ["verify", "--output", f.options.output],
+    f.dependencies,
+  );
+  const receipt = JSON.parse(
+    await fs.readFile(join(f.options.output, "renewal-receipt.json")),
+  );
+  assert.equal(result.status, "PASS");
+  assert.equal(result.generation, receipt.generation);
+  assert.equal(result.catalogSha256, receipt.catalogSha256);
+  assert.equal(result.manifestFiles, receipt.manifest.files.length);
+  f.signed.generation = 2;
+  f.bodies.set(feed, f.envelope());
+  const rejectedOutput = [];
+  await assert.rejects(
+    runNinjaRenewCli(["verify", "--output", f.options.output], {
+      ...f.dependencies,
+      writeOutput: (text) => rejectedOutput.push(text),
+    }),
+    /changed|drift|baseline/i,
+  );
+  assert.deepEqual(rejectedOutput, []);
+});
+
+test("renewal CLI live remains strict unless availability waiting is selected", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  const result = await captureRenewalCli(
+    ["live", "--output", f.options.output],
+    f.live.dependencies,
+  );
+  assert.equal(result.status, "PASS");
+  assert.equal(result.servedAssets, 34);
+  assert.equal(result.privateBoundaries, 9);
+  assert.equal(Object.hasOwn(result, "availability"), false);
+  let misses = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html") {
+      misses++;
+      return new Response("", { status: 404 });
+    }
+  };
+  const rejectedOutput = [];
+  await assert.rejects(
+    runNinjaRenewCli(["live", "--output", f.options.output], {
+      ...f.live.dependencies,
+      writeOutput: (text) => rejectedOutput.push(text),
+    }),
+    /status=404 expected=200/,
+  );
+  assert.equal(misses, 1);
+  assert.deepEqual(rejectedOutput, []);
+  assert.deepEqual(f.live.sleeps, []);
+  assert.deepEqual(await liveAvailabilityEvents(f), []);
+});
+
+test("renewal CLI live forwards availability waiting and retains the failed observation", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let reads = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html" && reads++ === 0)
+      return new Response("", { status: 404 });
+  };
+  const result = await captureRenewalCli(
+    ["live", "--output", f.options.output, "--wait-for-assets"],
+    f.live.dependencies,
+  );
+  assert.equal(result.status, "PASS");
+  assert.equal(result.servedAssets, 34);
+  assert.deepEqual(result.availability, {
+    attempts: 2,
+    elapsedMs: 5000,
+    notFound: [
+      { attempt: 1, path: "/compose.html", status: 404, elapsedMs: 0 },
+    ],
+  });
+  assert.deepEqual(f.live.sleeps, [5000]);
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.deepEqual(
+    receipt.events.map((event) => event.event),
+    ["started", "not_ready", "pass"],
+  );
+});
+
+test("renewal CLI rejects misplaced or duplicated availability flags before resources", async (t) => {
+  for (const [label, command, flags] of [
+    ["prepare availability flag", "prepare", ["--wait-for-assets"]],
+    ["verify availability flag", "verify", ["--wait-for-assets"]],
+    [
+      "duplicate live availability flag",
+      "live",
+      ["--wait-for-assets", "--wait-for-assets"],
+    ],
+  ]) {
+    await t.test(label, async (t) => {
+      const f = await fixture(t);
+      const output = [];
+      await assert.rejects(
+        runNinjaRenewCli(
+          [
+            command,
+            "--output",
+            f.options.output,
+            ...(command === "prepare"
+              ? ["--private-key", f.privateKeyPath]
+              : []),
+            ...flags,
+          ],
+          { ...f.dependencies, writeOutput: (text) => output.push(text) },
+        ),
+        /Invalid renewal CLI arguments/,
+      );
+      assert.equal(f.requests.length, 0);
+      assert.deepEqual(output, []);
+      await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
+    });
+  }
+});
+
 test("renewal refuses an unknown held alpha8 promotion selector before resources", async (t) => {
   const f = await fixture(t);
   await assert.rejects(
@@ -594,32 +800,41 @@ test("predeploy rejects expired prepared catalog and signed same-generation equi
 test("HTTP failure identifies the fixed feed path, status and exact Cloudflare challenge marker", async (t) => {
   const f = await fixture(t);
   let requested = 0;
+  let discarded = 0;
   f.dependencies.fetchImpl = async (url, options) => {
     requested++;
     assert.equal(url, feed);
     assert.equal(options.redirect, "error");
     assert.deepEqual(options.headers, { "Cache-Control": "no-cache" });
-    const response = new Response("private body must never enter diagnostics", {
-      status: 403,
-      statusText: "private status text",
-      headers: {
-        "cf-mitigated": "challenge",
-        "set-cookie": "private-cookie=value",
-        "x-private": "private-header-value",
+    return new Response(
+      new ReadableStream(
+        {
+          pull() {
+            assert.fail("status failure must not consume the response body");
+          },
+          cancel() {
+            discarded++;
+          },
+        },
+        { highWaterMark: 0 },
+      ),
+      {
+        status: 403,
+        statusText: "private status text",
+        headers: {
+          "cf-mitigated": "challenge",
+          "set-cookie": "private-cookie=value",
+          "x-private": "private-header-value",
+        },
       },
-    });
-    Object.defineProperty(response, "body", {
-      get() {
-        assert.fail("status failure must not read the response body");
-      },
-    });
-    return response;
+    );
   };
   await assert.rejects(prep(f), {
     message:
       "Unexpected renewal HTTP status: /updates/preview.json status=403 expected=200 cf-mitigated=challenge",
   });
   assert.equal(requested, 1);
+  assert.equal(discarded, 1);
   await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
 });
 test("HTTP asset failure reports only a reviewed fixed path and excludes unknown mitigation values", async (t) => {
@@ -1011,6 +1226,476 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
     /status/i,
   );
 });
+async function liveAvailabilityFixture(t) {
+  const f = await fixture(t);
+  await prep(f);
+  const receipt = JSON.parse(
+    await fs.readFile(join(f.options.output, "renewal-receipt.json")),
+  );
+  const served = new Map();
+  for (const file of receipt.manifest.files) {
+    if (
+      file.path.startsWith("public/") &&
+      !["public/_headers", "public/.assetsignore"].includes(file.path)
+    ) {
+      served.set(
+        origin + "/" + file.path.slice(7),
+        await fs.readFile(join(f.options.output, "site", file.path)),
+      );
+    }
+  }
+  const live = {
+    elapsed: 0,
+    requests: [],
+    sleeps: [],
+    served,
+    intercept: null,
+  };
+  live.exact = (url) => {
+    const bytes = served.get(
+      url === origin + "/" ? origin + "/index.html" : url,
+    );
+    return new Response(bytes ?? "", {
+      status: bytes ? 200 : 404,
+      headers: {
+        "content-length": String(bytes?.length ?? 0),
+        "x-content-type-options": "nosniff",
+        "cache-control":
+          url === feed
+            ? "no-cache, must-revalidate"
+            : /\/(downloads|updates\/keys)\//.test(url)
+              ? "public, max-age=31536000, immutable"
+              : "no-cache",
+      },
+    });
+  };
+  live.dependencies = {
+    ...f.dependencies,
+    monotonicNow: () => live.elapsed,
+    sleep: async (milliseconds) => {
+      live.sleeps.push(milliseconds);
+      live.elapsed += milliseconds;
+    },
+    fetchImpl: async (url, options) => {
+      live.requests.push({ url, options });
+      const response = await live.intercept?.(url, options);
+      return response ?? live.exact(url);
+    },
+  };
+  return { ...f, live };
+}
+
+async function liveAvailabilityEvents(f) {
+  const names = (await fs.readdir(f.options.output))
+    .filter((name) => name.startsWith("live-verification-"))
+    .sort();
+  return Promise.all(
+    names.map(async (name) => {
+      const path = join(f.options.output, name, "events.jsonl");
+      const text = await fs.readFile(path, "utf8");
+      return {
+        path,
+        text,
+        events: text
+          .trim()
+          .split("\n")
+          .map((line) => JSON.parse(line)),
+      };
+    }),
+  );
+}
+
+const verifyAvailable = (f, dependencies = {}) =>
+  verifyLiveNinjaRenewal(
+    { output: f.options.output, waitForAssets: true },
+    { ...f.live.dependencies, ...dependencies },
+  );
+
+test("post-activation availability waits for an expected public 404 then verifies exact assets", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let misses = 0;
+  let discardedBodies = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html" && misses++ === 0) {
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(Buffer.from("private untrusted response body"));
+          },
+          cancel() {
+            discardedBodies++;
+          },
+        }),
+        { status: 404, statusText: "private provider detail" },
+      );
+    }
+  };
+  const result = await verifyAvailable(f);
+  assert.equal(result.status, "PASS");
+  assert.equal(result.servedAssets, 34);
+  assert.deepEqual(result.availability, {
+    attempts: 2,
+    elapsedMs: 5000,
+    notFound: [
+      { attempt: 1, path: "/compose.html", status: 404, elapsedMs: 0 },
+    ],
+  });
+  assert.deepEqual(f.live.sleeps, [5000]);
+  assert.equal(
+    discardedBodies,
+    1,
+    "Discarded 404 bodies must release their resources",
+  );
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.deepEqual(
+    receipt.events.map((event) => event.event),
+    ["started", "not_ready", "pass"],
+  );
+  assert.doesNotMatch(receipt.text, /private untrusted|private provider/);
+  assert.ok(!receipt.text.includes(f.root));
+});
+
+test("post-activation availability retries approved canonical HTML 404s", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let canonicalReads = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html") {
+      return new Response("", {
+        status: 307,
+        headers: { location: "/compose" },
+      });
+    }
+    if (url === origin + "/compose") {
+      if (canonicalReads++ === 0) return new Response("", { status: 404 });
+      return f.live.exact(origin + "/compose.html");
+    }
+  };
+  const result = await verifyAvailable(f);
+  assert.equal(result.status, "PASS");
+  assert.equal(canonicalReads, 2);
+  assert.deepEqual(result.availability.notFound, [
+    { attempt: 1, path: "/compose", status: 404, elapsedMs: 0 },
+  ]);
+});
+
+test("post-activation availability has one bounded window across different missing assets", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let misses = 0;
+  f.live.intercept = (url) => {
+    if (
+      (url === origin + "/compose.html" && f.live.elapsed < 110000) ||
+      (url === origin + "/guide.html" && f.live.elapsed >= 110000)
+    ) {
+      misses++;
+      return new Response("still missing", { status: 404 });
+    }
+  };
+  await assert.rejects(
+    verifyAvailable(f),
+    /deadline|budget|window|timed out|timeout|exhaust/i,
+  );
+  assert.ok(misses > 1 && misses <= 25);
+  assert.ok(
+    f.live.elapsed <= 120000,
+    "A second missing asset cannot reset the deadline",
+  );
+  assert.ok(
+    f.live.sleeps.every(
+      (milliseconds) => milliseconds > 0 && milliseconds <= 5000,
+    ),
+  );
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.equal(receipt.events.at(-1).event, "fail");
+  assert.equal(
+    receipt.events.filter((event) => event.event === "not_ready").length,
+    misses,
+  );
+  assert.ok(!receipt.events.some((event) => event.event === "pass"));
+});
+
+test("post-activation availability has an independent attempt cap", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let misses = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html") {
+      misses++;
+      return new Response("", { status: 404 });
+    }
+  };
+  await assert.rejects(
+    verifyAvailable(f, {
+      sleep: async (milliseconds) => f.live.sleeps.push(milliseconds),
+    }),
+    /attempt_limit_exceeded/,
+  );
+  assert.equal(misses, 25);
+  assert.equal(f.live.sleeps.length, 24);
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.equal(receipt.events.at(-1).failure.code, "attempt_limit_exceeded");
+  assert.equal(
+    receipt.events.filter((event) => event.event === "not_ready").length,
+    25,
+  );
+});
+
+test("post-activation availability refuses a pass completing after its deadline", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  f.live.intercept = (url) => {
+    if (url === origin + "/package.json") f.live.elapsed = 120001;
+  };
+  await assert.rejects(
+    verifyAvailable(f),
+    /deadline|budget|window|timed out|timeout|exhaust/i,
+  );
+  assert.deepEqual(f.live.sleeps, []);
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.equal(receipt.events.at(-1).event, "fail");
+  assert.equal(receipt.events.at(-1).failure.code, "deadline_exceeded");
+});
+
+test("post-activation availability rechecks earlier assets rather than combining partial passes", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let missing = true;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html" && missing) {
+      missing = false;
+      const earlier = Buffer.from(f.live.served.get(origin + "/404.html"));
+      earlier[0] ^= 1;
+      f.live.served.set(origin + "/404.html", earlier);
+      return new Response("", { status: 404 });
+    }
+  };
+  await assert.rejects(verifyAvailable(f), /differs from prepared manifest/);
+  assert.deepEqual(f.live.sleeps, [5000]);
+  assert.equal(
+    f.live.requests.filter(({ url }) => url === origin + "/404.html").length,
+    2,
+  );
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.deepEqual(
+    receipt.events.map((event) => event.event),
+    ["started", "not_ready", "fail"],
+  );
+});
+
+test("post-activation availability refreshes signature expiry after waiting", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  const catalog = JSON.parse(f.live.served.get(feed));
+  let misses = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html" && misses++ === 0)
+      return new Response("", { status: 404 });
+  };
+  await assert.rejects(
+    verifyAvailable(f, { now: Date.parse(catalog.signed.expiresAt) - 1000 }),
+    /expired/i,
+  );
+  assert.deepEqual(f.live.sleeps, [5000]);
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.equal(receipt.events.at(-1).event, "fail");
+});
+
+test("post-activation availability rechecks signature expiry at the end of a complete pass", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  const catalog = JSON.parse(f.live.served.get(feed));
+  f.live.intercept = (url) => {
+    if (url === origin + "/package.json") f.live.elapsed = 1001;
+  };
+  await assert.rejects(
+    verifyAvailable(f, { now: Date.parse(catalog.signed.expiresAt) - 1000 }),
+    /expired/i,
+  );
+  assert.deepEqual(f.live.sleeps, []);
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.equal(receipt.events.at(-1).event, "fail");
+  assert.equal(receipt.events.at(-1).attempts, 1);
+});
+
+test("post-activation availability never retries transport, integrity or security failures", async (t) => {
+  for (const mode of [
+    "status",
+    "challenge",
+    "network",
+    "hash",
+    "nosniff",
+    "cache",
+    "private",
+    "redirect",
+    "size",
+  ]) {
+    await t.test(mode, async (t) => {
+      const f = await liveAvailabilityFixture(t);
+      let failures = 0;
+      const target =
+        mode === "cache"
+          ? feed
+          : mode === "private"
+            ? origin + "/.env"
+            : origin + "/compose.html";
+      f.live.intercept = (url) => {
+        if (url !== target) return;
+        failures++;
+        if (mode === "status")
+          return new Response("private-token", { status: 503 });
+        if (mode === "challenge")
+          return new Response("private-token", {
+            status: 404,
+            headers: { "cf-mitigated": "challenge" },
+          });
+        if (mode === "network")
+          throw new TypeError("private-token", {
+            cause: { code: "ENOTFOUND", hostname: "private-host" },
+          });
+        if (mode === "private")
+          return new Response("private-token", { status: 200 });
+        if (mode === "redirect")
+          return new Response("", {
+            status: 307,
+            headers: {
+              location: "https://private-host/path?secret=private-token",
+            },
+          });
+        const response = f.live.exact(url);
+        if (mode === "hash") {
+          const altered = Buffer.from(f.live.served.get(url));
+          altered[0] ^= 1;
+          return new Response(altered, {
+            status: 200,
+            headers: response.headers,
+          });
+        }
+        if (mode === "nosniff")
+          response.headers.delete("x-content-type-options");
+        if (mode === "cache")
+          response.headers.set("cache-control", "public, max-age=3600");
+        if (mode === "size")
+          response.headers.set("content-length", "999999999");
+        return response;
+      };
+      await assert.rejects(verifyAvailable(f));
+      assert.equal(failures, 1);
+      assert.deepEqual(f.live.sleeps, []);
+      const [receipt] = await liveAvailabilityEvents(f);
+      assert.deepEqual(
+        receipt.events.map((event) => event.event),
+        ["started", "fail"],
+      );
+      assert.doesNotMatch(
+        receipt.text,
+        /private-token|private-host|TypeError|cause/,
+      );
+      assert.ok(!receipt.text.includes(f.root));
+    });
+  }
+});
+
+test("post-activation availability bounds in-flight headers and body reads by remaining time", async (t) => {
+  for (const phase of ["headers", "body"]) {
+    await t.test(phase, async (t) => {
+      const f = await liveAvailabilityFixture(t);
+      let interrupted = false;
+      let guard;
+      f.live.intercept = async (url, options) => {
+        if (url === origin + "/404.html") f.live.elapsed = 119995;
+        if (url !== origin + "/compose.html") return;
+        const failure = new Promise((_, reject) => {
+          guard = setTimeout(
+            () => reject(new Error("test watchdog: request was not bounded")),
+            500,
+          );
+          options.signal.addEventListener(
+            "abort",
+            () => {
+              interrupted = true;
+              reject(options.signal.reason);
+            },
+            { once: true },
+          );
+        });
+        if (phase === "headers") return failure;
+        return new Response(
+          new ReadableStream({
+            start(controller) {
+              failure.catch((error) => controller.error(error));
+            },
+          }),
+          { status: 200, headers: f.live.exact(url).headers },
+        );
+      };
+      try {
+        await assert.rejects(verifyAvailable(f));
+      } finally {
+        clearTimeout(guard);
+      }
+      assert.equal(
+        interrupted,
+        true,
+        "The remaining five milliseconds must bound the in-flight request",
+      );
+      assert.deepEqual(f.live.sleeps, []);
+    });
+  }
+});
+
+test("post-activation availability retains separate invocation receipts without overwriting failures", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html")
+      return new Response("", { status: 503 });
+  };
+  await assert.rejects(verifyAvailable(f));
+  const [first] = await liveAvailabilityEvents(f);
+  f.live.intercept = null;
+  const result = await verifyAvailable(f);
+  assert.deepEqual(result.availability, {
+    attempts: 1,
+    elapsedMs: 0,
+    notFound: [],
+  });
+  const receipts = await liveAvailabilityEvents(f);
+  assert.equal(receipts.length, 2);
+  assert.equal(await fs.readFile(first.path, "utf8"), first.text);
+  assert.ok(receipts.some(({ events }) => events.at(-1).event === "pass"));
+  assert.ok(receipts.some(({ events }) => events.at(-1).event === "fail"));
+});
+
+test("ordinary live verification keeps strict one-pass missing-asset behavior", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  let misses = 0;
+  f.live.intercept = (url) => {
+    if (url === origin + "/compose.html") {
+      misses++;
+      return new Response("", { status: 404 });
+    }
+  };
+  await assert.rejects(
+    verifyLiveNinjaRenewal({ output: f.options.output }, f.live.dependencies),
+    /status=404 expected=200/,
+  );
+  assert.equal(misses, 1);
+  assert.deepEqual(f.live.sleeps, []);
+  assert.deepEqual(await liveAvailabilityEvents(f), []);
+});
+
+test("post-activation availability rejects a changed prepared signature before any live request", async (t) => {
+  const f = await liveAvailabilityFixture(t);
+  const path = join(f.options.output, "site/public/updates/preview.json");
+  const envelope = JSON.parse(await fs.readFile(path, "utf8"));
+  const signature = Buffer.from(envelope.signature.value, "base64");
+  signature[0] ^= 1;
+  envelope.signature.value = signature.toString("base64");
+  await fs.writeFile(path, JSON.stringify(envelope) + "\n");
+  await assert.rejects(verifyAvailable(f), /signature/i);
+  assert.equal(f.live.requests.length, 0);
+  assert.deepEqual(f.live.sleeps, []);
+  const [receipt] = await liveAvailabilityEvents(f);
+  assert.deepEqual(
+    receipt.events.map((event) => event.event),
+    ["started", "fail"],
+  );
+  assert.equal(receipt.events.at(-1).failure.code, "verification_failed");
+});
+
 test("predeploy rejects altered durable checkpoint receipt", async (t) => {
   const f = await fixture(t);
   await prep(f);
@@ -1122,6 +1807,33 @@ test("workflow limits events, credentials, concurrency and deployed configuratio
     activation.indexOf("ninja-renew.mjs verify") <
       activation.indexOf("versions deploy"),
     "Recheck current baseline immediately before activation",
+  );
+  const live = text
+    .split("      - name:")
+    .find((step) => step.includes("ninja-renew.mjs live"));
+  assert.match(live, /id: live/);
+  assert.match(live, /ninja-renew\.mjs live[^\n]+--wait-for-assets/);
+  assert.ok(
+    text.indexOf("Verify the active deployment identity") < text.indexOf(live),
+    "Only the post-activation live check may wait for missing assets",
+  );
+  assert.doesNotMatch(activation, /--wait-for-assets/);
+  const observations = text
+    .split("      - name:")
+    .find((step) => step.includes("name: ninja-live-verification-"));
+  assert.match(
+    observations,
+    /if: always\(\) && \(steps\.live\.outcome == 'success' \|\| steps\.live\.outcome == 'failure'\)/,
+  );
+  assert.match(observations, /uses: actions\/upload-artifact@[a-f0-9]{40}/);
+  assert.equal(
+    observations.match(/\n\s+path: ([^\n]+)/)?.[1],
+    "${{ runner.temp }}/daedlo-renewal/live-verification-*/events.jsonl",
+    "Only sanitized live observation journals may be uploaded",
+  );
+  assert.doesNotMatch(
+    observations,
+    /CLOUDFLARE_API_TOKEN|DAEDLO_UPDATE_SIGNING_KEY/,
   );
   assert.match(text, /persist-credentials: false/);
   assert.ok(
