@@ -9,7 +9,7 @@ license: Apache-2.0
 Daedlo is the product, package and skill name. Existing browser-driver commands
 remain compatibility aliases; preserved historical receipts keep their original names.
 
-This instruction copy accompanies the Daedlo 0.1.4-alpha.10 tools. Use the selected
+This instruction copy accompanies the Daedlo 0.1.4-alpha.11 tools. Use the selected
 kit's `release.json` for exact identity and verification and the current
 [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 for publication status.

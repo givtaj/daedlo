@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "daedlo-engine"
-version = "0.1.4-alpha.10"
+version = "0.1.4-alpha.11"
 dependencies = [
  "serde",
  "serde_json",

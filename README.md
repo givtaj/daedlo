@@ -17,6 +17,16 @@ The [verification record](docs/verification.md) owns current publication status,
 measured acceptance and limits; [alpha delivery](docs/alpha-release.md) owns the
 product scope. Use the exact verified release kit and its installation instructions.
 
+The alpha.11 candidate adds reviewed abandonment when model observation fails and
+explicit review of model descriptor migrations. Recovery preserves original run
+reports and requires fresh independent draft and pending-effect safety. Model
+migration retains the accepted runtime, store, reports and rollback history.
+These commands require new release tools; a runtime-only update cannot deliver
+them or change an already running older controller. Follow
+[native setup](docs/native-setup.md), [reviewed abandonment](docs/managed-abandonment.md)
+and [model migration](docs/model-migration.md). Publication and the exact upgrade
+results belong in the verification record linked above.
+
 The alpha.10 kit combines the live application/flow/results grid, bounded large
 state maps and explicit pending/stalled finalization with reusable Swagger API
 driving and masked password parameters. Existing integrations require the

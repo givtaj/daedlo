@@ -1,5 +1,23 @@
 # Verification record
 
+## Alpha.11 release preparation — 2026-11-11
+
+**IN PROGRESS — not published.** The reviewed recovery/model-migration source
+below is being packaged as `0.1.4-alpha.11`; existing alpha.10 public bytes remain
+immutable. Current publisher fixes from main `16d2436` are integrated without
+changing the new recovery or migration contracts. Updated portable guidance
+requires a separate tools bootstrap and preserves the older owner's safety guards.
+
+The release's new upgrade harness explicitly starts with published alpha.9 tools
+and alpha.10 runtime/engine, then checks the alpha.11 tools bootstrap, runtime
+upgrade, restart, runtime rollback and retained alpha.9-tools fallback. Its 95
+mode/helper tests pass; failing new-mode assertions were recorded first. On macOS
+arm64 with Node 24.22.2 and Rust 1.96.0, all 314 runtime/container/Compose contract
+tests and the workspace Rust tests pass. These are source checks, not an installed
+upgrade result. Exact alpha.11 package/browser acceptance, hosted CI, production
+publication and the public HTTPS upgrade drill remain **NOT RUN** at this checkpoint.
+
+
 ## Managed abandonment and reviewed model migration — 2026-11-10
 
 **Local source candidate; not published.** Ordinary Stop and Refresh retain their
