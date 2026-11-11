@@ -44,8 +44,113 @@
           disposable fixture and acceptance before an update is ready to use.
         </p>
       </section>
+      <section class="guide-block" aria-labelledby="alpha11-tools-title">
+        <h2 id="alpha11-tools-title">Get the alpha.11 tools first</h2>
+        <p>
+          Running alpha.9 tools with the alpha.10 runtime? A runtime update
+          keeps your existing tools. The new recovery and model-migration
+          commands require a separate bootstrap of the verified alpha.11 tools,
+          even though the dependency closure and manager contract remain
+          compatible.
+        </p>
+        <ol>
+          <li>
+            Use the
+            <a href="/install.html#manual">verified install instructions</a>
+            to install the new tools in a separate directory outside your
+            project. Retain the old tools, browser cache, accepted installation
+            and reports.
+          </li>
+          <li>
+            Safely stop the authenticated old owner with its original tools and
+            configuration. A refusal needs recovery; downloading new tools
+            cannot retrofit a running older child or bypass an unknown draft or
+            effect.
+          </li>
+          <li>
+            Start the new tools with the same configuration, registration,
+            store, publisher trust and signed checkpoint. Keep authored source
+            and application data in place; do not register a replacement store.
+          </li>
+          <li>
+            Verify the accepted installation, then use
+            <strong>Check for updates → Install update → Restart Daedlo</strong>
+            to prepare and activate the runtime at a safe boundary. Repeat your
+            application's agreed acceptance and retain the previous installation
+            for <strong>Revert update</strong>.
+          </li>
+        </ol>
+        <p>
+          Follow the packaged <code>docs/native-setup.md</code> and
+          <code>docs/ninja-update.md</code>, also available in the
+          <a
+            href="https://github.com/givtaj/daedlo/blob/v{{VERSION}}/docs/native-setup.md"
+            >release's native setup guide</a
+          >. Record tools and runtime versions separately. These commands
+          support sessions started by the new tools; they do not repair an
+          existing customer incident automatically.
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="managed-recovery-title">
+        <h2 id="managed-recovery-title">
+          Review a session before abandoning it
+        </h2>
+        <p>
+          Try ordinary guarded Stop first. If model observation remains broken,
+          the new tools offer <code>abandon-review</code>, then
+          <code>abandon</code> with the returned review ID. The same reachable
+          owner must be idle and independently prove current draft safety and
+          absence of pending requests or unresolved effects. Unknown safety,
+          active work and a pre-existing user pause block abandonment.
+        </p>
+        <p>
+          Inspect the captured report and resource inventory before confirming.
+          Cleanup closes only owned resources; attached resources remain intact.
+          The original uncertain report stays uncertain, and later verification
+          belongs in a separate linked record. Cleanup never replays a command
+          or turns a failed observation into application success.
+        </p>
+        <p>
+          The packaged <code>docs/managed-abandonment.md</code> explains the
+          prerequisites, private records and retries after incomplete cleanup.
+          <a
+            href="https://github.com/givtaj/daedlo/blob/v{{VERSION}}/docs/managed-abandonment.md"
+            >Read the reviewed abandonment guide.</a
+          >
+        </p>
+      </section>
+      <section class="guide-block" aria-labelledby="model-migration-title">
+        <h2 id="model-migration-title">Change a model with a full review</h2>
+        <p>
+          Use <code>migrate-prepare</code>, <code>migrate-review</code> and
+          <code>migrate-activate</code> for an intentional descriptor change.
+          Review both complete descriptors and the acceptance results, then
+          supply the exact review SHA-256 for activation. Preparation uses the
+          accepted runtime release, keeping the same store and history; it does
+          not also download a runtime update.
+        </p>
+        <p>
+          Safely stop the old owner before editing its model registration or
+          descriptor pin. Only those registration fields may change; the source
+          allowlist, launcher, hooks and dependency settings must remain
+          unchanged. Ordinary refresh and Restart still refuse an unreviewed
+          descriptor change. Migration requires the normal observation, draft,
+          effect and cleanup guards; it does not abandon a broken session or
+          hot-replace an adapter.
+        </p>
+        <p>
+          Revert selects the previous complete installation without overwriting
+          current authored files or undoing application writes. Follow the
+          packaged <code>docs/model-migration.md</code> for exact commands and
+          review requirements.
+          <a
+            href="https://github.com/givtaj/daedlo/blob/v{{VERSION}}/docs/model-migration.md"
+            >Read the model migration guide.</a
+          >
+        </p>
+      </section>
       <section class="guide-block" aria-labelledby="alpha10-upgrade-title">
-        <h2 id="alpha10-upgrade-title">From alpha.9 to alpha.10</h2>
+        <h2 id="alpha10-upgrade-title">Earlier update: alpha.9 to alpha.10</h2>
         <p>
           Alpha.10 uses the same dependency closure and manager contract 2 as
           alpha.9. Keep your existing published alpha.9 tools for this managed
@@ -62,7 +167,7 @@
           installation; it does not undo application writes.
         </p>
         <p>
-          This release distinguishes the viewer connection, browser, application
+          That release distinguishes the viewer connection, browser, application
           observation and live image while your API or site restarts. Completed
           run results remain intact and reconnecting never replays a command.
           <a href="/install.html#development-restarts-title"
@@ -116,7 +221,7 @@
           The earlier alpha.7 to alpha.9 migration requires a separate verified
           tools bootstrap. Alpha.8 was held and is not a required upgrade step.
           Preserve alpha.7 recovery files; this historical migration is separate
-          from the normal alpha.9 to alpha.10 upgrade above.
+          from the alpha.11 tools bootstrap above.
         </p>
         <p>
           Alpha.7 native status distinguishes observation failure, an

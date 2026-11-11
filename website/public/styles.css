@@ -412,6 +412,16 @@ h1 {
   font-size: 13px;
   line-height: 1.8;
 }
+.release-upgrade-note {
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+.release-upgrade-note a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .roadmap-section {
   padding-top: 40px;
   padding-bottom: 40px;

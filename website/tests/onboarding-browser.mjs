@@ -440,6 +440,48 @@ export async function checkOnboardingBrowser({
       name: "installer copied from rendered browser DOM uses verified package family",
       status: "PASS",
     });
+    for (const [label, current] of [
+      ["desktop", desktop],
+      ["narrow", narrow],
+    ]) {
+      await open(current.page, "/index.html");
+      const upgrade = current.page.locator(
+        'a[href="/updates.html#alpha11-tools-title"]',
+      );
+      await upgrade.scrollIntoViewIfNeeded();
+      const presentation = await upgrade.evaluate((link) => {
+        const style = getComputedStyle(link);
+        return {
+          underlined:
+            style.textDecorationLine.includes("underline") ||
+            (style.borderBottomStyle !== "none" &&
+              parseFloat(style.borderBottomWidth) > 0),
+          spacing: parseFloat(getComputedStyle(link.parentElement).marginTop),
+        };
+      });
+      assert.equal(
+        presentation.underlined,
+        true,
+        `${label}: the tools upgrade link needs a visible affordance`,
+      );
+      assert.ok(
+        presentation.spacing >= 16,
+        `${label}: the upgrade note needs separation from release cards`,
+      );
+      await upgrade.click();
+      assert.equal(new URL(current.page.url()).hash, "#alpha11-tools-title");
+      assert.match(
+        await current.page
+          .locator('[aria-labelledby="alpha11-tools-title"]')
+          .innerText(),
+        /same configuration, registration, store/,
+      );
+      await noOverflow(current.page, `${label} tools upgrade destination`);
+      receipt.checks.push({
+        name: `${label} discoverable tools upgrade link reaches preserved-installation instructions`,
+        status: "PASS",
+      });
+    }
     assert.deepEqual(errors, []);
     receipt.status = "PASS";
   } catch (error) {

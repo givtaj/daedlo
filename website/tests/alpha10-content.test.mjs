@@ -57,7 +57,7 @@ test("alpha10 installation explains independent status and safe development rest
   assert.match(html, /newly printed URL/i);
 });
 
-test("alpha9 to alpha10 is a normal managed upgrade with unchanged dependencies and tools", async () => {
+test("historical alpha9 to alpha10 remains a normal managed upgrade with unchanged dependencies and tools", async () => {
   const html = section(
     await read("templates/updates.html"),
     "alpha10-upgrade-title",

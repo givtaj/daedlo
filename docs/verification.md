@@ -1,22 +1,69 @@
 # Verification record
 
-## Alpha.11 release preparation — 2026-11-11
+## Alpha.11 final candidate verification — 2026-11-11
 
-**IN PROGRESS — not published.** The reviewed recovery/model-migration source
-below is being packaged as `0.1.4-alpha.11`; existing alpha.10 public bytes remain
-immutable. Current publisher fixes from main `16d2436` are integrated without
-changing the new recovery or migration contracts. Updated portable guidance
-requires a separate tools bootstrap and preserves the older owner's safety guards.
+**Local exact-package acceptance PASS; not published.** The final third candidate
+for `0.1.4-alpha.11` is frozen from clean source
+`8ddd8d7f770f3a6c7e14315ebee3164d45a9ac33`. Earlier candidate packages and failed
+checks remain retained as historical evidence; their identities are not the
+release candidate. Existing alpha.10 public files remain immutable.
 
-The release's new upgrade harness explicitly starts with published alpha.9 tools
-and alpha.10 runtime/engine, then checks the alpha.11 tools bootstrap, runtime
-upgrade, restart, runtime rollback and retained alpha.9-tools fallback. Its 95
-mode/helper tests pass; failing new-mode assertions were recorded first. On macOS
-arm64 with Node 24.22.2 and Rust 1.96.0, all 314 runtime/container/Compose contract
-tests and the workspace Rust tests pass. These are source checks, not an installed
-upgrade result. Exact alpha.11 package/browser acceptance, hosted CI, production
-publication and the public HTTPS upgrade drill remain **NOT RUN** at this checkpoint.
+[Source PR #46](https://github.com/givtaj/daedlo/pull/46) passed all five required
+checks in [CI run 42988617296](https://github.com/givtaj/daedlo/actions/runs/42988617296),
+including Node 22.23.4/24.22.2, metadata/secrets and native Compose on AMD64/ARM64.
+It merged as `83d87f451f2d81557602cfc2004de01ae86525a0`; the merge tree is identical
+to the frozen source tree. At this checkpoint,
+[main CI 42990442769](https://github.com/givtaj/daedlo/actions/runs/42990442769)
+is **IN PROGRESS**. PR checks and main checks are recorded separately.
 
+Final-source local checks passed 771 release-contract tests, with one intentional
+opt-in exact-bundle test skipped in that aggregate and exercised by installed
+acceptance separately. All 314 runtime/container/Compose contract tests, workspace
+Rust checks, 95 upgrade mode/helper tests and 36 installer/guidance/public-kit
+checks passed. Meaningful failing assertions preceded the new behavior and guide
+corrections; later passing results do not replace earlier failed receipts.
+
+On macOS arm64 with Node 24.22.2, Rust 1.96.0, Playwright 1.65.0 and Chromium
+158.0.8127.18, the final installed package passed 147 safety assertions in 17
+groups, eight browser groups, frontend/recipe viewers and all four native gates:
+startup, observation recovery, reviewed abandonment and reviewed model migration.
+The native gates had no skips and required exact installed identities and complete
+owned cleanup. The installed starter/reference checks passed 16 starter groups;
+the rebuilt installed Swagger integration passed 19 groups. These are independent
+synthetic application checks, not customer application acceptance.
+
+The final mixed-version upgrade drill passed all eight checkpoints and closed all
+six owned resources. It began with published alpha.9 tools and alpha.10
+runtime/engine, bootstrapped alpha.11 tools into the same managed configuration and
+store, upgraded the runtime, restarted a fresh manager, reverted the complete
+alpha.10 installation and reopened it with the retained alpha.9 tools. Source,
+configuration, trust, checkpoint, data, reports and history remained preserved.
+This drill used an ephemeral signed local feed; production HTTPS acceptance is a
+separate gate. Alpha.11 requires a tools bootstrap but no third-party dependency
+migration. New tools cannot repair an already running older controller or bypass
+unknown draft/pending-effect safety.
+
+| Frozen artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `daedlo-0.1.4-alpha.11.zip` | 380817 | `4c9c747f7530984db09e859783f447ba720c87bc5b41b609039453644230249c` |
+| `release.json` | 7561 | `113eaa403420e22a532164be052cc43a61075f6d77038f7baa45e31f360615d5` |
+| Public-kit `SHA256SUMS` | 92 | `c088b9f82c0a60c8d5e36d2f71ec17c492a30c4d04d1b89a7e7f96fc97afe832` |
+| Bundle manifest | 883 | `34e11ea18794eeaeead7be20b8223e7b94945cc5b808f1214cc4a6903279a685` |
+| Portable tools archive | 204024 | `eca9537c11523454c14a9ad5ad8c18b6e7a65a32a56810f2cc9cc1f8abdebf80` |
+
+The separate publisher candidate passed all 274 catalog, checkpoint, promotion,
+renewal and publisher tests. Its policy binds the frozen source and all three
+public files, preserves all 27 earlier download files and their contracts/trust
+identities, and permits only one explicit promotion selector. The complete local
+website staged from this final kit passed 92 tests and 18 browser checks. Desktop
+and narrow previews were inspected, with owned browser/server cleanup complete.
+The preview used an ephemeral test signing key, not the production publisher key.
+
+Publisher hosted CI, promotion, production deployment, independent public HTTPS
+download/installation and the public mixed-version upgrade drill are **NOT RUN**
+at this checkpoint. Customer incident recovery and application-specific acceptance
+remain **NOT RUN**; no customer private repository, credentials or API was accessed.
+The historical sections below retain their original candidate identities and scope.
 
 ## Managed abandonment and reviewed model migration — 2026-11-10
 
