@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { constants } from "node:fs";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { hostname } from "node:os";
 import { isDeepStrictEqual } from "node:util";
 import { join, resolve, parse, sep } from "node:path";
@@ -131,6 +131,21 @@ function retainsOwnPause(live, observation) {
     live.dirty === false
   );
 }
+function canonical(value) {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, canonical(value[key])]),
+    );
+  return value;
+}
+function fingerprint(value) {
+  return createHash("sha256")
+    .update(JSON.stringify(canonical(value)))
+    .digest("hex");
+}
 
 /** Trusted local dependencies are injected by the bootstrap CLI, never by HTTP input. */
 export async function createNinjaManager({
@@ -188,7 +203,13 @@ export async function createNinjaManager({
       });
     }
   });
-  for (const name of ["installations", "downloads", "reports", "history"])
+  for (const name of [
+    "installations",
+    "downloads",
+    "reports",
+    "history",
+    "migrations",
+  ])
     await ninjaDirectory(join(root, name), { create: true });
   const statePath = join(root, "state.json"),
     journalPath = join(root, "transaction.json");
@@ -293,7 +314,16 @@ export async function createNinjaManager({
         ? { id: s.available.id, version: s.available.version }
         : null,
       operation: s.operation
-        ? { id: s.operation.id, status: s.operation.status }
+        ? {
+            id: s.operation.id,
+            status: s.operation.status,
+            ...(s.operation.kind === "model_migration"
+              ? {
+                  kind: "model_migration",
+                  reviewSha256: s.operation.reviewSha256,
+                }
+              : {}),
+          }
         : null,
       canRollback: !!s.previous,
       blockers,
@@ -378,7 +408,79 @@ export async function createNinjaManager({
     });
     return { bundlePath, identity: structuredClone(current.release) };
   }
-  async function prepareCandidate(s, id, kit, expectedRelease) {
+  async function migrationRegistration(current) {
+    const previous = await ninjaRead(
+      join(slot(current.id), "registration.json"),
+    );
+    const withoutModel = ({ model, descriptorSha256, ...rest }) => rest;
+    if (!isDeepStrictEqual(withoutModel(previous), withoutModel(registration)))
+      fail(
+        "migration_scope_changed",
+        "Model migration may change only the registered model identity and descriptor pin; preserve all other registration fields.",
+      );
+    return previous;
+  }
+  async function migrationReview(s, current, candidate) {
+    const previousRegistration = await migrationRegistration(current);
+    const identity = (value, registered) => ({
+      ...publicReceipt(value),
+      descriptor: value.handshake.descriptor,
+      model: registered.model ?? null,
+      descriptorSha256: registered.descriptorSha256 ?? null,
+      registrationSha256: fingerprint(registered),
+      receiptSha256: fingerprint(value),
+    });
+    return {
+      schemaVersion: 1,
+      kind: "daedlo-model-migration",
+      projectId: registration.projectId,
+      operationId: candidate.id,
+      generation: s.generation,
+      accepted: identity(current, previousRegistration),
+      candidate: identity(candidate, registration),
+      release: structuredClone(current.release),
+    };
+  }
+  async function validateMigration(s, operationId, reviewSha256) {
+    if (
+      s.operation?.id !== operationId ||
+      s.operation.kind !== "model_migration" ||
+      s.operation.status !== "review_required" ||
+      s.operation.expectedCurrent !== s.current ||
+      s.operation.expectedGeneration !== s.generation
+    )
+      fail(
+        "stale_operation",
+        "Model migration no longer matches the accepted installation and generation.",
+      );
+    if (
+      !/^[a-f0-9]{64}$/.test(reviewSha256 ?? "") ||
+      reviewSha256 !== s.operation.reviewSha256
+    )
+      fail(
+        "migration_review_required",
+        "Review the exact model migration and supply its matching review SHA256.",
+      );
+    const retained = await ninjaRead(
+      join(root, "migrations", operationId + ".json"),
+    );
+    const { reviewSha256: retainedSha256, ...review } = retained;
+    if (retainedSha256 !== reviewSha256 || fingerprint(review) !== reviewSha256)
+      fail(
+        "migration_review_changed",
+        "The retained model migration review changed; prepare and review again.",
+      );
+    const current = await receipt(s.current);
+    const candidate = await receipt(operationId, true);
+    const actual = await migrationReview(s, current, candidate);
+    if (!isDeepStrictEqual(actual, review))
+      fail(
+        "migration_review_changed",
+        "The reviewed model, source or installation identity changed; prepare and review again.",
+      );
+    return retained;
+  }
+  async function prepareCandidate(s, id, kit, expectedRelease, kind) {
     s.phase = "validating";
     await save(s);
     const installed = await installer.prepare({
@@ -401,13 +503,37 @@ export async function createNinjaManager({
         "Refresh must retain the accepted exact release identity.",
       );
     const current = await receipt(s.current);
-    if (
+    const changed =
       current &&
       !isDeepStrictEqual(
         current.handshake?.descriptor,
         installed.handshake?.descriptor,
-      )
-    )
+      );
+    if (kind === "model_migration") {
+      if (!changed)
+        fail(
+          "migration_not_required",
+          "The model descriptor is unchanged; use ordinary Refresh.",
+        );
+      const review = await migrationReview(s, current, installed);
+      const reviewSha256 = fingerprint(review);
+      await ninjaWrite(join(root, "migrations", id + ".json"), {
+        ...review,
+        reviewSha256,
+      });
+      s.operation = {
+        id,
+        kind,
+        status: "review_required",
+        expectedCurrent: s.current,
+        expectedGeneration: s.generation,
+        reviewSha256,
+      };
+      s.phase = "review_required";
+      await save(s);
+      return view();
+    }
+    if (changed)
       fail(
         "migration_required",
         "Candidate changes the accepted states, commands or flows.",
@@ -460,7 +586,7 @@ export async function createNinjaManager({
   async function switchTo(
     s,
     target,
-    { rollback = false, acknowledgeRestart } = {},
+    { rollback = false, acknowledgeRestart, migration } = {},
   ) {
     if (acknowledgeRestart !== true)
       fail("restart_required", "Explicit restart acknowledgment is required.");
@@ -493,6 +619,7 @@ export async function createNinjaManager({
       before,
       target,
       phase: "prepared",
+      ...(migration ? { migration } : {}),
     };
     await supervisor.quiesce();
     try {
@@ -519,6 +646,8 @@ export async function createNinjaManager({
       throw e;
     }
     await receipt(target, !rollback);
+    if (migration)
+      await validateMigration(await read(), target, migration.reviewSha256);
     await ninjaWrite(journalPath, journal);
     await fault("journal_prepared");
     try {
@@ -597,23 +726,22 @@ export async function createNinjaManager({
           s.checkpoint = result.checkpoint;
           s.available = result.available || null;
           s.error = result.error || null;
-          s.phase =
-            s.operation?.status === "ready"
-              ? "ready"
-              : s.error
-                ? "failed"
-                : s.available
-                  ? "available"
-                  : "idle";
+          s.phase = ["ready", "review_required"].includes(s.operation?.status)
+            ? s.operation.status
+            : s.error
+              ? "failed"
+              : s.available
+                ? "available"
+                : "idle";
           await save(s);
           return view();
         } catch (e) {
-          if (s.operation?.status === "ready") {
+          if (["ready", "review_required"].includes(s.operation?.status)) {
             s.error = {
               code: e.code || "operation_failed",
               message: e.message,
             };
-            s.phase = "ready";
+            s.phase = s.operation.status;
             await save(s);
           } else await recordError(s, e);
           throw e;
@@ -672,6 +800,69 @@ export async function createNinjaManager({
         }
       });
     },
+    async prepareMigration() {
+      return mutate(async () => {
+        await recoverJournal();
+        const s = await read();
+        if (!s.current)
+          fail(
+            "not_installed",
+            "Model migration requires an accepted installation.",
+          );
+        const current = await receipt(s.current);
+        await migrationRegistration(current);
+        const id = randomUUID();
+        s.operation = {
+          id,
+          kind: "model_migration",
+          status: "preparing",
+          expectedCurrent: s.current,
+        };
+        s.phase = "preparing";
+        s.error = null;
+        await save(s);
+        try {
+          const kit = await retainedKit(current, id);
+          return await prepareCandidate(
+            s,
+            id,
+            kit,
+            current.release,
+            "model_migration",
+          );
+        } catch (e) {
+          s.operation = {
+            id,
+            kind: "model_migration",
+            status: "failed",
+            expectedCurrent: s.current,
+          };
+          await recordError(s, e);
+          throw e;
+        }
+      });
+    },
+    async reviewMigration(operationId) {
+      return mutate(async () => {
+        await recoverJournal();
+        const s = await read();
+        return validateMigration(s, operationId, s.operation?.reviewSha256);
+      });
+    },
+    async activateMigration(
+      operationId,
+      { reviewSha256, acknowledgeRestart } = {},
+    ) {
+      return mutate(async () => {
+        await recoverJournal();
+        const s = await read();
+        await validateMigration(s, operationId, reviewSha256);
+        return switchTo(s, operationId, {
+          acknowledgeRestart,
+          migration: { operationId, reviewSha256 },
+        });
+      });
+    },
     async activate(operationId, options) {
       return mutate(async () => {
         await recoverJournal();
@@ -715,6 +906,12 @@ export async function createNinjaManager({
         await supervisor.accept?.();
         return view();
       });
+    },
+    async reviewAbandonment() {
+      return mutate(async () => supervisor.reviewAbandonment());
+    },
+    async abandon({ reviewId } = {}) {
+      return mutate(async () => supervisor.abandon({ reviewId }));
     },
     async close() {
       return mutate(async () => {

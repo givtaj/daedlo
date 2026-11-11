@@ -12,6 +12,157 @@ const harness = join(
   dirname(fileURLToPath(import.meta.url)),
   "alpha4-upgrade-acceptance.mjs",
 );
+for (const [label, extra, baseline, candidate, pattern] of [
+  [
+    "wrong runtime baseline",
+    [],
+    "0.1.4-alpha.9",
+    "0.1.4-alpha.11",
+    /Alpha.11 upgrade mode requires the published alpha.10 runtime baseline/,
+  ],
+  [
+    "wrong candidate",
+    [],
+    "0.1.4-alpha.10",
+    "0.1.4-alpha.10",
+    /Alpha.11 upgrade mode requires exactly 0.1.4-alpha.11/,
+  ],
+  [
+    "duplicate mode",
+    ["--alpha11-upgrade"],
+    "0.1.4-alpha.10",
+    "0.1.4-alpha.11",
+    /Duplicate upgrade acceptance argument/,
+  ],
+  ...[
+    "--legacy-only",
+    "--local-candidate",
+    "--alpha6-upgrade",
+    "--alpha7-upgrade",
+    "--alpha8-upgrade",
+    "--alpha9-upgrade",
+    "--alpha10-upgrade",
+    "--alpha9-dependency-migration",
+  ].map((flag) => [
+    "conflict " + flag,
+    [flag],
+    "0.1.4-alpha.10",
+    "0.1.4-alpha.11",
+    /Alpha.11 upgrade mode cannot combine with another upgrade mode, dependency migration or legacy-only/,
+  ]),
+]) {
+  test(`mixed alpha.11 bootstrap rejects ${label} before acquiring resources`, async (t) => {
+    const root = await fs.mkdtemp(join(tmpdir(), "alpha11-mode-test-"));
+    t.after(() => fs.rm(root, { recursive: true, force: true }));
+    const output = join(root, "must-not-create");
+    await assert.rejects(
+      execute(process.execPath, [harness, "--alpha11-upgrade", ...extra], {
+        env: {
+          ...process.env,
+          DAEDLO_UPGRADE_BASELINE: baseline,
+          DAEDLO_UPGRADE_CANDIDATE_VERSION: candidate,
+          ALPHA4_LEGACY_KIT: join(root, "not-read"),
+          DAEDLO_UPGRADE_BASELINE_TOOLS_KIT: join(root, "not-read"),
+          ALPHA4_CANDIDATE_KIT: join(root, "not-read"),
+          ALPHA4_CANDIDATE_SHA256: "a".repeat(64),
+          ALPHA4_UPGRADE_OUTPUT: output,
+        },
+      }),
+      (error) => {
+        assert.match(error.stderr, pattern);
+        return true;
+      },
+    );
+    await assert.rejects(fs.stat(output), { code: "ENOENT" });
+  });
+}
+
+for (const production of [false, true])
+  test(`mixed alpha.11 ${production ? "production" : "local"} bootstrap requires a separately pinned alpha.9 tools kit`, async (t) => {
+    const root = await fs.mkdtemp(join(tmpdir(), "alpha11-tools-gate-"));
+    t.after(() => fs.rm(root, { recursive: true, force: true }));
+    const output = join(root, "must-not-create");
+    await assert.rejects(
+      execute(
+        process.execPath,
+        [
+          harness,
+          "--alpha11-upgrade",
+          ...(production ? ["--production-https"] : []),
+        ],
+        {
+          env: {
+            ...process.env,
+            DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.10",
+            DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.11",
+            ALPHA4_LEGACY_KIT: join(root, "runtime-not-read"),
+            DAEDLO_UPGRADE_BASELINE_TOOLS_KIT: "",
+            ALPHA4_CANDIDATE_KIT: join(root, "not-read"),
+            ALPHA4_CANDIDATE_SHA256: "a".repeat(64),
+            ALPHA4_UPGRADE_OUTPUT: output,
+          },
+        },
+      ),
+      (error) => {
+        assert.match(
+          error.stderr,
+          /Set DAEDLO_UPGRADE_BASELINE_TOOLS_KIT to the immutable alpha.9 tools kit/,
+        );
+        return true;
+      },
+    );
+    await assert.rejects(fs.stat(output), { code: "ENOENT" });
+  });
+
+test("mixed alpha.11 bootstrap pins alpha.10 runtime independently of alpha.9 tools and candidate", async (t) => {
+  const root = await fs.mkdtemp(join(tmpdir(), "alpha11-runtime-pin-"));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  const baseline = join(root, "baseline"),
+    output = join(root, "output");
+  await fs.mkdir(baseline);
+  await fs.writeFile(
+    join(baseline, "release.json"),
+    JSON.stringify({
+      version: "0.1.4-alpha.10",
+      source: { dirty: false },
+      archive: {
+        file: "daedlo-0.1.4-alpha.10.zip",
+        sha256: "a".repeat(64),
+        bytes: 0,
+      },
+    }),
+  );
+  await fs.writeFile(join(baseline, "daedlo-0.1.4-alpha.10.zip"), "");
+  await assert.rejects(
+    execute(process.execPath, [harness, "--alpha11-upgrade"], {
+      env: {
+        ...process.env,
+        DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.10",
+        DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.11",
+        ALPHA4_LEGACY_KIT: baseline,
+        ALPHA4_LEGACY_SHA256: "a".repeat(64),
+        DAEDLO_UPGRADE_BASELINE_TOOLS_KIT: join(root, "tools-not-read"),
+        ALPHA4_CANDIDATE_KIT: join(root, "candidate-not-read"),
+        ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
+        ALPHA4_UPGRADE_OUTPUT: output,
+      },
+    }),
+  );
+  const [run] = await fs.readdir(output);
+  const receipt = JSON.parse(
+    await fs.readFile(join(output, run, "result.json"), "utf8"),
+  );
+  assert.equal(receipt.status, "FAIL");
+  assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
+  assert.equal(receipt.alpha11Upgrade, true);
+  assert.equal(receipt.baselineRuntimeVersion, "0.1.4-alpha.10");
+  assert.equal(receipt.baselineToolsVersion, "0.1.4-alpha.9");
+  assert.equal(receipt.reusePublishedTools, false);
+  assert.equal(receipt.dependencyMigration, false);
+  assert.deepEqual(receipt.checks, []);
+  assert.deepEqual(await fs.readdir(join(output, run, "work")), []);
+});
+
 for (const [label, args, pattern] of [
   ["unknown mode", ["--production"], /Unsupported upgrade acceptance argument/],
   [

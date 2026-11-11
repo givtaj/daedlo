@@ -2,7 +2,7 @@
 
 Use the reusable Swagger integration when the user asks Daedlo to drive an API
 through Swagger UI. Read the selected source/package's compatibility table and
-API contracts. The alpha.10 candidate tools include this integration; alpha.7 does
+API contracts. The alpha.11 candidate tools include this integration; alpha.7 does
 not. Start at `integrations/swagger/README.md` in the selected verified tools or
 source checkout. Installed setup selects an explicit `runtimeRoot` and builds the
 shipped model against the exact extracted core crate in fresh output. Use the

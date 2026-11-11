@@ -16,6 +16,7 @@ const phases = new Set([
   "preparing",
   "validating",
   "ready",
+  "review_required",
   "activating",
   "updated",
   "failed",
@@ -68,10 +69,30 @@ const messages = {
     "The retained release bundle could not be verified. Preserve it for inspection and restore its exact verified bytes before refreshing. No newer release was downloaded.",
   stale_generation:
     "This view changed. Review the current status before trying again.",
+  stale_operation:
+    "The candidate no longer matches the selected installation. Prepare and review it again.",
   validation_failed:
     "The candidate did not pass project validation. Review the local verification record.",
   migration_required:
     "This project needs a reviewed migration before it can use the candidate.",
+  migration_review_required:
+    "Prepare and inspect this descriptor migration before activation.",
+  migration_review_changed:
+    "The reviewed migration identity changed. Inspect the candidate again before activation.",
+  migration_scope_changed:
+    "Descriptor migration cannot change other registration settings. Preserve the existing project, source and checks.",
+  migration_not_required:
+    "The descriptor is unchanged. Use ordinary source refresh.",
+  stale_recovery_review:
+    "This recovery review is stale or belongs to another owned session. Obtain a fresh review.",
+  stale_review:
+    "The review no longer matches this candidate or session. Obtain a fresh review before continuing.",
+  review_required:
+    "Inspect the exact migration or abandonment review before explicitly confirming it.",
+  recovery_unsafe:
+    "Fresh draft, pending-operation or lifecycle safety is unavailable. Owned resources remain retained.",
+  recovery_unavailable:
+    "This owned session cannot provide reviewed recovery. Preserve its evidence and ownership records.",
   compatibility_failed: "The candidate is incompatible with this project.",
   cleanup_incomplete:
     "Owned cleanup is incomplete. Recovery is required before restarting.",
@@ -433,12 +454,34 @@ export async function createNinjaServer({
       const input = await body(req, res);
       if (!input) return;
       if (req.url === "/native") {
+        const nativeMethods = {
+          stop: "stop",
+          refresh: "refresh",
+          restart: "restart",
+          "retry-evidence": "retryEvidence",
+          "migrate-prepare": "prepareMigration",
+          "migrate-review": "reviewMigration",
+          "migrate-activate": "activateMigration",
+          "abandon-review": "reviewAbandonment",
+          abandon: "abandon",
+        };
+        const extraKeys =
+          input.action === "migrate-activate"
+            ? ["operation", "reviewSha256"]
+            : input.action === "migrate-review"
+              ? ["operation"]
+              : input.action === "abandon"
+                ? ["reviewId"]
+                : [];
         if (
-          !["stop", "refresh", "restart", "retry-evidence"].includes(
-            input.action,
-          ) ||
-          Object.keys(input).sort().join(",") !== "action,generation" ||
-          !/^[a-f0-9]{32}$/.test(input.generation)
+          !Object.hasOwn(nativeMethods, input.action) ||
+          Object.keys(input).sort().join(",") !==
+            ["action", "generation", ...extraKeys].sort().join(",") ||
+          !/^[a-f0-9]{32}$/.test(input.generation) ||
+          (extraKeys.includes("operation") && !id(input.operation)) ||
+          (extraKeys.includes("reviewId") && !id(input.reviewId)) ||
+          (extraKeys.includes("reviewSha256") &&
+            !/^[a-f0-9]{64}$/.test(input.reviewSha256))
         ) {
           json(res, 400, { ok: false, error: "Invalid native action" });
           return;
@@ -452,15 +495,19 @@ export async function createNinjaServer({
         }
         busy = true;
         mutationEpoch++;
-        let failure;
+        let failure, actionResult;
         try {
           if (input.generation !== (await snapshot()).generation)
             throw Object.assign(Error(), { code: "stale_generation" });
           rotate();
-          const method =
-            input.action === "retry-evidence" ? "retryEvidence" : input.action;
-          const result = await lifecycle[method]();
-          if (result?.ok === false) throw result.error ?? result;
+          const method = nativeMethods[input.action];
+          if (typeof lifecycle[method] !== "function")
+            throw Object.assign(Error(), { code: "action_unavailable" });
+          actionResult = await lifecycle[method](
+            Object.fromEntries(extraKeys.map((key) => [key, input[key]])),
+          );
+          if (actionResult?.ok === false)
+            throw actionResult.error ?? actionResult;
         } catch (error) {
           failure = safeError(error);
         } finally {
@@ -468,7 +515,11 @@ export async function createNinjaServer({
           mutationEpoch++;
           rotate();
         }
-        if (!failure && input.action === "stop" && lifecycle.afterStop)
+        if (
+          !failure &&
+          ["stop", "abandon"].includes(input.action) &&
+          lifecycle.afterStop
+        )
           res.once("finish", () => {
             void Promise.resolve()
               .then(() => lifecycle.afterStop())
@@ -493,6 +544,13 @@ export async function createNinjaServer({
         }
         json(res, failure ? 409 : 200, {
           ...observed,
+          ...(!failure ? { action: input.action } : {}),
+          ...(!failure && input.action === "migrate-review"
+            ? { migration: actionResult }
+            : {}),
+          ...(!failure && ["abandon-review", "abandon"].includes(input.action)
+            ? { abandonment: actionResult }
+            : {}),
           ...(failure ? { ok: false, requestError: failure } : {}),
         });
         return;

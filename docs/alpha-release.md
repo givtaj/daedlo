@@ -1,4 +1,29 @@
-# Daedlo alpha delivery — 9 November 2026
+# Daedlo alpha delivery — 11 November 2026
+
+Release candidate: **0.1.4-alpha.11**. Publication, exact artifact identities and
+measured acceptance belong in [verification](verification.md).
+
+This release adds explicit reviewed abandonment for an owned session with failed
+model observation, and reviewed model descriptor migration in the existing store.
+Recovery requires fresh independent draft/pending-effect safety, preserves the
+original report and closes only owned resources. Migration binds the complete
+old/new descriptors and installation identities before activation, retaining
+reports and the previous installation for rollback.
+
+The new commands are delivered in **release tools**. Existing alpha.9 tools with
+alpha.10 runtime require a separately verified tools bootstrap and safe stop of
+the authenticated older owner. A runtime-only update does not add these commands;
+new tools cannot retrofit a running older controller or bypass unknown safety.
+The same registration, configuration, store, publisher trust and checkpoint must
+be retained. See [native setup](native-setup.md), [abandonment](managed-abandonment.md)
+and [model migration](model-migration.md).
+
+The assisted macOS arm64 scope remains. This release does not change the
+Playwright dependency closure or manager contract. Synthetic release acceptance
+and customer incident recovery are separate; application-specific readback and
+customer acceptance remain customer-side.
+
+# Historical alpha.9 delivery — 9 November 2026
 
 Release kit: **0.1.4-alpha.9**. Current publication and production acceptance
 status are recorded in [verification](verification.md). Frozen source `30d2a98`

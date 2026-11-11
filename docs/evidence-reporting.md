@@ -69,6 +69,12 @@ record containing the original `runId`, observation time, verification method an
 conclusion. Keep the original uncertain report unchanged. A later observation is
 not a retroactive rewrite of what was known at completion.
 
+If the session is later [explicitly abandoned](managed-abandonment.md), link that
+separate verification record to both the original `runId` and the abandonment
+review ID. Keep its readback time, method and conclusion separate from cleanup
+evidence. Neither a completed cleanup nor a linked later readback rewrites the
+original report or changes an earlier `uncertain` effect to `saved`.
+
 ## Capture a completed run, not a periodically sampled session
 
 After the action's promise settles, immediately capture:

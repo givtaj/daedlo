@@ -1,8 +1,11 @@
 import { pathToFileURL } from "node:url";
+import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { dirname, join } from "node:path";
-import { ninjaWrite } from "./ninja-manager.mjs";
+import { ninjaDirectory, ninjaWrite } from "./ninja-manager.mjs";
 import { verifyBrowserIdentity } from "./ninja-installation.mjs";
 import { createNinjaEvidence } from "./ninja-evidence.mjs";
+import { createRecoveryArchive } from "./ninja-recovery.mjs";
 
 import {
   safeFrontend,
@@ -51,7 +54,11 @@ let installation,
   quiesced = false,
   marker,
   token,
-  closing;
+  closing,
+  handleClosed = false,
+  managedCalls = 0,
+  recoveryReview = null,
+  recoveryArchive;
 function error(code, message) {
   const e = Error(message);
   e.code = code;
@@ -125,12 +132,13 @@ async function status() {
     cleanupPending:
       resources?.snapshot().some((r) => r.status === "cleanup_failed") ||
       (evidence?.status().failed ?? 0) > 0 ||
-      (evidence?.status().pending ?? 0) > 0,
+      (evidence?.status().pending ?? 0) > 0 ||
+      (recoveryArchive?.status().pending ?? 0) > 0,
     viewerUrl: handle?.viewerUrl || null,
     evidence: evidence?.status() ?? null,
   };
 }
-async function close() {
+async function close({ deferMarker = false } = {}) {
   if (closing) return closing;
   closing = (async () => {
     ready = false;
@@ -139,7 +147,10 @@ async function close() {
     progress("cleanup");
     try {
       await resources?.close();
-      await handle?.close?.();
+      if (!handleClosed) {
+        await handle?.close?.();
+        handleClosed = true;
+      }
     } catch {
       progress("failed", {
         cleanup: "incomplete",
@@ -151,12 +162,15 @@ async function close() {
       );
     }
     progress(failed ? "failed" : "stopped", { cleanup: "complete" });
-    if (marker)
+    if (marker && !deferMarker)
       await ninjaWrite(marker, {
         pid: process.pid,
         token,
         status: "closed",
         installationId: installation?.id,
+        ...(recoveryReview?.completed
+          ? { recoveryId: recoveryReview.public.id }
+          : {}),
       });
   })().finally(() => {
     closing = null;
@@ -175,11 +189,260 @@ async function releasePause() {
     throw error;
   }
 }
+
+// This boundary deliberately uses the existing independent draftState contract.
+// A disconnected model alone cannot supply application safety; absent or stale
+// draft/pending-effect measurement still refuses recovery.
+async function recoverySnapshot() {
+  try {
+    return await session.snapshot();
+  } catch {
+    error(
+      "observation_failed",
+      "Current local run lifecycle cannot be established; retain the owner.",
+    );
+  }
+}
+async function recoverySafety() {
+  const current = await recoverySnapshot();
+  if (
+    current.busy !== false ||
+    current.activeRun != null ||
+    current.finalization != null ||
+    managedCalls !== 0
+  )
+    error("busy", "Active work or finalization blocks abandonment.");
+  if (current.paused !== true)
+    error("busy", "The retained recovery pause is no longer established.");
+  if (targetPage && !targetPage.isClosed()) {
+    let matches = false;
+    try {
+      matches =
+        !frontend?.targetOrigin ||
+        new URL(targetPage.url()).origin === frontend.targetOrigin;
+    } catch {}
+    if (!matches)
+      error(
+        "target_mismatch",
+        "The controlled page no longer matches this frontend.",
+      );
+  }
+  await evidence.drain();
+  evidence.assertCanRun();
+  const after = await recoverySnapshot();
+  if (
+    after.busy !== false ||
+    after.activeRun != null ||
+    after.finalization != null ||
+    managedCalls !== 0 ||
+    after.paused !== true
+  )
+    error("busy", "Work changed while checking the recovery boundary.");
+  let dirty;
+  try {
+    dirty = await handle.draftState();
+  } catch {
+    error(
+      "draft_unknown",
+      "Fresh independent draft and pending-effect safety is unavailable.",
+    );
+  }
+  if (dirty !== false)
+    error(
+      dirty === true ? "dirty_draft" : "draft_unknown",
+      "Fresh independent draft and pending-effect safety blocks abandonment.",
+    );
+  if (managedCalls !== 0)
+    error("busy", "Work changed during independent safety measurement.");
+  let report;
+  try {
+    report = session.report();
+  } catch {}
+  if (report?.format !== "browser-driver-report/1")
+    error("evidence_incomplete", "The retained session report is unavailable.");
+  return { snapshot: after, report };
+}
+function recoveryIdentity(snapshot, report) {
+  return {
+    runId: snapshot.runId ?? report.runId ?? null,
+    lastResult: report.lastResult ?? null,
+    completedRunIds: report.completedRunIds ?? null,
+  };
+}
+async function recoveryRecord(suffix, value) {
+  try {
+    await recoveryArchive.write(
+      `${recoveryReview.public.id}.${suffix}.json`,
+      value,
+    );
+  } catch {
+    error(
+      "evidence_incomplete",
+      "Recovery evidence could not be saved; retain this owner and retry the same review.",
+    );
+  }
+}
+async function reviewAbandonment() {
+  if (!ready || !accepted || !session)
+    error("not_ready", "Recovery review requires this accepted owned session.");
+  if (recoveryReview?.closingStarted)
+    error(
+      "cleanup_incomplete",
+      "Retry the retained recovery review to finish cleanup.",
+    );
+  // Gate new proxy actions before any asynchronous measurement. Do not claim a
+  // user's pause: first inspect local lifecycle state while only our gate is set.
+  const previousGate = quiesced;
+  quiesced = true;
+  try {
+    await recoveryArchive.retry();
+  } catch {
+    quiesced = previousGate;
+    error(
+      "evidence_incomplete",
+      "Retained recovery evidence requires repair before a new review.",
+    );
+  }
+  let current;
+  try {
+    current = await recoverySnapshot();
+    if (
+      current.busy !== false ||
+      current.activeRun != null ||
+      current.finalization != null ||
+      managedCalls !== 0 ||
+      (current.paused !== false && !previousGate)
+    )
+      error(
+        "busy",
+        "Active work, finalization or a user pause blocks abandonment.",
+      );
+  } catch (failure) {
+    quiesced = previousGate;
+    throw failure;
+  }
+  session.pause();
+  const measured = await recoverySafety();
+  const id = randomUUID();
+  const review = {
+    schemaVersion: 1,
+    kind: "daedlo-abandonment-review",
+    id,
+    recordedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+    installation: {
+      id: installation.id,
+      version: installation.version,
+      sourceSha256: installation.sourceSha256,
+      model: installation.model,
+    },
+    observation: safeObservation({
+      status: measured.snapshot.connected === true ? "available" : "failed",
+      error: { code: measured.snapshot.error_code },
+    }),
+    safety: {
+      independentDraftAndPendingEffects: "safe",
+      idle: true,
+      evidence: "complete",
+    },
+    originalReport: structuredClone(measured.report),
+    resources: resources.snapshot(),
+  };
+  recoveryReview = {
+    public: review,
+    token,
+    identity: recoveryIdentity(measured.snapshot, measured.report),
+    closingStarted: false,
+  };
+  await ninjaDirectory(join(dirname(marker), "recovery"), { create: true });
+  await recoveryRecord("review", review);
+  return structuredClone(review);
+}
+async function abandon(reviewId) {
+  const retained = recoveryReview;
+  if (!retained || reviewId !== retained.public.id || retained.token !== token)
+    error(
+      "stale_recovery_review",
+      "Select the exact recovery review for this owned session.",
+    );
+  if (!retained.closingStarted) {
+    if (Date.parse(retained.public.expiresAt) < Date.now())
+      error(
+        "stale_recovery_review",
+        "The recovery review expired; obtain a fresh review.",
+      );
+    const measured = await recoverySafety();
+    if (
+      !isDeepStrictEqual(
+        recoveryIdentity(measured.snapshot, measured.report),
+        retained.identity,
+      )
+    )
+      error(
+        "stale_recovery_review",
+        "Run evidence changed since review; obtain a fresh review.",
+      );
+    retained.beforeClose ??= {
+      schemaVersion: 1,
+      kind: "daedlo-abandonment",
+      reviewId,
+      recordedAt: new Date().toISOString(),
+      disposition: "abandoned",
+      cleanup: "pending",
+      originalReport: retained.public.originalReport,
+      resources: resources.snapshot(),
+    };
+    await recoveryRecord("before-close", retained.beforeClose);
+    // Storage took time. Recheck application safety after it and before draining.
+    const final = await recoverySafety();
+    if (
+      !isDeepStrictEqual(
+        recoveryIdentity(final.snapshot, final.report),
+        retained.identity,
+      )
+    )
+      error(
+        "stale_recovery_review",
+        "Run evidence changed before cleanup; obtain a fresh review.",
+      );
+    retained.closingStarted = true;
+  }
+  // After draining starts some observations are necessarily destroyed. Retain
+  // this proof and retry only registered incomplete cleanup/receipt steps.
+  await close({ deferMarker: true });
+  retained.completed ??= {
+    schemaVersion: 1,
+    kind: "daedlo-abandonment",
+    reviewId,
+    recordedAt: new Date().toISOString(),
+    disposition: "abandoned",
+    cleanup: "complete",
+    originalReport: retained.public.originalReport,
+    resources: resources.snapshot(),
+  };
+  await recoveryRecord("complete", retained.completed);
+  await ninjaWrite(marker, {
+    pid: process.pid,
+    token,
+    status: "closed",
+    installationId: installation.id,
+    recoveryId: reviewId,
+  });
+  return {
+    closed: true,
+    abandoned: true,
+    reviewId,
+    report: retained.public.originalReport,
+    recovery: retained.completed,
+  };
+}
+
 async function perform(m) {
   if (m.action === "start") {
     if (installation)
       error("already_started", "Managed launcher already started.");
     ({ installation, marker, token, frontend } = m);
+    recoveryArchive = createRecoveryArchive(join(dirname(marker), "recovery"));
     if (frontend)
       frontend = safeFrontend({ ...frontend, model: installation.model });
     progress("bootstrap");
@@ -287,14 +550,24 @@ async function perform(m) {
               const invoke = () => {
                 if (!runMethods.has(key)) return value.apply(target, args);
                 evidence.assertCanRun();
-                return Promise.resolve(value.apply(target, args)).then(
-                  async (result) => {
+                managedCalls++;
+                let action;
+                try {
+                  action = value.apply(target, args);
+                } catch (failure) {
+                  managedCalls--;
+                  throw failure;
+                }
+                return Promise.resolve(action)
+                  .then(async (result) => {
                     await evidence.retain(result, () =>
                       target.report({ runId: result.runId }),
                     );
                     return result;
-                  },
-                );
+                  })
+                  .finally(() => {
+                    managedCalls--;
+                  });
               };
               if (!effectMethods.has(key)) return invoke();
               const assertTarget = () => {
@@ -453,6 +726,8 @@ async function perform(m) {
       throw e;
     }
   }
+  if (m.action === "reviewAbandonment") return reviewAbandonment();
+  if (m.action === "abandon") return abandon(m.reviewId);
   if (m.action === "status") return status();
   if (m.action === "retryEvidence") return evidence?.retry() ?? null;
   if (m.action === "accept") {
@@ -556,7 +831,7 @@ process.on("message", (m) => {
     try {
       const result = await perform(m);
       send({ id: m.id, result }, () => {
-        if (m.action === "close") process.disconnect?.();
+        if (["close", "abandon"].includes(m.action)) process.disconnect?.();
       });
     } catch (e) {
       send({

@@ -157,6 +157,16 @@ const messages = {
     "Run setup with a reviewed version before starting this frontend.",
   stale_source:
     "Authored source changed. Refresh and validate it before starting.",
+  migration_review_required:
+    "Prepare and inspect this descriptor migration before activation.",
+  migration_review_changed:
+    "The reviewed migration identity changed. Inspect the candidate again before activation.",
+  migration_scope_changed:
+    "Descriptor migration cannot change other registration settings.",
+  migration_not_required:
+    "The descriptor is unchanged. Use ordinary source refresh.",
+  stale_operation:
+    "The candidate no longer matches the selected installation. Prepare and review it again.",
   native_failed:
     "Startup failed. Review the launcher locally; no readiness was established.",
 };

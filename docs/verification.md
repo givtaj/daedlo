@@ -1,5 +1,91 @@
 # Verification record
 
+## Alpha.11 release preparation — 2026-11-11
+
+**IN PROGRESS — not published.** The reviewed recovery/model-migration source
+below is being packaged as `0.1.4-alpha.11`; existing alpha.10 public bytes remain
+immutable. Current publisher fixes from main `16d2436` are integrated without
+changing the new recovery or migration contracts. Updated portable guidance
+requires a separate tools bootstrap and preserves the older owner's safety guards.
+
+The release's new upgrade harness explicitly starts with published alpha.9 tools
+and alpha.10 runtime/engine, then checks the alpha.11 tools bootstrap, runtime
+upgrade, restart, runtime rollback and retained alpha.9-tools fallback. Its 95
+mode/helper tests pass; failing new-mode assertions were recorded first. On macOS
+arm64 with Node 24.22.2 and Rust 1.96.0, all 314 runtime/container/Compose contract
+tests and the workspace Rust tests pass. These are source checks, not an installed
+upgrade result. Exact alpha.11 package/browser acceptance, hosted CI, production
+publication and the public HTTPS upgrade drill remain **NOT RUN** at this checkpoint.
+
+
+## Managed abandonment and reviewed model migration — 2026-11-10
+
+**Local source candidate; not published.** Ordinary Stop and Refresh retain their
+existing guards. Explicit abandonment reviews use current runtime lifecycle and
+fresh independent draft/pending-effect safety even when model observation fails.
+Immutable review, pre-cleanup and completion records preserve the original report;
+cleanup only drains owned resources and retains failed cleanup/evidence handles.
+Explicit model migration binds the full old/new descriptor, source, registration,
+installation receipts and generation to its review SHA256 before guarded activation.
+The previous installation, reports and rollback history remain retained.
+
+Meaningful failures were recorded before implementation: unsupported abandonment
+at the real managed-child boundary, rejected descriptor migration, native command
+dispatch, missing portable inventory and missing installed-browser gate dispatch.
+A real migration-browser run also exposed an ordinary Restart refusal incorrectly
+retaining a controller; preflight now refuses before publishing that controller.
+
+On macOS arm64, Node 24.22.2 and Chromium 158.0.8127.18, focused recovery, migration,
+native routing, package inventory and release-dispatch regressions pass. All 239
+runtime tests and 29 Rust checks pass (one existing ignored Rust check remains).
+Source syntax, types and formatting pass. Independent review found and verified
+fixes for stale recovery confirmation reuse, retained temporary-file cleanup,
+final draft-measurement ordering and native refusal diagnostics.
+
+Real Chromium source acceptance passed recovery with an uncertain saved result,
+unchanged canonical report bytes, refusal of unknown safety, zero replay, owned
+cleanup and attached-application preservation. Real installer/native migration
+against the retained verified alpha.10 bundle passed a Rust model-version and
+descriptor-pin change, saved readback, unchanged prior reports and visible rollback
+to the original model in the same store. These use independent synthetic fixtures.
+
+The full release/alpha contract run passed 722 tests; its one opt-in exact-bundle
+migration test is exercised separately, with the source-tools run described above.
+**Exact installed-package verification PASS** from clean source
+`84dcf651b93d276ed7f695216ace3eccdddf313f`, using Node 24.22.2, Rust 1.96.0 and
+Chromium 158.0.8127.18 on macOS arm64. The fresh installed consumer passed 147
+checks in 17 extended groups, eight browser groups, frontend/recipe viewers and
+all four native gates: startup, observation recovery, reviewed abandonment and
+reviewed model migration. Each native gate enforces complete TAP totals with no
+skips, exact installed identities and passing cleanup. The model migration gate
+compiled both actual Rust model versions, exercised descriptor-pin changes and
+rejected ordinary/wrong-review activation before a real save and visible rollback.
+Screenshots were inspected; original reports stayed unchanged and attached apps
+survived. The existing update UI's two browser checks also passed.
+
+| Frozen candidate artifact | SHA-256 |
+| --- | --- |
+| Bundle manifest | `91debad9b5296d6f5fe9773e3706de9ecd486e9a5fe126bca62f09e506e338ce` |
+| Portable tools archive | `5c3bf4586e49f6dbba23097716d0c45e70de999614406006082849109857f116` |
+
+The candidate retains the engineering version string `0.1.4-alpha.10`; its bytes
+are different from the published release and must not be represented as that
+release. Both new installed-browser gates are now part of the ordinary release
+acceptance harness. Hosted CI and Linux/Windows execution are **NOT RUN** for this
+candidate. The subsequent documentation-only verification record does not rebuild
+or change the frozen artifacts.
+
+No release, deployment, existing customer incident
+recovery, customer business acceptance or normal Roots dependency promotion is
+claimed. New tools cannot hot-repair an older running controller; unavailable
+independent draft or pending-effect safety still blocks abandonment. See
+[abandonment](managed-abandonment.md) and [model migration](model-migration.md).
+
+Private red/green logs and browser receipts are retained under
+`artifacts/support-recovery/`; the exact installed receipt is
+`artifacts/support-recovery/installed-acceptance/results.json`. They are not
+public customer evidence.
+
 ## Publisher CLI correction — 2026-11-10
 
 **FAIL — production preparation; no upload or activation.** After

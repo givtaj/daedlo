@@ -15,6 +15,9 @@
 // runtime. This is an assisted dependency migration, not an automatic update.
 // --alpha10-upgrade keeps the immutable alpha.9 manager tools through the full
 // compatible alpha.10 runtime lifecycle. No dependency migration is allowed.
+// --alpha11-upgrade starts from the customer's mixed published tuple: alpha.9
+// tools with alpha.10 runtime/engine, then bootstraps alpha.11 tools before the
+// runtime upgrade. It verifies old-tools fallback after complete-slot rollback.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
@@ -48,6 +51,7 @@ for (const arg of args)
       "--alpha8-upgrade",
       "--alpha9-upgrade",
       "--alpha10-upgrade",
+      "--alpha11-upgrade",
       "--alpha9-dependency-migration",
     ].includes(arg),
     "Unsupported upgrade acceptance argument",
@@ -65,7 +69,22 @@ const alpha7Upgrade = args.includes("--alpha7-upgrade");
 const alpha8Upgrade = args.includes("--alpha8-upgrade");
 const alpha9Upgrade = args.includes("--alpha9-upgrade");
 const alpha10Upgrade = args.includes("--alpha10-upgrade");
+const alpha11Upgrade = args.includes("--alpha11-upgrade");
 const dependencyMigration = args.includes("--alpha9-dependency-migration");
+assert.ok(
+  !(
+    alpha11Upgrade &&
+    (localCandidate ||
+      alpha6Upgrade ||
+      alpha7Upgrade ||
+      alpha8Upgrade ||
+      alpha9Upgrade ||
+      alpha10Upgrade ||
+      dependencyMigration ||
+      legacyOnly)
+  ),
+  "Alpha.11 upgrade mode cannot combine with another upgrade mode, dependency migration or legacy-only",
+);
 assert.ok(
   !(
     alpha10Upgrade &&
@@ -139,6 +158,8 @@ const baselinePins = {
     "cb56901e85572c73dbbeb2c2566c97db31608fa15dd861704b674ef84ba1fd5e",
   "0.1.4-alpha.9":
     "81b252cc4853278360e893713c778676b492df5d60afe4f19d7880484327f4b2",
+  "0.1.4-alpha.10":
+    "543ab597a1c5d30af7d9b12cefa6dec8a01bed2e985426056f5fed57ea8a0c29",
 };
 assert.ok(
   Object.hasOwn(baselinePins, baselineVersion),
@@ -146,6 +167,13 @@ assert.ok(
 );
 const LEGACY_SHA = baselinePins[baselineVersion];
 const legacyNames = baselineVersion === "0.1.4-alpha.3";
+const baselineToolsVersion = alpha11Upgrade ? "0.1.4-alpha.9" : baselineVersion;
+if (alpha11Upgrade)
+  assert.equal(
+    baselineVersion,
+    "0.1.4-alpha.10",
+    "Alpha.11 upgrade mode requires the published alpha.10 runtime baseline",
+  );
 if (alpha10Upgrade)
   assert.equal(
     baselineVersion,
@@ -176,12 +204,22 @@ assert.ok(
   baselineVersion !== "0.1.4-alpha.9" || alpha10Upgrade,
   "Published alpha.9 baseline requires explicit alpha.10 upgrade mode",
 );
+assert.ok(
+  baselineVersion !== "0.1.4-alpha.10" || alpha11Upgrade,
+  "Published alpha.10 baseline requires explicit alpha.11 upgrade mode",
+);
 const candidateVersion =
   process.env.DAEDLO_UPGRADE_CANDIDATE_VERSION ??
   JSON.parse(
     await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
   ).version;
-if (alpha10Upgrade) {
+if (alpha11Upgrade) {
+  assert.equal(
+    candidateVersion,
+    "0.1.4-alpha.11",
+    "Alpha.11 upgrade mode requires exactly 0.1.4-alpha.11",
+  );
+} else if (alpha10Upgrade) {
   assert.equal(
     candidateVersion,
     "0.1.4-alpha.10",
@@ -234,6 +272,11 @@ assert.ok(
   process.env.ALPHA4_LEGACY_KIT,
   "Set ALPHA4_LEGACY_KIT to the selected immutable baseline public kit directory",
 );
+if (alpha11Upgrade)
+  assert.ok(
+    process.env.DAEDLO_UPGRADE_BASELINE_TOOLS_KIT,
+    "Set DAEDLO_UPGRADE_BASELINE_TOOLS_KIT to the immutable alpha.9 tools kit",
+  );
 if (!legacyOnly) {
   assert.ok(
     process.env.ALPHA4_CANDIDATE_KIT,
@@ -288,11 +331,16 @@ const result = {
   alpha8Upgrade,
   alpha9Upgrade,
   alpha10Upgrade,
+  alpha11Upgrade,
+  baselineRuntimeVersion: baselineVersion,
+  baselineToolsVersion,
   dependencyMigration,
   reusePublishedTools,
   toolsPolicy: reusePublishedTools
     ? `Keep exact published ${baselineVersion.replace("0.1.4-", "")} tools for baseline, upgrade, restart and rollback`
-    : "Verify candidate tools bootstrap before upgrading the accepted installation",
+    : alpha11Upgrade
+      ? "Run published alpha.10 runtime with exact alpha.9 tools, bootstrap alpha.11 tools, then upgrade; verify alpha.9 tools fallback after rollback"
+      : "Verify candidate tools bootstrap before upgrading the accepted installation",
   ...(productionHttps
     ? {
         feed: {
@@ -714,9 +762,26 @@ try {
     source: legacy.metadata.source,
     manifestSha256: legacy.metadata.bundle.manifestSha256,
   };
-  const oldTools = await installTools(legacy, join(work, "legacy-tools"));
+  const legacyToolsKit = alpha11Upgrade
+    ? await kit(
+        process.env.DAEDLO_UPGRADE_BASELINE_TOOLS_KIT,
+        baselineToolsVersion,
+        baselinePins[baselineToolsVersion],
+        join(work, "legacy-tools-kit"),
+      )
+    : legacy;
+  const oldTools = await installTools(
+    legacyToolsKit,
+    join(work, "legacy-tools"),
+  );
   const old = await toolApi(oldTools);
-  if (alpha10Upgrade) {
+  result.baselineTools = {
+    version: baselineToolsVersion,
+    kitSha256: legacyToolsKit.expectedSha,
+    source: legacyToolsKit.toolsReceipt.source,
+    archive: legacyToolsKit.toolsReceipt.archive,
+  };
+  if (alpha10Upgrade || alpha11Upgrade) {
     assert.equal(
       old.NINJA_CONTRACTS.manager,
       2,
@@ -990,6 +1055,18 @@ try {
   }
 
   await open(old);
+  if (alpha11Upgrade) {
+    assert.equal(
+      typeof active.manager.prepareMigration,
+      "undefined",
+      "Published alpha.9 tools do not gain new migration support from runtime updates",
+    );
+    assert.equal(
+      typeof active.supervisor.reviewAbandonment,
+      "undefined",
+      "Published alpha.9 tools do not gain new recovery support from runtime updates",
+    );
+  }
   await active.manager.check();
   let prepared = await preparePinned(legacy);
   assert.equal(prepared.operation.status, "ready");
@@ -1002,7 +1079,7 @@ try {
   assert.equal(baselineReceipt.release.archiveSha256, LEGACY_SHA);
   await managedFlow("baseline-old-tools", { durable: !legacyNames });
   await record(
-    `Immutable ${baselineVersion} installed by its exact tools; real negative/save flow passed`,
+    `Immutable ${baselineVersion} installed by exact ${baselineToolsVersion} tools; real negative/save flow passed`,
     {
       installationId: baselineReceipt.id,
       toolsFiles: Object.keys(oldTools.inventory).length,
@@ -1086,6 +1163,13 @@ try {
     const ownerBytes = await fs.readFile(
       join(config.store, ".ninja-project.json"),
     );
+    const retainedEvidence = alpha11Upgrade
+      ? {
+          reports: await inventory(join(config.store, "reports")),
+          runs: await inventory(join(config.store, "supervisor/run-reports")),
+          history: await inventory(join(config.store, "history")),
+        }
+      : null;
     // Compatible upgrade modes prove the already published client can manage
     // the new runtime bytes; no candidate tools are installed or used.
     const newTools = reusePublishedTools
@@ -1099,6 +1183,24 @@ try {
       reusedPublishedTools: reusePublishedTools,
     };
     await open(newer);
+    if (alpha11Upgrade) {
+      for (const method of [
+        "prepareMigration",
+        "reviewMigration",
+        "activateMigration",
+      ])
+        assert.equal(
+          typeof active.manager[method],
+          "function",
+          "New tools must provide explicit reviewed model migration",
+        );
+      for (const method of ["reviewAbandonment", "abandon"])
+        assert.equal(
+          typeof active.supervisor[method],
+          "function",
+          "New tools must provide explicit reviewed managed recovery",
+        );
+    }
     assert.deepEqual((await readJson(statePath)).checkpoint, checkpoint);
     assert.deepEqual(
       await fs.readFile(join(config.store, ".ninja-project.json")),
@@ -1271,6 +1373,35 @@ try {
       baselineReceipt.id,
     );
     await closeManager();
+    if (alpha11Upgrade) {
+      const beforeToolsRollback = await notes(application.url);
+      await open(old);
+      assert.deepEqual(
+        (await readJson(statePath)).checkpoint,
+        acceptedCheckpoint,
+      );
+      await active.manager.start();
+      assert.equal((await currentReceipt()).id, baselineReceipt.id);
+      assert.deepEqual(await notes(application.url), beforeToolsRollback);
+      await managedFlow("rollback-old-alpha9-tools");
+      await closeManager();
+      await record(
+        "Retained published alpha.9 tools reopen the complete alpha.10 rollback slot and pass a real flow without resetting trust or replaying prior writes",
+      );
+      for (const [name, directory] of [
+        ["reports", "reports"],
+        ["runs", "supervisor/run-reports"],
+        ["history", "history"],
+      ]) {
+        const after = await inventory(join(config.store, directory));
+        for (const [file, digest] of Object.entries(retainedEvidence[name]))
+          assert.equal(
+            after[file],
+            digest,
+            "Tools bootstrap and rollback preserve every prior evidence/history byte",
+          );
+      }
+    }
     assert.deepEqual(
       await newer.snapshotProject(registration),
       expectedAuthored,

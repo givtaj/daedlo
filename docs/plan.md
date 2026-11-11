@@ -1,5 +1,17 @@
 # Implementation plan
 
+## Explicit native recovery and model migration — 2026-11-10
+
+The local candidate adds reviewed abandonment of an idle, independently safe
+owned session and explicit review/activation of changed model descriptors in the
+same installation store. Ordinary Stop and Refresh guards remain in place.
+Source checks and synthetic browser verification are recorded in
+[verification](verification.md#managed-abandonment-and-reviewed-model-migration--2026-11-10).
+Exact candidate-tools acceptance passed, including both new browser flows and
+owned cleanup. The implementation is complete locally with review and frozen
+artifact identities. Hosted CI, release publication and customer application
+acceptance remain separate; the prepared support reply does not claim delivery.
+
 ## Local Compose service candidate — 2026-11-10
 
 The owner requested Daedlo as a service such as `app-daedlo` alongside

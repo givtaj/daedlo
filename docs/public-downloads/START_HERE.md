@@ -83,6 +83,38 @@ Do not bypass a digest or compatibility failure. A successful check establishes
 package integrity and measured toolchain compatibility, not your application's
 behavior. Keep the verified kit in a durable location for installation and rebuilds.
 
+## Existing managed installations: alpha.11 tools bootstrap
+
+The alpha.11 recovery and model-migration commands require a separate **tools
+bootstrap**. A runtime-only update does not add these commands. Install this kit's
+verified tools into the fresh directory above and retain the old tools, browser
+cache, accepted installations and original reports.
+
+Safely stop the authenticated old owner using its original tools and unchanged
+configuration before starting replacement tools. Preserve the same configuration,
+registration, store, publisher trust and checkpoint, plus authored source and
+application data. New tools cannot repair an already running older controller;
+unknown draft or pending-effect safety remains a blocker. Do not reset trust,
+delete ownership records or replay a save to make an upgrade proceed.
+
+From this extracted kit root, use the new native entrypoint with your existing
+absolute configuration path (replace `/same/absolute/FILE`):
+
+```console
+node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs doctor --config /same/absolute/FILE
+node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs start --config /same/absolute/FILE
+node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs status --config /same/absolute/FILE
+```
+
+Verify the accepted existing slot with the new tools, then use its returned update
+URL for **Check for updates → Install update → Restart Daedlo** in your isolated
+fixture. Preserve the previous slot for **Revert update**. Alpha.11 retains
+alpha.10's dependency closure and manager contract; this upgrade requires no
+third-party dependency migration. Review the installed `docs/native-setup.md`,
+`docs/managed-abandonment.md` and `docs/model-migration.md` before using the new
+operations. A reviewed model migration uses the accepted exact runtime and the
+same store; it does not automatically download a runtime update.
+
 ## Existing alpha.3 managed installations
 
 Alpha.3 tools cannot install renamed alpha.4 kits. The signed feed declares
@@ -108,8 +140,6 @@ for the supported OpenAPI 3.0/3.1/3.2 JSON subset. Use that flow instead of writ
 a customer state model or registering a native manager. Managed Swagger startup is not included. Configure the actual docs/schema URLs and permitted operations;
 application-specific persistence evidence still belongs to the project.
 
-Alpha.10 retains alpha.9's dependency closure and manager contract. Existing
-alpha.9 managed integrations can use the normal candidate, Restart and Revert flow.
 Standalone Swagger upgrades require the matching runtime, core and tools plus a
 rebuilt model; follow the integration guide and retain the accepted installation.
 

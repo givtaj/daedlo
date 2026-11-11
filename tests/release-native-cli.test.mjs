@@ -11,7 +11,197 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { nativeCommand } from "../scripts/release/native.mjs";
+import { nativeCommand, runNativeCli } from "../scripts/release/native.mjs";
+
+test("native migration prepares and reviews a stopped project without starting its old model", async (t) => {
+  const f = await fixture(t);
+  const review = {
+    operationId: "migration-1",
+    reviewSha256: "a".repeat(64),
+    before: { version: "1" },
+    after: { version: "2" },
+  };
+  f.manager.prepareMigration = async () => {
+    f.calls.push("migration-prepare");
+    return { operation: { id: "migration-1", status: "review_required" } };
+  };
+  f.manager.reviewMigration = async (id) => {
+    assert.equal(id, "migration-1");
+    f.calls.push("migration-review");
+    return review;
+  };
+  const prepared = await nativeCommand("migrate-prepare", f.configPath, f.deps);
+  assert.equal(prepared.result.operation.status, "review_required");
+  const inspected = await nativeCommand("migrate-review", f.configPath, {
+    ...f.deps,
+    operation: "migration-1",
+  });
+  assert.deepEqual(inspected.result.migration, review);
+  assert.equal(f.calls.includes("start"), false);
+  assert.equal(f.calls.includes("activate"), false);
+});
+
+test("native migration transports the exact reviewed identity to its existing owner", async (t) => {
+  const f = await fixture(t);
+  const first = await nativeCommand("start", f.configPath, f.deps);
+  const review = {
+    operationId: "migration-2",
+    reviewSha256: "b".repeat(64),
+    before: { version: "1" },
+    after: { version: "2" },
+  };
+  f.manager.prepareMigration = async () => ({
+    operation: { id: "migration-2", status: "review_required" },
+  });
+  f.manager.reviewMigration = async (id) => {
+    assert.equal(id, "migration-2");
+    return review;
+  };
+  let activation;
+  f.manager.activateMigration = async (id, options) => {
+    activation = { id, options };
+  };
+  await nativeCommand("migrate-prepare", f.configPath, f.deps);
+  const inspected = await nativeCommand("migrate-review", f.configPath, {
+    ...f.deps,
+    operation: "migration-2",
+  });
+  assert.deepEqual(inspected.result.migration, review);
+  await nativeCommand("migrate-activate", f.configPath, {
+    ...f.deps,
+    operation: "migration-2",
+    reviewSha256: review.reviewSha256,
+  });
+  assert.deepEqual(activation, {
+    id: "migration-2",
+    options: { reviewSha256: review.reviewSha256, acknowledgeRestart: true },
+  });
+  f.manager.activateMigration = async () => {
+    throw Object.assign(Error("private review details"), {
+      code: "migration_review_required",
+    });
+  };
+  await assert.rejects(
+    nativeCommand("migrate-activate", f.configPath, {
+      ...f.deps,
+      operation: "migration-2",
+      reviewSha256: "c".repeat(64),
+    }),
+    (error) =>
+      error.code === "migration_review_required" &&
+      !error.message.includes("private"),
+  );
+  await first.close();
+});
+
+test("reviewed abandonment closes the native controller only after confirmed owned cleanup", async (t) => {
+  const f = await fixture(t);
+  const open = f.deps.open;
+  let attempts = 0;
+  const review = {
+    id: "review-1",
+    originalResult: { effect: { status: "uncertain" } },
+  };
+  f.deps.open = async (...args) => {
+    const opened = await open(...args);
+    f.manager.reviewAbandonment = async () => review;
+    f.manager.abandon = async ({ reviewId }) => {
+      assert.equal(reviewId, review.id);
+      if (++attempts === 1)
+        throw Object.assign(Error("private cleanup failure"), {
+          code: "cleanup_incomplete",
+        });
+      await f.manager.close();
+      return { closed: true, reviewId };
+    };
+    return opened;
+  };
+  const owner = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    const inspected = await nativeCommand(
+      "abandon-review",
+      f.configPath,
+      f.deps,
+    );
+    assert.deepEqual(inspected.result.abandonment, review);
+    assert.equal(inspected.result.ok, true);
+    assert.equal(inspected.result.status, "review_required");
+    await assert.rejects(
+      nativeCommand("abandon", f.configPath, {
+        ...f.deps,
+        reviewId: review.id,
+      }),
+      { code: "cleanup_incomplete" },
+    );
+    assert.ok(await readFile(join(f.store, "native-session.json")));
+    const done = await nativeCommand("abandon", f.configPath, {
+      ...f.deps,
+      reviewId: review.id,
+    });
+    assert.equal(done.result.abandonment.closed, true);
+    await owner.closed;
+    await assert.rejects(readFile(join(f.store, "native-session.json")), {
+      code: "ENOENT",
+    });
+    assert.deepEqual(f.calls, ["open", "start", "close"]);
+  } finally {
+    await owner.close();
+  }
+});
+
+test("native CLI rejects missing review identities before opening an owner", async () => {
+  const called = [];
+  const command = async (...args) => {
+    called.push(args);
+    return { result: {} };
+  };
+  for (const args of [
+    ["migrate-review", "--config", "/fixture/config.json"],
+    [
+      "migrate-activate",
+      "--config",
+      "/fixture/config.json",
+      "--operation",
+      "candidate",
+    ],
+    ["abandon", "--config", "/fixture/config.json"],
+  ])
+    await assert.rejects(runNativeCli(args, { command }), { code: "usage" });
+  assert.equal(called.length, 0);
+});
+
+test("a stopped migration review refusal releases its transient controller before a corrected activation", async (t) => {
+  const f = await fixture(t);
+  const digest = "d".repeat(64);
+  f.manager.reviewMigration = async () => ({ reviewSha256: digest });
+  f.manager.activateMigration = async () => {
+    f.calls.push("migrate-activate");
+    await f.manager.start();
+  };
+  await assert.rejects(
+    nativeCommand("migrate-activate", f.configPath, {
+      ...f.deps,
+      operation: "candidate",
+      reviewSha256: "e".repeat(64),
+    }),
+    { code: "migration_review_required" },
+  );
+  assert.equal(f.calls.includes("start"), false);
+  assert.equal(f.calls.includes("migrate-activate"), false);
+  await assert.rejects(readFile(join(f.store, "native-session.json")), {
+    code: "ENOENT",
+  });
+  const owner = await nativeCommand("migrate-activate", f.configPath, {
+    ...f.deps,
+    operation: "candidate",
+    reviewSha256: digest,
+  });
+  try {
+    assert.equal(owner.result.status, "running");
+  } finally {
+    await owner.close();
+  }
+});
 
 test("a completed action with unavailable status preserves its no-replay result", async (t) => {
   const f = await fixture(t);

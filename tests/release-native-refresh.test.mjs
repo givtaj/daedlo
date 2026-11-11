@@ -31,14 +31,20 @@ async function fixture(t) {
     failBuild = false,
     changedDescriptor = false,
     offline = false,
-    faultPoint = null;
+    faultPoint = null,
+    failStart = false,
+    onClose = null;
   const calls = { check: 0, download: 0, build: 0, hooks: 0 };
   const prepared = [];
   const descriptors = {
     accepted: { id: "fixture", version: "1", commands: ["save"] },
     changed: { id: "fixture", version: "1", commands: ["delete"] },
   };
-  const registration = { projectId: "fixture", sourceRoot };
+  const registration = {
+    projectId: "fixture",
+    sourceRoot,
+    model: { id: "fixture", version: "1" },
+  };
   async function makeKit(output, version) {
     const bundlePath = join(output, `daedlo-${version}`, "bundle");
     await fs.mkdir(bundlePath, { recursive: true });
@@ -126,6 +132,10 @@ async function fixture(t) {
         join(destination, "receipt.json"),
         JSON.stringify(receipt),
       );
+      await fs.writeFile(
+        join(destination, "registration.json"),
+        JSON.stringify(registration),
+      );
       return receipt;
     },
     async verify(path, { checkSource = false } = {}) {
@@ -143,11 +153,16 @@ async function fixture(t) {
       return { running, dirty, busy, paused: false, cleanupPending: false };
     },
     async start(receipt) {
+      if (failStart) {
+        failStart = false;
+        throw Error("Candidate did not become ready");
+      }
       running = receipt;
     },
     async quiesce() {},
     async close() {
       running = null;
+      await onClose?.();
       return { report: { resources: [{ owned: true, status: "closed" }] } };
     },
     async report() {
@@ -186,6 +201,10 @@ async function fixture(t) {
     setDirty: (value) => (dirty = value),
     setBusy: (value) => (busy = value),
     setFault: (value) => (faultPoint = value),
+    setStartFailure: () => (failStart = true),
+    setOnClose: (value) => (onClose = value),
+    registration,
+    descriptors,
   };
 }
 
@@ -202,6 +221,271 @@ function requireRefresh(manager) {
     "An accepted installation must offer explicit same-version source revalidation",
   );
 }
+
+function requireMigration(manager) {
+  assert.equal(
+    typeof manager.prepareMigration,
+    "function",
+    "A reviewed descriptor migration must preserve the accepted store and installation history",
+  );
+}
+
+test("reviewed model migration retains the accepted release and history through activation and rollback", async (t) => {
+  const f = await fixture(t);
+  const first = await accepted(f);
+  requireMigration(f.manager);
+  f.setOffline(true);
+  f.setDescriptorChanged(true);
+  await f.changeSource("reviewed model and adapter\n");
+  const expectedData = await fs.readFile(f.dataFile);
+  const calls = { ...f.calls };
+  const ready = await f.manager.prepareMigration();
+  assert.equal(ready.operation.status, "review_required");
+  assert.equal(ready.operation.kind, "model_migration");
+  assert.equal(ready.selected.id, first.selected.id);
+  assert.equal(ready.running.id, first.running.id);
+  assert.equal(f.calls.check, calls.check);
+  assert.equal(f.calls.download, calls.download);
+  assert.equal(f.calls.hooks, calls.hooks + 2);
+  assert.equal(JSON.stringify(ready).includes('"commands"'), false);
+  const review = await f.manager.reviewMigration(ready.operation.id);
+  assert.deepEqual(review.accepted.descriptor.commands, ["save"]);
+  assert.deepEqual(review.candidate.descriptor.commands, ["delete"]);
+  assert.equal(review.accepted.id, first.selected.id);
+  assert.equal(review.candidate.id, ready.operation.id);
+  assert.equal(review.candidate.version, first.selected.version);
+  assert.equal(review.generation, first.generation);
+  assert.match(review.reviewSha256, /^[a-f0-9]{64}$/);
+  await assert.rejects(
+    f.manager.activate(ready.operation.id, { acknowledgeRestart: true }),
+    { code: "stale_operation" },
+  );
+  await assert.rejects(
+    f.manager.activateMigration(ready.operation.id, {
+      acknowledgeRestart: true,
+      reviewSha256: "0".repeat(64),
+    }),
+    { code: "migration_review_required" },
+  );
+  const activated = await f.manager.activateMigration(ready.operation.id, {
+    acknowledgeRestart: true,
+    reviewSha256: review.reviewSha256,
+  });
+  assert.equal(activated.selected.id, ready.operation.id);
+  assert.equal(activated.selected.version, first.selected.version);
+  const history = await Promise.all(
+    (await fs.readdir(join(f.store, "history"))).map(async (file) =>
+      JSON.parse(await fs.readFile(join(f.store, "history", file), "utf8")),
+    ),
+  );
+  const migration = history.find(
+    (entry) => entry.target === ready.operation.id,
+  );
+  assert.equal(migration.migration.reviewSha256, review.reviewSha256);
+  assert.equal(migration.phase, "committed");
+  const reverted = await f.manager.rollback({ acknowledgeRestart: true });
+  assert.equal(reverted.selected.id, first.selected.id);
+  assert.equal(
+    await fs.readFile(f.sourceFile, "utf8"),
+    "reviewed model and adapter\n",
+  );
+  assert.deepEqual(await fs.readFile(f.dataFile), expectedData);
+  await assert.rejects(
+    f.manager.activateMigration(ready.operation.id, {
+      acknowledgeRestart: true,
+      reviewSha256: review.reviewSha256,
+    }),
+    { code: "stale_operation" },
+  );
+});
+
+for (const damage of [
+  "descriptor",
+  "receipt-source",
+  "authored-source",
+  "review",
+  "generation",
+])
+  test(`model migration refuses changed ${damage} after review without stopping the accepted owner`, async (t) => {
+    const f = await fixture(t);
+    const first = await accepted(f);
+    requireMigration(f.manager);
+    f.setDescriptorChanged(true);
+    await f.changeSource("review candidate\n");
+    const ready = await f.manager.prepareMigration();
+    const review = await f.manager.reviewMigration(ready.operation.id);
+    if (damage === "authored-source") await f.changeSource("unreviewed edit\n");
+    else {
+      const path =
+        damage === "review"
+          ? join(f.store, "migrations", ready.operation.id + ".json")
+          : damage === "generation"
+            ? join(f.store, "state.json")
+            : join(
+                f.store,
+                "installations",
+                ready.operation.id,
+                "receipt.json",
+              );
+      const value = JSON.parse(await fs.readFile(path, "utf8"));
+      if (damage === "review")
+        value.candidate.descriptor.commands = ["unreviewed"];
+      else if (damage === "generation") value.generation++;
+      else if (damage === "descriptor")
+        value.handshake.descriptor.commands = ["unreviewed"];
+      else value.sourceSha256 = "f".repeat(64);
+      await fs.writeFile(path, JSON.stringify(value));
+    }
+    await assert.rejects(
+      f.manager.activateMigration(ready.operation.id, {
+        acknowledgeRestart: true,
+        reviewSha256: review.reviewSha256,
+      }),
+    );
+    const after = await f.manager.status();
+    assert.equal(after.selected.id, first.selected.id);
+    assert.equal(after.running.id, first.running.id);
+  });
+
+test("model migration still requires successful acceptance, a changed descriptor and safe restart", async (t) => {
+  const f = await fixture(t);
+  const first = await accepted(f);
+  requireMigration(f.manager);
+  await assert.rejects(f.manager.prepareMigration(), {
+    code: "migration_not_required",
+  });
+  f.setDescriptorChanged(true);
+  f.setFailure(true);
+  await assert.rejects(f.manager.prepareMigration(), /acceptance rejected/);
+  f.setFailure(false);
+  const ready = await f.manager.prepareMigration();
+  const review = await f.manager.reviewMigration(ready.operation.id);
+  const options = {
+    acknowledgeRestart: true,
+    reviewSha256: review.reviewSha256,
+  };
+  await assert.rejects(
+    f.manager.activateMigration(ready.operation.id, {
+      reviewSha256: review.reviewSha256,
+    }),
+    { code: "restart_required" },
+  );
+  f.setDirty(true);
+  await assert.rejects(
+    f.manager.activateMigration(ready.operation.id, options),
+    { code: "dirty_draft" },
+  );
+  f.setDirty(false);
+  f.setBusy(true);
+  await assert.rejects(
+    f.manager.activateMigration(ready.operation.id, options),
+    { code: "busy" },
+  );
+  assert.equal((await f.manager.status()).selected.id, first.selected.id);
+});
+
+test("model identity and descriptor pin can migrate in one store but other registration changes refuse", async (t) => {
+  const f = await fixture(t);
+  const first = await accepted(f);
+  f.registration.model = { id: "fixture", version: "2" };
+  f.descriptors.changed.version = "2";
+  f.registration.descriptorSha256 = sha256(
+    JSON.stringify(f.descriptors.changed),
+  );
+  f.setDescriptorChanged(true);
+  const ready = await f.manager.prepareMigration();
+  const review = await f.manager.reviewMigration(ready.operation.id);
+  assert.equal(review.accepted.model.version, "1");
+  assert.equal(review.candidate.model.version, "2");
+  assert.equal(
+    review.candidate.descriptorSha256,
+    f.registration.descriptorSha256,
+  );
+  const activated = await f.manager.activateMigration(ready.operation.id, {
+    acknowledgeRestart: true,
+    reviewSha256: review.reviewSha256,
+  });
+  assert.equal(activated.selected.id, ready.operation.id);
+  assert.equal(
+    (await f.manager.rollback({ acknowledgeRestart: true })).selected.id,
+    first.selected.id,
+  );
+  f.registration.label = "unreviewed registration scope";
+  await assert.rejects(f.manager.prepareMigration(), {
+    code: "migration_scope_changed",
+  });
+});
+
+test("checking releases or recreating the manager cannot turn a model review into an ordinary ready candidate", async (t) => {
+  const f = await fixture(t);
+  await accepted(f);
+  f.setDescriptorChanged(true);
+  const ready = await f.manager.prepareMigration();
+  await f.manager.check();
+  f.setOffline(true);
+  await assert.rejects(f.manager.check(), /Catalog unavailable/);
+  const reopened = await createNinjaManager(f.options);
+  assert.equal((await reopened.status()).phase, "review_required");
+  await assert.rejects(
+    reopened.activate(ready.operation.id, { acknowledgeRestart: true }),
+    { code: "stale_operation" },
+  );
+  await assert.rejects(
+    reopened.activateMigration(ready.operation.id, {
+      acknowledgeRestart: true,
+    }),
+    { code: "migration_review_required" },
+  );
+});
+
+for (const failure of ["crash", "boot"])
+  test(`model migration ${failure} recovery retains the reviewed history and previous installation`, async (t) => {
+    const f = await fixture(t);
+    const first = await accepted(f);
+    f.setDescriptorChanged(true);
+    const ready = await f.manager.prepareMigration();
+    const review = await f.manager.reviewMigration(ready.operation.id);
+    if (failure === "crash") f.setFault("selection_written");
+    else f.setStartFailure();
+    await assert.rejects(
+      f.manager.activateMigration(ready.operation.id, {
+        acknowledgeRestart: true,
+        reviewSha256: review.reviewSha256,
+      }),
+    );
+    f.setFault(null);
+    const reopened = await createNinjaManager(f.options);
+    assert.equal((await reopened.status()).selected.id, first.selected.id);
+    const histories = await Promise.all(
+      (await fs.readdir(join(f.store, "history"))).map(async (file) =>
+        JSON.parse(await fs.readFile(join(f.store, "history", file), "utf8")),
+      ),
+    );
+    const migration = histories.find(
+      (entry) => entry.target === ready.operation.id,
+    );
+    assert.equal(migration.phase, "recovered");
+    assert.equal(migration.migration.reviewSha256, review.reviewSha256);
+  });
+
+test("model migration rechecks source after safely draining the prior owner", async (t) => {
+  const f = await fixture(t);
+  const first = await accepted(f);
+  f.setDescriptorChanged(true);
+  const ready = await f.manager.prepareMigration();
+  const review = await f.manager.reviewMigration(ready.operation.id);
+  f.setOnClose(() => f.changeSource("concurrent authored edit"));
+  await assert.rejects(
+    f.manager.activateMigration(ready.operation.id, {
+      acknowledgeRestart: true,
+      reviewSha256: review.reviewSha256,
+    }),
+    /inputs changed/,
+  );
+  const after = await f.manager.status();
+  assert.equal(after.selected.id, first.selected.id);
+  assert.equal(after.running, null);
+});
 
 test("refresh validates authored edits with the accepted exact bundle, without checking or upgrading releases", async (t) => {
   const f = await fixture(t);
