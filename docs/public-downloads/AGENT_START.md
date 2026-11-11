@@ -20,6 +20,17 @@ outside its acceptance claim. Read the exact version's verification receipt;
 neither this guide nor a previous candidate's results establish this kit's release
 or acceptance status.
 
+For an existing managed integration, alpha.11 requires the **tools bootstrap** in
+`START_HERE.md`. A runtime-only update does not add these commands. Safely stop
+the authenticated old owner using its original tools and configuration before
+starting the new tools. Preserve the same configuration, registration, store,
+publisher trust and checkpoint; retain the old tools, browser cache, accepted
+installations and original reports. New tools cannot repair an already running
+older controller, and unknown draft or pending-effect safety remains a blocker.
+Verify the accepted slot with the new tools before a runtime update. Read the
+installed `docs/native-setup.md`, `docs/managed-abandonment.md` and
+`docs/model-migration.md`. Do not initialize a replacement store or reset trust.
+
 For an existing alpha.3 managed integration, first follow the tools bootstrap in
 `START_HERE.md`. Reuse its existing configuration, registration, store, trust pin
 and checkpoint. Do not replace an accepted integration with a newly initialized
