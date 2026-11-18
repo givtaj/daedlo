@@ -775,3 +775,63 @@ test("alpha4 retains a failed startup page with sanitized failure and completed 
     await handle?.close();
   }
 });
+
+test("an expired status transport deadline reports a read timeout and preserves the owner", async (t) => {
+  const f = await fixture(t);
+  const owner = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    const offline = t.mock.method(globalThis, "fetch", async () => {
+      throw new DOMException("test deadline", "TimeoutError");
+    });
+    try {
+      await assert.rejects(nativeCommand("status", f.configPath, f.deps), {
+        code: "status_timeout",
+      });
+      assert.ok(await readFile(join(f.store, "native-session.json")));
+    } finally {
+      offline.mock.restore();
+    }
+    assert.equal(
+      (await nativeCommand("status", f.configPath, f.deps)).result.status,
+      "running",
+    );
+  } finally {
+    await owner.close();
+  }
+});
+
+test("a final display timeout leaves an already accepted native owner available for status", async (t) => {
+  const f = await fixture(t);
+  let dropNext = false;
+  const start = f.manager.start;
+  f.manager.start = async () => {
+    await start();
+    dropNext = true;
+  };
+  const request = globalThis.fetch;
+  t.mock.method(globalThis, "fetch", async (...args) => {
+    if (dropNext) {
+      dropNext = false;
+      throw new DOMException("synthetic timeout", "TimeoutError");
+    }
+    return request(...args);
+  });
+  const owner = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    assert.equal(
+      f.calls.includes("close"),
+      false,
+      "an uncertain status handoff must preserve a successfully started owner",
+    );
+    assert.equal(owner.result.ok, false);
+    assert.equal(owner.result.status, "status_unconfirmed");
+    assert.equal(owner.result.error.code, "status_timeout");
+    assert.equal(owner.result.viewerUrl, null);
+    assert.equal(
+      (await nativeCommand("status", f.configPath, f.deps)).result.status,
+      "running",
+    );
+  } finally {
+    await owner.close();
+  }
+});

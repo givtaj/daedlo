@@ -503,7 +503,25 @@ export async function validateRegistration(input) {
   return registration;
 }
 
-async function extractArchive(archive, prefix, destination, artifact, log) {
+const octalMode = (mode) => mode.toString(8).padStart(4, "0");
+
+export function installationUmask() {
+  const mask = process.platform === "win32" ? 0 : process.umask();
+  if (mask & 0o700)
+    fail(
+      `Installation umask ${octalMode(mask)} removes owner access needed to create, read, and execute files in a private slot.`,
+    );
+  return mask;
+}
+
+async function extractArchive(
+  archive,
+  prefix,
+  destination,
+  artifact,
+  log,
+  mask,
+) {
   if (archive.length !== artifact.bytes || hash(archive) !== artifact.sha256)
     fail("Candidate archive integrity changed");
   const script = `import base64,io,json,sys,tarfile\np=json.load(sys.stdin); root=p['prefix']; files=[]; seen=set(); total=0\nwith tarfile.open(fileobj=io.BytesIO(base64.b64decode(p['archive'])),mode='r:gz') as tar:\n for entry in tar:\n  n=entry.name.rstrip('/') if entry.isdir() else entry.name\n  if not n or '\\\\' in n or n.startswith('/') or any(ord(c)<32 or ord(c)==127 for c in n) or any(c in ('','.','..') for c in n.split('/')) or (n!=root and not n.startswith(root+'/')) or n in seen: raise ValueError('Unsafe archive path: '+repr(n))\n  seen.add(n)\n  if len(seen)>4096: raise ValueError('Too many archive entries')\n  if entry.isdir(): continue\n  if not entry.isfile() or n==root or entry.size<0: raise ValueError('Only regular archive files supported')\n  total+=entry.size\n  if total>67108864: raise ValueError('Archive expansion exceeds bound')\n  data=tar.extractfile(entry).read()\n  if len(data)!=entry.size: raise ValueError('Truncated archive')\n  files.append({'file':n[len(root)+1:],'mode':entry.mode&511,'data':base64.b64encode(data).decode()})\nprint(json.dumps(files))`;
@@ -514,13 +532,21 @@ async function extractArchive(archive, prefix, destination, artifact, log) {
       log,
     }),
   );
+  const archiveFiles = new Map();
   for (const file of files) {
     const path = join(destination, localPath(file.file));
-    await put(path, Buffer.from(file.data, "base64"));
-    await fs.chmod(path, file.mode & 0o777);
+    const content = Buffer.from(file.data, "base64");
+    await put(path, content);
+    archiveFiles.set(file.file, {
+      mode: file.mode,
+      bytes: content.length,
+      sha256: hash(content),
+    });
+    await fs.chmod(path, file.mode & ~mask);
   }
+  return archiveFiles;
 }
-async function inventory(root) {
+async function inventory(root, runtimeLabel) {
   const files = [];
   let total = 0;
   async function visit(directory) {
@@ -534,7 +560,14 @@ async function inventory(root) {
       else {
         if (!info.isFile())
           fail("Installation inventory contains a nonregular file");
-        const content = await bytes(path);
+        const content = await bytes(path).catch((error) => {
+          if (runtimeLabel && ["EPERM", "EACCES"].includes(error.code))
+            throw Error(
+              `${runtimeLabel} runtime file ${file} cannot be read (mode ${octalMode(info.mode & 0o777)}).`,
+              { cause: error },
+            );
+          throw error;
+        });
         total += content.length;
         if (total > 1024 * 1024 * 1024 || files.length > 50000)
           fail("Installation inventory exceeds limits");
@@ -550,6 +583,120 @@ async function inventory(root) {
   await visit(root);
   return { files, sha256: hash(JSON.stringify(files)) };
 }
+// npm applies the process umask during extraction and may retain masked execute
+// bits on declared binaries. Compare signed file identities and only remove
+// permissions. The resulting exact modes are sealed for subsequent verification.
+async function verifyRuntimeFiles(
+  installedRoot,
+  extractedRoot,
+  archiveFiles,
+  mask,
+) {
+  const installed = await inventory(installedRoot, "Installed");
+  const extracted = await inventory(extractedRoot, "Extracted reference");
+  if (extracted.files.length !== archiveFiles.size)
+    fail(
+      "Extracted reference runtime file list differs from the signed archive.",
+    );
+  if (installed.files.length !== archiveFiles.size)
+    fail("Installed runtime file list differs from the signed archive.");
+  for (const [index, reference] of extracted.files.entries()) {
+    const signed = archiveFiles.get(reference.file);
+    if (!signed)
+      fail(
+        "Extracted reference runtime file list differs from the signed archive.",
+      );
+    if (reference.bytes !== signed.bytes || reference.sha256 !== signed.sha256)
+      fail(
+        `Extracted reference runtime content mismatch for ${reference.file}.`,
+      );
+    const actual = installed.files[index];
+    if (actual.file !== reference.file)
+      fail("Installed runtime file list differs from the signed archive.");
+    if (actual.bytes !== signed.bytes || actual.sha256 !== signed.sha256)
+      fail(`Installed runtime content mismatch for ${actual.file}.`);
+    // Windows exposes a reduced set of permission bits through stat/chmod.
+    // Keep comparing the installed file with the archive as extracted there.
+    const expected =
+      process.platform === "win32" ? reference.mode : signed.mode & ~mask;
+    const possible = process.platform === "win32" ? expected : signed.mode;
+    if (reference.mode !== expected)
+      fail(
+        `Extracted reference runtime mode mismatch for ${reference.file}: expected ${octalMode(expected)}, found ${octalMode(reference.mode)}.`,
+      );
+    if (
+      (actual.mode & ~possible) !== 0 ||
+      (actual.mode & expected) !== expected
+    )
+      fail(
+        `Installed runtime mode mismatch for ${actual.file}: expected ${octalMode(expected)} (archive ${octalMode(signed.mode)}), found ${octalMode(actual.mode)}.`,
+      );
+    if (actual.mode !== expected) {
+      const file = await fs.open(
+        join(installedRoot, actual.file),
+        constants.O_RDONLY | constants.O_NOFOLLOW,
+      );
+      try {
+        if (((await file.stat()).mode & 0o777) !== actual.mode)
+          fail(
+            `Installed runtime mode changed during verification for ${actual.file}.`,
+          );
+        await file.chmod(expected);
+      } finally {
+        await file.close();
+      }
+    }
+  }
+}
+
+export async function checkPlaywrightCache(path) {
+  try {
+    if (
+      typeof path !== "string" ||
+      !isAbsolute(path) ||
+      /[\x00-\x1f\x7f]/.test(path)
+    )
+      throw Error("Invalid path");
+    const resolved = await fs.realpath(path);
+    await checkedPath(resolved, { directory: true });
+    await fs.access(resolved, constants.R_OK | constants.X_OK);
+    return resolved;
+  } catch {
+    fail(
+      "The configured Playwright browser cache must resolve to an existing, readable and searchable directory. Supply its absolute path.",
+    );
+  }
+}
+
+// Run in a separate process with the same module and environment resolution as
+// first acceptance. This is a diagnostic for Chromium. Custom hooks can select
+// another browser, whose measured identity is established by actual acceptance.
+async function recordPlaywrightResolution(
+  path,
+  runtimePath,
+  playwrightBrowsersPath,
+) {
+  const script = `
+    const fs = require("node:fs");
+    const load = require("node:module").createRequire(process.argv[1]);
+    let executablePath = null, accessible = false;
+    try {
+      executablePath = load("playwright").chromium.executablePath();
+      fs.accessSync(executablePath, fs.constants.R_OK | fs.constants.X_OK);
+      accessible = fs.statSync(executablePath).isFile();
+    } catch {}
+    process.stdout.write(JSON.stringify({browser:"chromium",cache:process.env.PLAYWRIGHT_BROWSERS_PATH ?? null,executablePath,accessible}));
+  `;
+  const output = await run(process.execPath, ["-e", script, runtimePath], {
+    cwd: join(path, "project"),
+    env: playwrightBrowsersPath
+      ? { PLAYWRIGHT_BROWSERS_PATH: playwrightBrowsersPath }
+      : {},
+    timeout: 10000,
+  });
+  await put(join(path, "logs/playwright-browser.json"), output);
+}
+
 async function sealedInventory(path) {
   const sections = {};
   for (const section of ["snapshot", "project", "dependencies", "bin"])
@@ -775,6 +922,9 @@ async function hookRun(
         [join(receipt.sourcePath, registration.hooks[phase])],
         {
           cwd: receipt.sourcePath,
+          env: receipt.playwrightBrowsersPath
+            ? { PLAYWRIGHT_BROWSERS_PATH: receipt.playwrightBrowsersPath }
+            : {},
           input: JSON.stringify({
             schemaVersion: 1,
             phase,
@@ -784,7 +934,10 @@ async function hookRun(
           timeout,
           log: join(fixturePath, "hook.log"),
         },
-      ),
+      ).catch((error) => {
+        error.message += `. See checks/${basename(fixturePath)}/hook.log and, for Playwright, logs/playwright-browser.json inside the private installation.`;
+        throw error;
+      }),
     );
     validateHookOutput(output, phase, receipt);
     await verifyBrowserIdentity(output.browser);
@@ -804,9 +957,13 @@ export async function prepareInstallation({
   destination,
   npmCache,
   cargoHome,
+  playwrightBrowsersPath,
   offline = true,
 } = {}) {
+  const mask = installationUmask();
   const registration = registrationValue(input);
+  if (playwrightBrowsersPath !== undefined)
+    playwrightBrowsersPath = await checkPlaywrightCache(playwrightBrowsersPath);
   if (
     !digest.test(verifiedKit?.identity?.manifestSha256 ?? "") ||
     typeof verifiedKit?.identity?.version !== "string"
@@ -917,17 +1074,21 @@ export async function prepareInstallation({
         await put(file, contents.get(entry.file));
         await fs.chmod(file, entry.mode);
       }
+    let signedRuntime;
     for (const [kind, prefix] of [
       ["runtime", "package"],
       ["engine", `${names.engine}-${version}`],
-    ])
-      await extractArchive(
+    ]) {
+      const entries = await extractArchive(
         archives[kind],
         prefix,
         join(path, "dependencies", kind),
         verified.manifest.artifacts[kind],
         join(path, "logs", `extract-${kind}.log`),
+        mask,
       );
+      if (kind === "runtime") signedRuntime = entries;
+    }
     const runtimePackage = json(
       await bytes(join(path, "dependencies/runtime/package.json")),
     );
@@ -1000,11 +1161,25 @@ export async function prepareInstallation({
         )
           fail("Existing adapter dependency lock changed; migration required");
       }
-    same(
-      await inventory(join(path, "project/node_modules", names.runtime)),
-      await inventory(join(path, "dependencies/runtime")),
-      "Installed runtime differs from exact candidate archive",
+    const runtimeRoot = join(path, "project/node_modules", names.runtime);
+    await verifyRuntimeFiles(
+      runtimeRoot,
+      join(path, "dependencies/runtime"),
+      signedRuntime,
+      mask,
     );
+    if (playwrightBrowsersPath) {
+      await put(
+        join(path, "dependencies/playwright-cache.json"),
+        JSON.stringify(playwrightBrowsersPath),
+      );
+    }
+    if (playwrightBrowsersPath || runtimePackage.dependencies?.playwright)
+      await recordPlaywrightResolution(
+        path,
+        join(runtimeRoot, runtimeEntry),
+        playwrightBrowsersPath,
+      );
     await fs.writeFile(
       join(path, "project", registration.rust.manifest),
       cargoManifest,
@@ -1111,6 +1286,7 @@ export async function prepareInstallation({
       sourcePath: join(path, "project"),
       snapshotPath: join(path, "snapshot"),
       runtimePackage: names.runtime,
+      ...(playwrightBrowsersPath ? { playwrightBrowsersPath } : {}),
       runtimePath: join(
         path,
         "project/node_modules",
@@ -1194,6 +1370,12 @@ export async function verifyInstallation(
   same(actual, receipt.inventory, "Installation inventory integrity changed");
   if (actual.sha256 !== receipt.inventorySha256)
     fail("Installation inventory digest mismatch");
+  const cacheRecord = join(path, "dependencies/playwright-cache.json");
+  const selectedCache = (await stat(cacheRecord))
+    ? json(await bytes(cacheRecord))
+    : undefined;
+  if (receipt.playwrightBrowsersPath !== selectedCache)
+    fail("Installation Playwright cache selection changed");
   const release = json(await bytes(join(path, "release.json")));
   same(release, receipt.release, "Installation release identity changed");
   const selectedRuntime = runtimePackages.find((name) =>

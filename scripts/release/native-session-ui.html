@@ -249,8 +249,17 @@
         else $("viewer").removeAttribute("href");
         $("stop").disabled = mutating;
       }
+      let pollTimer,
+        polling = false;
+      function schedulePoll(delay) {
+        clearTimeout(pollTimer);
+        if (token && !stopped && !document.hidden)
+          pollTimer = setTimeout(poll, delay);
+      }
+      document.addEventListener("visibilitychange", () => schedulePoll(0));
       async function poll() {
-        if (stopped) return;
+        if (stopped || document.hidden || polling) return;
+        polling = true;
         try {
           const r = await fetch("/native", {
             headers: { Authorization: "Bearer " + token },
@@ -259,14 +268,15 @@
           const v = await r.json();
           if (!r.ok || !v.ok)
             throw Error(v.requestError?.message || "Owner status unavailable");
-          render(v);
+          if (!stopped) render(v);
         } catch (e) {
           $("connection").textContent = "Status unconfirmed: " + e.message;
           $("viewer").hidden = true;
           $("viewer").removeAttribute("href");
           $("stop").disabled = true;
         }
-        if (!stopped) setTimeout(poll, 350);
+        polling = false;
+        schedulePoll(current?.native.starting || mutating ? 350 : 5000);
       }
       $("stop").onclick = async () => {
         if (!current || mutating) return;

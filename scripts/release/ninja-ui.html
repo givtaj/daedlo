@@ -426,17 +426,27 @@
           );
         return data;
       }
+      let pollTimer, pollError;
+      function schedulePoll(delay) {
+        clearTimeout(pollTimer);
+        if (token && !document.hidden) pollTimer = setTimeout(poll, delay);
+      }
       async function poll() {
-        if (polling) return;
+        if (polling || !token || document.hidden) return;
         polling = true;
         try {
-          await request("/status");
+          const next = await request("/status");
+          if (!next.status?.error && $("message").textContent === pollError)
+            $("message").textContent = "";
+          pollError = null;
         } catch (error) {
-          $("message").textContent = error.message;
+          pollError = error.message;
+          $("message").textContent = pollError;
           view = null;
           controls();
         } finally {
           polling = false;
+          schedulePoll(pending || view?.busy ? 500 : 5000);
         }
       }
       for (const action of ["check", "install", "restart", "revert"])
@@ -444,6 +454,7 @@
           if (pending || !view?.actions?.[action]) return;
           const generation = view.generation;
           pending = true;
+          schedulePoll(500);
           controls();
           $("message").textContent = "";
           try {
@@ -467,15 +478,14 @@
           }
         });
       $("acknowledge").addEventListener("change", controls);
-      let pollTimer;
+      document.addEventListener("visibilitychange", () => schedulePoll(0));
       function connect() {
         if (!token)
           $("message").textContent =
             "Open the local control link supplied by the manager to authenticate this page.";
         else {
           $("message").textContent = "";
-          void poll();
-          pollTimer ??= setInterval(poll, 500);
+          schedulePoll(0);
         }
       }
       addEventListener("hashchange", () => {

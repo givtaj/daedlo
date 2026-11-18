@@ -8,7 +8,11 @@ import { openNinja, readNinjaConfig } from "./ninja.mjs";
 import { ninjaDirectory, ninjaRead, ninjaWrite } from "./ninja-manager.mjs";
 import { createNinjaServer } from "./ninja-server.mjs";
 
-import { frontendIdentity, startupError } from "./native-session.mjs";
+import {
+  frontendIdentity,
+  safeStatusTiming,
+  startupError,
+} from "./native-session.mjs";
 
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const fail = (code, message) => {
@@ -29,6 +33,12 @@ const commands = [
   "abandon-review",
   "abandon",
 ];
+const statusReadErrors = new Set([
+  "operation_busy",
+  "status_unavailable",
+  "status_timeout",
+  "status_superseded",
+]);
 const operationPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 function commandArguments(command, { operation, reviewSha256, reviewId }) {
   if (
@@ -83,22 +93,34 @@ function controlUrl(value) {
 }
 async function request(record, action, generation, arguments_ = {}) {
   const url = controlUrl(record.controlUrl);
-  const response = await fetch(url.origin + "/native", {
-    method: action ? "POST" : "GET",
-    redirect: "error",
-    headers: {
-      Authorization: `Bearer ${url.hash.slice(7)}`,
+  const signal = AbortSignal.timeout(action ? 30 * 60 * 1000 : 6500);
+  let value, response;
+  try {
+    response = await fetch(url.origin + "/native", {
+      method: action ? "POST" : "GET",
+      redirect: "error",
+      headers: {
+        Authorization: `Bearer ${url.hash.slice(7)}`,
+        ...(action
+          ? { Origin: url.origin, "Content-Type": "application/json" }
+          : {}),
+      },
       ...(action
-        ? { Origin: url.origin, "Content-Type": "application/json" }
+        ? { body: JSON.stringify({ action, generation, ...arguments_ }) }
         : {}),
-    },
-    ...(action
-      ? { body: JSON.stringify({ action, generation, ...arguments_ }) }
-      : {}),
-    // Commands are never automatically retried, including after a timeout.
-    signal: AbortSignal.timeout(action ? 30 * 60 * 1000 : 5000),
-  });
-  const value = await response.json();
+      // Commands are never automatically retried, including after a timeout.
+      signal,
+    });
+    value = await response.json();
+  } catch (error) {
+    if (!action && (signal.aborted || error.name === "TimeoutError"))
+      fail(
+        "status_timeout",
+        "The local status request timed out before a complete reply. Current state is unconfirmed.",
+      );
+    throw error;
+  }
+  const timing = safeStatusTiming(value.timing);
   if (!response.ok || value.ok !== true)
     throw Object.assign(
       Error(
@@ -106,6 +128,7 @@ async function request(record, action, generation, arguments_ = {}) {
       ),
       {
         code: value.requestError?.code ?? "session_unavailable",
+        ...(timing ? { timing } : {}),
         ...(value.doNotReplay === true
           ? {
               doNotReplay: true,
@@ -122,6 +145,7 @@ async function request(record, action, generation, arguments_ = {}) {
   return value;
 }
 function handoff(value, record, reused) {
+  const timing = safeStatusTiming(value.timing);
   const observation = value.native.observation ?? value.status.observation;
   const observationFailure = ["failed", "unreachable"].includes(
     observation?.status,
@@ -147,6 +171,7 @@ function handoff(value, record, reused) {
                 ? "running"
                 : "stopped",
     reused,
+    ...(timing ? { timing } : {}),
     project: value.status.project,
     selected: value.status.selected,
     running: value.status.running,
@@ -226,8 +251,7 @@ export async function nativeCommand(
     try {
       current = await request(existing);
     } catch (cause) {
-      if (["operation_busy", "status_unavailable"].includes(cause.code))
-        throw cause;
+      if (statusReadErrors.has(cause.code)) throw cause;
       throw Object.assign(
         Error(
           "The recorded runner cannot be authenticated. Inspect native-session.json and supervisor/child.json; preserve possible live resources. No process was killed or flow replayed.",
@@ -365,6 +389,7 @@ export async function nativeCommand(
     if (closed) return;
     if (closing) return closing;
     closing = (async () => {
+      server?.invalidateStatus();
       await closeDriver();
       await server?.close();
       await release();
@@ -406,8 +431,8 @@ export async function nativeCommand(
     server = await createNinjaServer({
       manager,
       lifecycle: {
-        snapshot: async () => {
-          const s = await supervisor.status();
+        snapshot: async (live) => {
+          const s = live ?? (await supervisor.status());
           return {
             instance,
             configSha256,
@@ -623,6 +648,7 @@ export async function nativeCommand(
       );
     startedSuccessfully = true;
     starting = false;
+    server?.invalidateStatus();
     startup = { phase: "ready", cleanup: "pending" };
     startupSettled();
     if (cancellationRequested)
@@ -644,7 +670,26 @@ export async function nativeCommand(
       closed: closedPromise,
     };
   } catch (error) {
+    if (startedSuccessfully && statusReadErrors.has(error.code)) {
+      // The manager already accepted the installation. A failed final display
+      // read must not enter startup rollback or relinquish the foreground owner.
+      return {
+        result: {
+          schemaVersion: 1,
+          ok: false,
+          status: "status_unconfirmed",
+          error: { code: error.code, message: error.message },
+          ...(error.timing ? { timing: error.timing } : {}),
+          viewerUrl: null,
+          startupUrl: record.controlUrl.replace("/#", "/session#"),
+          updateUrl: record.controlUrl,
+        },
+        close,
+        closed: closedPromise,
+      };
+    }
     starting = false;
+    server?.invalidateStatus();
     const lastStartup = (await supervisor.status()).startup;
     startup = {
       ...lastStartup,
@@ -777,6 +822,7 @@ if (
           ...(e.doNotReplay
             ? { doNotReplay: true, actionCompleted: e.actionCompleted }
             : {}),
+          ...(e.timing ? { timing: e.timing } : {}),
           ...(e.preflight ? { preflight: e.preflight } : {}),
           ...(e.cleanupFailed
             ? { cleanupFailed: true, cleanupMessage: e.cleanupMessage }

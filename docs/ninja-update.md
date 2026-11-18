@@ -116,6 +116,21 @@ npm lifecycle scripts remain disabled. Rust builds/tests and registered hooks
 execute trusted code. Node 22, the manifest's Rust toolchain, Python 3 for safe
 archive extraction, and the accepted Playwright browser are prerequisites.
 
+For an existing nondefault browser cache, set the optional
+`installation.playwrightBrowsersPath` to its absolute directory or symlink and run
+`doctor`. Each candidate records the resolved directory for its slot. The setting takes precedence over the launching shell for the first
+acceptance hook, subsequent health hooks and the managed child for that slot.
+Setup records the installed Playwright Chromium executable (when available)
+and read/execute access in the private slot's `logs/playwright-browser.json`.
+Review this record and the failed phase's `checks/<phase>-*/hook.log` if the
+hook chooses a missing browser. With no setting, the first hook uses the
+installer's restricted environment and Playwright's default cache. A custom
+hook can use a reviewed executable from its registered project configuration.
+It must return the executable's canonical path, observed version and SHA-256.
+Subsequent launches use the accepted executable recorded for their slot.
+Retain each accepted browser installation for rollback.
+
+
 ## Managed integration contract, version 1
 
 The launcher exports `createManagedLaunch({runtime, resources, enginePath,

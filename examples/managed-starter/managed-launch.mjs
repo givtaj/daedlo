@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { isDeepStrictEqual } from "node:util";
 import { createHash } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
 import { readPrivateCatalog } from "./catalog.mjs";
@@ -77,6 +78,21 @@ export async function createManagedLaunch({
   await page.goto(target.origin);
   await page.locator("#note").waitFor();
   await adapter.settle();
+  const editorDocument = await page.evaluate(
+    () => window.starterRecovery?.documentId,
+  );
+  if (typeof editorDocument !== "string" || !editorDocument)
+    throw new Error("The starter editor recovery source is unavailable.");
+  const inspectEditor = () =>
+    page.evaluate(
+      ({ origin, editorDocument }) => {
+        const editor = window.starterRecovery;
+        if (location.origin !== origin || editor?.documentId !== editorDocument)
+          return null;
+        return editor.inspect();
+      },
+      { origin: target.origin, editorDocument },
+    );
   check();
   const session = await runtime.createDriverSession({
     page,
@@ -106,10 +122,44 @@ export async function createManagedLaunch({
     viewerUrl: viewer.url,
     browser: browserIdentity,
     async draftState() {
-      const { facts } = await adapter.observe();
-      return ["draft", "saving", "validation", "recovery"].includes(
-        facts.phase,
-      );
+      const before = adapter.requestDiagnostics();
+      if (before.closed || before.pendingCount !== 0) return null;
+      const editor = await inspectEditor();
+      if (!editor || editor.dirty !== false)
+        return editor?.dirty === true ? true : null;
+      if (editor.pending.length) {
+        // A lost acknowledgement leaves its intent in the tab journal. This
+        // fixture has no queued replays. Verify each such write independently.
+        const deadline = AbortSignal.timeout(2000);
+        for (const expected of editor.pending) {
+          const url = new URL("/api/notes", target);
+          url.searchParams.set("operation", expected.operation);
+          const response = await fetch(url, {
+            signal: deadline,
+            redirect: "error",
+            cache: "no-store",
+          });
+          if (!response.ok) return null;
+          const { items } = await response.json();
+          if (
+            !Array.isArray(items) ||
+            items.length !== 1 ||
+            !isDeepStrictEqual(items[0], expected)
+          )
+            return null;
+        }
+        if (!isDeepStrictEqual(await inspectEditor(), editor)) return null;
+      }
+      // A request could start and finish during the asynchronous editor read.
+      const after = adapter.requestDiagnostics();
+      if (
+        after.closed ||
+        after.pendingCount !== 0 ||
+        before.finished !== after.finished ||
+        before.failed !== after.failed
+      )
+        return null;
+      return false;
     },
   };
 }

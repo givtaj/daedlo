@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { ninjaDirectory, ninjaRead } from "./ninja-manager.mjs";
 import {
+  checkPlaywrightCache,
+  installationUmask,
   validateRegistration,
   verifyInstallation,
 } from "./ninja-installation.mjs";
@@ -188,11 +190,17 @@ export async function nativeDoctor(configPath, { runCommand = execute } = {}) {
     if (
       !object(installation) ||
       Object.keys(installation).some(
-        (key) => !["offline", "npmCache", "cargoHome"].includes(key),
+        (key) =>
+          ![
+            "offline",
+            "npmCache",
+            "cargoHome",
+            "playwrightBrowsersPath",
+          ].includes(key),
       ) ||
       (installation.offline !== undefined &&
         typeof installation.offline !== "boolean") ||
-      ["npmCache", "cargoHome"].some(
+      ["npmCache", "cargoHome", "playwrightBrowsersPath"].some(
         (key) =>
           installation[key] !== undefined &&
           (typeof installation[key] !== "string" ||
@@ -426,6 +434,45 @@ export async function nativeDoctor(configPath, { runCommand = execute } = {}) {
         permissionError(error) ? "permission" : "configuration",
         "The configured dependency cache is inaccessible or unsafe.",
         "Use an absolute cache directory with readable/writable access and no symlinks. Preserve caches needed by accepted installations.",
+      );
+    }
+  }
+  if (process.platform !== "win32") {
+    try {
+      const mask = installationUmask().toString(8).padStart(4, "0");
+      add(
+        "installation-umask",
+        "pass",
+        "permission",
+        `The current umask ${mask} preserves owner access for private setup.`,
+      );
+    } catch (error) {
+      add(
+        "installation-umask",
+        "blocked",
+        "permission",
+        error.message,
+        "Run setup with a process-local umask that preserves owner permissions, such as 077.",
+      );
+    }
+  }
+  const playwrightCache = config.installation?.playwrightBrowsersPath;
+  if (playwrightCache) {
+    try {
+      const resolvedCache = await checkPlaywrightCache(playwrightCache);
+      add(
+        "playwright-browser-cache",
+        "pass",
+        "dependency",
+        `Configured Playwright browser cache resolves to a readable directory: ${resolvedCache}. Setup records the installed Playwright Chromium executable before acceptance.`,
+      );
+    } catch {
+      add(
+        "playwright-browser-cache",
+        "blocked",
+        "dependency",
+        "The configured Playwright browser cache is missing, inaccessible or unsafe.",
+        "Choose an existing readable absolute cache directory or directory alias and install the matching browser there before setup.",
       );
     }
   }

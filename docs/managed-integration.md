@@ -49,6 +49,31 @@ while fresh draft and pending-effect safety permit owned cleanup. The hook must
 not return an old clean value or treat an empty visible form as proof that a
 pending operation is resolved. The ordinary Stop path keeps its existing guards.
 
+The runnable starter uses two independent sources for recovery. The launcher brackets
+a read of the original editor with snapshots of the owned page's live request tracker.
+It checks that the tracker stayed open, that both snapshots were idle, and that no
+request finished or failed during the read. It also checks the expected origin and
+the identity of the document opened at startup. [Managed launcher](../examples/managed-starter/managed-launch.mjs)
+
+The editor reads its current form, write journal, in-progress save and held or queued
+Web Locks for the fixture's save path. A clean form must match its initial values or
+its verified save. The editor journals each save before dispatch. It removes that
+entry only after a matching acknowledgement and a separate read that finds exactly
+one matching record for the operation. A lost response leaves its intended operation,
+text and category in the private tab journal even after the visible draft is discarded.
+The launcher reads each retained operation directly from the fixture and compares
+all three fields. It rechecks the editor, journal and request tracker after those
+reads. A match can establish safe cleanup while the original run report still says
+`uncertain`. Absent, duplicate or conflicting records, unavailable evidence and
+replacement of the original document all block cleanup. The fixture has no background
+worker that could replay a journal entry. [Runnable editor and journal](../examples/starter/index.html)
+
+Adapt those sources to the scope of your application. A browser-owned tab journal
+covers this disposable editor. For server-backed work, query the authoritative
+journal, operation and lease owners for the same session, including work that can
+survive a browser or host restart. Require every source to be current and complete.
+Keep missing state unknown and keep reconciliation separate from the read-only hook.
+
 A typed application unavailable state belongs in the customer's Rust model. Its
 commands may all be disabled while the adapter measures current draft, pending
 operation and request safety independently. Recognizing an error page does not

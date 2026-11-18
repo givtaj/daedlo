@@ -63,6 +63,25 @@ local environment/cache using scoped permission. `installation.offline` defaults
 true; explicit `false` allows acquisition during setup. npm lifecycle scripts stay
 disabled. Rust builds and customer hooks are trusted code. Matching browser
 installation remains an explicit prerequisite; keep that cache for rollback.
+Set `installation.playwrightBrowsersPath` to the absolute existing directory for a
+project-specific Playwright cache. A directory symlink is supported. Doctor reports
+the resolved directory and checks read/search access. Setup uses
+the selected runtime's Playwright to resolve Chromium after npm installation,
+before building the Rust model or running the first acceptance hook. Inspect the
+private slot's `logs/playwright-browser.json` for the selected cache, executable
+and accessibility, including when Chromium is missing. The extraction, health
+and acceptance logs live in that same private slot. An integration using its own
+browser should record that selection in its private hook diagnostics. The
+accepted executable, measured version and hash come from the hook receipt.
+
+On POSIX hosts a restrictive group/other umask such as `077` is supported.
+Doctor and setup identify a mask that blocks required owner access.
+Installer verification checks each signed runtime filename and its bytes,
+applies the masked permission bits and seals the resulting modes. An unexpected
+content or mode mismatch names the affected runtime file. Preserve the failed
+slot and the accepted installation while investigating. Keep absolute cache
+and executable paths in local diagnostics.
+
 Docker is only an application-fixture choice, not a Daedlo requirement.
 
 ## Normal use and Codex Browser
@@ -219,6 +238,32 @@ perform fresh observation. Native `status --config FILE` also obtains fresh
 session and draft measurements from the same managed child. These reads do not
 execute a command, replay a save or reload the adapter. No separate reobserve
 command is required when the existing adapter can measure the current page again.
+
+In the updated tools, overlapping authenticated Update and native status reads
+share one in-progress measurement for the same controller and mutation epoch.
+A read arriving after the child delivered its measurement samples again, even
+when the earlier request is still verifying the selected installation. An
+older response overtaken by a newer measurement returns `status_superseded`.
+Stop, restart, migration and abandonment retain
+their own fresh checks. For scripts, request status on demand, allow one
+request at a time and wait at least five seconds after completion between idle
+polls. The Update and session pages check every five seconds while idle,
+increase the cadence during their active operation and suspend polling while
+hidden. A visible page immediately requests fresh status when it returns.
+
+An updated controller gives a display read five seconds. If it exceeds that
+deadline, it returns `status_timeout` with a monotonic timing summary. The
+`phase` identifies manager work, waiting for the child (`queued`), collecting
+the session and draft measurements (`observation`), or verifying the selected
+installation (`installation`). Successful reads report `complete`. The fields
+`queuedMs`, `observationMs`, `installationMs` and `totalMs` apply to the shared
+measurement. Queue and observation timings include the local IPC handoff.
+Times carry no application values. If the CLI's 6.5-second transport deadline
+expires before it receives the owner's reply, it reports `status_timeout`
+without phase timings. If startup succeeded and only its final read failed, the foreground
+runner keeps its owner and reports `status_unconfirmed` with its control links.
+Request fresh status after the slow read completes. No display response authorizes cleanup. Alpha.11 itself uses
+a five-second CLI transport deadline and does not report these timings.
 
 1. Retain the original owner, configuration, selected installation, private
    receipts and completed-run archives. Obtain status using that configuration;
