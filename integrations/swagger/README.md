@@ -63,23 +63,35 @@ evidence establishes what was saved.
 
 Use the matching runtime, core crate and tools from one verified release. First
 follow the kit's `START_HERE.md` and [release verification guide](../../docs/releases.md).
-The commands below use alpha.10 filenames; replace the three absolute paths with
-your verified tools installation, extracted bundle and a **new** private QA
-folder. They do not change the application's normal dependencies.
+Choose three absolute paths in the same shell: your verified tools installation,
+its verified bundle directory, and a new private QA directory whose parent exists.
 
 ```sh
 tools_root=/absolute/tools/node_modules/@daedlo/release-tools
 bundle_root=/absolute/verified/bundle
-qa_root=/absolute/project/.daedlo-local/swagger-alpha9
-mkdir "$qa_root"
-npm install --prefix "$qa_root" --workspaces=false --ignore-scripts --no-audit --no-fund \
-  "$bundle_root/daedlo-runtime-0.1.4-alpha.10.tgz"
-node "$qa_root/node_modules/playwright/cli.js" install chromium
-mkdir "$qa_root/vendor"
-tar -xzf "$bundle_root/daedlo-engine-0.1.4-alpha.10.crate" -C "$qa_root/vendor"
-node "$tools_root/integrations/swagger/build-model.mjs" \
-  --crate "$qa_root/vendor/daedlo-engine-0.1.4-alpha.10" \
-  --output "$qa_root/swagger-build"
+qa_root=/absolute/project/.daedlo-local/swagger
+mkdir -m 700 "$qa_root"
+```
+
+After creating that directory, install the runtime and build the model. This
+block selects the two archive filenames from the verified kit's manifest:
+
+```sh
+(
+  set -eu
+  archive_file() {
+    node -p 'require(process.argv[1]).artifacts[process.argv[2]].file' "$bundle_root/manifest.json" "$1"
+  }
+  runtime_archive=$(archive_file runtime)
+  engine_archive=$(archive_file engine)
+  npm install --prefix "$qa_root" --workspaces=false --ignore-scripts --no-audit --no-fund \
+    "$bundle_root/$runtime_archive"
+  node "$qa_root/node_modules/playwright/cli.js" install --no-remove chromium
+  mkdir "$qa_root/vendor"
+  tar -xzf "$bundle_root/$engine_archive" -C "$qa_root/vendor" --strip-components=1
+  node "$tools_root/integrations/swagger/build-model.mjs" \
+    --crate "$qa_root/vendor" --output "$qa_root/swagger-build"
+)
 ```
 
 The builder copies only the shipped model sources and lockfile into the fresh

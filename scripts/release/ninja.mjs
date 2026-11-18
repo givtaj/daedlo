@@ -9,6 +9,7 @@ import {
 } from "./ninja-catalog.mjs";
 import {
   prepareInstallation,
+  readInstallationIdentity,
   verifyInstallation,
   validateRegistration,
 } from "./ninja-installation.mjs";
@@ -187,6 +188,7 @@ export async function openNinja(configPath, { recover = true } = {}) {
     provider: createNinjaProvider({ ...config.catalog, trustedKeys: keys }),
     installer: {
       prepare: (args) => prepareInstallation({ ...args, ...installation }),
+      readIdentity: readInstallationIdentity,
       verify: verifyInstallation,
     },
     supervisor,

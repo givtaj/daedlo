@@ -1,5 +1,38 @@
 # Verification record
 
+## Swagger validation, update selection, install guide and status polling — 2026-11-18
+
+**Local candidate passed on macOS arm64.** The runtime, engine and tools were
+packaged from clean commit `6a013d13d2ee52e603cb1261e1db4ec8d07bc203`.
+The bundle manifest SHA-256 was
+`a1f96501aff095dd8b128137a52434dcf4273ba73bb3c4a607a48f850bb71528`
+and the tools archive SHA-256 was
+`4c5fa9e36bf5f28c8c78db017ab958a9f5763f66abbaee008659e4e8e98f376f`.
+The candidate reused the alpha.11 version label for local testing. The public
+alpha.11 release has the separate digests recorded below.
+
+| Regression | Failure observed | Passing check |
+| --- | --- | --- |
+| Swagger response validation | A GET returned 200 with a body that violated a constraint on an intermediate schema reference. Chromium reported success. | The same response now produces `schemaValid: false` and an unknown outcome. Catalog tests exercise nested and boolean schemas and the different reference rules in OpenAPI 3.0, 3.1 and 3.2. |
+| Restart after a new release check | The updater showed the newer offer while restart could activate an earlier prepared version. Resumed native setup could accept a different version. | The browser shows both versions. Browser and native requests bind restart to the prepared installation ID and version. A changed target is refused, and a late mismatch preserves whether the prior installation was running or stopped. |
+| Swagger install guide | The alpha.11 guide named alpha.10 runtime and engine archives, so running its instructions failed to locate the files. | The literal setup block reads both filenames from the verified manifest. It installed the original published alpha.11 runtime and built its model offline. The newly packaged guide also passed all 19 installed Swagger browser groups and cleanup. |
+| Native status polling | Two concurrent status reads after reopening the manager triggered two full installation verifications. | The same reads triggered zero full verifications. Polls check the owned installation receipt. Start and activation still verify the installation, and startup refuses a changed source. |
+
+The source Swagger suite passed 40 Node, 19 Rust and 27 Chromium tests. The
+updater passed 96 focused Node tests and five Chromium tests. All 319 runtime
+and container contract tests passed, along with workspace Rust, syntax, types
+and formatting. The release suite passed 680 tests. Its opt-in model migration
+test ran separately against the exact installed candidate and passed, including
+real saves and rollback. The same installed candidate passed all four native
+gates, 147 safety assertions in 17 groups, eight browser groups, both viewer
+suites and owned cleanup.
+
+Website checks passed 94 tests, static checks on 11 pages and 10 release
+archives, and 18 Chromium onboarding checks. All 141 repository guardrail and
+metadata tests and the public metadata scan passed. These results cover local
+synthetic projects. Hosted CI and public release verification for these four
+fixes remain pending.
+
 ## Managed starter recovery, status polling and setup — 2026-11-18
 
 **PASS on macOS arm64, local candidate.** The tools archive built from clean

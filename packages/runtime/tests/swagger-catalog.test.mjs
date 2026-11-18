@@ -376,6 +376,122 @@ test("external and cyclic refs, unsupported assertions and serialization fail cl
   );
 });
 
+function referenceResults(version, components, schema, body) {
+  const doc = document();
+  doc.openapi = version;
+  doc.components.schemas = components;
+  const patch = doc.paths["/items/{id}"].patch;
+  delete patch.parameters[0].schema.const;
+  patch.requestBody.content["application/json"].schema = schema;
+  doc.components.responses.Item.content["application/json"].schema = schema;
+  const catalog = buildCatalog(doc);
+  return [
+    validateRequest(catalog, op(catalog, "PATCH"), {
+      path: { id: 1 },
+      headers: { "X-CSRF": "1" },
+      body,
+    }),
+    validateResponse(catalog, op(catalog), {
+      status: 200,
+      contentType: "application/json",
+      body,
+    }),
+  ];
+}
+
+test("named and inline schema reference siblings honor the document dialect", () => {
+  const name = { $ref: "#/components/schemas/Text", minLength: 3 };
+  const components = { Text: { type: "string" }, Name: name };
+  for (const version of ["3.1.2", "3.2.1", "3.0.4"]) {
+    for (const schema of [{ $ref: "#/components/schemas/Name" }, name]) {
+      for (const body of ["x", "abc", 42]) {
+        const valid =
+          typeof body === "string" && (version === "3.0.4" || body.length >= 3);
+        for (const result of referenceResults(
+          version,
+          components,
+          schema,
+          body,
+        )) {
+          assert.equal(result.supported, true);
+          assert.equal(
+            result.valid,
+            valid,
+            `${version}: ${JSON.stringify(schema)} with ${JSON.stringify(body)}`,
+          );
+        }
+      }
+    }
+  }
+});
+
+test("intermediate schema reference keywords are checked for support and direction", () => {
+  const field = { $ref: "#/components/schemas/Alias" };
+  const components = {
+    Text: { type: "string" },
+    Alias: { $ref: "#/components/schemas/Text", pattern: "^ok$" },
+  };
+  for (const result of referenceResults("3.1.2", components, field, "ok"))
+    assert.equal(result.supported, false);
+
+  components.Alias = { $ref: "#/components/schemas/Text", readOnly: true };
+  const object = {
+    type: "object",
+    required: ["id"],
+    properties: { id: field },
+  };
+  const [request, response] = referenceResults("3.1.2", components, object, {});
+  assert.equal(request.valid, true);
+  assert.equal(response.valid, false);
+});
+
+test("boolean schema reference targets retain their validation result", () => {
+  const field = { $ref: "#/components/schemas/Flag" };
+  for (const flag of [true, false])
+    for (const result of referenceResults(
+      "3.1.2",
+      { Flag: flag },
+      field,
+      "data",
+    )) {
+      assert.equal(result.supported, true);
+      assert.equal(result.valid, flag);
+    }
+});
+
+test("a bounded schema reference chain also works inside nested objects", () => {
+  const components = { Last: { type: "string" } };
+  let field = { $ref: "#/components/schemas/Last" };
+  for (let i = 0; i < 30; i++) {
+    components[`Alias${i}`] = field;
+    field = { $ref: `#/components/schemas/Alias${i}` };
+  }
+  let body = "ok";
+  for (let i = 0; i < 4; i++) {
+    field = { type: "object", properties: { child: field } };
+    body = { child: body };
+  }
+  for (const result of referenceResults("3.1.2", components, field, body))
+    assert.equal(result.valid, true);
+});
+
+test("an intermediate non-scalar parameter type is marked unsupported", () => {
+  const doc = document();
+  doc.components.schemas.Collection = {
+    $ref: "#/components/schemas/Any",
+    type: "array",
+  };
+  doc.components.schemas.Any = {};
+  doc.paths["/items/{id}"].get.parameters[0].schema = {
+    $ref: "#/components/schemas/Collection",
+  };
+  const catalog = buildCatalog(doc);
+  assert.equal(
+    validateRequest(catalog, op(catalog), { path: { id: 1 } }).supported,
+    false,
+  );
+});
+
 test("bounded JSON catalogs reject malformed versions and excessive operation count", () => {
   assert.throws(() => buildCatalog({ swagger: "2.0", paths: {} }), /OpenAPI/i);
   assert.throws(
