@@ -721,59 +721,50 @@ test("startup recovery never bypasses a known dirty draft or a running session",
   }
 });
 
-test("alpha4 exposes startup before a blocked launcher finishes and retains named identity", async (t) => {
-  const f = await fixture(t);
-  const parsed = await f.deps.readConfig();
-  parsed.config.frontend = {
-    name: "Settings portal",
-    targetOrigin: "http://127.0.0.1:45001",
-  };
-  parsed.config.registration.model = { id: "gm", version: "1" };
-  const start = f.manager.start;
-  let finish;
-  const held = new Promise((done) => {
-    finish = done;
-  });
-  f.manager.start = async () => {
-    await held;
-    return start();
-  };
-  let progress;
-  let entered;
-  const announced = new Promise((done) => {
-    entered = done;
-  });
-  const launching = nativeCommand("start", f.configPath, {
-    ...f.deps,
-    onProgress: (value) => {
-      progress = value;
-      entered();
-    },
-  });
-  try {
-    await Promise.race([
-      announced,
-      new Promise((done) => setTimeout(done, 100)),
-    ]);
-    assert.ok(
-      progress?.startupUrl,
-      "the startup page must be handed off before launcher readiness",
-    );
-    assert.equal(progress.status, "starting");
-    assert.equal(progress.viewerUrl, null);
-    assert.equal(progress.frontend.name, "Settings portal");
-    const current = await nativeCommand("status", f.configPath, f.deps);
-    assert.equal(
-      current.result.frontend.targetOrigin,
-      "http://127.0.0.1:45001",
-    );
-    assert.equal(current.result.status, "starting");
-  } finally {
-    finish();
-    const handle = await launching;
-    await handle.close();
-  }
-});
+test(
+  "alpha4 exposes startup before a blocked launcher finishes and retains named identity",
+  { timeout: 30_000 },
+  async (t) => {
+    const f = await fixture(t);
+    const parsed = await f.deps.readConfig();
+    parsed.config.frontend = {
+      name: "Settings portal",
+      targetOrigin: "http://127.0.0.1:45001",
+    };
+    parsed.config.registration.model = { id: "gm", version: "1" };
+
+    let announced, handoffAtStart, statusWhileStarting;
+    const start = f.manager.start;
+    f.manager.start = async () => {
+      handoffAtStart = announced;
+      statusWhileStarting = await nativeCommand("status", f.configPath, f.deps);
+      return start();
+    };
+    const handle = await nativeCommand("start", f.configPath, {
+      ...f.deps,
+      onProgress: (value) => {
+        announced = value;
+      },
+    });
+    try {
+      assert.ok(
+        handoffAtStart?.startupUrl,
+        "the startup page must be handed off before launcher readiness",
+      );
+      assert.equal(handoffAtStart.status, "starting");
+      assert.equal(handoffAtStart.viewerUrl, null);
+      assert.equal(handoffAtStart.frontend.name, "Settings portal");
+      assert.equal(
+        statusWhileStarting.result.frontend.targetOrigin,
+        "http://127.0.0.1:45001",
+      );
+      assert.equal(statusWhileStarting.result.status, "starting");
+      assert.equal(handle.result.status, "running");
+    } finally {
+      await handle.close();
+    }
+  },
+);
 
 test("alpha4 retains a failed startup page with sanitized failure and completed owned cleanup", async (t) => {
   const f = await fixture(t);
