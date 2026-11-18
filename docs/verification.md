@@ -1,5 +1,43 @@
 # Verification record
 
+## Released viewer capture for the website — 2026-11-18
+
+The public `0.1.4-alpha.11` kit (source `8ddd8d7`) ran in Chromium against a
+local synthetic Swagger UI 5.34.1 application. Its three-step read-only flow
+selected `GET /hello`, prepared the request and executed it. The fixture saw
+exactly one `GET /api/hello`. The viewer recorded HTTP 200, a verified response
+and no write attempt.
+
+The 1995 × 1305 screenshot shows the four connection indicators, observed state,
+browser, ordered steps and result. In the second capture, closing the controlled
+page left the viewer connected, the browser disconnected, observation unavailable
+and the last image labelled. Checking the connection kept the completed result
+and the API request count at one. The 840 × 491 detail captures that state. The
+viewer, session, browser and fixture were closed after capture.
+
+Before implementation the website regression failed because the homepage had no
+current-viewer section. The original Roots and Architecture Studio captures keep
+their own dates and evidence. With signed catalog generation 43 staged, all
+96 website tests, 97 simulated publisher tests, 18 visitor checks and 18
+onboarding checks passed. Static acceptance verified 11 pages and 10 archives.
+
+## Site-wide design preview — 2026-11-18
+
+The ten current pages share the homepage typography, colors, masthead and
+footer in the local preview. Before the change, Chromium found a different
+background on the 404 page and a different heading typeface on the integration
+guide. The recorded demo also lacked a keyboard-navigable index of its two runs.
+
+Chromium checked all ten pages at 1440, 390 and 320 CSS pixels, including the
+generated install and updates pages and a nested missing URL. The layouts fit
+each viewport. The two links in the demo index reached their respective
+recordings, and both evidence files and all three full-size images opened.
+Desktop and phone screenshots of the dated October demo matched the originals.
+
+All 95 website tests, 97 simulated publisher tests, 16 visitor checks and 18
+onboarding checks passed locally. Static acceptance verified 11 HTML pages and
+10 release archives. This record covers the local preview.
+
 ## Swagger validation, update selection, install guide and status polling — 2026-11-18
 
 **Local candidate passed on macOS arm64.** The runtime, engine and tools were
