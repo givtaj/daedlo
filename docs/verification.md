@@ -1,5 +1,32 @@
 # Verification record
 
+## Managed starter recovery, status polling and setup — 2026-11-18
+
+**PASS on macOS arm64, local candidate.** The tools archive built from clean
+commit `279eb4a7f9a3c2ce4e4e9fa4c98f48f2310c30db` has SHA-256
+`a0db02e4f7e117b9015057065880f8d5329fbee02f9f85209e57686be1ed472a`.
+It was installed offline and exercised with the published alpha.11 runtime and
+engine bundle, Node 24.22.2, npm 11.21.2 and Chromium 158.0.8127.18. The
+isolated setup test supplied the retained bundle through a local catalog fixture.
+The public alpha.11 release is recorded separately below.
+
+| Area | Failure reproduced before the fix | Candidate result |
+| --- | --- | --- |
+| Reviewed recovery | The Rust model rejected a missing or unknown page phase while the managed starter reported `draftState() === false`. | The installed starter returned unknown in both cases. With a failing observer and independent proof of a clean editor it returned `false`. The three measurements produced zero writes. Source browser regressions also cover live requests, write leases, changed journals and missing or conflicting storage records. A lost response followed by matching independent readback permits guarded stop and preserves the original uncertain report. |
+| Status polling | One overlapping CLI and Update read caused three child measurements. A delayed read reported a recovery/authentication error. | Overlapping readers share one in-progress observation. A later edit triggers a fresh read while earlier installation verification is still running. Real child/browser tests distinguished time waiting in the queue from time collecting an observation. The owner recovered from both deadlines. The Update and session pages suspend hidden polls and resume when visible. |
+| Setup | The installer rejected a byte-identical runtime under `umask 077`. The first acceptance hook lost the shell’s explicit Playwright cache setting. | Fresh installed setup under `077` verified all 28 runtime files, sealed 27 as `0600` and one as `0700`, and used the selected cache for Chromium. All five acceptance and three health checks passed. The installed owner started, served concurrent CLI status with the Update page open, and stopped cleanly. The attached application remained available with zero writes. |
+
+All **671 release tests** passed with no skips, including exact-bundle model
+migration and rollback. All 314 runtime, container and Compose contract tests,
+the workspace Rust suite, syntax, types, formatting and public metadata checks
+passed. The source managed-reference suite passed all eight checks with confirmed
+cleanup. [Recovery regression](../tests/managed-starter-recovery.test.mjs) ·
+[Status regressions](../tests/release-native-session.test.mjs) ·
+[Setup regressions](../tests/release-ninja-installation.test.mjs)
+
+These results cover independent local fixtures. Publication, hosted CI, Windows
+and customer validation of these changes remain unverified.
+
 ## Alpha.11 publication and public verification — 2026-11-11
 
 **PASS — published and independently verified.** The `0.1.4-alpha.11` kit is
