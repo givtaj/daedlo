@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import {
   safeFrontend,
   safeObservation,
+  safeStatusTiming,
   safeStartup,
 } from "./native-session.mjs";
 
@@ -102,6 +103,10 @@ const messages = {
     "Release discovery is unavailable. This does not establish that your version is up to date.",
   operation_failed:
     "The update action failed. Review the current selection and local manager record.",
+  status_superseded:
+    "A newer status measurement completed first. Request fresh status.",
+  status_timeout:
+    "The status measurement exceeded its deadline. Current state is unconfirmed.",
   status_unavailable:
     "Manager status is unavailable. The selected and running versions cannot be confirmed.",
   evidence_incomplete:
@@ -181,15 +186,64 @@ function publicStatus(value) {
   };
 }
 
+// Time comes from the controller's monotonic clock. The queued phase includes
+// IPC delivery until the child acknowledges that this measurement is running.
+function statusClock() {
+  const started = performance.now();
+  let since = started,
+    phase = "manager";
+  const elapsed = { queued: 0, observation: 0, installation: 0 };
+  const bounded = (value) => Math.min(3600000, Math.round(value));
+  function duration(key, now) {
+    return elapsed[key] + (phase === key ? now - since : 0);
+  }
+  return {
+    started,
+    enter(next) {
+      if (
+        ![
+          "manager",
+          "queued",
+          "observation",
+          "installation",
+          "complete",
+        ].includes(next)
+      )
+        return;
+      const now = performance.now();
+      if (Object.hasOwn(elapsed, phase)) elapsed[phase] += now - since;
+      since = now;
+      phase = next;
+    },
+    report(complete = false) {
+      const now = performance.now();
+      return {
+        phase: complete ? "complete" : phase,
+        totalMs: bounded(now - started),
+        queuedMs: bounded(duration("queued", now)),
+        observationMs: bounded(duration("observation", now)),
+        installationMs: bounded(duration("installation", now)),
+      };
+    },
+  };
+}
+
 /** Stable local update control. The caller retains ownership of the manager. */
 export async function createNinjaServer({
   manager,
   lifecycle,
   host = "127.0.0.1",
   port = 0,
+  statusDeadlineMs = 5000,
 } = {}) {
   if (host !== "127.0.0.1")
     throw new TypeError("Ninja control must bind 127.0.0.1");
+  if (
+    !Number.isInteger(statusDeadlineMs) ||
+    statusDeadlineMs < 1 ||
+    statusDeadlineMs > 60000
+  )
+    throw new TypeError("Invalid status deadline");
   if (!Number.isInteger(port) || port < 0 || port > 65535)
     throw new TypeError("Invalid Ninja control port");
   for (const method of ["status", "check", "prepare", "activate", "rollback"]) {
@@ -220,15 +274,18 @@ export async function createNinjaServer({
     fingerprint,
     busy = false,
     mutationEpoch = 0,
+    readSequence = 0,
+    publishedRead = 0,
     closing,
     origin;
   const rotate = () => {
     generation = randomBytes(16).toString("hex");
   };
-  async function snapshot() {
+  async function snapshot(options, readEpoch) {
+    const sequence = ++readSequence;
     let status;
     try {
-      status = publicStatus(await manager.status());
+      status = publicStatus(await manager.status(options));
     } catch {
       status = {
         project: { id: null, label: "Registered project" },
@@ -242,7 +299,17 @@ export async function createNinjaServer({
         error: safeError({ code: "status_unavailable" }),
       };
     }
+    if (readEpoch !== undefined && readEpoch !== mutationEpoch)
+      throw Object.assign(Error(), { code: "operation_busy" });
     const next = JSON.stringify(status);
+    // An unchanged display poll cannot veto a mutation's own fresh check.
+    // A changed newer view, however, always disqualifies the older result.
+    if (
+      sequence < publishedRead &&
+      (readEpoch !== undefined || next !== fingerprint)
+    )
+      throw Object.assign(Error(), { code: "status_superseded" });
+    publishedRead = Math.max(sequence, publishedRead);
     if (fingerprint !== next) {
       fingerprint = next;
       rotate();
@@ -268,16 +335,25 @@ export async function createNinjaServer({
       },
     };
   }
-  async function nativeSnapshot() {
+  async function nativeSnapshot(read) {
     const epoch = mutationEpoch;
     if (busy) throw Object.assign(Error(), { code: "operation_busy" });
-    const value = await lifecycle.snapshot();
-    const state = await snapshot();
+    let live;
+    const state = read
+      ? await read.state
+      : await snapshot({
+          onLive: (value) => {
+            live = value;
+          },
+        });
+    const value = await lifecycle.snapshot(read ? read.live : live);
     const observation = safeObservation(
       value.observation ?? state.status.observation,
     );
     if (busy || epoch !== mutationEpoch)
       throw Object.assign(Error(), { code: "operation_busy" });
+    if (state.generation !== generation)
+      throw Object.assign(Error(), { code: "status_superseded" });
     if (
       !state.status.project.id ||
       state.status.error?.code === "status_unavailable"
@@ -336,6 +412,54 @@ export async function createNinjaServer({
           : null,
       },
     };
+  }
+  // Only authenticated display GETs share work. Mutations still measure their
+  // own fresh authorization and post-action state. Never cache a completed read.
+  let activeRead;
+  function readStatus() {
+    if (activeRead?.epoch === mutationEpoch) return activeRead;
+    const read = { epoch: mutationEpoch, clock: statusClock() };
+    activeRead = read;
+    read.state = snapshot(
+      {
+        onLive: (live) => {
+          read.live = live;
+          // A later request may follow a user edit during receipt verification.
+          if (activeRead === read) activeRead = undefined;
+        },
+        onPhase: read.clock.enter,
+      },
+      read.epoch,
+    ).finally(() => {
+      read.clock.enter("manager");
+      if (activeRead === read) activeRead = undefined;
+    });
+    return read;
+  }
+  async function displayStatus(native) {
+    if (native && busy)
+      throw Object.assign(Error(), { code: "operation_busy" });
+    const read = readStatus();
+    const timeout = () =>
+      Object.assign(Error(), {
+        code: "status_timeout",
+        timing: read.clock.report(),
+      });
+    const remaining =
+      statusDeadlineMs - (performance.now() - read.clock.started);
+    if (remaining <= 0) throw timeout();
+    let timer;
+    try {
+      const result = await Promise.race([
+        native ? nativeSnapshot(read) : read.state,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(timeout()), remaining);
+        }),
+      ]);
+      return { ...result, timing: read.clock.report(true) };
+    } finally {
+      clearTimeout(timer);
+    }
   }
   const json = (res, code, data) => {
     if (res.destroyed || res.writableEnded) return;
@@ -432,15 +556,28 @@ export async function createNinjaServer({
     }
     if (req.method === "GET") {
       try {
-        json(
-          res,
-          200,
-          req.url === "/native" ? await nativeSnapshot() : await snapshot(),
-        );
+        json(res, 200, await displayStatus(req.url === "/native"));
       } catch (error) {
+        const requestError = safeError(error, "status_unavailable");
+        const timing =
+          requestError.code === "status_timeout"
+            ? safeStatusTiming(error.timing)
+            : null;
+        if (timing) {
+          const descriptions = {
+            manager: "reading manager state",
+            queued: "waiting for the child to start the observation",
+            observation:
+              "collecting the application observation and draft state",
+            installation: "verifying the selected installation",
+            complete: "returning the measurement",
+          };
+          requestError.message += ` The controller was ${descriptions[timing.phase]}. Queue ${timing.queuedMs} ms. Observation ${timing.observationMs} ms. Installation ${timing.installationMs} ms.`;
+        }
         json(res, 503, {
           ok: false,
-          requestError: safeError(error, "status_unavailable"),
+          requestError,
+          ...(timing ? { timing } : {}),
         });
       }
       return;
@@ -643,6 +780,12 @@ export async function createNinjaServer({
   origin = `http://${host}:${server.address().port}`;
   return {
     url: `${origin}/#token=${token}`,
+    // Foreground native startup/cleanup may change the live owner outside an
+    // HTTP mutation. Reads spanning that boundary must also be discarded.
+    invalidateStatus() {
+      mutationEpoch++;
+      rotate();
+    },
     close() {
       return (closing ??= new Promise((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));

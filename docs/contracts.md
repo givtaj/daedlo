@@ -157,6 +157,15 @@ The [recovery procedure](native-setup.md#recover-observation-in-the-existing-own
 preserves the original owner and attached resources; it adds no force-stop,
 automatic command retry or live adapter replacement.
 
+The updated native tools can share an in-progress child observation between the
+Update page and native status readers. A later read obtains a fresh observation.
+Stop, restart and reviewed abandonment still measure their own safety boundaries.
+Display reads may include a local `timing` object with `phase`, `totalMs`,
+`queuedMs`, `observationMs` and `installationMs`. A `status_timeout` leaves the
+current state unconfirmed. The controller can report its phase when its own
+deadline expires. A transport timeout before a complete reply has no controller
+timings. See [native status polling](native-setup.md#recover-observation-in-the-existing-owned-session).
+
 `createViewer({page,context,session,port:0})` returns `{url,close()}`. Viewer HTTP: GET `/`, assets, `/status` returns `{connected,frames,driver:snapshot}`, `/stream` MJPEG. POST `/command` accepts `{id,params,revision,recipe?}`; POST `/control` accepts `{action,value?}`. Bounded JSON, loopback Host and same Origin policy, CSP. It renders descriptor-driven hierarchy, command-specific fields, availability reasons, progress, results and live images. Execution, application outcome, overall effect and individual operation labels/statuses remain separate; incomplete transient cleanup is disclosed. No Roots fields.
 
 Viewer status additionally separates `connections:{browser,application}` from

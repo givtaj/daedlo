@@ -151,12 +151,20 @@ export async function readNinjaConfig(
   const installation = config.installation || {};
   if (
     Object.keys(installation).some(
-      (k) => !["offline", "npmCache", "cargoHome"].includes(k),
+      (k) =>
+        ![
+          "offline",
+          "npmCache",
+          "cargoHome",
+          "playwrightBrowsersPath",
+        ].includes(k),
     ) ||
     (installation.offline !== undefined &&
       typeof installation.offline !== "boolean") ||
-    ["npmCache", "cargoHome"].some(
-      (k) => installation[k] !== undefined && !isAbsolute(installation[k]),
+    ["npmCache", "cargoHome", "playwrightBrowsersPath"].some(
+      (k) =>
+        installation[k] !== undefined &&
+        (typeof installation[k] !== "string" || !isAbsolute(installation[k])),
     )
   )
     throw Error(

@@ -284,6 +284,87 @@ test("real isolated npm and Cargo prepare preserve source, custom instructions, 
   );
 });
 
+test(
+  "restrictive umask preserves signed runtime bytes and private installed modes",
+  { skip: process.platform === "win32" },
+  async (t) => {
+    const f = await fixture(t);
+    const previous = process.umask(0o077);
+    let receipt;
+    try {
+      receipt = await f.prepare();
+    } finally {
+      process.umask(previous);
+    }
+    const installed = join(
+      receipt.sourcePath,
+      "node_modules/@browser-driver/runtime/index.mjs",
+    );
+    const signed = join(receipt.path, "dependencies/runtime/index.mjs");
+    assert.deepEqual(await fs.readFile(installed), await fs.readFile(signed));
+    assert.equal((await fs.stat(installed)).mode & 0o777, 0o600);
+    await fs.chmod(installed, 0o644);
+    await assert.rejects(
+      verifyInstallation(receipt.path),
+      /inventory|integrity/i,
+    );
+  },
+);
+
+test(
+  "owner-restrictive umask is diagnosed before materializing a slot",
+  { skip: process.platform === "win32" },
+  async (t) => {
+    const f = await fixture(t);
+    const previous = process.umask(0o277);
+    try {
+      await assert.rejects(f.prepare(), /umask.*0277.*owner/i);
+      await assert.rejects(fs.stat(f.destination), { code: "ENOENT" });
+    } finally {
+      process.umask(previous);
+    }
+  },
+);
+
+test(
+  "signed runtime checks distinguish unexpected permission changes from content changes",
+  { skip: process.platform === "win32" },
+  async (t) => {
+    const f = await fixture(t);
+    const wrapper = join(f.root, "wrappers");
+    const npm = execFileSync("which", ["npm"], { encoding: "utf8" }).trim();
+    await fs.mkdir(wrapper);
+    const previousPath = process.env.PATH;
+    const installed = "node_modules/@browser-driver/runtime/index.mjs";
+    try {
+      process.env.PATH = wrapper + ":" + previousPath;
+      for (const [action, expected] of [
+        ["chmod 0777 " + installed, /mode.*index\.mjs.*0644.*0777/i],
+        ["echo changed >> " + installed, /content.*index\.mjs/i],
+      ]) {
+        const script =
+          "#!/bin/sh\n" +
+          JSON.stringify(npm) +
+          ' "$@" || exit $?\n' +
+          action +
+          "\n";
+        await fs.writeFile(join(wrapper, "npm"), script, { mode: 0o700 });
+        await assert.rejects(
+          f.prepare({
+            destination: join(
+              f.root,
+              action.startsWith("chmod") ? "mode-slot" : "content-slot",
+            ),
+          }),
+          expected,
+        );
+      }
+    } finally {
+      process.env.PATH = previousPath;
+    }
+  },
+);
+
 test("unsupported interfaces reject before creating a destination", async (t) => {
   const f = await fixture(t);
   f.registration.interfaces.launcher = 2;
@@ -562,7 +643,7 @@ test("real npm retains the locked adapter/browser dependency closure and verifie
   );
   await write(
     join(library, "index.cjs"),
-    'module.exports={closureIdentity:"locked-browser-library-fixture"};\n',
+    'module.exports={closureIdentity:"locked-browser-library-fixture",chromium:{executablePath:()=>require("node:path").join(process.env.PLAYWRIGHT_BROWSERS_PATH,"synthetic-browser")}};\n',
   );
   await fs.mkdir(join(f.sourceRoot, "vendor"));
   execFileSync(
@@ -623,7 +704,7 @@ test("real npm retains the locked adapter/browser dependency closure and verifie
     "import {createRequire} from 'node:module';\n" +
     hook.replace(
       "if(runtime.version!==i.version)",
-      "const load=createRequire(i.runtimePath); if(load('playwright').closureIdentity!=='locked-browser-library-fixture')throw Error('Wrong browser dependency');\nif(runtime.version!==i.version)",
+      "const load=createRequire(i.runtimePath); if(load('playwright').closureIdentity!=='locked-browser-library-fixture'||load('playwright').chromium.executablePath()!==config.browserPath)throw Error('Wrong browser dependency');\nif(runtime.version!==i.version)",
     );
   for (const file of ["acceptance.mjs", "health.mjs"])
     await fs.writeFile(join(f.sourceRoot, file), dependencyHook);
@@ -638,7 +719,42 @@ test("real npm retains the locked adapter/browser dependency closure and verifie
       join(f.sourceRoot, file),
       await fs.readFile(join(f.sourceRoot, file)),
     );
-  const receipt = await f.prepare();
+  await assert.rejects(
+    f.prepare({ playwrightBrowsersPath: join(f.root, "missing-cache") }),
+    /Playwright.*cache/i,
+  );
+  const emptyCache = join(f.root, "empty-cache");
+  await fs.mkdir(emptyCache);
+  const failedSlot = join(f.root, "no-browser-slot");
+  await assert.rejects(
+    f.prepare({ playwrightBrowsersPath: emptyCache, destination: failedSlot }),
+    /hook.log.*playwright-browser.json/i,
+  );
+  const missing = JSON.parse(
+    await fs.readFile(join(failedSlot, "logs/playwright-browser.json")),
+  );
+  assert.deepEqual(missing, {
+    browser: "chromium",
+    cache: emptyCache,
+    executablePath: join(emptyCache, "synthetic-browser"),
+    accessible: false,
+  });
+  await assert.rejects(fs.stat(join(failedSlot, "installation.json")), {
+    code: "ENOENT",
+  });
+  const alias = join(f.root, "cache-alias");
+  await fs.symlink(f.root, alias, "dir");
+  const receipt = await f.prepare({ playwrightBrowsersPath: alias });
+  assert.equal(receipt.playwrightBrowsersPath, f.root);
+  const probe = JSON.parse(
+    await fs.readFile(
+      join(receipt.path, "logs/playwright-browser.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(probe.executablePath, receipt.browser.executablePath);
+  assert.equal(probe.accessible, true);
+  assert.equal((await runInstallationHook(receipt.path, "health")).ready, true);
   const afterLock = JSON.parse(
     await fs.readFile(join(receipt.sourcePath, "package-lock.json"), "utf8"),
   );

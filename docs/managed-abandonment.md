@@ -29,6 +29,11 @@ unknown value when any prerequisite is unavailable. Never return a remembered
 with a newly proven clean boundary. Ordinary `stop` still requires full available
 observation. No model validation or normal shutdown guard is weakened.
 
+For a runnable implementation, see the [managed starter's recovery measurements](managed-integration.md#current-observation-and-draft-safety).
+The hook combines live request tracking with an application-owned editor, save
+journal and write lease. The normal model observation can fail throughout both
+recovery steps. An outstanding or unmeasurable obligation still blocks cleanup.
+
 If the loaded launcher cannot independently measure that safety, this procedure
 refuses cleanup. A changed source file does not hot-replace a running adapter.
 Keep the existing owner and private evidence for integration-specific repair;

@@ -273,9 +273,11 @@ export async function createNinjaManager({
       ? installer.verify(slot(id), { registration, checkSource })
       : null;
   }
-  async function view() {
+  async function view({ onLive, onPhase } = {}) {
     const s = await read();
-    const live = await supervisor.status();
+    const live = await supervisor.status({ onPhase });
+    onLive?.(live);
+    onPhase?.(s.current ? "installation" : "manager");
     const selected = s.current ? publicReceipt(await receipt(s.current)) : null;
     if (selected && s.historicalSnapshot) selected.historicalSnapshot = true;
     const blockers = [];

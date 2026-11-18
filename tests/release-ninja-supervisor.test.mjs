@@ -65,6 +65,20 @@ test("supervisor starts exact selected runtime, gates shutdown, and closes owned
   await supervisor.close();
   assert.equal((await supervisor.status()).running, null);
 });
+test("launcher uses the browser cache selected for its installation", async (t) => {
+  const { supervisor, receipt, root } = await fixture(
+    t,
+    `export async function createManagedLaunch({runtime,installation}) {
+      if (process.env.PLAYWRIGHT_BROWSERS_PATH !== installation.playwrightBrowsersPath) throw Error("Configured browser cache not selected");
+      return {session:await runtime.createDriverSession({}), draftState:async()=>false};
+    }`,
+  );
+  receipt.playwrightBrowsersPath = join(root, "project-cache");
+  await fs.mkdir(receipt.playwrightBrowsersPath);
+  await supervisor.start(receipt);
+  await supervisor.accept();
+  assert.equal((await supervisor.status()).running?.id, receipt.id);
+});
 test("launcher cannot execute an application command during startup", async (t) => {
   const { supervisor, receipt } = await fixture(
     t,

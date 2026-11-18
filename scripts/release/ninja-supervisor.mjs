@@ -35,7 +35,7 @@ export async function createNinjaSupervisor({
     const r = await ninjaRead(marker, { optional: true });
     return !r || r.status === "closed" ? null : r;
   }
-  async function request(action, payload = {}) {
+  async function request(action, payload = {}, onPhase) {
     if (!child || child.exitCode !== null || !child.connected)
       throw Object.assign(Error("Managed driver is unavailable."), {
         code: "child_unreachable",
@@ -50,7 +50,8 @@ export async function createNinjaSupervisor({
         e.code = action === "status" ? "child_timeout" : "cleanup_incomplete";
         reject(e);
       }, timeoutMs);
-      pending.set(id, { resolve, reject, timer });
+      pending.set(id, { resolve, reject, timer, onPhase });
+      onPhase?.("queued");
       child.send({ id, action, ...payload }, (e) => {
         if (e) {
           clearTimeout(timer);
@@ -126,7 +127,7 @@ export async function createNinjaSupervisor({
     };
   }
   return {
-    async status() {
+    async status({ onPhase } = {}) {
       if (launching)
         return {
           ready: false,
@@ -141,7 +142,7 @@ export async function createNinjaSupervisor({
         };
       if (!child || child.exitCode !== null) return idle();
       try {
-        const s = await request("status");
+        const s = await request("status", { traceTiming: !!onPhase }, onPhase);
         return {
           ...s,
           observation: safeObservation(s.observation),
@@ -213,6 +214,8 @@ export async function createNinjaSupervisor({
           .filter((k) => process.env[k])
           .map((k) => [k, process.env[k]]),
       );
+      if (receipt.playwrightBrowsersPath)
+        env.PLAYWRIGHT_BROWSERS_PATH = receipt.playwrightBrowsersPath;
       child = fork(
         fileURLToPath(new URL("./ninja-child.mjs", import.meta.url)),
         [],
@@ -251,6 +254,10 @@ export async function createNinjaSupervisor({
         }
         const p = pending.get(m.id);
         if (!p) return;
+        if (m.event === "observing") {
+          p.onPhase?.("observation");
+          return;
+        }
         pending.delete(m.id);
         clearTimeout(p.timer);
         if (m.error) {

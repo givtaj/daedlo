@@ -258,3 +258,126 @@ test("failed discovery remains unavailable and a tokenless page cannot operate t
     await server?.close();
   }
 });
+
+for (const surface of ["Update", "session"])
+  test(`idle ${surface} pages reduce polling and suspend it while hidden`, async (t) => {
+    let reads = 0;
+    const manager = {
+      async status() {
+        reads++;
+        return { project: { id: "polling" }, phase: "idle" };
+      },
+      ...Object.fromEntries(
+        ["check", "prepare", "activate", "rollback"].map((k) => [
+          k,
+          async () => {},
+        ]),
+      ),
+    };
+    const lifecycle = {
+      snapshot: async () => ({
+        instance: "a".repeat(32),
+        configSha256: "b".repeat(64),
+        toolsSha256: "c".repeat(64),
+        runningId: null,
+        starting: false,
+      }),
+      ...Object.fromEntries(
+        ["stop", "refresh", "restart", "retryEvidence"].map((k) => [
+          k,
+          async () => {},
+        ]),
+      ),
+    };
+    const server = await createNinjaServer({ manager, lifecycle });
+    t.after(() => server.close());
+    const browser = await chromium.launch({ headless: true });
+    t.after(() => browser.close());
+    const page = await browser.newPage();
+    await page.clock.install();
+    const endpoint = surface === "Update" ? "/status" : "/native";
+    await page.goto(
+      surface === "Update" ? server.url : server.url.replace("/#", "/session#"),
+    );
+    if (surface === "Update")
+      await page.locator("#check:not(:disabled)").waitFor();
+    else await page.getByText("Frontend stopped", { exact: true }).waitFor();
+    const first = reads;
+    await page.clock.runFor(1200);
+    // Flush the most recent same-origin poll before comparing request counts.
+    await page.evaluate(() => fetch("/").then((r) => r.text()));
+    assert.equal(
+      reads,
+      first,
+      "an idle tab should not request status several times per second",
+    );
+    await page.evaluate(() => {
+      Object.defineProperty(document, "hidden", {
+        configurable: true,
+        value: true,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await page.clock.runFor(12000);
+    await page.evaluate(() => fetch("/").then((r) => r.text()));
+    assert.equal(reads, first);
+    const refreshed = page.waitForResponse(
+      (r) => new URL(r.url()).pathname === endpoint,
+    );
+    await page.evaluate(() => {
+      delete document.hidden;
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    await refreshed;
+    assert.equal(reads, first + 1);
+  });
+
+test("a timed-out Update page explains the measured phase and elapsed times", async (t) => {
+  const hold = Promise.withResolvers();
+  const manager = {
+    async status(options) {
+      options.onPhase("observation");
+      await hold.promise;
+      return { project: { id: "fixture" }, phase: "idle" };
+    },
+    ...Object.fromEntries(
+      ["check", "prepare", "activate", "rollback"].map((k) => [
+        k,
+        async () => {},
+      ]),
+    ),
+  };
+  const server = await createNinjaServer({ manager, statusDeadlineMs: 120 });
+  t.after(() => server.close());
+  const browser = await chromium.launch({ headless: true });
+  t.after(() => browser.close());
+  const page = await browser.newPage();
+  try {
+    await page.goto(server.url);
+    await page.getByText(/exceeded its deadline/).waitFor();
+    const message = await page.locator("#message").textContent();
+    assert.match(message, /collecting the application observation/i);
+    assert.match(message, /Observation [1-9]\d* ms/);
+    const output = resolve(
+      process.env.NINJA_UI_ARTIFACTS ?? "artifacts/ninja-update/ui",
+    );
+    await mkdir(output, { recursive: true });
+    await page.screenshot({
+      path: resolve(output, "status-deadline.png"),
+      fullPage: true,
+    });
+    assert.equal(await page.locator("#check").isDisabled(), true);
+    hold.resolve();
+    await page.evaluate(() =>
+      document.dispatchEvent(new Event("visibilitychange")),
+    );
+    await page.locator("#check:not(:disabled)").waitFor();
+    assert.equal(
+      await page.locator("#message").textContent(),
+      "",
+      "a later healthy read clears the polling error",
+    );
+  } finally {
+    hold.resolve();
+  }
+});

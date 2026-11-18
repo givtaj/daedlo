@@ -829,6 +829,8 @@ process.on("message", (m) => {
   }
   queue = queue.then(async () => {
     try {
+      if (m.action === "status" && m.traceTiming === true)
+        send({ id: m.id, event: "observing" });
       const result = await perform(m);
       send({ id: m.id, result }, () => {
         if (["close", "abandon"].includes(m.action)) process.disconnect?.();

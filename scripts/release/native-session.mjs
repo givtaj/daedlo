@@ -6,6 +6,28 @@ const text = (v, limit) =>
   v.trim().length > 0 &&
   v.length <= limit &&
   !/[\x00-\x1f\x7f-\x9f]/.test(v);
+const timingPhases = [
+  "manager",
+  "queued",
+  "observation",
+  "installation",
+  "complete",
+];
+const timingKeys = ["totalMs", "queuedMs", "observationMs", "installationMs"];
+export function safeStatusTiming(value) {
+  if (!timingPhases.includes(value?.phase)) return null;
+  const timing = { phase: value.phase };
+  for (const key of timingKeys) {
+    if (
+      !Number.isSafeInteger(value[key]) ||
+      value[key] < 0 ||
+      value[key] > 3600000
+    )
+      return null;
+    timing[key] = value[key];
+  }
+  return timing;
+}
 export function frontendConfiguration(value) {
   if (value === undefined) return null;
   if (
