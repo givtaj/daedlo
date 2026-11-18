@@ -9,6 +9,34 @@ const website = resolve(
     fileURLToPath(new URL("../", import.meta.url)),
 );
 
+test("the first product screenshot shows the released viewer and keeps the Roots evidence dated", async () => {
+  for (const [page, section] of [
+    ["index.html", "workbench"],
+    ["demo.html", "current-viewer"],
+  ]) {
+    const html = await readFile(resolve(website, "public", page), "utf8");
+    const panel = html.match(
+      new RegExp(`<section\\b[^>]*id="${section}"[^>]*>([\\s\\S]*?)</section>`),
+    )?.[1];
+    assert.ok(panel, `Expose the current viewer on ${page}.`);
+    assert.match(panel, /src="\/viewer-alpha11-workspace\.webp"/);
+    assert.match(panel, /alpha\.11/);
+    assert.match(panel, /Swagger/);
+    if (page === "demo.html") {
+      assert.match(panel, /src="\/viewer-alpha11-connections\.webp"/);
+      assert.match(panel, /GET \/hello/);
+      assert.match(panel, /HTTP 200/);
+      assert.match(panel, /exactly one request/);
+    }
+    assert.match(html, /href="\/demo-roots-save\.png"/);
+    const oldImage = html.indexOf('src="/demo-roots-save.png"');
+    assert.ok(
+      oldImage < 0 ||
+        html.indexOf('src="/viewer-alpha11-workspace.webp"') < oldImage,
+    );
+  }
+});
+
 test("the recording index links each run to its own evidence before its original capture", async () => {
   const html = await readFile(resolve(website, "public/demo.html"), "utf8");
   const directory = html.match(

@@ -16,7 +16,12 @@ navigation and footer styles through `public/site.css`. The homepage serves the
 keypress illustration locally. The shared Instrument Serif Italic font is also
 served locally, with its license at
 `/instrument-serif-license.txt`. There is no framework, analytics,
-account, data submission or live browser connection. The curated Roots screenshot
+account, data submission or live browser connection. The homepage and recorded
+runs page show the released alpha.11 viewer inspecting a synthetic Swagger UI
+API. On 18 November 2026 the three-step flow sent one GET and verified the HTTP
+200 response. The connections detail shows the same viewer after the controlled
+browser closed. Checking the connection preserved the result and left the
+request count at one. The curated Roots screenshot
 and evidence summary show a 9 November 2026 alpha.9 candidate run, with unchanged
 component provenance to the published alpha.9 source. The two earlier screenshots
 and evidence summary preserve the Architecture Studio recording from 11 October

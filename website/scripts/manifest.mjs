@@ -21,6 +21,8 @@ export const PUBLIC_FILES = new Set([
   "recordings.css",
   "guidebook.css",
   "save-press.webp",
+  "viewer-alpha11-workspace.webp",
+  "viewer-alpha11-connections.webp",
   "instrument-serif-italic.woff2",
   "instrument-serif-license.txt",
   "workflow.html",

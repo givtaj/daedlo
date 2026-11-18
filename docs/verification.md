@@ -1,5 +1,24 @@
 # Verification record
 
+## Released viewer capture for the website — 2026-11-18
+
+The public `0.1.4-alpha.11` kit (source `8ddd8d7`) ran in Chromium against a
+local synthetic Swagger UI 5.34.1 application. Its three-step read-only flow
+selected `GET /hello`, prepared the request and executed it. The fixture saw
+exactly one `GET /api/hello`. The viewer recorded HTTP 200, a verified response
+and no write attempt.
+
+The 1995 × 1305 screenshot shows the four connection indicators, observed state,
+browser, ordered steps and result. In the second capture, closing the controlled
+page left the viewer connected, the browser disconnected, observation unavailable
+and the last image labelled. Checking the connection kept the completed result
+and the API request count at one. The 840 × 491 detail captures that state. The
+viewer, session, browser and fixture were closed after capture.
+
+Before implementation the website regression failed because the homepage had no
+current-viewer section. The original Roots and Architecture Studio captures keep
+their own dates and evidence.
+
 ## Site-wide design preview — 2026-11-18
 
 The ten current pages share the homepage typography, colors, masthead and

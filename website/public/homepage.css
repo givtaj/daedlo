@@ -101,6 +101,18 @@ h2 {
 .capture {
   margin: 0;
 }
+.record-links {
+  display: flex;
+  gap: 10px 24px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 15px;
+}
+.workbench-lead {
+  max-width: 58ch;
+  margin: -0.3em 0 1.3em;
+  font-size: clamp(17px, 1.45vw, 21px);
+}
 .capture img {
   display: block;
   width: 100%;

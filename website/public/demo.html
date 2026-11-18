@@ -45,12 +45,16 @@
         <div>
           <h1 id="demo-title">Recorded <i class="editorial">runs.</i></h1>
           <p class="recordings-lead">
-            Follow a Roots Journal entry through a browser reload, or inspect an
-            Architecture Studio model saved to disk. Each run includes its
-            original capture and the checks behind it.
+            See Daedlo inspect a local API in Swagger UI. Then follow a Roots
+            Journal entry through a browser reload, or inspect an Architecture
+            Studio model saved to disk.
           </p>
         </div>
         <nav class="run-index" aria-label="Recorded runs">
+          <a href="#current-viewer"
+            ><span class="run-date">18 Nov 2026</span><span>Swagger UI</span
+            ><span aria-hidden="true">↓</span></a
+          >
           <a href="#roots-recording"
             ><span class="run-date">9 Nov 2026</span><span>Roots Journal</span
             ><span aria-hidden="true">↓</span></a
@@ -61,6 +65,107 @@
             ><span aria-hidden="true">↓</span></a
           >
         </nav>
+      </section>
+
+      <section
+        id="current-viewer"
+        class="recording"
+        aria-labelledby="current-viewer-title"
+      >
+        <div class="recording-byline">
+          <p class="run-label">Inside the current viewer</p>
+          <p>
+            <time datetime="2026-11-18">18 Nov 2026</time> · 0.1.4-alpha.11 ·
+            local test API
+          </p>
+        </div>
+        <div class="recording-heading">
+          <h2 id="current-viewer-title">
+            Watch a <i class="editorial">request.</i>
+          </h2>
+        </div>
+        <div class="recording-layout">
+          <div class="run-outcomes">
+            <div>
+              <h3>Check the connection</h3>
+              <p>
+                The sidebar tracks the viewer, browser, application observation
+                and live image separately. You can tell when the image is stale
+                while the browser is still connected.
+              </p>
+            </div>
+            <div>
+              <h3>Follow the flow</h3>
+              <p>
+                Daedlo selected <code>GET /hello</code>, prepared the request
+                and executed it in Swagger UI. The flow panel shows all three
+                steps finished.
+              </p>
+            </div>
+            <div>
+              <h3>Read the outcome</h3>
+              <p>
+                The test API returned HTTP 200. Daedlo verified the documented
+                response. This read-only request completed without a write.
+              </p>
+            </div>
+          </div>
+          <figure class="recording-capture">
+            <a
+              href="/viewer-alpha11-workspace.webp"
+              aria-label="Open the current Swagger UI viewer capture at full size"
+              ><img
+                src="/viewer-alpha11-workspace.webp"
+                alt="Alpha.11 control room showing connections, a controlled Swagger UI browser, the flow and its result."
+                width="1995"
+                height="1305"
+                fetchpriority="high"
+            /></a>
+            <figcaption>
+              <span>Daedlo alpha.11 · Swagger UI · HTTP 200</span
+              ><a
+                href="/viewer-alpha11-workspace.webp"
+                aria-label="Full-size current viewer capture"
+                >Full size <span aria-hidden="true">↗</span></a
+              >
+            </figcaption>
+          </figure>
+        </div>
+        <div class="connection-review">
+          <div>
+            <h3>What if the browser closes?</h3>
+            <p>
+              We closed the controlled browser after the request. The viewer
+              stayed connected and kept the completed result. The Connections
+              panel marked the application observation unavailable and labelled
+              the last image.
+            </p>
+            <p>
+              Selecting <strong>Check connection</strong> checked the session
+              again. The API still counted exactly one request.
+            </p>
+          </div>
+          <figure class="recording-capture">
+            <a
+              href="/viewer-alpha11-connections.webp"
+              aria-label="Open the connection status detail at full size"
+              ><img
+                src="/viewer-alpha11-connections.webp"
+                width="840"
+                height="491"
+                loading="lazy"
+                alt="The viewer stays connected after the browser disconnects. Application observation shows Unavailable and Live image shows Last image."
+            /></a>
+            <figcaption>
+              <span>Connection status after closing the browser</span
+              ><a
+                href="/viewer-alpha11-connections.webp"
+                aria-label="Full-size connection status detail"
+                >Full size <span aria-hidden="true">↗</span></a
+              >
+            </figcaption>
+          </figure>
+        </div>
       </section>
 
       <section
@@ -116,10 +221,9 @@
                 alt="Recorded Daedlo viewer showing the Roots Journal calendar, saved entry and completed ten-step keyboard-save flow."
                 width="1440"
                 height="900"
-                fetchpriority="high"
             /></a>
             <figcaption>
-              <span>Recorded screenshot · not a live session</span
+              <span>Recorded in the alpha.9 viewer · not a live session</span
               ><a
                 href="/demo-roots-save.png"
                 aria-label="Full-size Roots capture"

@@ -27,7 +27,7 @@
     />
     <link rel="stylesheet" href="/site.css" />
     <link rel="stylesheet" href="/homepage.css" />
-    </head>
+  </head>
   <body class="homepage">
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="masthead wrap">
@@ -100,23 +100,48 @@
             <p>Reload returned the same row.</p>
           </div>
         </div>
+        <div class="record-links">
+          <a class="deep" href="/demo.html#roots-recording"
+            >Read the full evidence <span aria-hidden="true">↗</span></a
+          >
+          <a href="/demo-roots-save.png">Original alpha.9 screenshot</a>
+        </div>
+      </section>
+      <section
+        id="workbench"
+        class="record wrap"
+        aria-labelledby="workbench-title"
+      >
+        <div class="band">
+          <p class="meta">Inside Daedlo</p>
+          <p class="small">0.1.4-alpha.11 · Swagger UI</p>
+        </div>
+        <h2 id="workbench-title">
+          Inside the <i class="editorial">control room.</i>
+        </h2>
+        <p class="workbench-lead">
+          Three steps, one request. Watch Daedlo send
+          <code>GET /hello</code> through Swagger UI and check the HTTP 200
+          response. The sidebar shows what the browser and application are doing
+          along the way.
+        </p>
         <figure class="capture">
           <a
-            href="/demo-roots-save.png"
-            aria-label="Open the original viewer capture at full size"
+            href="/viewer-alpha11-workspace.webp"
+            aria-label="Open the alpha.11 control room at full size"
           >
             <img
-              src="/demo-roots-save.png"
-              width="1440"
-              height="900"
+              src="/viewer-alpha11-workspace.webp"
+              width="1995"
+              height="1305"
               loading="lazy"
-              alt="Recorded Daedlo viewer showing the Roots Journal entry, the completed keyboard-save flow and its saved application effect."
+              alt="Daedlo’s Connections sidebar beside a controlled Swagger UI browser, with flow steps and execution results."
             />
           </a>
           <figcaption>
-            <span class="small">Original viewer capture · Roots Journal</span>
-            <a class="deep" href="/demo.html#roots-recording"
-              >Read the full evidence <span aria-hidden="true">↗</span></a
+            <span class="small">18 Nov 2026 · Local test API</span>
+            <a class="deep" href="/demo.html#current-viewer"
+              >Explore the viewer <span aria-hidden="true">↗</span></a
             >
           </figcaption>
         </figure>
@@ -239,7 +264,8 @@
             >
           </li>
           <li>
-            <a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+            <a
+              href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
               >Apache-2.0 core</a
             >
           </li>
