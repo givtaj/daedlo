@@ -245,14 +245,17 @@ async function fixture(t) {
   let running = false,
     selected = true,
     ready = false,
+    offered = "1.0.0",
     dirty = false;
   const status = async () => ({
     project: { id: "fixture" },
     phase: ready ? "ready" : "idle",
     selected: selected ? { id: "installed", version: "1.0.0" } : null,
     running: running ? { id: "installed", version: "1.0.0" } : null,
-    operation: ready ? { id: "candidate", status: "ready" } : null,
-    available: { id: "1.0.0", version: "1.0.0" },
+    operation: ready
+      ? { id: "candidate", status: "ready", version: "1.0.0" }
+      : null,
+    available: offered ? { id: offered, version: offered } : null,
     blockers: [],
   });
   const manager = {
@@ -317,6 +320,7 @@ async function fixture(t) {
     calls,
     manager,
     setSelected: (v) => (selected = v),
+    setOffer: (v) => (offered = v),
     setDirty: (v) => (dirty = v),
   };
 }
@@ -640,6 +644,28 @@ test("setup cannot resume a prepared installation with a different requested ver
     ["open", "close"],
     "Mismatch must not check, replace or activate the prepared candidate",
   );
+});
+
+test("resumed setup checks the prepared slot when the catalog offers another release or none", async (t) => {
+  const f = await fixture(t);
+  f.setSelected(false);
+  const setup = (version) =>
+    nativeCommand("setup", f.configPath, { ...f.deps, version });
+  await setup("1.0.0");
+  f.calls.length = 0;
+  f.setOffer("2.0.0");
+  await assert.rejects(setup("2.0.0"), { code: "version_unavailable" });
+  assert.equal((await setup("1.0.0")).result.status, "ready");
+  f.setOffer(null);
+  assert.equal((await setup("1.0.0")).result.status, "ready");
+  assert.deepEqual(f.calls, [
+    "open",
+    "close",
+    "open",
+    "close",
+    "open",
+    "close",
+  ]);
 });
 
 test("startup recovery never bypasses a known dirty draft or a running session", async (t) => {

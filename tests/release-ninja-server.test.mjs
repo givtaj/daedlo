@@ -28,7 +28,11 @@ function fixture() {
     async prepare(id) {
       calls.push(["prepare", id]);
       state.phase = "ready";
-      state.operation = { id: "operation-from-manager", status: "ready" };
+      state.operation = {
+        id: "operation-from-manager",
+        status: "ready",
+        version: state.available.version,
+      };
     },
     async activate(id, options) {
       calls.push(["activate", id, options]);
@@ -126,9 +130,30 @@ test("only server-owned candidate and operation IDs reach the manager", async (t
   assert.deepEqual(f.calls, [
     ["check"],
     ["prepare", "release-from-manager"],
-    ["activate", "operation-from-manager", { acknowledgeRestart: true }],
+    [
+      "activate",
+      "operation-from-manager",
+      { acknowledgeRestart: true, expectedVersion: "0.1.5" },
+    ],
     ["rollback", { acknowledgeRestart: true }],
   ]);
+});
+
+test("a ready operation without a confirmed version cannot restart the available release", async (t) => {
+  const f = await start(t);
+  await f.action("check");
+  await f.action("install");
+  delete f.state.operation.version;
+  const status = (await f.status()).body;
+  assert.equal(status.status.available.version, "0.1.5");
+  assert.equal(status.status.operation.version, null);
+  assert.equal(status.actions.restart, false);
+  const result = await f.action("restart", { acknowledgeRestart: true });
+  assert.equal(result.body.requestError.code, "action_unavailable");
+  assert.deepEqual(
+    f.calls.map(([action]) => action),
+    ["check", "prepare"],
+  );
 });
 
 test("Host, Origin, token and strict request shape refuse cross-site and arbitrary inputs", async (t) => {

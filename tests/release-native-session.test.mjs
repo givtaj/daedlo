@@ -80,6 +80,24 @@ test("native reconnect exposes only the current owned viewer and stop keeps safe
   assert.equal((await fetch(url.origin + "/native")).status, 401);
 });
 
+test("native restart binds the dispatched slot and version to its status generation", async (t) => {
+  const f = await nativeFixture(t);
+  f.state.phase = "ready";
+  f.state.operation = { id: "prepared-a", status: "ready", version: "1.1.0" };
+  const old = (await f.request()).body.generation;
+  f.state.operation = { id: "prepared-b", status: "ready", version: "1.2.0" };
+  const stale = await f.post("restart", old);
+  assert.equal(stale.body.requestError.code, "stale_generation");
+  assert.deepEqual(f.calls, []);
+  const current = (await f.request()).body.generation;
+  let target;
+  f.lifecycle.restart = async (input) => {
+    target = input;
+  };
+  assert.equal((await f.post("restart", current)).status, 200);
+  assert.deepEqual(target, { operation: "prepared-b", version: "1.2.0" });
+});
+
 test("legacy Ninja servers do not expose native lifecycle routes", async (t) => {
   const manager = Object.fromEntries(
     ["status", "check", "prepare", "activate", "rollback"].map((key) => [

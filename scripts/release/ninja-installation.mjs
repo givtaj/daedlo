@@ -1330,10 +1330,7 @@ export async function prepareInstallation({
     throw error;
   }
 }
-export async function verifyInstallation(
-  input,
-  { registration: supplied, checkSource = true } = {},
-) {
+async function readOwnedReceipt(input) {
   const path = await checkedPath(
     typeof input === "string" ? input : input?.path,
     { directory: true },
@@ -1347,11 +1344,37 @@ export async function verifyInstallation(
     receipt.id !== basename(path) ||
     !digest.test(receipt.inventorySha256 ?? "") ||
     owner.kind !== "ninja-project-installation" ||
+    owner.projectId !== receipt.projectId ||
     owner.nonce !== receipt.ownerNonce
   )
     fail("Invalid installation receipt or ownership");
   if (typeof input !== "string")
     same(input, receipt, "Installation receipt changed");
+  return receipt;
+}
+
+// Status displays the recorded identity. Launch and activation still verify all sealed bytes.
+export async function readInstallationIdentity(path, { registration }) {
+  const receipt = await readOwnedReceipt(path);
+  if (
+    receipt.projectId !== registration.projectId ||
+    typeof receipt.version !== "string" ||
+    !receipt.version ||
+    receipt.version !== receipt.release?.version ||
+    !digest.test(receipt.sourceSha256 ?? "") ||
+    receipt.sourceSha256 !== receipt.source?.sha256
+  )
+    fail("Invalid recorded installation identity");
+  const { id, version, sourceSha256 } = receipt;
+  return { id, version, sourceSha256 };
+}
+
+export async function verifyInstallation(
+  input,
+  { registration: supplied, checkSource = true } = {},
+) {
+  const receipt = await readOwnedReceipt(input);
+  const path = receipt.path;
   const registration = registrationValue(
     json(await bytes(join(path, "registration.json"))),
   );

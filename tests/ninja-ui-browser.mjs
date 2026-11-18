@@ -31,6 +31,10 @@ test("local update UI validates, defers unsafe restart, activates and reverts wi
     status: async () => structuredClone(state),
     async check() {
       calls.push("check");
+      if (state.operation?.status === "ready") {
+        state.available = { id: "later-release", version: "0.1.6-candidate" };
+        return;
+      }
       state.phase = "checking";
       await pause(550);
       state.available = { id: "verified-release", version: "0.1.5-candidate" };
@@ -48,11 +52,18 @@ test("local update UI validates, defers unsafe restart, activates and reverts wi
         validated = r;
       });
       state.phase = "ready";
-      state.operation = { id: "validated-operation", status: "ready" };
+      state.operation = {
+        id: "validated-operation",
+        status: "ready",
+        version: "0.1.5-candidate",
+      };
     },
     async activate(id, options) {
-      assert.equal(id, "validated-operation");
-      assert.deepEqual(options, { acknowledgeRestart: true });
+      assert.equal(id, "replacement-operation");
+      assert.deepEqual(options, {
+        acknowledgeRestart: true,
+        expectedVersion: "0.1.5-candidate",
+      });
       calls.push("activate");
       if (rejection)
         throw Object.assign(Error("private manager path"), { code: rejection });
@@ -121,6 +132,34 @@ test("local update UI validates, defers unsafe restart, activates and reverts wi
     assert.equal(
       await page.locator("#selected").textContent(),
       "0.1.4-alpha.2",
+    );
+    await page.getByRole("button", { name: "Check for updates" }).click();
+    await page
+      .locator("#candidate")
+      .filter({ hasText: "0.1.6-candidate" })
+      .waitFor();
+    assert.match(
+      await page.locator("#phase-detail").textContent(),
+      /Restart.*0\.1\.5-candidate/,
+    );
+    const evidence = resolve(
+      process.env.NINJA_UI_ARTIFACTS ?? "artifacts/ninja-update/ui",
+    );
+    await mkdir(evidence, { recursive: true });
+    await page.screenshot({
+      path: resolve(evidence, "prepared-and-offered.png"),
+      fullPage: true,
+    });
+    assert.equal(await page.locator("#restart").isDisabled(), true);
+    await page.locator("#acknowledge").check();
+    state.operation.id = "replacement-operation";
+    await page.waitForResponse(
+      async (res) =>
+        res.url().endsWith("/status") &&
+        (await res.json()).status?.operation?.id === "replacement-operation",
+    );
+    await page.waitForFunction(
+      () => !document.querySelector("#acknowledge").checked,
     );
     assert.equal(await page.locator("#restart").isDisabled(), true);
     await page.locator("#acknowledge").check();
@@ -202,6 +241,7 @@ test("local update UI validates, defers unsafe restart, activates and reverts wi
     assert.deepEqual(calls, [
       "check",
       "prepare",
+      "check",
       "activate",
       "activate",
       "activate",
