@@ -52,6 +52,92 @@
     <script type="module">
       const note = document.querySelector("#note"),
         category = document.querySelector("#category");
+      // One editor owns its drafts and save operations. Retain unresolved writes
+      // across navigation, including when a response is lost after a commit.
+      const journalKey = "daedlo-starter-pending-saves";
+      const saveLease = "starter-note-save";
+      let activeOperation = null,
+        confirmed = null,
+        expectedJournal;
+      try {
+        if (sessionStorage.getItem(journalKey) === null)
+          sessionStorage.setItem(journalKey, "[]");
+        expectedJournal = sessionStorage.getItem(journalKey);
+      } catch {
+        // An unavailable journal blocks both new saves and proof of safe cleanup.
+      }
+      function pendingSaves() {
+        const current = sessionStorage.getItem(journalKey);
+        if (current === null || current !== expectedJournal)
+          throw new Error("Save journal changed outside the owned editor");
+        const entries = JSON.parse(current);
+        if (
+          !Array.isArray(entries) ||
+          entries.some(
+            (entry) =>
+              !entry ||
+              typeof entry.operation !== "string" ||
+              !entry.operation ||
+              typeof entry.text !== "string" ||
+              !entry.text.trim() ||
+              !["plain", "work"].includes(entry.category),
+          ) ||
+          new Set(entries.map((entry) => entry.operation)).size !==
+            entries.length
+        )
+          throw new Error("Save journal unavailable");
+        return entries;
+      }
+      function writeJournal(entries) {
+        const bytes = JSON.stringify(entries);
+        sessionStorage.setItem(journalKey, bytes);
+        expectedJournal = bytes;
+      }
+      // Read-only application facts for this particular editor and write path.
+      window.starterRecovery = Object.freeze({
+        documentId: crypto.randomUUID(),
+        async inspect() {
+          const leases = await navigator.locks.query();
+          if (
+            [...leases.held, ...leases.pending].some(
+              (lock) => lock.name === saveLease,
+            ) ||
+            activeOperation !== null
+          )
+            return null;
+          if (
+            document.querySelector("#note") !== note ||
+            document.querySelector("#category") !== category
+          )
+            return null;
+          let dirty;
+          switch (document.body.dataset.phase) {
+            case "ready":
+              dirty =
+                note.value !== "" ||
+                category.value !== "plain" ||
+                !!document.body.dataset.operation;
+              break;
+            case "saved":
+              if (
+                !confirmed ||
+                confirmed.operation !== document.body.dataset.operation
+              )
+                return null;
+              dirty =
+                note.value !== confirmed.text ||
+                category.value !== confirmed.category;
+              break;
+            case "draft":
+            case "validation":
+              dirty = true;
+              break;
+            default:
+              return null;
+          }
+          return { dirty, pending: pendingSaves() };
+        },
+      });
       const phase = (value, label) => {
         document.body.dataset.phase = value;
         document.querySelector("#status").textContent = label;
@@ -73,28 +159,72 @@
           phase("validation", "Write a note before saving.");
           return;
         }
+        if (activeOperation !== null) return;
         const operation =
           document.body.dataset.operation ?? crypto.randomUUID();
+        const payload = {
+          operation,
+          text: note.value,
+          category: category.value,
+        };
+        activeOperation = operation;
         document.body.dataset.operation = operation;
         phase("saving", "Saving…");
         try {
-          const response = await fetch("/api/notes", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              operation,
-              text: note.value,
-              category: category.value,
-            }),
+          await navigator.locks.request(saveLease, async () => {
+            const entries = pendingSaves();
+            const previous = entries.find(
+              (entry) => entry.operation === operation,
+            );
+            if (
+              previous &&
+              (previous.text !== payload.text ||
+                previous.category !== payload.category)
+            )
+              throw new Error(
+                "The operation already has a different pending payload",
+              );
+            if (!previous) writeJournal([...entries, payload]);
+            const response = await fetch("/api/notes", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!response.ok) throw new Error("Save was rejected");
+            const matches = (record) =>
+              record?.operation === operation &&
+              record.text === payload.text &&
+              record.category === payload.category;
+            if (!matches(await response.json()))
+              throw new Error("Save acknowledgement unavailable");
+            const readback = await fetch(
+              "/api/notes?operation=" + encodeURIComponent(operation),
+              { cache: "no-store" },
+            );
+            if (!readback.ok) throw new Error("Save readback unavailable");
+            const { items } = await readback.json();
+            if (
+              !Array.isArray(items) ||
+              items.length !== 1 ||
+              !matches(items[0])
+            )
+              throw new Error("Save readback did not confirm this operation");
+            writeJournal(
+              pendingSaves().filter((entry) => entry.operation !== operation),
+            );
+            if (document.body.dataset.operation === operation) {
+              confirmed = payload;
+              phase("saved", "Saved. Independent readback still required.");
+            }
           });
-          if (!response.ok) throw new Error("Save was rejected");
-          await response.json();
-          phase("saved", "Saved. Independent readback still required.");
         } catch {
-          phase(
-            "recovery",
-            "Response unavailable. Storage outcome is uncertain.",
-          );
+          if (document.body.dataset.operation === operation)
+            phase(
+              "recovery",
+              "Response unavailable. Storage outcome is uncertain.",
+            );
+        } finally {
+          activeOperation = null;
         }
       });
     </script>

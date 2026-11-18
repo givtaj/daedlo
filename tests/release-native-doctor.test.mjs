@@ -207,6 +207,54 @@ test("offline caches are inspected without creating or populating them", async (
   });
 });
 
+test(
+  "doctor reports owner-restrictive umask before a write is attempted",
+  { skip: process.platform === "win32" },
+  async (t) => {
+    const f = await fixture(t);
+    const before = await fs.readdir(f.root);
+    const old = process.umask(0o277);
+    try {
+      const info = check(
+        await nativeDoctor(f.configPath, { runCommand: f.runCommand }),
+        "installation-umask",
+      );
+      assert.equal(info?.status, "blocked");
+      assert.match(info.message, /0277.*owner/);
+    } finally {
+      process.umask(old);
+    }
+    assert.deepEqual(await fs.readdir(f.root), before);
+  },
+);
+
+test("doctor checks the selected Playwright cache before installation without creating or launching anything", async (t) => {
+  const f = await fixture(t);
+  const cache = join(f.root, "pinned-browser-cache");
+  f.config.installation.playwrightBrowsersPath = cache;
+  await f.save();
+  const diagnose = async () =>
+    check(
+      await nativeDoctor(f.configPath, { runCommand: f.runCommand }),
+      "playwright-browser-cache",
+    );
+  assert.equal((await diagnose())?.status, "blocked");
+  await assert.rejects(fs.stat(cache), { code: "ENOENT" });
+  await fs.mkdir(cache);
+  const result = await diagnose();
+  assert.equal(result.status, "pass");
+  assert.ok(result.message.includes(cache));
+  assert.deepEqual(await fs.readdir(cache), []);
+  const alias = join(f.root, "selected-cache");
+  await fs.symlink(cache, alias, "dir");
+  f.config.installation.playwrightBrowsersPath = alias;
+  await f.save();
+  const resolved = await diagnose();
+  assert.equal(resolved.status, "pass");
+  assert.ok(resolved.message.includes(cache));
+  assert.equal(await fs.readlink(alias), cache);
+});
+
 test("unowned stores and interrupted ownership are retained for explicit recovery", async (t) => {
   const f = await fixture(t);
   await fs.mkdir(f.config.store);

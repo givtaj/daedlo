@@ -271,14 +271,17 @@ export async function createManagedLaunch({runtime,resources,settings,installati
   resources.own(session,{label:"Observation session",close:()=>session.close()});
   const viewer=await runtime.createViewer({page,context,session});
   resources.own(viewer,{label:"Observation viewer",close:()=>viewer.close()});
-  let pending=false,unknown=false;
+  let pending=false,unknown=false,blocked,entered;
   // Private test-only controls act on this owned page. They are not an adapter
   // recovery API, application transition graph or production launcher feature.
   const controls=http.createServer(async(req,res)=>{
     try {
       let body="";for await(const chunk of req)body+=chunk;
       const {action}=JSON.parse(body);
-      if(action==="fault")await page.goto(settings.target+"/unavailable");
+      if(action==="hold-draft") {blocked=Promise.withResolvers();entered=Promise.withResolvers();}
+      else if(action==="draft-entered") await entered.promise;
+      else if(action==="release-draft") {blocked?.resolve();blocked=null;}
+      else if(action==="fault")await page.goto(settings.target+"/unavailable");
       else if(action==="overview")await page.getByRole("link",{name:"Overview",exact:true}).click();
       else if(action==="dirty")await page.getByLabel("Note",{exact:true}).fill("Retained synthetic draft");
       else if(action==="unknown")unknown=true;
@@ -298,6 +301,7 @@ export async function createManagedLaunch({runtime,resources,settings,installati
   resources.own(controls,{label:"Private observation test control",close:()=>new Promise((done,reject)=>{controls.close(e=>e?reject(e):done());controls.closeAllConnections();})});
   await writeFile(settings.controlPath,"http://127.0.0.1:"+controls.address().port);
   return {session,viewerUrl:viewer.url,async draftState(){
+    if(blocked){entered.resolve();await blocked.promise;}
     if(pending||unknown)return null;
     try {const {facts}=await adapter.observe();return ["draft","saving","validation","recovery"].includes(facts.phase);}
     catch {throw Error("synthetic-observation-secret-do-not-publish");}
@@ -372,6 +376,31 @@ export async function createManagedLaunch({runtime,resources,settings,installati
     owner = await nativeCommand("start", configPath, deps);
     assert.equal(owner.result.status, "running");
     controlUrl = await fs.readFile(config.settings.controlPath, "utf8");
+    // Hold one actual child-side draft measurement. A second IPC request
+    // queues behind it, while a lone request spends its deadline collecting.
+    for (const phase of ["queued", "observation"]) {
+      await control("hold-draft");
+      let earlier;
+      try {
+        if (phase === "queued") {
+          earlier = supervisor.status();
+          await control("draft-entered");
+        }
+        await assert.rejects(status(), (error) => {
+          assert.equal(error.code, "status_timeout");
+          assert.equal(error.timing?.phase, phase);
+          assert.ok(error.timing[phase + "Ms"] >= 4000);
+          if (phase === "queued") assert.equal(error.timing.observationMs, 0);
+          return true;
+        });
+      } finally {
+        await control("release-draft");
+        await earlier;
+        // Wait for previously timed-out work to drain before sampling again.
+        await supervisor.status();
+      }
+    }
+    assert.equal((await status()).status, "running");
     const startup = await controller.newPage();
     await startup.goto(owner.result.startupUrl);
     await startup

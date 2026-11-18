@@ -452,3 +452,195 @@ test("a rejected asynchronous afterStop cleanup remains handled and retains a pr
   assert.equal(result.stderr.includes("private-cleanup-secret"), false);
   assert.match(result.stderr, /cleanup.*retain|cleanup.*recover/i);
 });
+
+test("overlapping native and Update GETs share one live read, and a later GET measures again", async (t) => {
+  const { createNinjaManager } = await import(
+    "../scripts/release/ninja-manager.mjs"
+  );
+  const { mkdtemp, realpath, rm } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const root = await realpath(await mkdtemp(join(tmpdir(), "shared-status-")));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  let reads = 0;
+  const supervisor = {
+    async status() {
+      reads++;
+      await new Promise((done) => setTimeout(done, 100));
+      return {
+        running: null,
+        dirty: false,
+        busy: false,
+        observation: { status: "not_running" },
+      };
+    },
+  };
+  const manager = await createNinjaManager({
+    root,
+    supervisor,
+    registration: { projectId: "fixture" },
+    installer: {},
+    provider: {},
+  });
+  const server = await createNinjaServer({
+    manager,
+    lifecycle: {
+      async snapshot(live) {
+        const current = live ?? (await supervisor.status());
+        return {
+          instance: "a".repeat(32),
+          configSha256: "b".repeat(64),
+          toolsSha256: "c".repeat(64),
+          runningId: null,
+          observation: current.observation,
+        };
+      },
+      ...Object.fromEntries(
+        ["stop", "refresh", "restart", "retryEvidence"].map((k) => [
+          k,
+          async () => {},
+        ]),
+      ),
+    },
+  });
+  t.after(() => server.close());
+  const url = new URL(server.url);
+  const get = async (path) =>
+    (
+      await fetch(url.origin + path, {
+        headers: { Authorization: "Bearer " + url.hash.slice(7) },
+      })
+    ).json();
+  const [native, update] = await Promise.all([get("/native"), get("/status")]);
+  assert.equal(native.ok, true);
+  assert.equal(update.ok, true);
+  assert.equal(
+    reads,
+    1,
+    "both HTTP handoffs should use one fresh child status measurement",
+  );
+  const next = await get("/native");
+  assert.equal(reads, 2, "sequential requests must obtain a new observation");
+  assert.equal(
+    next.generation,
+    native.generation,
+    "timings do not invalidate a stable generation",
+  );
+});
+
+test("a slow status read reports bounded timing for its current phase without returning a handoff", async (t) => {
+  let resume;
+  const wait = new Promise((done) => {
+    resume = done;
+  });
+  const manager = {
+    async status(options) {
+      options?.onPhase?.("queued");
+      await wait;
+      return { project: { id: "fixture" }, phase: "idle" };
+    },
+    ...Object.fromEntries(
+      ["check", "prepare", "activate", "rollback"].map((k) => [
+        k,
+        async () => {},
+      ]),
+    ),
+  };
+  const server = await createNinjaServer({ manager, statusDeadlineMs: 80 });
+  t.after(() => server.close());
+  const url = new URL(server.url);
+  const fallback = setTimeout(resume, 300);
+  try {
+    const response = await fetch(url.origin + "/status", {
+      headers: { Authorization: "Bearer " + url.hash.slice(7) },
+    });
+    const result = await response.json();
+    assert.equal(
+      response.status,
+      503,
+      "a delayed status must identify the deadline before collection finishes",
+    );
+    assert.equal(result.requestError.code, "status_timeout");
+    assert.equal(result.timing.phase, "queued");
+    assert.ok(result.timing.queuedMs > 0);
+    assert.equal(result.timing.observationMs, 0);
+    assert.equal(result.status, undefined);
+  } finally {
+    clearTimeout(fallback);
+    resume();
+  }
+});
+
+test("a fresh GET during receipt verification observes a later edit and supersedes the older view", async (t) => {
+  const f = await nativeFixture(t);
+  let dirty = false,
+    first = true;
+  const checking = Promise.withResolvers();
+  const release = Promise.withResolvers();
+  f.manager.status = async (options) => {
+    const measured = dirty;
+    options?.onLive?.({ dirty: measured });
+    if (first) {
+      first = false;
+      checking.resolve();
+      options?.onPhase?.("installation");
+      await release.promise;
+    }
+    return { ...f.state, dirty: measured };
+  };
+  const older = f.request("/status");
+  await checking.promise;
+  dirty = true;
+  const fallback = setTimeout(release.resolve, 200);
+  try {
+    const current = await f.request("/native");
+    assert.equal(
+      current.body.status.dirty,
+      true,
+      "a new reader must see an edit after the previous observation",
+    );
+    release.resolve();
+    assert.equal((await older).body.requestError?.code, "status_superseded");
+    assert.equal(
+      (await f.request("/status")).body.generation,
+      current.body.generation,
+    );
+  } finally {
+    clearTimeout(fallback);
+    release.resolve();
+    await older;
+  }
+});
+
+test("an unchanged Update poll overtaking a POST authorization still permits the fresh action", async (t) => {
+  const f = await nativeFixture(t);
+  const initial = await f.request();
+  const checking = Promise.withResolvers(),
+    release = Promise.withResolvers();
+  let preflight = true;
+  f.manager.status = async () => {
+    if (preflight) {
+      preflight = false;
+      checking.resolve();
+      await release.promise;
+    }
+    return f.state;
+  };
+  const action = f.post("refresh", initial.body.generation);
+  try {
+    await checking.promise;
+    const update = await f.request("/status");
+    assert.equal(update.body.busy, true);
+    release.resolve();
+    const result = await action;
+    assert.equal(
+      result.status,
+      200,
+      "a read of identical state cannot veto the action",
+    );
+    assert.deepEqual(f.calls, ["refresh"]);
+  } finally {
+    release.resolve();
+    await action;
+  }
+});
