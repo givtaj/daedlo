@@ -195,7 +195,10 @@ This is an explicit assisted migration, not an automatic lock rewrite.
 
 Each installation seals original source, generated project dependencies, runtime,
 crate, compiled model, handshake, acceptance receipts and launch paths. A project
-selection references the complete slot. Activation rechecks source and slot
+selection references the complete slot. Status reads the selected version and
+source identity from its owned installation receipt. Opening or polling the
+control page leaves the sealed files and browser executable unread.
+Startup and activation verify their contents. Activation rechecks source and slot
 integrity, drains the driver, writes a durable report, closes owned resources,
 then journals and atomically selects the candidate. Failed candidate boot restores
 and relaunches the accepted previous selection. A crash before transaction commit

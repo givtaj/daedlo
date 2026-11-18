@@ -8,6 +8,7 @@ import test from "node:test";
 import { createManifest } from "../scripts/release/manifest.mjs";
 import {
   prepareInstallation,
+  readInstallationIdentity,
   snapshotProject,
   verifyInstallation,
   runInstallationHook,
@@ -444,6 +445,23 @@ test("verification detects installation tampering and authoring drift; historica
     receipt.sourceSha256,
   );
   await fs.appendFile(receipt.enginePath, "tampered");
+  assert.deepEqual(
+    await readInstallationIdentity(f.destination, {
+      registration: f.registration,
+    }),
+    {
+      id: receipt.id,
+      version: receipt.version,
+      sourceSha256: receipt.sourceSha256,
+    },
+    "Status is the recorded selection even when the executable needs verification",
+  );
+  await assert.rejects(
+    readInstallationIdentity(f.destination, {
+      registration: { ...f.registration, projectId: "different-project" },
+    }),
+    /installation identity/i,
+  );
   await assert.rejects(
     verifyInstallation(f.destination, { checkSource: false }),
     /integrity|inventory|changed/i,
