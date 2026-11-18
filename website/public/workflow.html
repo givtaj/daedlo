@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workflow illustrations — Daedlo</title>
+    <meta
+      name="description"
+      content="Step through two illustrations of draft retention and uncertain saves."
+    />
+    <link rel="canonical" href="https://daedlo.com/workflow.html" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/workflow.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="34" height="34" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="/demo.html">Real demo</a
+        ><a href="/teaching.html">Teaching mode</a
+        ><a href="/install.html" class="nav-guide"
+          >Get started <span aria-hidden="true">↗</span></a
+        >
+        <a href="https://github.com/givtaj/daedlo">GitHub</a>
+      </nav>
+    </header>
+    <main id="main">
+      <section
+        class="workflow-illustration wrap"
+        aria-labelledby="illustration-title"
+      >
+        <div class="workflow-explanation">
+          <p class="eyebrow">Explore the idea</p>
+          <h1 id="illustration-title">What should count as working?</h1>
+          <p>
+            Step through two illustrations of the questions that shaped Daedlo.
+            For execution evidence,
+            <a href="/demo.html#roots-recording"
+              >inspect the recorded Roots run</a
+            >.
+          </p>
+        </div>
+        <div class="workbench" id="workflow" aria-labelledby="workbench-title">
+          <div class="workbench-top">
+            <span class="mini-mark" aria-hidden="true">d.</span>
+            <h2 id="workbench-title">A small path to proof</h2>
+            <span class="workbench-label">FLOW SKETCH</span>
+          </div>
+          <div
+            class="scenario-picker"
+            role="group"
+            aria-label="Choose an illustrated scenario"
+          >
+            <button type="button" data-scenario="draft" aria-pressed="true">
+              A draft that stays</button
+            ><button type="button" data-scenario="save" aria-pressed="false">
+              An uncertain save
+            </button>
+          </div>
+          <p class="scenario-promise" data-promise>
+            Your draft should survive a trip away and back.
+          </p>
+          <ol class="flow-path" aria-label="Illustrated steps" data-flow-path>
+            <li class="current" aria-current="step"><span>01</span>Write</li>
+            <li><span>02</span>Leave</li>
+            <li><span>03</span>Return</li>
+            <li><span>04</span>Verify</li>
+          </ol>
+          <div class="observation" aria-live="polite" aria-atomic="true">
+            <div class="observation-top">
+              <p class="eyebrow">Observed application state</p>
+              <span class="step-count" data-step-count>01 / 04</span>
+            </div>
+            <h3 data-state>Draft ready</h3>
+            <p data-description>A note is written. It has not been saved.</p>
+            <div class="sample-note">
+              <span class="sample-label" data-sample-label
+                >Illustrative draft</span
+              >
+              <p data-sample>Keep this thought. I’ll be right back.</p>
+              <span class="note-corner" aria-hidden="true">↗</span>
+            </div>
+            <div class="evidence-row">
+              <span>Evidence</span
+              ><strong data-evidence-value>No write attempted</strong>
+            </div>
+          </div>
+          <div class="workbench-controls">
+            <button class="reset-button" type="button" data-reset>
+              Start over</button
+            ><button class="button step-button" type="button" data-next>
+              Next step <span aria-hidden="true">→</span>
+            </button>
+          </div>
+          <p class="illustration-note" data-illustration-note>
+            Interactive illustration — not a live browser or a test result.
+          </p>
+          <noscript
+            ><p class="noscript-note">
+              Enable JavaScript to step through the illustration. You can also
+              <a href="/guide.html">read the integration guide</a>.
+            </p></noscript
+          >
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer wrap">
+      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
+        ><img src="/mark.svg" alt="" width="28" height="28" />daedlo<span
+          class="wordmark-dot"
+          >.</span
+        ></a
+      >
+      <p>Tools grow out of the work.</p>
+      <nav aria-label="Footer navigation">
+        <a href="/compose.html">Docker Compose</a>
+        <a href="/install.html">Get started</a
+        ><a href="/teaching.html">Teaching mode</a
+        ><a href="/guide.html">Integration guide</a
+        ><a href="/privacy.html">Privacy &amp; contact</a>
+        <a href="https://github.com/givtaj/daedlo">GitHub</a>
+        <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
+        <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
+          >Contribute</a
+        >
+        <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
+          >Support</a
+        >
+        <a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+          >Apache-2.0</a
+        >
+      </nav>
+    </footer>
+  </body>
+</html>

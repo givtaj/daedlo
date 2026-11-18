@@ -386,7 +386,11 @@ test("website acceptance requires explicit test trust and retains the production
   const { checkWebsite } = await import("./acceptance.mjs");
   await writeFile(
     join(f.site, "public/index.html"),
-    "<h1>Make “it works” something you can show</h1><p>Illustration, not a live browser; application-specific integration.</p>",
+    '<h1>Did it save?</h1><p>Application-specific integration.</p><a href="/workflow.html">Workflow illustration</a>',
+  );
+  await writeFile(
+    join(f.site, "public/workflow.html"),
+    "<p>Interactive illustration — not a live browser.</p>",
   );
   await writeFile(
     join(f.site, "public/privacy.html"),

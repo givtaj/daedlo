@@ -11,14 +11,16 @@ The planned teaching-mode page describes a proposed Roots Journal lesson.
 Teaching mode is not implemented or included in the current release.
 
 Only `public/` is deployable. Scripts, tests, this README and hosting configuration
-stay outside the asset root. There is no framework, third-party font, analytics,
+stay outside the asset root. The homepage serves the keypress illustration and
+Instrument Serif Italic locally, with the font license at
+`/instrument-serif-license.txt`. There is no framework, analytics,
 account, data submission or live browser connection. The curated Roots screenshot
 and evidence summary show a 9 November 2026 alpha.9 candidate run, with unchanged
 component provenance to the published alpha.9 source. The two earlier screenshots
 and evidence summary preserve the Architecture Studio recording from 11 October
 2026 and the public `0.1.2-rc.1` kit. Its original HTML bytes remain at
 `public/demo-2026-10-11.html`; the current demo page presents both recordings with
-their own identities. The separate workflow sketches are labelled
+their own identities. The separate sketches on `/workflow.html` are labelled
 as illustrations. Private traces and customer source must never enter this tree.
 
 ## One onboarding entrypoint

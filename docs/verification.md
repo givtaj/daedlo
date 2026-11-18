@@ -1,5 +1,19 @@
 # Verification record
 
+## “Did it save?” homepage preview — 2026-11-18
+
+**Local preview passed.** Before implementation, the browser check expected
+“Did it save?” and found the previous homepage headline. On the redesigned
+page, keyboard activation of “Inspect the recorded run” reached the dated
+Roots receipt on desktop and mobile. The original capture and independent
+readback retain their 9 November alpha.9 candidate provenance.
+
+The 93 website tests, 97 simulated publisher tests and static acceptance passed
+with 11 HTML pages and 10 verified release archives. Local Chromium passed all
+16 visitor and 18 onboarding checks, including the relocated workflow sketches,
+Compose guide and alpha.11 tools upgrade link. The homepage action fit the first
+screen across checks from 320 to 1440 CSS pixels. Desktop and phone renders were inspected locally. Publication remains pending.
+
 ## Alpha.11 publication and public verification — 2026-11-11
 
 **PASS — published and independently verified.** The `0.1.4-alpha.11` kit is

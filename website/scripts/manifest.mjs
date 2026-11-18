@@ -16,6 +16,11 @@ import { readStagedUpdates, UPDATE_TRUST } from "./stage-updates.mjs";
 
 export const PUBLIC_FILES = new Set([
   "index.html",
+  "homepage.css",
+  "save-press.webp",
+  "instrument-serif-italic.woff2",
+  "instrument-serif-license.txt",
+  "workflow.html",
   "guide.html",
   "compose.html",
   "privacy.html",
