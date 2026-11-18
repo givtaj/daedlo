@@ -1,5 +1,22 @@
 # Verification record
 
+## Site-wide design preview — 2026-11-18
+
+The ten current pages share the homepage typography, colors, masthead and
+footer in the local preview. Before the change, Chromium found a different
+background on the 404 page and a different heading typeface on the integration
+guide. The recorded demo also lacked a keyboard-navigable index of its two runs.
+
+Chromium checked all ten pages at 1440, 390 and 320 CSS pixels, including the
+generated install and updates pages and a nested missing URL. The layouts fit
+each viewport. The two links in the demo index reached their respective
+recordings, and both evidence files and all three full-size images opened.
+Desktop and phone screenshots of the dated October demo matched the originals.
+
+All 95 website tests, 97 simulated publisher tests, 16 visitor checks and 18
+onboarding checks passed locally. Static acceptance verified 11 HTML pages and
+10 release archives. This record covers the local preview.
+
 ## “Did it save?” homepage published — 2026-11-18
 
 [PR #49](https://github.com/givtaj/daedlo/pull/49) merged as `43a02f7` after

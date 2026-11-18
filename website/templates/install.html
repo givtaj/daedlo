@@ -7,37 +7,45 @@
       name="description"
       content="One Codex prompt to install Daedlo, connect your project, verify a first flow and keep its supported launch route. Assisted alpha for macOS arm64."
     />
-    <meta name="theme-color" content="#f5f3ed" />
+    <meta name="theme-color" content="#f6f3eb" />
     <link rel="canonical" href="https://daedlo.com/install.html" />
     <link rel="icon" href="/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/guidebook.css" />
     <title>Get started — Daedlo {{VERSION}}</title>
   </head>
-  <body>
+  <body class="current-page">
     <a class="skip-link" href="#main">Skip to content</a>
-    <header class="site-header wrap">
-      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
-        ><img src="/mark.svg" alt="" width="34" height="34" />daedlo<span
-          class="wordmark-dot"
-          >.</span
+    <header class="masthead wrap">
+      <a class="brand" aria-label="Daedlo home" href="/index.html"
+        ><img src="/mark.svg" alt="" width="32" height="32" /><span
+          >daedlo<b>.</b></span
         ></a
       >
       <nav aria-label="Main navigation">
-        <a href="/demo.html">Real demo</a
-        ><a href="/guide.html">Integration guide</a>
+        <a class="wide-link" href="/demo.html">Recorded runs</a>
+        <a class="wide-link" href="/guide.html">Integration guide</a>
         <a href="https://github.com/givtaj/daedlo">GitHub</a>
+        <a class="install-link" aria-current="page" href="/install.html"
+          >Start with Codex <span aria-hidden="true">↗</span></a
+        >
       </nav>
     </header>
     <main class="guide-main install-main wrap" id="main">
-      <p class="eyebrow">Assisted alpha / {{VERSION}}</p>
-      <h1>
-        One prompt.<br />Your first verified flow<span class="orange">.</span>
-      </h1>
-      <p class="guide-intro">
-        Assisted alpha for macOS arm64 with Codex. Your agent installs Daedlo,
-        connects your project, verifies one real flow and leaves its launch
-        commands.
-      </p>
+      <div class="reference-hero">
+        <div>
+          <p class="kicker">Assisted alpha / {{VERSION}}</p>
+          <h1>One prompt. <i class="editorial">Your first verified flow.</i></h1>
+        </div>
+        <div class="reference-summary">
+          <p class="guide-intro">
+            Assisted alpha for macOS arm64 with Codex. Your agent installs Daedlo,
+            connects your project, verifies one real flow and leaves its launch
+            commands.
+          </p>
+        </div>
+      </div>
       <p class="guide-demo-link">
         Using Docker Compose?
         <a href="/compose.html"
@@ -571,28 +579,40 @@ NODE
       </section>
       <a class="back-link" href="/index.html">← Back to Daedlo</a>
     </main>
-    <footer class="site-footer wrap">
-      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
-        ><img src="/mark.svg" alt="" width="28" height="28" />daedlo<span
-          class="wordmark-dot"
-          >.</span
-        ></a
-      >
-      <p>Tools grow out of the work.</p>
+    <footer class="site-footer-links wrap">
+      <p>Daedlo · Make “it works” something you can show.</p>
       <nav aria-label="Footer navigation">
-        <a href="/guide.html">Integration guide</a
-        ><a href="/privacy.html">Privacy &amp; contact</a>
-        <a href="https://github.com/givtaj/daedlo">GitHub</a>
-        <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
-        <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
-          >Contribute</a
-        >
-        <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
-          >Support</a
-        >
-        <a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
-          >Apache-2.0</a
-        >
+        <ul aria-label="Product and guides">
+          <li><a href="/demo.html">Recorded runs</a></li>
+          <li><a href="/workflow.html">Workflow illustrations</a></li>
+          <li><a href="/teaching.html">Teaching plan</a></li>
+          <li><a href="/index.html#story">Our story</a></li>
+          <li><a href="/guide.html">Integration guide</a></li>
+          <li><a href="/compose.html">Docker Compose</a></li>
+          <li><a href="/updates.html">Updates</a></li>
+        </ul>
+        <ul aria-label="Project and support">
+          <li><a href="https://github.com/givtaj/daedlo">GitHub</a></li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
+          </li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
+              >Contribute</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
+              >Support</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+              >Apache-2.0 core</a
+            >
+          </li>
+          <li><a href="/privacy.html">Privacy &amp; contact</a></li>
+        </ul>
       </nav>
     </footer>
     <script src="/onboarding.js" defer></script>

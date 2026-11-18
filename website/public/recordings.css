@@ -1,0 +1,299 @@
+.recordings-intro {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  align-items: end;
+  gap: 8%;
+  padding-block: clamp(40px, 5vw, 82px);
+}
+
+.recordings-intro h1 {
+  max-width: none;
+  margin: 0;
+  font-size: clamp(76px, 7.1vw, 112px);
+  line-height: 0.96;
+  letter-spacing: -0.075em;
+}
+
+.recordings h1 .editorial,
+.recordings h2 .editorial,
+.recordings h3 .editorial {
+  display: inline;
+  color: var(--blue);
+  font-size: 1.13em;
+  letter-spacing: -0.04em;
+}
+
+.recordings-lead {
+  max-width: 52ch;
+  margin: 22px 0 0;
+  font-size: clamp(18px, 1.4vw, 21px);
+  line-height: 1.45;
+}
+
+.run-index {
+  border-top: 1px solid var(--ink);
+}
+
+.run-index a {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  font-size: clamp(17px, 1.5vw, 23px);
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.run-index a:hover,
+.recording a:hover {
+  color: var(--blue);
+}
+
+.run-date,
+.recording-byline,
+.recording-capture figcaption,
+.restored-values dt {
+  font: 12px/1.5 var(--mono);
+}
+
+.run-date {
+  min-width: 11ch;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.recording {
+  border-top: 2px solid var(--ink);
+  padding: 18px 0 55px;
+  scroll-margin-top: 16px;
+}
+
+.recording-byline,
+.recording-heading,
+.recording-capture figcaption,
+.recordings-next {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.recording-byline {
+  color: var(--muted);
+}
+
+.recording-byline p,
+.run-outcomes p,
+.restored-values dl,
+.recording-notes p {
+  margin: 0;
+}
+
+.recording-byline .run-label {
+  color: var(--blue);
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.recording-heading {
+  margin: 17px 0 25px;
+}
+
+.recording-heading h2,
+.recordings-next h2 {
+  margin: 0;
+  font-size: clamp(44px, 4.7vw, 73px);
+  line-height: 1.03;
+  letter-spacing: -0.055em;
+}
+
+.recording-heading > a,
+.recording-notes a {
+  font-size: 15px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+
+.recording-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.74fr) minmax(0, 1.9fr);
+  align-items: start;
+  gap: 5%;
+}
+
+.run-outcomes > div,
+.restored-values dl > div {
+  border-top: 1px solid var(--line);
+  padding: 15px 0 19px;
+}
+
+.run-outcomes h3 {
+  margin: 0 0 5px;
+  font-size: clamp(25px, 2.15vw, 36px);
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+}
+
+.run-outcomes p,
+.restored-values p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.recording-capture {
+  margin: 0;
+}
+
+.recording-capture > a,
+.recording-capture img {
+  display: block;
+}
+
+.recording-capture img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+}
+
+.recording-capture figcaption {
+  margin-top: 9px;
+  color: var(--muted);
+}
+
+.recording-capture figcaption a {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.recording-notes {
+  display: grid;
+  grid-template-columns: 0.74fr 1.9fr;
+  gap: 5%;
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.recording-notes h3,
+.reopen-heading h3 {
+  margin: 0;
+  font-size: clamp(25px, 2.2vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
+.recording-notes p {
+  max-width: 72ch;
+  font-size: 16px;
+}
+
+.recording-notes p + p {
+  margin-top: 10px;
+}
+
+.run-stages {
+  list-style-position: inside;
+  margin: 24px 0 0;
+  padding: 13px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  border-block: 1px solid var(--line);
+  font-size: 15px;
+}
+
+.run-stages li::marker {
+  color: var(--blue);
+  font: 12px var(--mono);
+}
+
+.reopen-heading {
+  margin: 32px 0 18px;
+}
+
+.restored-values dt {
+  color: var(--blue);
+}
+
+.restored-values dd {
+  margin: 5px 0 0;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.restored-values p {
+  margin: 3px 0 0;
+}
+
+.recordings-next {
+  align-items: center;
+  margin-bottom: 40px;
+  padding: 30px 0;
+  border-top: 2px solid var(--ink);
+}
+
+@media (max-width: 760px) {
+  .recordings-intro,
+  .recording-layout,
+  .recording-notes {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .recordings-intro {
+    padding-block: 32px;
+  }
+  .recordings-intro h1 {
+    font-size: clamp(56px, 12vw, 82px);
+  }
+  .recordings-lead {
+    margin-top: 15px;
+  }
+  .run-index a {
+    padding: 13px 0;
+  }
+  .recording {
+    padding: 16px 0 32px;
+  }
+  .recording-byline {
+    gap: 3px 12px;
+  }
+  .recording-heading {
+    margin: 13px 0 18px;
+  }
+  .recording-heading h2,
+  .recordings-next h2 {
+    font-size: clamp(37px, 7vw, 54px);
+  }
+  .recording-capture {
+    grid-row: 1;
+  }
+  .run-outcomes > div {
+    display: grid;
+    grid-template-columns: minmax(92px, 0.8fr) 1.4fr;
+    gap: 12px;
+    align-items: baseline;
+    padding: 12px 0;
+  }
+  .run-outcomes h3 {
+    font-size: 24px;
+  }
+  .run-outcomes p {
+    font-size: 15px;
+  }
+  .recording-notes {
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .recordings-next {
+    gap: 16px;
+  }
+}

@@ -40,15 +40,52 @@ function linked(html, href) {
   return links(html).find((link) => link.href.replace(/\/$/, "") === href);
 }
 
+test("every current page carries the homepage navigation and local theme", async () => {
+  const pages = [...PUBLIC_FILES].filter(
+    (name) => name.endsWith(".html") && name !== "demo-2026-10-11.html",
+  );
+  for (const name of pages) {
+    const html = await read("public/" + name);
+    const header =
+      html.match(/<header\b[^>]*>([\s\S]*?)<\/header>/i)?.[1] ?? "";
+    const footer =
+      html.match(/<footer\b[^>]*>([\s\S]*?)<\/footer>/i)?.[1] ?? "";
+    assert.deepEqual(
+      links(header).map(({ href }) => href),
+      ["/index.html", "/demo.html", "/guide.html", repository, "/install.html"],
+      name + " must expose the same masthead destinations as the homepage",
+    );
+    assert.ok(
+      html.includes('href="/site.css"'),
+      name + " must load the shared local stylesheet",
+    );
+    for (const page of [
+      "/compose.html",
+      "/workflow.html",
+      "/teaching.html",
+      "/privacy.html",
+      "/updates.html",
+    ]) {
+      assert.ok(
+        linked(footer, page),
+        name + " must provide footer navigation to " + page,
+      );
+    }
+  }
+});
+
 test("the reviewed homepage artwork and typeface are served from the curated site", async () => {
   const home = await read("public/index.html");
-  const css = await read("public/homepage.css");
+  const css = await read("public/site.css");
   const exceptions = (await read("public/.assetsignore")).split(/\r?\n/);
   assert.match(home, /href="\/homepage\.css"/);
   assert.match(home, /src="\/save-press\.webp"/);
   assert.match(css, /url\(\s*["']?\/?instrument-serif-italic\.woff2["']?\s*\)/);
   for (const name of [
     "homepage.css",
+    "site.css",
+    "recordings.css",
+    "guidebook.css",
     "save-press.webp",
     "instrument-serif-italic.woff2",
     "instrument-serif-license.txt",

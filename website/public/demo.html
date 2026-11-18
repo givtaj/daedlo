@@ -7,297 +7,225 @@
       name="description"
       content="Inspect recorded Daedlo flows in Roots and Architecture Studio: completed steps, saved data and independent evidence after browser reload."
     />
-    <meta name="theme-color" content="#f5f3ed" />
-    <meta
-      property="og:title"
-      content="A real save. Something to show. — Daedlo"
-    />
+    <meta name="theme-color" content="#f6f3eb" />
+    <meta property="og:title" content="Recorded runs — Daedlo" />
     <meta
       property="og:description"
-      content="Real application flows with recorded evidence. Explore a Roots keyboard save and an earlier Architecture Studio run, each with its own source and acceptance record."
+      content="Recorded real application runs with original evidence. Explore a Roots keyboard save and an earlier Architecture Studio run, each with its own source and acceptance record."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://daedlo.com/demo.html" />
     <link rel="canonical" href="https://daedlo.com/demo.html" />
     <link rel="icon" href="/mark.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
-    <link rel="stylesheet" href="/demo.css" />
-    <title>A real save. Something to show. — Daedlo</title>
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="/recordings.css" />
+    <title>Recorded runs — Daedlo</title>
   </head>
-  <body>
+  <body class="current-page">
     <a class="skip-link" href="#main">Skip to content</a>
-    <header class="site-header wrap">
-      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
-        ><img src="/mark.svg" alt="" width="34" height="34" />daedlo<span
-          class="wordmark-dot"
-          >.</span
+    <header class="masthead wrap">
+      <a class="brand" aria-label="Daedlo home" href="/index.html"
+        ><img src="/mark.svg" alt="" width="32" height="32" /><span
+          >daedlo<b>.</b></span
         ></a
       >
       <nav aria-label="Main navigation">
-        <a href="/demo.html" aria-current="page">Real demo</a>
-        <a href="/guide.html">Integration guide</a>
-        <a href="/install.html" class="nav-guide"
-          >Get Daedlo <span aria-hidden="true">↗</span></a
+        <a class="wide-link" aria-current="page" href="/demo.html"
+          >Recorded runs</a
         >
+        <a class="wide-link" href="/guide.html">Integration guide</a>
         <a href="https://github.com/givtaj/daedlo">GitHub</a>
+        <a class="install-link" href="/install.html"
+          >Start with Codex <span aria-hidden="true">↗</span></a
+        >
       </nav>
     </header>
-    <main id="main" class="demo-main wrap">
-      <section class="demo-intro" aria-labelledby="demo-title">
+    <main id="main" class="recordings wrap">
+      <section class="recordings-intro" aria-labelledby="demo-title">
         <div>
-          <p class="eyebrow">
-            <span class="status-dot"></span> Recorded real application run
-          </p>
-          <h1 id="demo-title">
-            A real save.<br />Something to <span class="orange">show.</span>
-          </h1>
-          <p class="demo-lead">
-            Start with a Roots keyboard-save flow, then inspect an earlier
-            Architecture Studio run. Each recording keeps its own version, date
-            and evidence of what happened.
+          <h1 id="demo-title">Recorded <i class="editorial">runs.</i></h1>
+          <p class="recordings-lead">
+            Follow a Roots Journal entry through a browser reload, or inspect an
+            Architecture Studio model saved to disk. Each run includes its
+            original capture and the checks behind it.
           </p>
         </div>
-        <aside class="demo-run-card" aria-label="Choose a recorded flow">
-          <p class="eyebrow">Explore the recordings</p>
-          <dl>
-            <div>
-              <dt>9 Nov 2026</dt>
-              <dd><a href="#roots-recording">Roots keyboard save →</a></dd>
-            </div>
-            <div>
-              <dt>11 Oct 2026</dt>
-              <dd>
-                <a href="#architecture-recording">Architecture Studio →</a>
-              </dd>
-            </div>
-          </dl>
-          <a class="text-link" href="/install.html"
-            >Try the current alpha <span aria-hidden="true">↗</span></a
+        <nav class="run-index" aria-label="Recorded runs">
+          <a href="#roots-recording"
+            ><span class="run-date">9 Nov 2026</span><span>Roots Journal</span
+            ><span aria-hidden="true">↓</span></a
           >
-        </aside>
+          <a href="#architecture-recording"
+            ><span class="run-date">11 Oct 2026</span
+            ><span>Architecture Studio</span
+            ><span aria-hidden="true">↓</span></a
+          >
+        </nav>
       </section>
 
       <section
-        class="demo-recording roots-recording"
         id="roots-recording"
+        class="recording"
         aria-labelledby="roots-recording-title"
       >
-        <div class="demo-section-heading">
-          <div>
-            <p class="section-number">ROOTS · 9 NOVEMBER 2026</p>
-            <h2 id="roots-recording-title">
-              A keyboard save. A record to check.
-            </h2>
+        <div class="recording-byline">
+          <p class="run-label">Roots Journal</p>
+          <p>
+            <time datetime="2026-11-09">9 Nov 2026</time> · alpha.9 candidate ·
+            synthetic data
+          </p>
+        </div>
+        <div class="recording-heading">
+          <h2 id="roots-recording-title">
+            A keyboard <i class="editorial">save.</i>
+          </h2>
+          <a href="/demo-roots-evidence.json"
+            >Inspect the Roots evidence <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="recording-layout">
+          <div class="run-outcomes" aria-label="Recorded results">
+            <div>
+              <h3>10 steps</h3>
+              <p>
+                The “Save with the keyboard on mobile” flow completed all ten
+                steps in the controlled browser.
+              </p>
+            </div>
+            <div>
+              <h3>1 new row</h3>
+              <p>
+                An independent API readback found exactly one new record.
+                Earlier rows stayed unchanged.
+              </p>
+            </div>
+            <div>
+              <h3>0 new writes</h3>
+              <p>
+                A browser reload returned the same saved row without another
+                write.
+              </p>
+            </div>
           </div>
-          <span class="demo-recorded-label"
-            >Recorded screenshot · not a live session</span
-          >
+          <figure class="recording-capture">
+            <a
+              href="/demo-roots-save.png"
+              aria-label="Open the original Roots keyboard-save capture at full size"
+              ><img
+                src="/demo-roots-save.png"
+                alt="Recorded Daedlo viewer showing the Roots Journal calendar, saved entry and completed ten-step keyboard-save flow."
+                width="1440"
+                height="900"
+                fetchpriority="high"
+            /></a>
+            <figcaption>
+              <span>Recorded screenshot · not a live session</span
+              ><a
+                href="/demo-roots-save.png"
+                aria-label="Full-size Roots capture"
+                >Full size <span aria-hidden="true">↗</span></a
+              >
+            </figcaption>
+          </figure>
         </div>
-        <figure class="demo-capture">
-          <a
-            href="/demo-roots-save.png"
-            aria-label="Open the full recorded Roots keyboard-save screenshot"
-          >
-            <img
-              src="/demo-roots-save.png"
-              alt="Recorded Daedlo viewer showing the Roots Journal calendar and saved experience, a completed ten-step keyboard-save flow, and a Saved application effect."
-              width="1440"
-              height="900"
-              fetchpriority="high"
-            />
-          </a>
-          <figcaption>
-            <span
-              >Roots · Captured
-              <time datetime="2026-11-09">9 November 2026</time> · alpha.9
-              candidate</span
-            >
-            <span
-              >Open image for full size <span aria-hidden="true">↗</span></span
-            >
-          </figcaption>
-        </figure>
-        <div class="demo-proof-grid roots-proof-grid">
-          <article>
-            <span class="demo-proof-number">10</span>
-            <h3>Every step completed.</h3>
+        <div class="recording-notes">
+          <h3>What this run covers</h3>
+          <div>
             <p>
-              The “Save with the keyboard on mobile” flow completed all ten
-              authored steps in the controlled browser.
+              The capture comes from the isolated alpha.9 candidate
+              <code>32f11d4</code>. The published alpha.9 source
+              <code>30d2a98</code> retained the same non-Swagger runtime and
+              core used by this flow.
             </p>
-          </article>
-          <article>
-            <span class="demo-proof-number">1</span>
-            <h3>One new saved row.</h3>
             <p>
-              Independent API readback confirmed exactly one new record from the
-              selected recipe. Previously saved rows stayed unchanged.
+              The one-save count covers the selected recipe and excludes fixture
+              preparation. This check covers browser reload persistence.
+              Application-service and database restarts, full Roots coverage and
+              everyday dependency promotion are outside its scope.
             </p>
-          </article>
-          <article>
-            <span class="demo-proof-number">0</span>
-            <h3>No extra write on reload.</h3>
-            <p>
-              After a browser reload, the same saved row was still present. The
-              reload added no mutation.
-            </p>
-          </article>
+          </div>
         </div>
-        <div class="recording-provenance">
+      </section>
+
+      <section
+        id="architecture-recording"
+        class="recording"
+        aria-labelledby="recording-title"
+      >
+        <div class="recording-byline">
+          <p class="run-label">Architecture Studio</p>
           <p>
-            <strong>Recorded candidate, preserved provenance.</strong> This
-            isolated run used synthetic QA data and alpha.9 candidate
-            <code>32f11d4</code>. The non-Swagger runtime and core used by this
-            flow were verified unchanged through published alpha.9 source
-            <code>30d2a98</code>. The image was captured on the earlier
-            candidate, not the final published package.
+            <time datetime="2026-10-11">11 Oct 2026</time> · public 0.1.2-rc.1
+            kit · macOS arm64
           </p>
-          <p>
-            The one-save count covers the selected recipe, not fixture
-            preparation. This verifies browser reload persistence; it does not
-            establish application-service or database restart recovery, complete
-            Roots coverage or an everyday dependency upgrade.
-          </p>
-          <a class="text-link" href="/demo-roots-evidence.json"
-            >Inspect the Roots evidence summary
+        </div>
+        <div class="recording-heading">
+          <h2 id="recording-title">A model <i class="editorial">edit.</i></h2>
+          <a href="/demo-evidence.json"
+            >Inspect the Architecture Studio evidence
             <span aria-hidden="true">↗</span></a
           >
         </div>
-      </section>
-
-      <section
-        class="demo-recording architecture-recording"
-        id="architecture-recording"
-        aria-labelledby="recording-title"
-      >
-        <div class="demo-section-heading">
-          <div>
-            <p class="section-number">ARCHITECTURE STUDIO · 11 OCTOBER 2026</p>
-            <h2 id="recording-title">Edit. Save. Reload. Verify.</h2>
+        <div class="recording-layout">
+          <div class="run-outcomes">
+            <div>
+              <h3>1 saved revision</h3>
+              <p>
+                The run made one PUT. The HTTP 200 response, API and disk agreed
+                on the saved name and notes. Revision advanced from 2 to 3.
+              </p>
+            </div>
+            <div>
+              <h3>0 invalid writes</h3>
+              <p>
+                An empty name disabled Save and Reload. Zero PUT requests
+                reached the workspace and the revision stayed the same.
+              </p>
+            </div>
+            <div>
+              <h3>2 restored fields</h3>
+              <p>
+                Reopening the editor after reload recovered both saved values
+                without another write.
+              </p>
+            </div>
           </div>
-          <span class="demo-recorded-label"
-            >Recorded screenshot · not a live session</span
-          >
-        </div>
-        <p class="demo-context recording-context">
-          Public <strong>0.1.2-rc.1</strong> kit · Recorded
-          <time datetime="2026-10-11">11 October 2026</time> · macOS arm64. We
-          downloaded the public Daedlo kit, connected one existing editor flow,
-          and followed the save all the way to disk.
-          <a href="/demo-2026-10-11.html">Open the original dated page</a>.
-        </p>
-        <figure class="demo-capture">
-          <a
-            href="/demo-verified-save.png"
-            aria-label="Open the full recorded screenshot of the completed five-stage flow"
-          >
-            <img
-              src="/demo-verified-save.png"
-              alt="Recorded Daedlo viewer with Architecture Studio showing the saved model, persisted revision 3, and the five-stage presentation marked Completed."
-              width="1265"
-              height="712"
-              loading="lazy"
-            />
-          </a>
-          <figcaption>
-            <span>Actual Daedlo viewer, captured after the five-stage run.</span
-            ><span
-              >Open image for full size <span aria-hidden="true">↗</span></span
-            >
-          </figcaption>
-        </figure>
-        <ol
-          class="demo-steps"
-          aria-label="The five recorded presentation stages"
-        >
-          <li><span>01</span>Open the editor</li>
-          <li><span>02</span>Set the name</li>
-          <li><span>03</span>Set the notes</li>
-          <li><span>04</span>Save and check</li>
-          <li><span>05</span>Reload and verify</li>
-        </ol>
-        <p class="demo-context">
-          The editor and persistence are real application behavior, tested with
-          disposable synthetic data. Architecture Studio’s topology is an
-          authored 3D simulation; its simulated jobs and performance are outside
-          this check.
-        </p>
-      </section>
-
-      <section class="demo-proof" aria-labelledby="proof-title">
-        <div class="demo-section-heading">
-          <div>
-            <p class="section-number">02 / LOOK PAST THE CLICK</p>
-            <h2 id="proof-title">What made it a pass?</h2>
-          </div>
-          <a class="text-link" href="/demo-evidence.json"
-            >Inspect the evidence summary <span aria-hidden="true">↗</span></a
-          >
-        </div>
-        <div class="demo-proof-grid">
-          <article>
-            <span class="demo-proof-number">1</span>
-            <h3>One PUT. One revision.</h3>
-            <p>
-              The presentation made one PUT request. HTTP 200, response, API and
-              disk agreed on the exact saved values. Revision advanced from 2 to
-              3.
-            </p>
-          </article>
-          <article>
-            <span class="demo-proof-number">0</span>
-            <h3>No write for an empty name.</h3>
-            <p>
-              An empty name entered the invalid state. Save and Reload were
-              unavailable. Zero PUT requests; the revision stayed unchanged.
-            </p>
-          </article>
-          <article>
-            <span class="demo-proof-number">2</span>
-            <h3>Both fields survived.</h3>
-            <p>
-              After reload, reopening the editor verified the actual name and
-              notes against the persisted values, without another write.
-            </p>
-          </article>
-        </div>
-        <div class="demo-test-line">
-          <p>
-            <strong>13 Rust checks + 7 Node checks passed.</strong> The browser
-            flow and persistence checks provide separate evidence of the real
-            application outcome.
-          </p>
-          <span class="demo-pass">Verified</span>
-        </div>
-      </section>
-
-      <section class="demo-reopen" aria-labelledby="reopen-title">
-        <div class="demo-section-heading">
-          <div>
-            <p class="section-number">03 / OPEN IT AGAIN</p>
-            <h2 id="reopen-title">Still there after a reload.</h2>
-          </div>
-        </div>
-        <div class="demo-reopen-grid">
-          <figure class="demo-capture">
+          <figure class="recording-capture">
             <a
-              href="/demo-restored-fields.png"
-              aria-label="Open the full recorded screenshot of the reopened editor and successful field verification"
-            >
-              <img
-                src="/demo-restored-fields.png"
-                alt="Recorded Daedlo viewer showing the reopened Architecture Studio editor, revision 3, and the successful outcome Editor opened with persisted model fields."
+              href="/demo-verified-save.png"
+              aria-label="Open the original Architecture Studio five-stage capture at full size"
+              ><img
+                src="/demo-verified-save.png"
+                alt="Recorded Daedlo viewer with Architecture Studio showing the saved model, persisted revision 3 and the five-stage presentation marked Completed."
                 width="1265"
-                height="958"
+                height="712"
                 loading="lazy"
-              />
-            </a>
+            /></a>
             <figcaption>
-              Recorded screenshot · editor reopened after reload.
+              <span>Original viewer capture · five stages completed</span
+              ><a
+                href="/demo-verified-save.png"
+                aria-label="Full-size Architecture Studio run capture"
+                >Full size <span aria-hidden="true">↗</span></a
+              >
             </figcaption>
           </figure>
-          <div class="demo-saved-fields">
-            <p class="eyebrow">Exact values verified by the check</p>
+        </div>
+        <ol
+          class="run-stages"
+          aria-label="The five recorded presentation stages"
+        >
+          <li>Open the editor</li>
+          <li>Set the name</li>
+          <li>Set the notes</li>
+          <li>Save and check</li>
+          <li>Reload and verify</li>
+        </ol>
+        <div class="recording-heading reopen-heading">
+          <h3>Back in the <i class="editorial">editor.</i></h3>
+        </div>
+        <div class="recording-layout reopened-editor">
+          <div class="restored-values">
             <dl>
               <div>
                 <dt>Model name</dt>
@@ -309,84 +237,114 @@
               </div>
               <div>
                 <dt>Persisted revision</dt>
-                <dd>3 <span>· unchanged on reopen</span></dd>
+                <dd>3</dd>
               </div>
             </dl>
             <p>
-              The outcome confirms both fields in the reopened editor. The
-              screenshot shows the name and result; the notes field is below the
-              captured editor viewport.
+              The outcome confirmed both fields. The viewer shows the name and
+              the result. The notes field sits below the captured viewport.
+            </p>
+          </div>
+          <figure class="recording-capture">
+            <a
+              href="/demo-restored-fields.png"
+              aria-label="Open the original capture of the reopened editor at full size"
+              ><img
+                src="/demo-restored-fields.png"
+                alt="Recorded Daedlo viewer showing the reopened Architecture Studio editor, revision 3 and the successful check of its persisted model fields."
+                width="1265"
+                height="958"
+                loading="lazy"
+            /></a>
+            <figcaption>
+              <span>Original viewer capture · editor reopened after reload</span
+              ><a
+                href="/demo-restored-fields.png"
+                aria-label="Full-size reopened editor capture"
+                >Full size <span aria-hidden="true">↗</span></a
+              >
+            </figcaption>
+          </figure>
+        </div>
+        <div class="recording-notes">
+          <h3>What this run covers</h3>
+          <div>
+            <p>
+              The editor and its persistence were exercised with disposable
+              synthetic data. The topology is an authored 3D simulation.
+              Simulated jobs and performance are outside this check. The
+              integration also passed 13 Rust checks and 7 Node checks.
+            </p>
+            <p>
+              The public ZIP matched its published SHA-256. The installation
+              used fresh dependency caches for npm, Cargo and Chromium with
+              existing Node.js 22.20.0 and Rust 1.96.0 toolchains. The public
+              runtime, crate and tools retained their original bytes.
+            </p>
+            <p>
+              A customer-authored Rust state model and JavaScript adapter
+              connected the editor. The first run exposed issues with readiness,
+              selectors, invalid input and save observation. This recording
+              follows the corrections.
+            </p>
+            <p>
+              This acceptance covers one flow on macOS arm64. Linux, Windows and
+              Claude Code remain unverified for this run. Clean OS installation,
+              automatic skill discovery, independent human onboarding,
+              concurrent editors and injected save failures were outside its
+              scope.
+            </p>
+            <p>
+              <a href="/demo-2026-10-11.html"
+                >Open the original dated page
+                <span aria-hidden="true">↗</span></a
+              >
             </p>
           </div>
         </div>
       </section>
-
-      <section class="demo-scope" aria-labelledby="scope-title">
-        <div>
-          <p class="section-number">THE INSTALLATION BEHIND THE RUN</p>
-          <h2 id="scope-title">
-            The public kit.<br />Fresh dependency caches.
-          </h2>
-        </div>
-        <div class="demo-scope-copy">
-          <p>
-            The downloaded ZIP matched its published SHA-256. We installed the
-            runtime, Chromium and Rust dependencies into new, empty caches,
-            using existing Node.js 22.20.0 and Rust 1.96.0 toolchains. The
-            public runtime, engine crate and tools stayed unchanged.
-          </p>
-          <p>
-            A customer-authored Rust state model and JavaScript adapter
-            connected this application. The first run exposed integration issues
-            around readiness, selectors, invalid input and observing a save;
-            those were corrected and checked before this completed run.
-          </p>
-          <p>
-            This is one verified flow on macOS arm64. Linux, Windows and Claude
-            Code remain unverified for this acceptance. A clean OS installation,
-            automatic skill discovery, independent human onboarding, concurrent
-            editors and injected save failures were not tested.
-          </p>
-        </div>
-      </section>
-
-      <section class="demo-cta" aria-labelledby="try-title">
-        <div>
-          <p class="eyebrow">YOUR APPLICATION. YOUR DEFINITION OF WORKING.</p>
-          <h2 id="try-title">Bring one real flow.</h2>
-          <p>
-            Download the kit, give your coding agent the bundled instructions,
-            and connect a small feature you already understand.
-          </p>
-        </div>
-        <a class="button primary" href="/install.html"
-          >Install Daedlo <span aria-hidden="true">↓</span></a
+      <section class="recordings-next" aria-labelledby="try-title">
+        <h2 id="try-title">Try a flow of <i class="editorial">your own.</i></h2>
+        <a href="/install.html" class="button"
+          >Install the current alpha <span aria-hidden="true">↗</span></a
         >
       </section>
     </main>
-    <footer class="site-footer wrap">
-      <a class="wordmark" href="/index.html" aria-label="Daedlo home"
-        ><img src="/mark.svg" alt="" width="28" height="28" />daedlo<span
-          class="wordmark-dot"
-          >.</span
-        ></a
-      >
-      <p>Tools grow out of the work.</p>
+    <footer class="site-footer-links wrap">
+      <p>Daedlo · Make “it works” something you can show.</p>
       <nav aria-label="Footer navigation">
-        <a href="/install.html">Download</a
-        ><a href="/guide.html">Integration guide</a
-        ><a href="/privacy.html">Privacy &amp; contact</a>
-        <a href="https://github.com/givtaj/daedlo">GitHub</a>
-        <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
-        <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
-          >Contribute</a
-        >
-        <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
-          >Support</a
-        >
-        <a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
-          >Apache-2.0</a
-        >
+        <ul aria-label="Product and guides">
+          <li><a aria-current="page" href="/demo.html">Recorded runs</a></li>
+          <li><a href="/workflow.html">Workflow illustrations</a></li>
+          <li><a href="/teaching.html">Teaching plan</a></li>
+          <li><a href="/index.html#story">Our story</a></li>
+          <li><a href="/guide.html">Integration guide</a></li>
+          <li><a href="/compose.html">Docker Compose</a></li>
+          <li><a href="/updates.html">Updates</a></li>
+        </ul>
+        <ul aria-label="Project and support">
+          <li><a href="https://github.com/givtaj/daedlo">GitHub</a></li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
+          </li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
+              >Contribute</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
+              >Support</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+              >Apache-2.0 core</a
+            >
+          </li>
+          <li><a href="/privacy.html">Privacy &amp; contact</a></li>
+        </ul>
       </nav>
     </footer>
   </body>

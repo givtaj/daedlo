@@ -11,8 +11,10 @@ The planned teaching-mode page describes a proposed Roots Journal lesson.
 Teaching mode is not implemented or included in the current release.
 
 Only `public/` is deployable. Scripts, tests, this README and hosting configuration
-stay outside the asset root. The homepage serves the keypress illustration and
-Instrument Serif Italic locally, with the font license at
+stay outside the asset root. Current pages share their typography, colors,
+navigation and footer styles through `public/site.css`. The homepage serves the
+keypress illustration locally. The shared Instrument Serif Italic font is also
+served locally, with its license at
 `/instrument-serif-license.txt`. There is no framework, analytics,
 account, data submission or live browser connection. The curated Roots screenshot
 and evidence summary show a 9 November 2026 alpha.9 candidate run, with unchanged
@@ -170,6 +172,7 @@ node --test website/tests/*.test.mjs
 node website/tests/acceptance.mjs
 node website/tests/onboarding-browser.mjs --website-root website
 node website/tests/public-launch-browser.mjs --website-root website
+node website/tests/site-style-browser.mjs --website-root website
 node --check website/public/onboarding.js
 node --check website/public/workflow.js
 node --check website/scripts/serve.mjs
@@ -182,7 +185,10 @@ exact staged ZIP, enforce the explicit npm prefix and workspace boundary, check
 the dated release claims against metadata, and preserve every historical demo
 and rc.1/alpha.2 byte. Static acceptance checks all local page links and curated archive
 identities. Inspect the actual local preview at desktop and narrow widths before
-calling presentation ready. The preview prints its owned loopback URL and uses an
+calling presentation ready. The style check compares all current pages to the
+homepage at desktop and phone widths, exercises a missing URL and verifies the
+original dated demo against its frozen receipt. It saves screenshots and results
+under `artifacts/website-style/`. The preview prints its owned loopback URL and uses an
 ephemeral port unless `DAEDLO_PREVIEW_PORT` is set. Stop only that owned process.
 
 Edit `templates/install.html` and rerun staging to render the page; never edit the

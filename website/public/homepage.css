@@ -1,113 +1,9 @@
-@font-face {
-  font-family: "Instrument Serif";
-  src: url("/instrument-serif-italic.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-}
-:root {
-  --paper: #f6f3eb;
-  --ink: #182224;
-  --blue: #243fc7;
-  --line: #babbb1;
-  --orange: #c2471d;
-  --sans: "Helvetica Neue", Arial, sans-serif;
-  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-}
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: 17px/1.5 var(--sans);
-  -webkit-font-smoothing: antialiased;
-}
-a {
-  color: inherit;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.2em;
-}
-a:focus-visible {
-  outline: 3px solid #ba4a00;
-  outline-offset: 4px;
-}
-.wrap {
-  width: min(1280px, 90%);
-  margin: auto;
-}
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 78px;
-  border-bottom: 1px solid var(--ink);
-  gap: 1rem;
-}
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  line-height: 1;
-  font: bold 36px/0.95 var(--sans);
-  letter-spacing: -2.8px;
-  text-decoration: none;
-}
-.brand img {
-  width: 32px;
-  height: 32px;
-}
-.brand b {
-  color: var(--orange);
-}
-header nav,
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 26px;
-}
-header nav a,
-.actions a,
-.deep {
-  font-size: 15px;
-  font-weight: 650;
-}
-header nav a,
-.deep {
-  text-decoration: none;
-}
-nav a:hover,
-.deep:hover {
-  text-decoration: underline;
-}
-header nav a:last-child {
-  border: 1px solid var(--ink);
-  padding: 9px 15px;
-}
 .hero {
   display: grid;
   grid-template-columns: 0.88fr 1.12fr;
   gap: 4%;
   align-items: center;
   padding: 48px 0 46px;
-}
-.kicker,
-.meta {
-  font: 600 12px/1.5 var(--mono);
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
-}
-.kicker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 27px;
-}
-.kicker::before {
-  content: "";
-  width: 26px;
-  border-top: 3px solid var(--blue);
 }
 h1 {
   margin: 0;
@@ -119,8 +15,7 @@ h1 span,
 h1 i {
   display: block;
 }
-h1 i,
-.editorial {
+h1 i {
   font-family: "Instrument Serif", Georgia, serif;
   font-weight: 400;
   font-style: italic;
@@ -138,20 +33,6 @@ h1 i {
   line-height: 1.4;
   letter-spacing: -0.018em;
   margin: 24px 0 26px;
-}
-.button {
-  display: inline-flex;
-  align-items: center;
-  gap: 24px;
-  text-decoration: none;
-  background: var(--ink);
-  color: white;
-  padding: 13px 20px;
-  font-weight: 650;
-  font-size: 15px;
-}
-.button:hover {
-  background: var(--blue);
 }
 .hero figure {
   margin: 0;
@@ -258,59 +139,13 @@ h2 {
 .next a {
   color: var(--paper);
 }
-footer {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 15px;
-  padding: 26px 0;
-  font-size: 14px;
-}
-footer p {
-  margin: 0;
-}
-footer nav {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-}
 @media (max-width: 760px) {
-  .wrap {
-    width: min(91%, 620px);
-  }
-  header {
-    min-height: 62px;
-  }
-  .brand {
-    font-size: 30px;
-  }
-  .brand img {
-    width: 27px;
-    height: 27px;
-  }
-  header nav .wide-link {
-    display: none;
-  }
-  header nav {
-    gap: 15px;
-  }
-  header nav a {
-    font-size: 13px;
-  }
-  header nav a:last-child {
-    font-size: 13px;
-    padding: 6px 9px;
-  }
   .hero {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 24px;
     padding: 30px 0 22px;
-  }
-  .kicker {
-    font-size: 11px;
-    margin-bottom: 15px;
   }
   h1 {
     font-size: clamp(65px, 12.2vw, 91px);
@@ -329,9 +164,6 @@ footer nav {
     font-size: 18px;
     line-height: 1.38;
     margin: 13px 0 18px;
-  }
-  .button {
-    padding: 10px 14px;
   }
   .hero figure {
     margin: auto;
@@ -395,27 +227,10 @@ footer nav {
   h1 {
     font-size: 90px;
   }
-  .kicker {
-    font-size: 10px;
-  }
   .fact {
     padding-left: 12px;
     padding-right: 12px;
   }
-}
-
-.skip-link {
-  position: absolute;
-  left: 1rem;
-  top: 0;
-  transform: translateY(-150%);
-  z-index: 1;
-  background: var(--ink);
-  color: white;
-  padding: 0.65rem 1rem;
-}
-.skip-link:focus {
-  transform: translateY(0);
 }
 .next .secondary {
   display: block;
@@ -477,9 +292,6 @@ footer nav {
 }
 .notebook .upgrade {
   margin-top: 18px;
-}
-footer {
-  border-top: 1px solid var(--ink);
 }
 @media (max-width: 760px) {
   .notebook {

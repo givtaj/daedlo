@@ -1,0 +1,250 @@
+@font-face {
+  font-family: "Instrument Serif";
+  src: url("/instrument-serif-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+:root {
+  --paper: #f6f3eb;
+  --ink: #182224;
+  --blue: #243fc7;
+  --orange: #c2471d;
+  --line: #babbb1;
+  --muted: #43504e;
+  --navy: #1a294c;
+  --sans: "Helvetica Neue", Arial, sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 17px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  width: min(1280px, 90%);
+  max-width: 1280px;
+  padding-inline: 0;
+  margin-inline: auto;
+}
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 3px solid #ba4a00;
+  outline-offset: 4px;
+}
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  transform: translateY(-150%);
+  z-index: 4;
+  background: var(--ink);
+  color: white;
+  padding: 0.65rem 1rem;
+}
+.skip-link:focus {
+  top: 0;
+  transform: translateY(0);
+}
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 78px;
+  border-bottom: 1px solid var(--ink);
+  gap: 1rem;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: bold 36px/0.95 var(--sans);
+  letter-spacing: -2.8px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.brand img {
+  width: 32px;
+  height: 32px;
+}
+.brand b {
+  color: var(--orange);
+}
+.masthead nav,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+.masthead nav a,
+.actions a,
+.deep {
+  font: 650 15px/1.5 var(--sans);
+}
+.masthead nav a,
+.deep {
+  text-decoration: none;
+}
+.masthead nav a:hover,
+.deep:hover {
+  text-decoration: underline;
+}
+.masthead nav a[aria-current="page"],
+.site-footer-links a[aria-current="page"] {
+  color: var(--blue);
+  text-decoration: underline;
+}
+.masthead .install-link {
+  border: 1px solid var(--ink);
+  padding: 9px 15px;
+}
+.masthead .install-link:hover {
+  background: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+}
+.editorial {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+.kicker,
+.meta {
+  font: 600 12px/1.5 var(--mono);
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 27px;
+}
+.kicker::before {
+  content: "";
+  width: 26px;
+  flex: none;
+  border-top: 3px solid var(--blue);
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  text-decoration: none;
+  background: var(--ink);
+  color: white;
+  padding: 13px 20px;
+  font: 650 15px/1.5 var(--sans);
+  border-radius: 0;
+}
+.button:hover {
+  background: var(--blue);
+  color: white;
+}
+.site-footer-links {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 2fr;
+  gap: 28px;
+  border-top: 1px solid var(--ink);
+  padding-block: 28px 36px;
+  font: 14px/1.5 var(--sans);
+}
+.site-footer-links p {
+  margin: 0;
+}
+.site-footer-links nav {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: start;
+  gap: 28px;
+  font: inherit;
+}
+.site-footer-links ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: start;
+  gap: 8px 18px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-footer-links li {
+  margin: 0;
+}
+.site-footer-links a {
+  font: inherit;
+}
+@media (max-width: 760px) {
+  .wrap {
+    width: min(91%, 620px);
+  }
+  .masthead {
+    min-height: 62px;
+  }
+  .brand {
+    font-size: 30px;
+  }
+  .brand img {
+    width: 27px;
+    height: 27px;
+  }
+  .masthead nav .wide-link {
+    display: none;
+  }
+  .masthead nav {
+    gap: 15px;
+  }
+  .masthead nav a {
+    font-size: 13px;
+  }
+  .masthead .install-link {
+    padding: 6px 9px;
+  }
+  .kicker {
+    font-size: 11px;
+    margin-bottom: 15px;
+  }
+  .button {
+    padding: 10px 14px;
+  }
+  .site-footer-links {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    font-size: 14px;
+  }
+  .site-footer-links nav {
+    gap: 16px;
+  }
+}
+@media (min-width: 761px) and (max-width: 1040px) {
+  .kicker {
+    font-size: 10px;
+  }
+}
+@media (max-width: 370px) {
+  .masthead {
+    gap: 8px;
+  }
+  .masthead nav {
+    gap: 8px;
+  }
+  .masthead .install-link {
+    padding-inline: 6px;
+  }
+  .brand {
+    font-size: 27px;
+    gap: 5px;
+  }
+}

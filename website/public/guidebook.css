@@ -1,0 +1,355 @@
+/* Reading pages share the homepage's two-column rhythm and printed rules. */
+.guide-main.wrap {
+  max-width: 1280px;
+  padding-block: 0 clamp(42px, 6vw, 80px);
+}
+.reference-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
+  align-items: end;
+  gap: clamp(24px, 6vw, 100px);
+  padding-block: clamp(38px, 5vw, 78px);
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 26px;
+}
+.guide-main h1,
+.teaching-intro h1,
+.workflow-explanation h1 {
+  margin: 0;
+  max-width: 15ch;
+  font: 700 clamp(52px, 5.75vw, 89px) / 0.98 var(--sans);
+  letter-spacing: -0.07em;
+}
+.reference-hero h1 i,
+.teaching-intro h1 i,
+.workflow-explanation h1 i {
+  color: var(--blue);
+  display: block;
+  font-size: 1.08em;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+}
+.reference-summary .guide-intro,
+.teaching-lead,
+.workflow-explanation > p:last-child {
+  margin: 0;
+  max-width: 43ch;
+  color: var(--ink);
+  font-size: clamp(18px, 1.45vw, 22px);
+  line-height: 1.45;
+  letter-spacing: -0.018em;
+}
+.reference-summary .button {
+  margin-top: 18px;
+}
+.reference-summary .updated-note {
+  margin-top: 16px;
+  font: 12px/1.5 var(--mono);
+  color: var(--muted);
+}
+.guide-main .guide-block {
+  margin-top: 34px;
+  padding-top: 22px;
+}
+.reference-hero + .guide-block {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 6px;
+}
+.guide-block h2,
+.prompt-heading h2,
+.download-card h2 {
+  color: var(--ink);
+  font-size: clamp(26px, 2.5vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+}
+.guide-block p,
+.guide-block li,
+.guide-download p + p,
+.guide-callout p,
+.onboarding-steps p,
+.prompt-intro {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.65;
+}
+.guide-block > p,
+.guide-block > ul,
+.guide-callout p {
+  max-width: 72ch;
+}
+.guide-block > :where(p, ul, dl, details) + :where(p, ul, dl, details) {
+  margin-top: 12px;
+}
+.guide-main .guide-demo-link {
+  font-size: 16px;
+  margin-block: 12px;
+}
+.guide-main code {
+  overflow-wrap: anywhere;
+}
+.guide-block :not(pre) > code {
+  background: #ebe8df;
+  color: var(--ink);
+}
+.guide-main pre code {
+  background: transparent;
+  color: inherit;
+}
+.install-code {
+  background: var(--navy);
+  color: #f6f3eb;
+  border-radius: 0;
+}
+.install-code code {
+  font: 14px/1.65 var(--mono);
+}
+.guide-download,
+.guide-callout,
+.checksum-box,
+.download-card,
+.onboarding-card,
+.onboarding-details {
+  border-radius: 0;
+  box-shadow: none;
+}
+.guide-download {
+  border: 0;
+  background: var(--navy);
+  color: var(--paper);
+  padding: clamp(20px, 3vw, 36px);
+}
+.guide-download p + p,
+.guide-download .eyebrow {
+  color: var(--paper);
+}
+.guide-download .button {
+  background: var(--paper);
+  color: var(--ink);
+}
+.guide-download .button:hover {
+  background: white;
+  text-decoration: underline;
+}
+.guide-callout,
+.checksum-box {
+  border: 0;
+  border-left: 3px solid var(--blue);
+  background: #eeece4;
+}
+.guide-callout strong,
+.checksum-box code {
+  color: var(--ink);
+}
+.checksum-box code {
+  background: transparent;
+}
+.onboarding-steps {
+  border-block: 1px solid var(--line);
+  padding-block: 18px;
+}
+.onboarding-steps .section-number,
+.requirements .section-number {
+  font: 600 11px/1.5 var(--mono);
+  letter-spacing: 0.04em;
+  color: var(--blue);
+}
+.download-card,
+.onboarding-card {
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-top-width: 3px;
+}
+#onboarding-prompt {
+  border-radius: 0;
+  border-color: var(--line);
+  background: #eeece4;
+  color: var(--ink);
+}
+.onboarding-details {
+  border: 0;
+  border-block: 1px solid var(--line);
+}
+.onboarding-details > summary {
+  color: var(--ink);
+  font-size: 19px;
+}
+.onboarding-details[open] > summary {
+  color: var(--blue);
+}
+
+/* The proposed lesson and interactive sketch keep their own information hierarchy. */
+.teaching-intro,
+.workflow-illustration {
+  gap: clamp(24px, 6vw, 85px);
+  padding-block: clamp(38px, 5vw, 72px);
+}
+.teaching-lead,
+.workflow-explanation > p:last-child {
+  margin-top: 24px;
+}
+.teaching-note {
+  background: var(--navy);
+  border: 0;
+  border-radius: 0;
+  color: var(--paper);
+  box-shadow: none;
+  transform: none;
+  padding: clamp(22px, 3vw, 42px);
+}
+.teaching-note :is(h2, .section-number, .learning-path span),
+.teaching-note > p:not(.section-number) {
+  color: var(--paper);
+}
+.teaching-note h2 {
+  font:
+    italic 400 clamp(38px, 4vw, 63px) / 1 "Instrument Serif",
+    Georgia,
+    serif;
+}
+.teaching-note .learning-path li {
+  border-color: #586988;
+}
+.teaching-status,
+.teaching-mode-grid,
+.teaching-cta {
+  border-top-color: var(--ink);
+}
+.planned-tag {
+  border-radius: 0;
+  border-color: var(--blue);
+  background: transparent;
+  color: var(--blue);
+}
+.teaching-main .first-lesson,
+.teaching-main .lesson-outline {
+  background: transparent;
+  border-color: var(--line);
+  border-radius: 0;
+}
+.teaching-main .first-lesson {
+  border-top: 2px solid var(--ink);
+}
+.teaching-main .lesson-outline {
+  background: #eeece4;
+}
+.teaching-main
+  :is(.lesson-heading, .lesson-outline, .lesson-source)
+  p:not(.eyebrow),
+.teaching-main .lesson-takeaway p {
+  color: var(--muted);
+}
+.teaching-mode-grid .mode-evidence,
+.lesson-step {
+  color: var(--blue);
+}
+.teaching-section-heading h2,
+.teaching-foundation h2,
+.lesson-heading h2,
+.teaching-cta h2 {
+  font-size: clamp(32px, 3.6vw, 54px);
+  line-height: 1.06;
+  letter-spacing: -0.055em;
+}
+.workbench {
+  border: 1px solid var(--ink);
+  border-top-width: 3px;
+  border-radius: 0;
+  background: var(--paper);
+  box-shadow: none;
+}
+.workbench::before {
+  display: none;
+}
+.workbench-top,
+.observation,
+.evidence-row,
+.sample-note {
+  border-color: var(--line);
+}
+.workbench h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.035em;
+}
+.workbench-label,
+.illustration-note,
+.step-count {
+  color: var(--muted);
+  font-size: 10px;
+}
+.scenario-picker button {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 0;
+  font-size: 12px;
+}
+.scenario-picker button[aria-pressed="true"] {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+}
+.scenario-promise,
+.observation > p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.observation {
+  background: #eeece4;
+  border-radius: 0;
+}
+.sample-note {
+  border-radius: 0;
+}
+.workbench .reset-button {
+  font-size: 13px;
+  color: var(--ink);
+}
+.workbench .step-button {
+  border-radius: 0;
+  font-size: 13px;
+}
+@media (min-width: 960px) {
+  .guide-main > .guide-block {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    column-gap: clamp(26px, 5vw, 72px);
+    align-items: start;
+  }
+  .guide-main > .guide-block > h2 {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .guide-main > .guide-block > :not(h2) {
+    grid-column: 2;
+  }
+  .guide-main > .guide-block > h2 + :is(p, ol, ul, pre) {
+    margin-top: 0;
+  }
+}
+@media (max-width: 760px) {
+  .reference-hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding-block: 32px 26px;
+    margin-bottom: 20px;
+  }
+  .guide-main h1,
+  .teaching-intro h1,
+  .workflow-explanation h1 {
+    font-size: clamp(44px, 9.4vw, 66px);
+    line-height: 1;
+  }
+  .onboarding-details {
+    padding-inline: 0;
+  }
+  .onboarding-steps {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .workbench-label {
+    font-size: 9px;
+  }
+}
