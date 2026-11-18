@@ -178,6 +178,8 @@ async function fixture(
     promoted10 = alpha10,
     alpha11 = false,
     promoted11 = alpha11,
+    alpha12 = false,
+    promoted12 = alpha12,
   } = {},
 ) {
   alpha10 ||= alpha11;
@@ -228,6 +230,7 @@ async function fixture(
     ...(alpha9 ? ["0.1.4-alpha.9"] : []),
     ...(alpha10 ? ["0.1.4-alpha.10"] : []),
     ...(alpha11 ? ["0.1.4-alpha.11"] : []),
+    ...(alpha12 ? ["0.1.4-alpha.12"] : []),
   ];
   for (const version of versions) {
     const files = kit(
@@ -241,6 +244,7 @@ async function fixture(
         "0.1.4-alpha.9",
         "0.1.4-alpha.10",
         "0.1.4-alpha.11",
+        "0.1.4-alpha.12",
       ].includes(version)
         ? "daedlo"
         : "browser-driver",
@@ -264,7 +268,8 @@ async function fixture(
       (version === "0.1.4-alpha.7" && !promoted7) ||
       (version === "0.1.4-alpha.9" && !promoted9) ||
       (version === "0.1.4-alpha.10" && !promoted10) ||
-      (version === "0.1.4-alpha.11" && !promoted11)
+      (version === "0.1.4-alpha.11" && !promoted11) ||
+      (version === "0.1.4-alpha.12" && !promoted12)
     )
       continue;
     const asset = (name) => ({
@@ -283,6 +288,7 @@ async function fixture(
         "0.1.4-alpha.9",
         "0.1.4-alpha.10",
         "0.1.4-alpha.11",
+        "0.1.4-alpha.12",
       ].includes(version)
         ? { ...contracts, manager: 2 }
         : contracts,
@@ -330,6 +336,7 @@ async function fixture(
       ...(alpha9 ? { "0.1.4-alpha.9": { ...contracts, manager: 2 } } : {}),
       ...(alpha10 ? { "0.1.4-alpha.10": { ...contracts, manager: 2 } } : {}),
       ...(alpha11 ? { "0.1.4-alpha.11": { ...contracts, manager: 2 } } : {}),
+      ...(alpha12 ? { "0.1.4-alpha.12": { ...contracts, manager: 2 } } : {}),
     },
     initialCheckpoint: {
       generation: 1,
@@ -1763,7 +1770,7 @@ test("workflow limits events, credentials, concurrency and deployed configuratio
   );
   assert.match(
     text,
-    /case "\$PROMOTE_ALPHA4:\$PROMOTE_ALPHA5:\$PROMOTE_ALPHA6:\$PROMOTE_ALPHA7:\$PROMOTE_ALPHA9:\$PROMOTE_ALPHA10:\$PROMOTE_ALPHA11" in/,
+    /case "\$PROMOTE_ALPHA4:\$PROMOTE_ALPHA5:\$PROMOTE_ALPHA6:\$PROMOTE_ALPHA7:\$PROMOTE_ALPHA9:\$PROMOTE_ALPHA10:\$PROMOTE_ALPHA11:\$PROMOTE_ALPHA12" in/,
   );
   assert.ok(
     text.indexOf("Validate one explicit promotion selection") <
@@ -2223,6 +2230,7 @@ test("alpha6 workflow selection refuses every combined promotion before credenti
           PROMOTE_ALPHA9: "false",
           PROMOTE_ALPHA10: "false",
           PROMOTE_ALPHA11: "false",
+          PROMOTE_ALPHA12: "false",
         };
         const run = () =>
           execFileSync("bash", ["-c", script], { env, stdio: "pipe" });
@@ -2385,6 +2393,7 @@ test("alpha7 workflow selection rejects every combined promotion before credenti
       PROMOTE_ALPHA9: "false",
       PROMOTE_ALPHA10: "false",
       PROMOTE_ALPHA11: "false",
+      PROMOTE_ALPHA12: "false",
       ...Object.fromEntries(
         [4, 5, 6, 7].map((number, index) => [
           "PROMOTE_ALPHA" + number,
@@ -2621,7 +2630,7 @@ test("alpha9 workflow selection rejects every combined promotion before credenti
     const env = {
       ...process.env,
       ...Object.fromEntries(
-        [4, 5, 6, 7, 9, 10, 11].map((number, index) => [
+        [4, 5, 6, 7, 9, 10, 11, 12].map((number, index) => [
           "PROMOTE_ALPHA" + number,
           mask & (1 << index) ? "true" : "false",
         ]),
@@ -2662,13 +2671,14 @@ test("alpha9 workflow selection rejects every combined promotion before credenti
           PROMOTE_ALPHA9: value,
           PROMOTE_ALPHA10: "false",
           PROMOTE_ALPHA11: "false",
+          PROMOTE_ALPHA12: "false",
         },
         stdio: "pipe",
       }),
     );
 });
 
-test("publisher source allows exactly historical assets plus three reviewed alpha11 files", async () => {
+test("publisher source allows exactly historical assets plus three reviewed alpha12 files", async () => {
   const text = await fs.readFile(
     join(repo, "website/public/.assetsignore"),
     "utf8",
@@ -2684,6 +2694,7 @@ test("publisher source allows exactly historical assets plus three reviewed alph
     "0.1.4-alpha.9",
     "0.1.4-alpha.10",
     "0.1.4-alpha.11",
+    "0.1.4-alpha.12",
   ];
   const allowed = text
     .split("\n")
@@ -2869,7 +2880,7 @@ test("alpha10 workflow checks all 64 selections before credentials", async () =>
     .split("\n")
     .map((line) => line.replace(/^          /, ""))
     .join("\n");
-  const selectors = [4, 5, 6, 7, 9, 10, 11];
+  const selectors = [4, 5, 6, 7, 9, 10, 11, 12];
   for (let mask = 0; mask < 64; mask++) {
     const selected = selectors.filter((_, index) => mask & (1 << index));
     const env = {
@@ -3118,7 +3129,7 @@ test("alpha11 ordinary renewal authenticates retained alpha10 checkpoint", async
   );
 });
 
-test("alpha11 workflow checks all 128 selections before credentials", async () => {
+test("alpha12 workflow checks all 256 selections before credentials", async () => {
   const text = await fs.readFile(
     join(repo, ".github/workflows/ninja-renew.yml"),
     "utf8",
@@ -3131,8 +3142,8 @@ test("alpha11 workflow checks all 128 selections before credentials", async () =
     .split("\n")
     .map((line) => line.replace(/^          /, ""))
     .join("\n");
-  const selectors = [4, 5, 6, 7, 9, 10, 11];
-  for (let mask = 0; mask < 128; mask++) {
+  const selectors = [4, 5, 6, 7, 9, 10, 11, 12];
+  for (let mask = 0; mask < 256; mask++) {
     const selected = selectors.filter((_, index) => mask & (1 << index));
     const env = {
       ...process.env,
@@ -3162,6 +3173,18 @@ test("alpha11 workflow checks all 128 selections before credentials", async () =
       }),
     );
   }
+  assert.match(
+    text,
+    /promote_alpha12:\n\s+description:[^\n]+\n\s+type: boolean\n\s+default: false/,
+  );
+  assert.match(
+    text,
+    /NINJA_PROMOTE_ALPHA12:.*github.event_name == 'workflow_dispatch'.*inputs.promote_alpha12/,
+  );
+  assert.match(
+    text,
+    /elif test "\$NINJA_PROMOTE_ALPHA12" = "true"; then\n\s+node scripts\/release\/ninja-promotion\.mjs --promote-alpha12/,
+  );
   assert.match(
     text,
     /promote_alpha11:\n\s+description:[^\n]+\n\s+type: boolean\n\s+default: false/,
@@ -3301,4 +3324,64 @@ test("alpha11 preserves durable history, trust and static download diagnostics",
     message:
       "Renewal network failure: stage=prepare path=/downloads/0.1.4-alpha.11/daedlo-0.1.4-alpha.11.zip phase=headers category=connection",
   });
+});
+
+test("alpha12 promotion preserves every authenticated alpha11 entry and verifies the staged site", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha9: true,
+    alpha10: true,
+    alpha11: true,
+    alpha12: true,
+    promoted12: false,
+  });
+  const result = await prepareNinjaRenewal(
+    { ...f.options, promoteAlpha12: true },
+    f.dependencies,
+  );
+  const { signed } = JSON.parse(
+    await fs.readFile(join(result.sitePath, "public/updates/preview.json")),
+  );
+  assert.equal(signed.releases.length, 10);
+  assert.deepEqual(signed.releases.slice(0, -1), f.signed.releases);
+  assert.equal(signed.releases.at(-1).version, "0.1.4-alpha.12");
+  assert.equal(signed.releases.at(-1).contracts.manager, 2);
+  const receipt = JSON.parse(await fs.readFile(result.receiptPath));
+  assert.equal(receipt.promoteAlpha12, true);
+  assert.equal(
+    (await verifyNinjaRenewal({ output: f.options.output }, f.dependencies))
+      .status,
+    "PASS",
+  );
+});
+test("alpha12 cannot be introduced by ordinary renewal or by skipping signed alpha11 history", async (t) => {
+  const f = await fixture(t, {
+    alpha4: true,
+    alpha5: true,
+    alpha6: true,
+    alpha7: true,
+    alpha9: true,
+    alpha10: true,
+    alpha11: true,
+    alpha12: true,
+    promoted12: false,
+  });
+  await assert.rejects(prep(f), /requires explicit next-release promotion/);
+  await assert.rejects(
+    prepareNinjaRenewal(
+      { ...f.options, promoteAlpha11: true, promoteAlpha12: true },
+      f.dependencies,
+    ),
+    /Only one explicit release promotion/,
+  );
+  f.signed.releases.pop();
+  f.bodies.set(feed, f.envelope());
+  await assert.rejects(
+    prepareNinjaRenewal({ ...f.options, promoteAlpha12: true }, f.dependencies),
+    /requires explicit next-release promotion/,
+  );
+  await assert.rejects(fs.lstat(f.options.output), { code: "ENOENT" });
 });

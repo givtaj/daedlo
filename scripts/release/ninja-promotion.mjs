@@ -4,7 +4,7 @@
  * workflow must persist its normal checkpoint before any deployment. This tool
  * neither publishes a GitHub release nor deploys a Worker. Policy, transport and
  * preparation seams are for trusted tests only; the CLI accepts paths and one
- * allowlisted release selector only: --promote-alpha11, --promote-alpha10, --promote-alpha9, or the historical
+ * allowlisted release selector only: --promote-alpha12, --promote-alpha11, --promote-alpha10, --promote-alpha9, or the historical
  * --release 0.1.4-alpha.4 through 0.1.4-alpha.7 forms.
  */
 import { isAbsolute, resolve } from "node:path";
@@ -25,6 +25,7 @@ const ALPHA7 = "0.1.4-alpha.7";
 const ALPHA9 = "0.1.4-alpha.9";
 const ALPHA10 = "0.1.4-alpha.10";
 const ALPHA11 = "0.1.4-alpha.11";
+const ALPHA12 = "0.1.4-alpha.12";
 const MAX_JSON = 1024 * 1024;
 const MAX_ASSET = 64 * 1024 * 1024;
 const fail = (message) => {
@@ -32,21 +33,18 @@ const fail = (message) => {
 };
 const positive = (n) => Number.isSafeInteger(n) && n > 0;
 
-function pinned(policy, version) {
-  const promotion =
-    version === ALPHA11
-      ? policy?.alpha11Promotion
-      : version === ALPHA10
-        ? policy?.alpha10Promotion
-        : version === ALPHA9
-          ? policy?.alpha9Promotion
-          : version === ALPHA7
-            ? policy?.alpha7Promotion
-            : version === ALPHA6
-              ? policy?.alpha6Promotion
-              : version === ALPHA5
-                ? policy?.alpha5Promotion
-                : policy?.promotion;
+const promotions = {
+  promoteAlpha4: [ALPHA4, "promotion"],
+  promoteAlpha5: [ALPHA5, "alpha5Promotion"],
+  promoteAlpha6: [ALPHA6, "alpha6Promotion"],
+  promoteAlpha7: [ALPHA7, "alpha7Promotion"],
+  promoteAlpha9: [ALPHA9, "alpha9Promotion"],
+  promoteAlpha10: [ALPHA10, "alpha10Promotion"],
+  promoteAlpha11: [ALPHA11, "alpha11Promotion"],
+  promoteAlpha12: [ALPHA12, "alpha12Promotion"],
+};
+function pinned(policy, version, policyKey) {
+  const promotion = policy?.[policyKey];
   const pins = policy?.assets?.[version];
   const names = [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"];
   if (
@@ -107,46 +105,17 @@ function json(bytes) {
 }
 
 export async function prepareNinjaPromotion(options = {}, deps = {}) {
-  const {
-    privateKeyPath,
-    output,
-    checkpointPath,
-    promoteAlpha5 = false,
-    promoteAlpha6 = false,
-    promoteAlpha7 = false,
-    promoteAlpha9 = false,
-    promoteAlpha10 = false,
-    promoteAlpha11 = false,
-  } = options;
+  const { privateKeyPath, output, checkpointPath, ...flags } = options;
+  const entries = Object.entries(flags);
+  const selected = entries.filter(([, enabled]) => enabled === true);
   if (
-    Object.keys(options).some(
-      (key) =>
-        ![
-          "privateKeyPath",
-          "output",
-          "checkpointPath",
-          "promoteAlpha5",
-          "promoteAlpha6",
-          "promoteAlpha7",
-          "promoteAlpha9",
-          "promoteAlpha10",
-          "promoteAlpha11",
-        ].includes(key),
+    entries.some(
+      ([key, enabled]) =>
+        key === "promoteAlpha4" ||
+        !Object.hasOwn(promotions, key) ||
+        (enabled !== undefined && typeof enabled !== "boolean"),
     ) ||
-    typeof promoteAlpha5 !== "boolean" ||
-    typeof promoteAlpha6 !== "boolean" ||
-    typeof promoteAlpha7 !== "boolean" ||
-    typeof promoteAlpha9 !== "boolean" ||
-    typeof promoteAlpha10 !== "boolean" ||
-    typeof promoteAlpha11 !== "boolean" ||
-    [
-      promoteAlpha5,
-      promoteAlpha6,
-      promoteAlpha7,
-      promoteAlpha9,
-      promoteAlpha10,
-      promoteAlpha11,
-    ].filter(Boolean).length > 1 ||
+    selected.length > 1 ||
     [privateKeyPath, output, checkpointPath].some(
       (path) =>
         typeof path !== "string" || !isAbsolute(path) || path.includes("\0"),
@@ -154,22 +123,11 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
   )
     fail("requires explicit key, output and checkpoint paths");
   const policy = deps.policy ?? PRODUCTION_RENEWAL_POLICY;
-  const version = promoteAlpha11
-    ? ALPHA11
-    : promoteAlpha10
-      ? ALPHA10
-      : promoteAlpha9
-        ? ALPHA9
-        : promoteAlpha7
-          ? ALPHA7
-          : promoteAlpha6
-            ? ALPHA6
-            : promoteAlpha5
-              ? ALPHA5
-              : ALPHA4;
+  const selector = selected[0]?.[0] ?? "promoteAlpha4";
+  const [version, policyKey] = promotions[selector];
   const tag = `v${version}`;
   const publicBase = `https://daedlo.com/downloads/${version}/`;
-  const { pins, sourceCommit, names } = pinned(policy, version);
+  const { pins, sourceCommit, names } = pinned(policy, version, policyKey);
   const token = deps.token ?? process.env.GITHUB_TOKEN;
   if (typeof token !== "string" || !token || /\s/.test(token))
     fail("requires a GitHub credential");
@@ -310,19 +268,7 @@ export async function prepareNinjaPromotion(options = {}, deps = {}) {
       privateKeyPath,
       output,
       checkpointPath,
-      [promoteAlpha11
-        ? "promoteAlpha11"
-        : promoteAlpha10
-          ? "promoteAlpha10"
-          : promoteAlpha9
-            ? "promoteAlpha9"
-            : promoteAlpha7
-              ? "promoteAlpha7"
-              : promoteAlpha6
-                ? "promoteAlpha6"
-                : promoteAlpha5
-                  ? "promoteAlpha5"
-                  : "promoteAlpha4"]: true,
+      [selector]: true,
     },
     {
       policy,
@@ -361,9 +307,12 @@ if (
     for (let i = 0; i < args.length; ) {
       const key = args[i++];
       if (
-        ["--promote-alpha9", "--promote-alpha10", "--promote-alpha11"].includes(
-          key,
-        )
+        [
+          "--promote-alpha9",
+          "--promote-alpha10",
+          "--promote-alpha11",
+          "--promote-alpha12",
+        ].includes(key)
       ) {
         if (Object.hasOwn(parsed, key))
           fail("CLI promotion selector must be unique");
@@ -387,6 +336,7 @@ if (
         parsed["--promote-alpha9"],
         parsed["--promote-alpha10"],
         parsed["--promote-alpha11"],
+        parsed["--promote-alpha12"],
         parsed["--release"],
       ].filter(Boolean).length > 1
     )
@@ -406,6 +356,7 @@ if (
       promoteAlpha9: parsed["--promote-alpha9"] === true,
       promoteAlpha10: parsed["--promote-alpha10"] === true,
       promoteAlpha11: parsed["--promote-alpha11"] === true,
+      promoteAlpha12: parsed["--promote-alpha12"] === true,
     });
     console.log(JSON.stringify(result));
   } catch (error) {

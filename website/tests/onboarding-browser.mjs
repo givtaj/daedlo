@@ -446,7 +446,7 @@ export async function checkOnboardingBrowser({
     ]) {
       await open(current.page, "/index.html");
       const upgrade = current.page.locator(
-        'a[href="/updates.html#alpha11-tools-title"]',
+        'a[href="/updates.html#alpha12-tools-title"]',
       );
       await upgrade.scrollIntoViewIfNeeded();
       const presentation = await upgrade.evaluate((link) => {
@@ -469,10 +469,10 @@ export async function checkOnboardingBrowser({
         `${label}: the upgrade note needs separation from release cards`,
       );
       await upgrade.click();
-      assert.equal(new URL(current.page.url()).hash, "#alpha11-tools-title");
+      assert.equal(new URL(current.page.url()).hash, "#alpha12-tools-title");
       assert.match(
         await current.page
-          .locator('[aria-labelledby="alpha11-tools-title"]')
+          .locator('[aria-labelledby="alpha12-tools-title"]')
           .innerText(),
         /same configuration, registration, store/,
       );

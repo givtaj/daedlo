@@ -54,8 +54,53 @@
           disposable fixture and acceptance before an update is ready to use.
         </p>
       </section>
+      <section class="guide-block" aria-labelledby="alpha12-tools-title">
+        <h2 id="alpha12-tools-title">Upgrade from alpha.11 to alpha.12</h2>
+        <p>
+          Use the original tools and configuration to stop the authenticated
+          alpha.11 owner safely. Keep its installation, reports and browser
+          cache. Follow the
+          <a href="/install.html#manual">verified install instructions</a>
+          to bootstrap the alpha.12 tools in a separate directory. Start them
+          with the same configuration, registration, store, publisher trust and
+          signed checkpoint. Check the accepted installation before using
+          <strong>Check for updates → Install update → Restart Daedlo</strong>.
+          Keep both tools directories for rollback.
+        </p>
+        <ul>
+          <li>
+            CLI and Update can share an in-progress observation. Status reads
+            the selected version from its installation receipt. Startup and
+            activation verify the sealed files. If a status check times out,
+            the controller reports how long it spent in the child queue,
+            observing the application and reading the installation receipt
+            when timing information is available.
+          </li>
+          <li>
+            The managed starter shows how <code>draftState()</code> can measure
+            drafts, journals, requests, unresolved effects, operations and
+            leases independently of the model. Use your application's own
+            authoritative records. Unknown safety continues to block recovery.
+          </li>
+          <li>
+            Setup diagnostics identify installed file permission mismatches and
+            the configured browser cache used for installation and launch hooks.
+          </li>
+        </ul>
+        <p>
+          <a
+            href="https://github.com/givtaj/daedlo/blob/v{{VERSION}}/docs/native-setup.md"
+            >Native setup and status</a
+          >
+          ·
+          <a
+            href="https://github.com/givtaj/daedlo/blob/v{{VERSION}}/docs/managed-abandonment.md"
+            >Independent recovery measurements</a
+          >
+        </p>
+      </section>
       <section class="guide-block" aria-labelledby="alpha11-tools-title">
-        <h2 id="alpha11-tools-title">Get the alpha.11 tools first</h2>
+        <h2 id="alpha11-tools-title">Earlier upgrade to alpha.11</h2>
         <p>
           Running alpha.9 tools with the alpha.10 runtime? A runtime update
           keeps your existing tools. The new recovery and model-migration

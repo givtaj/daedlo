@@ -82,7 +82,7 @@ an already running adapter or bypasses unknown draft/pending-operation guards.
 ## Alpha.9 coordinated promotion
 
 This is the historical alpha.9 procedure, completed while the repository was
-private. The current alpha.11 procedure below uses the now-public repository.
+private. The current alpha.12 procedure below uses the now-public repository.
 
 The prepared alpha.9 policy pins source
 `30d2a985964011c08d80db2e83a3716a2c151345` and the three immutable files in the
@@ -204,6 +204,29 @@ later independent verification is a separate record. See
 [reviewed abandonment](managed-abandonment.md), [model migration](model-migration.md)
 and [verification](verification.md) for the exact scope and measured results.
 Preparing this policy does not establish public availability.
+
+## Alpha.12 coordinated promotion
+
+Alpha.12 adds native status timing, an independent recovery example and setup
+diagnostics. Bootstrap the new tools separately and retain the alpha.11 tools,
+installation, configuration, reports and trust checkpoint for recovery.
+
+1. Use the clean package source commit and the frozen ZIP, `SHA256SUMS` and
+   sanitized `release.json` accepted by the release owner. After the protected
+   source integration, publish those bytes at the GitHub prerelease
+   `v0.1.4-alpha.12`. Independently verify the tag target, sizes and digests.
+2. Merge the reviewed publisher policy and dispatch `ninja-renew.yml` on
+   `main` with only `promote_alpha12=true`. Ordinary renewal requires the full
+   active inventory once that policy merges. The promotion appends alpha.12 to
+   the authenticated alpha.11 baseline. It retains 30 earlier download files,
+   nine earlier signed entries, the publisher key and the Worker configuration.
+3. The workflow verifies all assets and the staged site, persists its signed
+   checkpoint, checks the live baseline and activates the exact uploaded Worker
+   version. Verify the active Worker, the ten-entry signed feed and all three
+   downloads over production HTTPS.
+4. Verify the public installer and the alpha.11 to alpha.12 bootstrap, runtime
+   upgrade, restart, rollback and retained-tool fallback with disposable data.
+   Record completed checks and limitations in the release verification record.
 
 ## Automatic renewal
 
