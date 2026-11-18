@@ -62,16 +62,9 @@ function boundedJson(value, limit) {
     fail("JSON data exceeds the supported size limit.");
   return JSON.parse(encoded);
 }
-function resolve(document, input, visited = new Set(), pathItem = false) {
-  if (!object(input)) fail("Invalid OpenAPI object.");
-  if (!own(input, "$ref")) return input;
-  if (pathItem && Object.keys(input).some((key) => key !== "$ref"))
-    fail("Path Item reference siblings are unsupported.");
-  const ref = input.$ref;
+function referenceTarget(document, ref) {
   if (typeof ref !== "string" || !ref.startsWith("#/"))
     fail("Only local OpenAPI references are supported.");
-  if (visited.has(ref) || visited.size > 32)
-    fail("Cyclic or excessive OpenAPI references are unsupported.");
   let value = document;
   for (const part of ref.slice(2).split("/")) {
     if (/~(?:[^01]|$)/.test(part)) fail("Invalid local OpenAPI reference.");
@@ -80,7 +73,22 @@ function resolve(document, input, visited = new Set(), pathItem = false) {
       fail("Unresolved local OpenAPI reference.");
     value = value[name];
   }
-  return resolve(document, value, new Set([...visited, ref]), pathItem);
+  return value;
+}
+function resolve(document, input, visited = new Set(), pathItem = false) {
+  if (!object(input)) fail("Invalid OpenAPI object.");
+  if (!own(input, "$ref")) return input;
+  if (pathItem && Object.keys(input).some((key) => key !== "$ref"))
+    fail("Path Item reference siblings are unsupported.");
+  const ref = input.$ref;
+  if (visited.has(ref) || visited.size > 32)
+    fail("Cyclic or excessive OpenAPI references are unsupported.");
+  return resolve(
+    document,
+    referenceTarget(document, ref),
+    new Set([...visited, ref]),
+    pathItem,
+  );
 }
 const annotations = new Set([
   "title",
@@ -141,7 +149,11 @@ const types = new Set([
   "integer",
   "string",
 ]);
-function schemaSupport(document, schema, depth = 0, refs = new Set()) {
+function schemaSupport(
+  document,
+  schema,
+  { depth = 0, refs = new Set(), refHops = 0, scalarParameter = false } = {},
+) {
   if (depth > 32) fail("Schema depth exceeds the supported limit.");
   const legacy = document.openapi.startsWith("3.0.");
   if (typeof schema === "boolean") {
@@ -149,6 +161,20 @@ function schemaSupport(document, schema, depth = 0, refs = new Set()) {
     return;
   }
   if (!object(schema)) fail("Invalid schema.");
+  if (own(schema, "$ref")) {
+    if (refs.has(schema.$ref)) fail("Cyclic schemas are unsupported.");
+    if (refHops > 32) fail("Excessive OpenAPI references are unsupported.");
+    schemaSupport(document, referenceTarget(document, schema.$ref), {
+      // A chain is one schema nesting level with a separate reference limit.
+      depth: refHops === 0 ? depth + 1 : depth,
+      refHops: refHops + 1,
+      refs: new Set([...refs, schema.$ref]),
+      scalarParameter,
+    });
+    // 3.0 uses a Reference Object here. In 3.1+ each referenced schema
+    // contributes its own assertions alongside the target's assertions.
+    if (legacy) return;
+  }
   if (
     legacy &&
     (Array.isArray(schema.type) ||
@@ -167,15 +193,6 @@ function schemaSupport(document, schema, depth = 0, refs = new Set()) {
   for (const key of Object.keys(schema))
     if (!assertions.has(key) && !annotations.has(key) && !key.startsWith("x-"))
       fail("Schema contains an unsupported keyword.");
-  if (own(schema, "$ref")) {
-    if (refs.has(schema.$ref)) fail("Cyclic schemas are unsupported.");
-    schemaSupport(
-      document,
-      resolve(document, schema),
-      depth + 1,
-      new Set([...refs, schema.$ref]),
-    );
-  }
   if (own(schema, "type")) {
     const list = Array.isArray(schema.type) ? schema.type : [schema.type];
     if (
@@ -184,6 +201,13 @@ function schemaSupport(document, schema, depth = 0, refs = new Set()) {
       new Set(list).size !== list.length
     )
       fail("Invalid schema type.");
+    if (
+      scalarParameter &&
+      (list.includes("object") ||
+        list.includes("array") ||
+        (Array.isArray(schema.type) && list.includes("null")))
+    )
+      fail("Only scalar parameter serialization is supported.");
   }
   if (own(schema, "nullable") && typeof schema.nullable !== "boolean")
     fail("Invalid nullable schema.");
@@ -209,15 +233,18 @@ function schemaSupport(document, schema, depth = 0, refs = new Set()) {
   if (own(schema, "properties")) {
     if (!object(schema.properties)) fail("Invalid schema properties.");
     for (const child of Object.values(schema.properties))
-      schemaSupport(document, child, depth + 1, refs);
+      schemaSupport(document, child, { depth: depth + 1, refs });
   }
   if (
     own(schema, "additionalProperties") &&
     typeof schema.additionalProperties !== "boolean"
   )
-    schemaSupport(document, schema.additionalProperties, depth + 1, refs);
+    schemaSupport(document, schema.additionalProperties, {
+      depth: depth + 1,
+      refs,
+    });
   if (own(schema, "items"))
-    schemaSupport(document, schema.items, depth + 1, refs);
+    schemaSupport(document, schema.items, { depth: depth + 1, refs });
   for (const key of ["allOf", "anyOf", "oneOf"])
     if (own(schema, key)) {
       if (
@@ -227,7 +254,7 @@ function schemaSupport(document, schema, depth = 0, refs = new Set()) {
       )
         fail("Invalid schema composition.");
       for (const child of schema[key])
-        schemaSupport(document, child, depth + 1, refs);
+        schemaSupport(document, child, { depth: depth + 1, refs });
     }
   for (const key of [
     "minItems",
@@ -330,12 +357,15 @@ function formatValid(format, value) {
 }
 function directionFlag(document, schema, flag) {
   if (!object(schema)) return false;
+  if (own(schema, "$ref")) {
+    const fromTarget = directionFlag(
+      document,
+      referenceTarget(document, schema.$ref),
+      flag,
+    );
+    if (fromTarget || document.openapi.startsWith("3.0.")) return fromTarget;
+  }
   if (schema[flag] === true) return true;
-  if (
-    own(schema, "$ref") &&
-    directionFlag(document, resolve(document, schema), flag)
-  )
-    return true;
   return (
     schema.allOf?.some((child) => directionFlag(document, child, flag)) ?? false
   );
@@ -349,17 +379,16 @@ function schemaValid(
 ) {
   if (depth > 48) return false;
   if (typeof schema === "boolean") return schema;
-  if (
-    own(schema, "$ref") &&
-    !schemaValid(
+  if (own(schema, "$ref")) {
+    const validTarget = schemaValid(
       document,
-      resolve(document, schema),
+      referenceTarget(document, schema.$ref),
       value,
-      depth + 1,
+      depth,
       direction,
-    )
-  )
-    return false;
+    );
+    if (!validTarget || document.openapi.startsWith("3.0.")) return validTarget;
+  }
   if (own(schema, "type")) {
     const list = Array.isArray(schema.type) ? schema.type : [schema.type];
     if (
@@ -550,17 +579,7 @@ function parameterSupport(document, parameter) {
     ].includes(parameter.name.toLowerCase())
   )
     fail("Managed header parameters are unsupported.");
-  schemaSupport(document, parameter.schema ?? {});
-  const schema = object(parameter.schema)
-    ? resolve(document, parameter.schema)
-    : parameter.schema;
-  if (
-    schema &&
-    (["object", "array"].includes(schema.type) ||
-      (Array.isArray(schema.type) &&
-        schema.type.some((type) => ["object", "array", "null"].includes(type))))
-  )
-    fail("Only scalar parameter serialization is supported.");
+  schemaSupport(document, parameter.schema ?? {}, { scalarParameter: true });
 }
 function contentSchema(content, mediaType) {
   if (!object(content)) fail("Invalid media type content.");
