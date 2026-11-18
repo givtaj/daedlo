@@ -273,12 +273,19 @@ export async function createNinjaManager({
       ? installer.verify(slot(id), { registration, checkSource })
       : null;
   }
+  async function statusReceipt(id) {
+    if (!id) return null;
+    const identity = installer.readIdentity
+      ? await installer.readIdentity(slot(id), { registration })
+      : await receipt(id);
+    return publicReceipt(identity);
+  }
   async function view({ onLive, onPhase } = {}) {
     const s = await read();
     const live = await supervisor.status({ onPhase });
     onLive?.(live);
     onPhase?.(s.current ? "installation" : "manager");
-    const selected = s.current ? publicReceipt(await receipt(s.current)) : null;
+    const selected = await statusReceipt(s.current);
     if (selected && s.historicalSnapshot) selected.historicalSnapshot = true;
     const blockers = [];
     const observation = safeObservation(live.observation);
@@ -319,6 +326,9 @@ export async function createNinjaManager({
         ? {
             id: s.operation.id,
             status: s.operation.status,
+            ...(s.operation.status === "ready"
+              ? { version: await preparedVersion(s.operation) }
+              : {}),
             ...(s.operation.kind === "model_migration"
               ? {
                   kind: "model_migration",
@@ -331,6 +341,10 @@ export async function createNinjaManager({
       blockers,
       error: s.error,
     };
+  }
+  async function preparedVersion(operation) {
+    // Older tools recorded only the immutable slot ID in ready operations.
+    return operation.version ?? (await statusReceipt(operation.id)).version;
   }
   async function recordError(s, e) {
     s.phase = e.cleanupFailed ? "recovery_required" : "failed";
@@ -540,7 +554,12 @@ export async function createNinjaManager({
         "migration_required",
         "Candidate changes the accepted states, commands or flows.",
       );
-    s.operation = { id, status: "ready", expectedCurrent: s.current };
+    s.operation = {
+      id,
+      status: "ready",
+      version: installed.version,
+      expectedCurrent: s.current,
+    };
     s.phase = "ready";
     await save(s);
     return view();
@@ -588,11 +607,22 @@ export async function createNinjaManager({
   async function switchTo(
     s,
     target,
-    { rollback = false, acknowledgeRestart, migration } = {},
+    { rollback = false, acknowledgeRestart, migration, expectedVersion } = {},
   ) {
     if (acknowledgeRestart !== true)
       fail("restart_required", "Explicit restart acknowledgment is required.");
     const candidate = await receipt(target, !rollback);
+    if (
+      !rollback &&
+      !migration &&
+      (candidate.version !== (await preparedVersion(s.operation)) ||
+        (expectedVersion !== undefined &&
+          candidate.version !== expectedVersion))
+    )
+      fail(
+        "stale_operation",
+        "The prepared version no longer matches the requested installation.",
+      );
     const live = await supervisor.status();
     const observation = safeObservation(live.observation);
     if (observation?.error)
@@ -647,12 +677,16 @@ export async function createNinjaManager({
       if (e.cleanupFailed) await recordError(s, e);
       throw e;
     }
-    await receipt(target, !rollback);
     if (migration)
       await validateMigration(await read(), target, migration.reviewSha256);
     await ninjaWrite(journalPath, journal);
     await fault("journal_prepared");
     try {
+      if ((await receipt(target, !rollback)).version !== candidate.version)
+        fail(
+          "stale_operation",
+          "The installation version changed during restart.",
+        );
       s.current = target;
       s.previous = before.current;
       s.historicalSnapshot = rollback;
@@ -688,13 +722,15 @@ export async function createNinjaManager({
         throw e;
       }
       try {
+        // A failed pre-switch verification only restores a runner that was live.
+        const restartPrevious = live.running || s.current === target;
         await supervisor.close();
         Object.assign(s, before, {
           generation: s.generation + 1,
           operation: null,
         });
         await save(s);
-        if (before.current) {
+        if (before.current && restartPrevious) {
           await supervisor.start(await receipt(before.current));
           await supervisor.accept?.();
         }

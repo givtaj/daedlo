@@ -680,6 +680,35 @@ test("schema-invalid and documented HTTP error responses are not success", async
   assert.equal(f.app.calls.length, 2);
 });
 
+test("a 200 response violating an intermediate schema reference remains unknown", async (t) => {
+  const schema = specification("3.1.0");
+  schema.components = {
+    schemas: {
+      Message: messageSchema,
+      Greeting: {
+        $ref: "#/components/schemas/Message",
+        properties: { message: { minLength: 6 } },
+      },
+    },
+  };
+  schema.paths["/hello"].get.responses[200] = jsonResponse({
+    $ref: "#/components/schemas/Greeting",
+  });
+  const f = await setup(t, { schema });
+  await f.select("GET /hello");
+  await f.prepare();
+  const result = await f.run("execute");
+  assert.deepEqual(
+    f.app.calls.map((call) => call.path),
+    ["/hello"],
+  );
+  const { response } = (await f.adapter.observe()).facts;
+  assert.equal(response.status, 200);
+  assert.equal(response.schemaSupported, true);
+  assert.equal(result.outcome?.kind, "unknown");
+  assert.equal(response.schemaValid, false);
+});
+
 test("an API redirect never reaches an unapproved destination", async (t) => {
   const f = await setup(t, { allowOperations: ["GET /redirect"] });
   await f.select("GET /redirect");

@@ -32,6 +32,24 @@ export function requireInstalledSwagger(toolsRoot) {
       "Verified tools must ship complete Swagger integration: " + file,
     );
 }
+export function documentedSwaggerInstall(guide) {
+  const section = guide
+    .split("## Start from the verified installed kit\n")[1]
+    ?.split(/\n## /)[0];
+  assert.ok(
+    section,
+    "Verified tools must ship the Swagger installation section",
+  );
+  const commands = [...section.matchAll(/^```sh\n([\s\S]*?)^```$/gm)]
+    .map((match) => match[1])
+    .filter((block) => block.includes("npm install --prefix"));
+  assert.equal(
+    commands.length,
+    1,
+    "Expected one installed Swagger setup block",
+  );
+  return commands[0];
+}
 export function verifyInstalledSwaggerChecks(checks) {
   assert.equal(
     checks.length,
@@ -249,28 +267,27 @@ export async function runInstalledSwagger({
     );
     const toolsExpected = extract("tools", toolsBytes, "package");
     requireInstalledSwagger(toolsExpected);
-    const selected = {};
+    const verifiedBundle = join(temporary, "verified bundle");
+    fs.mkdirSync(verifiedBundle);
+    const manifestBytes = fs.readFileSync(join(bundle, "manifest.json"));
+    assert.equal(sha(manifestBytes), expectedManifestSha256);
+    fs.writeFileSync(join(verifiedBundle, "manifest.json"), manifestBytes);
+    const extracted = {};
     for (const kind of ["runtime", "engine"]) {
       const artifact = manifest.artifacts[kind],
         bytes = fs.readFileSync(join(bundle, artifact.file));
       assert.equal(sha(bytes), artifact.sha256);
       assert.equal(bytes.length, artifact.bytes);
-      const archive = join(temporary, artifact.file);
-      fs.writeFileSync(archive, bytes);
-      selected[kind] = {
-        archive,
-        root: extract(
-          kind,
-          bytes,
-          kind === "runtime"
-            ? "package"
-            : `${artifact.name}-${artifact.version}`,
-        ),
-      };
+      fs.writeFileSync(join(verifiedBundle, artifact.file), bytes);
+      extracted[kind] = extract(
+        kind,
+        bytes,
+        kind === "runtime" ? "package" : `${artifact.name}-${artifact.version}`,
+      );
     }
     const crateBefore = verifyInstalledRuntime(
-      selected.engine.root,
-      selected.engine.root,
+      extracted.engine,
+      extracted.engine,
     );
     const toolsCopy = join(temporary, "verified-tools.tgz");
     fs.writeFileSync(toolsCopy, toolsBytes);
@@ -297,30 +314,68 @@ export async function runInstalledSwagger({
       assert.equal(packed[0].name, name);
       dependencies.push(join(dependencyDir, packed[0].filename));
     }
-    run("install", "npm", [
-      "install",
-      "--prefix",
-      work,
-      "--workspaces=false",
-      "--offline",
-      "--ignore-scripts",
-      "--no-audit",
-      "--no-fund",
-      "--cache",
-      cache,
-      toolsCopy,
-      selected.runtime.archive,
-      ...dependencies,
-    ]);
-    const toolsRoot = join(work, "node_modules/@daedlo/release-tools"),
+    const toolsInstall = join(temporary, "verified tools");
+    for (const [step, prefix, archives] of [
+      ["install-tools", toolsInstall, [toolsCopy]],
+      ["install-cached-dependencies", work, dependencies],
+    ]) {
+      run(step, "npm", [
+        "install",
+        "--prefix",
+        prefix,
+        "--workspaces=false",
+        "--offline",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--cache",
+        cache,
+        ...archives,
+      ]);
+    }
+    const toolsRoot = join(toolsInstall, "node_modules/@daedlo/release-tools"),
       runtimeRoot = join(work, "node_modules/@daedlo/runtime");
-    result.runtimeInventory = verifyInstalledRuntime(
-      selected.runtime.root,
-      runtimeRoot,
-    );
     verifyInstalledRuntime(toolsExpected, toolsRoot);
     result.toolsInventory = verifyToolsSource(toolsRoot, manifest);
     requireInstalledSwagger(toolsRoot);
+    const setupBlock = documentedSwaggerInstall(
+      fs.readFileSync(
+        join(toolsRoot, "integrations/swagger/README.md"),
+        "utf8",
+      ),
+    );
+    const setupOutput = run("documented-setup", "/bin/sh", ["-eu"], {
+      input: setupBlock,
+      env: {
+        tools_root: toolsRoot,
+        bundle_root: verifiedBundle,
+        qa_root: work,
+        NPM_CONFIG_OFFLINE: "true",
+        NPM_CONFIG_CACHE: cache,
+        CARGO_NET_OFFLINE: "true",
+        RUSTUP_TOOLCHAIN: rustVersion,
+        // CI provisions the matching browser before installed acceptance.
+        PLAYWRIGHT_DOWNLOAD_HOST: "http://127.0.0.1:0",
+        PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST: "http://127.0.0.1:0",
+      },
+      timeout: 300000,
+    });
+    // The final documented command prints the model builder's JSON receipt.
+    const receiptStart = setupOutput.trimEnd().lastIndexOf("\n{");
+    const build = JSON.parse(setupOutput.slice(receiptStart + 1));
+    const crateRoot = join(work, "vendor");
+    assert.equal(build.cratePath, crateRoot);
+    assert.equal(build.version, manifest.version);
+    assert.equal(build.model, join(work, "swagger-build/model"));
+    assert.equal(
+      build.enginePath,
+      join(work, "swagger-build/target/debug/swagger-engine"),
+    );
+    result.documentedSetupSha256 = sha(setupBlock);
+    result.runtimeInventory = verifyInstalledRuntime(
+      extracted.runtime,
+      runtimeRoot,
+    );
     const publicUrls = JSON.parse(
       run("runtime-resolution", process.execPath, [
         "--input-type=module",
@@ -333,29 +388,12 @@ export async function runInstalledSwagger({
         url.startsWith(pathToFileURL(runtimeRoot + "/").href),
         "Product imports must resolve within the exact installed runtime",
       );
-    const build = JSON.parse(
-      run(
-        "model-build",
-        process.execPath,
-        [
-          join(toolsRoot, "integrations/swagger/build-model.mjs"),
-          "--crate",
-          selected.engine.root,
-          "--output",
-          join(temporary, "model-build"),
-          "--offline",
-        ],
-        { env: { RUSTUP_TOOLCHAIN: rustVersion }, timeout: 300000 },
-      ),
-    );
-    assert.equal(build.cratePath, selected.engine.root);
-    assert.equal(build.version, manifest.version);
     const modelManifest = fs.readFileSync(
       join(build.model, "Cargo.toml"),
       "utf8",
     );
     assert.ok(modelManifest.includes(`version = "=${manifest.version}"`));
-    assert.ok(modelManifest.includes(JSON.stringify(selected.engine.root)));
+    assert.ok(modelManifest.includes(JSON.stringify(crateRoot)));
     assert.deepEqual(
       fs.readFileSync(join(build.model, "Cargo.lock")),
       fs.readFileSync(
@@ -372,13 +410,13 @@ export async function runInstalledSwagger({
     verifyInstalledSwaggerChecks(browserResult.checks);
     Object.assign(result, browserResult);
     result.runtimeInventory = verifyInstalledRuntime(
-      selected.runtime.root,
+      extracted.runtime,
       runtimeRoot,
     );
     verifyInstalledRuntime(toolsExpected, toolsRoot);
     result.toolsInventory = verifyToolsSource(toolsRoot, manifest);
     assert.deepEqual(
-      verifyInstalledRuntime(selected.engine.root, selected.engine.root),
+      verifyInstalledRuntime(extracted.engine, crateRoot),
       crateBefore,
       "Building must not modify the selected core crate",
     );

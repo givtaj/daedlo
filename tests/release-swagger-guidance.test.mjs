@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
+import { documentedSwaggerInstall } from "./swagger-installed-acceptance.mjs";
 const read = (path) =>
   fs.readFile(new URL("../" + path, import.meta.url), "utf8");
 test("current installation guides select the exact candidate browser dependency", async () => {
@@ -33,4 +34,23 @@ test("downloaded onboarding explicitly routes Swagger to the shipped standalone 
     assert.match(guide, /Swagger[\s\S]*standalone/);
     assert.match(guide, /managed Swagger.*not (?:included|supported)/i);
   }
+});
+
+test("the Swagger quickstart selects artifacts available in the verified kit", async () => {
+  const guide = await read("integrations/swagger/README.md");
+  const version = JSON.parse(
+    await read("packages/runtime/package.json"),
+  ).version;
+  const block = documentedSwaggerInstall(guide);
+  const files = new Set([
+    `daedlo-runtime-${version}.tgz`,
+    `daedlo-engine-${version}.crate`,
+  ]);
+  for (const [, file] of block.matchAll(/\$bundle_root\/(daedlo-[^"\s]+)/g)) {
+    assert.ok(files.has(file), `The ${version} kit does not contain ${file}`);
+  }
+  assert.ok(
+    block.includes("manifest.json"),
+    "Select archives from the verified manifest",
+  );
 });

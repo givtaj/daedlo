@@ -76,3 +76,21 @@ test("alpha7 migration guidance names the changed QA dependency closure", async 
   assert.match(html, /snapshot[^.]*restore/i);
   assert.match(html, /normal application dependencies[^.]*unchanged/i);
 });
+
+test("the public install prompt and guide correct the frozen alpha.11 Swagger filenames", async () => {
+  const install = await read("templates/install.html");
+  const prompt = install.match(
+    /id="onboarding-prompt"[\s\S]*?>([\s\S]*?)<\/pre/,
+  )[1];
+  for (const [location, text] of [
+    ["copied prompt", prompt],
+    ["integration guide", await read("public/guide.html")],
+  ]) {
+    assert.ok(
+      text.includes("bundle/manifest.json"),
+      `${location} must direct alpha.11 users to the verified bundle's manifest`,
+    );
+    assert.match(text, /alpha\.10/);
+    assert.match(text, /alpha\.11/);
+  }
+});

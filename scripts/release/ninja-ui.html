@@ -374,8 +374,14 @@
       }
       function render(next) {
         if (!next.status) return;
-        view = next;
         const s = next.status;
+        if (
+          view?.status.operation?.id !== s.operation?.id ||
+          view?.status.operation?.version !== s.operation?.version ||
+          view?.status.selected?.id !== s.selected?.id
+        )
+          $("acknowledge").checked = false;
+        view = next;
         $("project-name").textContent = s.project.label;
         $("selected").textContent = s.selected?.version ?? "Not selected";
         $("running").textContent = s.running?.version ?? "No running session";
@@ -384,9 +390,14 @@
         const [title, detail] = phases[s.phase] ?? phases.recovery_required;
         $("phase-title").textContent = title;
         $("phase-badge").textContent = title;
-        $("phase-detail").textContent = detail;
+        $("phase-detail").textContent =
+          s.operation?.status === "ready"
+            ? s.operation.version
+              ? `Restart to activate the prepared installation, version ${s.operation.version}.`
+              : "The prepared installation version could not be confirmed."
+            : detail;
         $("candidate").textContent = s.available
-          ? `Candidate ${s.available.version}`
+          ? `Available release: ${s.available.version}`
           : "No candidate currently offered by the manager.";
         $("restart").hidden = s.operation?.status !== "ready";
         $("revert").hidden = !s.canRollback;
@@ -440,6 +451,7 @@
             $("message").textContent = "";
           pollError = null;
         } catch (error) {
+          $("acknowledge").checked = false;
           pollError = error.message;
           $("message").textContent = pollError;
           view = null;

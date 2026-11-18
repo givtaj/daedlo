@@ -144,6 +144,18 @@ async function request(record, action, generation, arguments_ = {}) {
     );
   return value;
 }
+function checkPreparedSetupVersion(state, version) {
+  if (
+    !state.selected &&
+    state.operation?.status === "ready" &&
+    version &&
+    state.operation.version !== version
+  )
+    fail(
+      "version_unavailable",
+      "The prepared installation does not match the requested version. Review Ninja status before resuming setup.",
+    );
+}
 function handoff(value, record, reused) {
   const timing = safeStatusTiming(value.timing);
   const observation = value.native.observation ?? value.status.observation;
@@ -269,6 +281,7 @@ export async function nativeCommand(
         "stale_session",
         "Configuration or tools changed. Stop the authenticated runner before starting the new setup.",
       );
+    if (command === "setup") checkPreparedSetupVersion(current.status, version);
     if (["setup", "start", "status"].includes(command))
       return { result: handoff(current, existing, true) };
     const changed = await request(
@@ -511,12 +524,12 @@ export async function nativeCommand(
           startup = { ...startup, phase: "stopped", cleanup: "complete" };
           return result;
         },
-        restart: async () => {
+        restart: ({ operation, version }) => {
           available();
-          const s = await manager.status();
-          if (s.operation?.status !== "ready")
-            fail("action_unavailable", "No validated candidate is ready.");
-          return manager.activate(s.operation.id, { acknowledgeRestart: true });
+          return manager.activate(operation, {
+            acknowledgeRestart: true,
+            expectedVersion: version,
+          });
         },
         retryEvidence: async () => {
           available();
@@ -553,16 +566,7 @@ export async function nativeCommand(
   try {
     let state = await manager.status();
     if (command === "setup") {
-      if (
-        !state.selected &&
-        state.operation?.status === "ready" &&
-        version &&
-        state.available?.version !== version
-      )
-        fail(
-          "version_unavailable",
-          "The prepared installation does not match the requested catalog version. Review Ninja status before resuming setup.",
-        );
+      checkPreparedSetupVersion(state, version);
       if (!state.selected && state.operation?.status !== "ready") {
         if (!version)
           fail(
@@ -637,10 +641,16 @@ export async function nativeCommand(
     } else if (command === "restart") {
       if (state.operation?.status !== "ready")
         fail("action_unavailable", "No validated candidate is ready.");
-      await manager.activate(state.operation.id, { acknowledgeRestart: true });
+      await manager.activate(state.operation.id, {
+        acknowledgeRestart: true,
+        expectedVersion: state.operation.version,
+      });
     } else if (state.selected) await manager.start();
     else if (state.operation?.status === "ready")
-      await manager.activate(state.operation.id, { acknowledgeRestart: true });
+      await manager.activate(state.operation.id, {
+        acknowledgeRestart: true,
+        expectedVersion: state.operation.version,
+      });
     else
       fail(
         "setup_required",

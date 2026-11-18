@@ -172,6 +172,9 @@ function publicStatus(value) {
         ? {
             id: value.operation.id,
             status: label(value.operation.status, "unknown"),
+            ...(value.operation.status === "ready"
+              ? { version: label(value.operation.version, null) }
+              : {}),
           }
         : null,
     canRollback: known && value.canRollback === true,
@@ -330,6 +333,7 @@ export async function createNinjaServer({
           permitted &&
           status.phase === "ready" &&
           status.operation?.status === "ready" &&
+          Boolean(status.operation.version) &&
           status.blockers.length === 0,
         revert: permitted && status.canRollback && status.blockers.length === 0,
       },
@@ -634,15 +638,24 @@ export async function createNinjaServer({
         mutationEpoch++;
         let failure, actionResult;
         try {
-          if (input.generation !== (await snapshot()).generation)
+          const current = await snapshot();
+          if (input.generation !== current.generation)
             throw Object.assign(Error(), { code: "stale_generation" });
           rotate();
           const method = nativeMethods[input.action];
           if (typeof lifecycle[method] !== "function")
             throw Object.assign(Error(), { code: "action_unavailable" });
-          actionResult = await lifecycle[method](
-            Object.fromEntries(extraKeys.map((key) => [key, input[key]])),
+          const args = Object.fromEntries(
+            extraKeys.map((key) => [key, input[key]]),
           );
+          if (input.action === "restart") {
+            const operation = current.status.operation;
+            if (operation?.status !== "ready" || !operation.version)
+              throw Object.assign(Error(), { code: "action_unavailable" });
+            args.operation = operation.id;
+            args.version = operation.version;
+          }
+          actionResult = await lifecycle[method](args);
           if (actionResult?.ok === false)
             throw actionResult.error ?? actionResult;
         } catch (error) {
@@ -736,6 +749,7 @@ export async function createNinjaServer({
             (input.action === "restart" &&
               s.phase === "ready" &&
               s.operation?.status === "ready" &&
+              s.operation.version &&
               s.blockers.length === 0) ||
             (input.action === "revert" &&
               s.canRollback &&
@@ -750,6 +764,7 @@ export async function createNinjaServer({
         else if (input.action === "restart")
           result = await manager.activate(s.operation.id, {
             acknowledgeRestart: true,
+            expectedVersion: s.operation.version,
           });
         else result = await manager.rollback({ acknowledgeRestart: true });
         if (result?.ok === false) throw result.error ?? result;

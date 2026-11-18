@@ -120,6 +120,95 @@ async function install(f, version) {
   return f.manager.status();
 }
 
+test("a rechecked catalog cannot relabel the prepared restart target, including legacy ready slots", async (t) => {
+  const f = await fixture(t);
+  await f.manager.check();
+  const ready = await f.manager.prepare("1.0.0");
+  f.setOffer("2.0.0");
+  const offered = await f.manager.check();
+  assert.equal(offered.available.version, "2.0.0");
+  assert.equal(offered.operation.version, "1.0.0");
+  const path = join(f.root, "state.json");
+  const state = JSON.parse(await fs.readFile(path));
+  assert.equal(state.operation.version, "1.0.0");
+  delete state.operation.version; // Ready record created by older tools.
+  await fs.writeFile(path, JSON.stringify(state));
+  const reopened = await createNinjaManager(f.options);
+  assert.equal((await reopened.status()).operation.version, "1.0.0");
+  const switched = await reopened.activate(ready.operation.id, {
+    acknowledgeRestart: true,
+  });
+  assert.equal(switched.selected.version, "1.0.0");
+});
+
+test("a changed prepared version refuses activation before the running session is stopped", async (t) => {
+  const f = await fixture(t);
+  await install(f, "1.0.0");
+  f.setOffer("2.0.0");
+  await f.manager.check();
+  const ready = await f.manager.prepare("2.0.0");
+  const path = join(f.root, "state.json");
+  const state = JSON.parse(await fs.readFile(path));
+  state.operation.version = "3.0.0";
+  await fs.writeFile(path, JSON.stringify(state));
+  f.log.length = 0;
+  await assert.rejects(
+    f.manager.activate(ready.operation.id, { acknowledgeRestart: true }),
+    { code: "stale_operation" },
+  );
+  assert.deepEqual(f.log, []);
+  assert.equal((await f.manager.status()).running.version, "1.0.0");
+});
+
+for (const wasRunning of [true, false]) {
+  test(`a changed candidate after guarded close preserves the previous ${wasRunning ? "running" : "stopped"} selection`, async (t) => {
+    const f = await fixture(t);
+    const accepted = await install(f, "1.0.0");
+    if (!wasRunning) await f.manager.close();
+    f.setOffer("2.0.0");
+    await f.manager.check();
+    const ready = await f.manager.prepare("2.0.0");
+    const verify = f.options.installer.verify;
+    let reads = 0;
+    f.options.installer.verify = async (path, options) => {
+      const receipt = await verify(path, options);
+      if (receipt.id === ready.operation.id && ++reads === 2)
+        receipt.version = "3.0.0";
+      return receipt;
+    };
+    f.log.length = 0;
+    await assert.rejects(
+      f.manager.activate(ready.operation.id, { acknowledgeRestart: true }),
+      { code: "stale_operation" },
+    );
+    const after = await f.manager.status();
+    assert.equal(after.selected.id, accepted.selected.id);
+    assert.equal(
+      after.running?.id ?? null,
+      wasRunning ? accepted.running.id : null,
+    );
+    assert.ok(!f.log.includes("start:2.0.0") && !f.log.includes("start:3.0.0"));
+    assert.equal(
+      JSON.parse(await fs.readFile(join(f.root, "transaction.json"))).phase,
+      "recovered",
+    );
+  });
+}
+
+test("activation only consents to the requested operation version", async (t) => {
+  const f = await fixture(t);
+  await f.manager.check();
+  const ready = await f.manager.prepare("1.0.0");
+  await assert.rejects(
+    f.manager.activate(ready.operation.id, {
+      acknowledgeRestart: true,
+      expectedVersion: "2.0.0",
+    }),
+    { code: "stale_operation" },
+  );
+  assert.deepEqual(f.log, []);
+});
+
 test("upgrade and rollback select complete immutable installations and persist reports", async (t) => {
   const f = await fixture(t);
   const first = await install(f, "1.0.0");
@@ -388,4 +477,37 @@ test("durable shutdown report records completed owned cleanup before activation"
     await fs.readFile(join(f.root, "reports", reports[0])),
   );
   assert.equal(report.resources?.[0]?.status, "closed");
+});
+
+test("status reads the selected receipt without verifying the installation on every poll", async (t) => {
+  const f = await fixture(t);
+  const accepted = await install(f, "1.0.0");
+  const installer = f.options.installer;
+  let fullVerifications = 0;
+  const verify = installer.verify;
+  installer.verify = (...args) => {
+    fullVerifications++;
+    return verify(...args);
+  };
+  installer.readIdentity = async (path) =>
+    JSON.parse(await fs.readFile(join(path, "receipt.json"), "utf8"));
+
+  const reopened = await createNinjaManager(f.options);
+  const statuses = await Promise.all([reopened.status(), reopened.status()]);
+  for (const status of statuses)
+    assert.deepEqual(status.selected, accepted.selected);
+  assert.equal(
+    fullVerifications,
+    0,
+    "Opening a status page must not scan the sealed files or browser",
+  );
+
+  await reopened.close();
+  f.setSource("changed after selection");
+  assert.deepEqual((await reopened.status()).selected, accepted.selected);
+  await assert.rejects(reopened.start(), /Project inputs changed/);
+  assert.ok(
+    fullVerifications > 0,
+    "Starting the installation must verify the actual bytes",
+  );
 });
