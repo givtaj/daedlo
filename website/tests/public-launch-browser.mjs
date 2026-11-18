@@ -128,8 +128,72 @@ export async function checkPublicLaunchBrowser({
 
       await open("/");
       await layout("homepage");
+      const title = page.getByRole("heading", { level: 1 });
+      assert.equal(
+        (await title.innerText()).replace(/\s+/g, " ").trim(),
+        "Did it save?",
+        "The homepage must lead with the recorded save question.",
+      );
+      const hero = page.locator("section").filter({ has: title }).first();
+      const inspect = hero.getByRole("link", {
+        name: /inspect the recorded run/i,
+      });
+      assert.equal(await inspect.getAttribute("href"), "#record");
+      const action = await inspect.boundingBox();
+      assert.ok(
+        action && action.y >= 0 && action.y + action.height <= viewport.height,
+        `${label}: the recorded-run action must fit in the first screen.`,
+      );
+      assert.match(await hero.innerText(), /one new row/i);
+      assert.match(await hero.innerText(), /reload/i);
+      const illustration = hero.locator("img");
+      const art = await illustration.evaluate((image) => ({
+        origin: new URL(image.currentSrc).origin,
+        width: image.naturalWidth,
+        source: image.getAttribute("src"),
+      }));
+      assert.equal(art.origin, origin);
+      assert.ok(art.width > 0, "The local keypress illustration must load.");
+      assert.notEqual(art.source, "/demo-roots-save.png");
+
       await screenshot("home");
       await screenshot("hero", false);
+      await inspect.focus();
+      await inspect.press("Enter");
+      assert.equal(new URL(page.url()).hash, "#record");
+      const record = page.locator("#record");
+      assert.equal(await record.isVisible(), true);
+      const summary = await record.innerText();
+      for (const fact of [
+        /10\s+(?:completed\s+)?steps/i,
+        /1\s+new (?:saved )?row/i,
+        /0\s+(?:new |additional )?writes/i,
+        /same (?:saved )?row/i,
+        /independent.*API/i,
+        /alpha\.9 candidate/i,
+        /synthetic/i,
+      ])
+        assert.match(summary, fact);
+      const homeCapture = record.locator('img[src="/demo-roots-save.png"]');
+      await homeCapture.scrollIntoViewIfNeeded();
+      await homeCapture.evaluate((image) => image.decode());
+      assert.deepEqual(
+        await homeCapture.evaluate((image) => [
+          image.naturalWidth,
+          image.naturalHeight,
+        ]),
+        [1440, 900],
+      );
+      assert.equal(
+        await record
+          .locator('a[href="/demo.html#roots-recording"]')
+          .isVisible(),
+        true,
+      );
+      receipt.checks.push({
+        name: `${label} first-screen action reaches the dated Roots receipt and original recording`,
+        status: "PASS",
+      });
       const current = page.locator("#latest-release");
       assert.equal(
         await current.isVisible(),
@@ -166,21 +230,14 @@ export async function checkPublicLaunchBrowser({
       const roadmap = page.locator("#roadmap");
       await roadmap.scrollIntoViewIfNeeded();
       assert.equal(await roadmap.isVisible(), true);
-      for (const pattern of [
-        /(?:persistent|durable|target)[\s\S]*?(?:history|recover)/i,
-        /Docker Compose/i,
-      ]) {
-        const item = roadmap
-          .locator("article, li")
-          .filter({ hasText: pattern })
-          .first();
-        assert.equal(
-          await item.isVisible(),
-          true,
-          "Each development direction must be readable on the page.",
-        );
-        assert.match(await item.innerText(), /in development/i);
-      }
+      const history = roadmap
+        .locator("article, li")
+        .filter({
+          hasText: /(?:persistent|durable|target)[\s\S]*?(?:history|recover)/i,
+        })
+        .first();
+      assert.equal(await history.isVisible(), true);
+      assert.match(await history.innerText(), /in development/i);
       assert.match(
         await roadmap.innerText(),
         /not (?:yet )?(?:included|available|shipped)|unreleased/i,
@@ -195,6 +252,37 @@ export async function checkPublicLaunchBrowser({
         status: "PASS",
         version,
       });
+
+      const compose = page
+        .locator('a[href="/compose.html"]')
+        .filter({ hasText: /local/i })
+        .first();
+      await compose.click();
+      assert.equal(new URL(page.url()).pathname, "/compose.html");
+      assert.match(
+        await page.locator("main").innerText(),
+        /build.*images locally/i,
+      );
+      await page.locator('a[href="/index.html#story"]').click();
+      assert.equal(await page.locator("#story").isVisible(), true);
+      await page.locator('a[href="/workflow.html"]').first().click();
+      assert.match(
+        await page.locator("[data-illustration-note]").innerText(),
+        /not a live browser/i,
+      );
+      await page.getByRole("button", { name: "A draft that stays" }).click();
+      await page.locator("[data-next]").click();
+      assert.match(
+        await page.locator("[data-state]").innerText(),
+        /away from the editor/i,
+      );
+      await page.getByRole("button", { name: "An uncertain save" }).click();
+      await page.locator("[data-next]").click();
+      assert.match(
+        await page.locator("[data-state]").innerText(),
+        /save dispatched/i,
+      );
+      await open("/");
 
       await activate(
         page.locator(`header a[href="${sourceUrl}"]`).first(),

@@ -10,12 +10,18 @@ const flat = (text) => text.replace(/\s+/g, " ");
 
 test("alpha11 homepage retains bounded reusable Swagger support", async () => {
   const html = flat(await read("public/index.html"));
-  assert.match(html, /0\.1\.4-alpha\.11 · Assisted alpha\./);
-  assert.match(html, /Swagger UI/);
-  assert.match(html, /OpenAPI 3\.0, 3\.1 and 3\.2/);
-  assert.match(html, /bounded|supported subset/i);
+  const integration = html.match(
+    /<section\b[^>]*aria-labelledby="integration-title"[^>]*>(.*?)<\/section>/i,
+  )?.[1];
+  assert.ok(
+    integration,
+    "Visitors need the bounded Swagger integration scope.",
+  );
+  assert.match(integration, /Swagger UI/);
+  assert.match(integration, /OpenAPI 3\.0, 3\.1 and 3\.2/);
+  assert.match(integration, /bounded|supported subset/i);
   assert.match(
-    html,
+    integration,
     /For other browser flows, application-specific integration/i,
   );
 });

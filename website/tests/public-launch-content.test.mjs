@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { PUBLIC_FILES } from "../scripts/manifest.mjs";
 
 const website = resolve(
   process.env.DAEDLO_WEBSITE_ROOT ??
@@ -38,6 +39,31 @@ function section(html, id) {
 function linked(html, href) {
   return links(html).find((link) => link.href.replace(/\/$/, "") === href);
 }
+
+test("the reviewed homepage artwork and typeface are served from the curated site", async () => {
+  const home = await read("public/index.html");
+  const css = await read("public/homepage.css");
+  const exceptions = (await read("public/.assetsignore")).split(/\r?\n/);
+  assert.match(home, /href="\/homepage\.css"/);
+  assert.match(home, /src="\/save-press\.webp"/);
+  assert.match(css, /url\(\s*["']?\/?instrument-serif-italic\.woff2["']?\s*\)/);
+  for (const name of [
+    "homepage.css",
+    "save-press.webp",
+    "instrument-serif-italic.woff2",
+    "instrument-serif-license.txt",
+    "workflow.html",
+  ]) {
+    assert.ok(
+      PUBLIC_FILES.has(name),
+      `${name} must be included in the staged site.`,
+    );
+    assert.ok(
+      exceptions.includes(`!/${name}`),
+      `${name} needs an explicit public asset rule.`,
+    );
+  }
+});
 
 test("a public visitor can find the source and contributor guidance from the homepage", async () => {
   const home = await read("public/index.html");
@@ -298,24 +324,24 @@ test("homepage roadmap separates unreleased development from planned teaching", 
       /<(?:article|li)\b[^>]*>([\s\S]*?)<\/(?:article|li)>/gi,
     ),
   ].map((match) => text(match[1]));
-  for (const [label, pattern] of [
-    [
-      "persistent target history/recovery",
-      /(?:persistent|durable|target)[\s\S]*(?:history|recover)/i,
-    ],
-    ["Docker Compose", /Docker Compose/i],
-  ]) {
-    const card = cards.find((value) => pattern.test(value));
-    assert.ok(
-      card,
-      `The roadmap must identify ${label} in its own readable item.`,
-    );
-    assert.match(
-      card,
-      /in development/i,
-      `${label} must visibly remain in development.`,
-    );
-  }
+  const history = cards.find((value) =>
+    /(?:persistent|durable|target)[\s\S]*(?:history|recover)/i.test(value),
+  );
+  assert.ok(
+    history,
+    "The roadmap must identify persistent target history and recovery.",
+  );
+  assert.match(history, /in development/i);
+  const compose = links(home).find(
+    ({ href, label }) =>
+      href === "/compose.html" &&
+      /local/i.test(label) &&
+      /compose/i.test(label),
+  );
+  assert.ok(
+    compose,
+    "The homepage must link to the available local Compose build instructions.",
+  );
   assert.match(
     text(roadmap),
     /not (?:yet )?(?:included|available|shipped)|unreleased/i,
