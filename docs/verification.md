@@ -1,5 +1,137 @@
 # Verification record
 
+## Alpha.12 publication and public verification — 2026-11-18
+
+**Published and independently verified on macOS arm64.** The public installer
+bootstrapped the exact alpha.12 tools. Using the production feed, the updater upgraded
+and restarted an existing installation. After rollback, the original alpha.11 tools
+reopened the restored slot. Two rollout checks initially refused stale reads. Their
+failures and the subsequent independent results are recorded below.
+[Public installer](https://daedlo.com/install.html) ·
+[GitHub prerelease](https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.12)
+
+### Source and frozen files
+
+The tag resolves to clean source `2721e9e58beecd6cd2fa9c9960b1a7d399ade299`. Its Git
+tree is `d6a8f0ca30170b47ed37407e22155fdafa82a58f` and its bundle records source-tree
+SHA-256 `d3b20bd71db22fcb9c8b0690e407e462114acf0556bf72aecc065e39fc8b38fc`. The tagged
+source passed all five CI jobs, covering Node 22 and 24, native Compose on AMD64 and
+arm64, and public metadata.
+[Frozen-source CI](https://github.com/givtaj/daedlo/actions/runs/44319170182)
+
+The source incorporates the managed recovery, polling, setup and Swagger fixes, plus the
+site redesign. The source PR's final head `4257ca8566392d43c3fea74ca35f1086dd12f932`
+added only `docs/verification.md` relative to the tag. Inspection confirmed that this
+record is absent from the ZIP and all three nested archives. It merged as
+`8e06876277023e8f2400d25d72227e346a843fb0` after five passing PR checks. All five
+merged-main jobs also passed. [Fixes #51](https://github.com/givtaj/daedlo/pull/51)
+· [Fixes #52](https://github.com/givtaj/daedlo/pull/52) ·
+[Site #54](https://github.com/givtaj/daedlo/pull/54) ·
+[Source #53](https://github.com/givtaj/daedlo/pull/53) ·
+[Source PR CI](https://github.com/givtaj/daedlo/actions/runs/44322107612) ·
+[Source main CI](https://github.com/givtaj/daedlo/actions/runs/44325534014)
+
+Two earlier candidates remained unpublished. `f86ebfc` preceded PR #52. On `403c3b5`,
+hosted Node 24 exceeded a 100 ms deadline while checking that startup hands off its
+status page before the launcher becomes ready. The corrected test captures the handoff
+at manager entry and reads status before launch can finish. A delayed launch passed and
+a deliberately omitted handoff still failed.
+[Earlier CI failure](https://github.com/givtaj/daedlo/actions/runs/44316453963)
+
+GitHub published the prerelease at **14:33:59 UTC**. Anonymous downloads at 14:34:32 UTC
+matched all three published files. The ZIP, official metadata and nested build
+identities are recorded here.
+
+| Frozen artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `daedlo-0.1.4-alpha.12.zip` | 391508 | `fa69913ddcea6cf52df9879d9a36eec3b2a47423854deeccdb2bc8c00d3a7d2b` |
+| `release.json` | 7743 | `5b5b3f218e3d1a88b3272183dc3174b4aa34d7896ad6bb22967bbb3a2d621f1c` |
+| Kit `SHA256SUMS` | 92 | `d3a37fa6b52f20838f66cce742f7ea361fff8b518aa8da782ce7ae711d8a3b88` |
+| Bundle manifest | 883 | `aa61552922973649df899a6b6a1e3ee89ca1d83e20e1d1a5dda75b9bb8be0b9f` |
+| Runtime tarball | 79544 | `aa4ceb137ac8949ed98d481b647d67264106a4a41566fc6a828d5fb44fdcfa7b` |
+| Engine crate | 23643 | `d2e774f63b80bb39fa5bf6867a37aa1afe49693455a758527581abe6fe47ea1c` |
+| Portable tools | 213708 | `edfb7b96a12704ece2a8d0c7e65915e4e0bb5dcce9ae41520d7fdee3e8420ce9` |
+
+### Installed package
+
+On macOS arm64 with Node 24.22.2, Rust 1.96.0 and Chromium 158.0.8127.18, the exact kit
+passed 147 safety assertions in 17 groups, eight browser groups and four native suites
+covering startup (13 checks), observation recovery (5), reviewed abandonment (6) and
+model migration (4). All 28 runtime and 82 tools files matched. The starter passed 16
+standalone, nine evidence and eight managed checks.
+
+| Managed integration | Installed result |
+| --- | --- |
+| Reviewed recovery | Missing and unrecognized page phases produced rejected observations and an unknown `draftState()`. A failed observer with independent evidence of a clean editor returned `false`. The three measurements produced zero writes. |
+| Status | With the Update page open, two concurrent CLI status requests read one recorded installation identity and performed zero additional full-slot verifications. Guarded stop left the attached application available. |
+| Setup | Under `umask 077`, the installer verified all runtime bytes and retained 27 files as `0600` and one as `0700`. The configured Playwright cache supplied Chromium to the first five acceptance checks, three health checks and managed launch. |
+
+The standalone Swagger instructions now select the runtime and engine archive names from
+`bundle/manifest.json`. Running those literal commands rebuilt the model from the kit
+and the installed integration passed 19 groups. A further 26 catalog tests and one
+Chromium test verified that an HTTP 200 response violating a referenced schema leaves
+the outcome unknown. The older alpha.11 guide names alpha.10 archives. When using it,
+select `artifacts.runtime.file` and `artifacts.engine.file` from its verified manifest.
+[Swagger quickstart](../integrations/swagger/README.md#start-from-the-verified-installed-kit)
+
+### Production publisher and signed feed
+
+Publisher head `ef5b70ee1207f8aa593b8cdcbee8a1701f0cde64` passed all five PR jobs and
+merged as `bacf282ada0bce0a29aeacd094099ee63dc2fc8f` with identical tree
+`9758e00a55d73ceee38ee2d98dceb0a0c4eeb320`.
+[Publisher #56](https://github.com/givtaj/daedlo/pull/56) ·
+[Publisher PR CI](https://github.com/givtaj/daedlo/actions/runs/44325950646) ·
+[Publisher main CI](https://github.com/givtaj/daedlo/actions/runs/44329431372)
+
+The promotion workflow persisted its checkpoint, uploaded the frozen Worker and reported
+deployment of version `0773a556-46fd-4287-9045-b363ea35323b` at 100% at 14:56:12 UTC.
+Its immediate control-plane read returned the previous version,
+`1921fb8d-4541-4503-b569-8c138112a6f5`. The workflow failed that identity check and
+skipped its live check. A separate authenticated Wrangler status read at **14:58:21
+UTC** verified deployment `f9790394-1a3b-41e2-a1e0-4751bdb9af68` with the new version
+receiving 100% of traffic. There was one dispatch and one attempt.
+[Promotion run and step results](https://github.com/givtaj/daedlo/actions/runs/44329533867)
+
+The original checkpoint ZIP (artifact `14438826627`, 2523 bytes) matched GitHub's
+SHA-256 `dc2b47e5c51201aba65737b5406eb3e1697e29775b1375941c386de14e6977c4`. The catalog
+verified with the pinned production Ed25519 key. Generation **44 advanced to 45**,
+preserving all nine signed entries and adding alpha.12. The catalog file SHA-256 is
+`624a0dee7b3f236d3507ae843b2692aceb1921f935bbe37d8bacf0cb87700d8b`. The signed payload
+SHA-256 is `987dd4cc22c9ea719169267cd4b2857e768a9205739e621ed7f070dfb212f5b8`. This
+checkpoint expires at **2026-11-25 14:55:55.752 UTC**.
+
+Independent HTTPS checks matched all 68 served files, including all 33 immutable
+downloads, with the 30 historical downloads unchanged. The checked-in live verifier then
+passed against the original checkpoint and a reconstructed site, including
+cache/security policies and nine private paths returning 404. The provider hostname's
+homepage and feed also matched the canonical bytes.
+
+### Public installation and rollback
+
+The visible public installer offered the frozen ZIP and digest. Its unmodified bootstrap
+succeeded with an initially empty npm cache. All three anonymous downloads, 82 installed
+tools files, source receipt and production trust pins matched. Both ancestor manifests
+and directory inventories were preserved. The installer exited and the browser closed.
+
+The local signed-fixture upgrade passed eight checkpoints. During the first **production
+HTTPS** drill, the updater retained generation 45 and then refused an older signed
+generation before activating a replacement. The evidence records the refusal and the
+preserved alpha.11 installation. After four authenticated reads agreed on generation 45,
+a fresh drill passed all eight checkpoints over ten production HTTPS requests. Original
+alpha.11 tools discovered the release. Verified alpha.12 tools reused the configuration
+and store, upgraded the slot and restarted it under a fresh manager. Complete rollback
+restored alpha.11, and the retained alpha.11 tools reopened it and passed a real
+synthetic save flow. Source, trust, checkpoint, model, data, history and seven lifecycle
+reports survived with zero replayed writes. All six owned resources closed.
+
+Release availability and upgrade guidance were sent at approximately 15:00 UTC on 18
+November. These drills used an existing macOS arm64 toolchain and Chromium. The
+application stayed running across manager restarts. Clean-OS installation, Windows host
+onboarding, and recovery or acceptance in a customer application remain unverified. If
+the optional browser-cache setting is enabled after bootstrap, restore the retained
+alpha.11-compatible configuration at its original path before resuming with alpha.11
+tools. [Upgrade and rollback guide](releases.md)
+
 ## Site-wide redesign on daedlo.com — 2026-11-18
 
 [PR #54](https://github.com/givtaj/daedlo/pull/54) merged as `1fcf20e` after
