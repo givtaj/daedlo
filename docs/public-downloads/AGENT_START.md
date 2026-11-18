@@ -20,8 +20,12 @@ outside its acceptance claim. Read the exact version's verification receipt;
 neither this guide nor a previous candidate's results establish this kit's release
 or acceptance status.
 
-For an existing managed integration, alpha.11 requires the **tools bootstrap** in
-`START_HERE.md`. A runtime-only update does not add these commands. Safely stop
+For an existing managed integration, apply the alpha.12 **tools bootstrap** in
+`START_HERE.md` for status polling, timeout timing and setup diagnostics. A
+runtime-only update keeps the previous controller and setup tools.
+The optional `installation.playwrightBrowsersPath` selects the first hook's
+browser cache. See the managed starter's independent `draftState()` when
+authoring recovery checks for the application. Safely stop
 the authenticated old owner using its original tools and configuration before
 starting the new tools. Preserve the same configuration, registration, store,
 publisher trust and checkpoint; retain the old tools, browser cache, accepted

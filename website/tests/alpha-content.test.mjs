@@ -4,18 +4,17 @@ import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { compareNinjaVersions } from "../../scripts/release/ninja-catalog.mjs";
+import { PRODUCTION_RENEWAL_POLICY } from "../../scripts/release/ninja-renew.mjs";
 const sourceWebsite = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const website = resolve(process.env.DAEDLO_WEBSITE_ROOT ?? sourceWebsite);
 const read = (path) => readFile(resolve(website, path), "utf8");
 const flat = (html) => html.replace(/\s+/g, " ");
 
-test("homepage release label matches the current runtime release", async () => {
-  const runtime = JSON.parse(
-    await readFile(
-      resolve(sourceWebsite, "../packages/runtime/package.json"),
-      "utf8",
-    ),
-  );
+test("homepage release label matches the publisher's pinned kit", async () => {
+  const current = Object.keys(PRODUCTION_RENEWAL_POLICY.assets)
+    .sort(compareNinjaVersions)
+    .at(-1);
   const home = flat(await read("public/index.html"));
   const release = home.match(
     /<section\b[^>]*\bid="latest-release"[^>]*>(.*?)<\/section>/i,
@@ -24,15 +23,27 @@ test("homepage release label matches the current runtime release", async () => {
   const advertisedVersion = release.match(/Available now\s*·\s*([^\s<]+)/)?.[1];
   assert.equal(
     advertisedVersion,
-    runtime.version,
-    "The public release label must match the runtime being staged.",
+    current,
+    "The public release label must match the latest kit pinned for publication.",
   );
   assert.ok(
     release.includes(
-      `href="https://github.com/givtaj/daedlo/releases/tag/v${runtime.version}"`,
+      `href="https://github.com/givtaj/daedlo/releases/tag/v${current}"`,
     ),
     "The current release must point to its matching tag.",
   );
+  if (process.env.DAEDLO_WEBSITE_ROOT) {
+    const install = await read("public/install.html");
+    const zip = `daedlo-${current}.zip`;
+    assert.ok(
+      install.includes(`href="/downloads/${current}/${zip}"`),
+      "The staged installer must offer the advertised kit.",
+    );
+    assert.ok(
+      install.includes(PRODUCTION_RENEWAL_POLICY.assets[current][zip].sha256),
+      "The staged installer must identify the pinned archive bytes.",
+    );
+  }
 });
 
 test("alpha home and install state the supported assisted release scope", async () => {

@@ -6,9 +6,9 @@ agent helps connect one existing application flow to a customer model and adapte
 the kit does not discover your application or include a prebuilt customer engine.
 
 The alpha onboarding scope is **macOS arm64 with Codex**, using one agreed
-existing application flow and a relevant negative case. Exact-package and
-customer-flow acceptance must be recorded for this version before release; these
-instructions alone establish neither successful verification nor publication.
+existing application flow and a relevant negative case. Consult the selected
+kit's release receipt for exact-package verification. Record your own
+application's acceptance after running those flows.
 
 Read [LICENSE](LICENSE), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the
 included component notices for the applicable permissions. Daedlo is the product
@@ -25,8 +25,8 @@ receipt for measured results and limits.
 
 The portable tools have no npm dependencies or install scripts and install
 offline. Runtime dependencies, Chromium, Rust dependencies and missing toolchains
-need their normal downloads or populated caches. This kit is independent of the
-private source repository, but it is not a completely offline SDK.
+need their normal downloads or populated caches. Installation from this kit
+requires no source checkout.
 
 Acquire the exact selected ZIP and its independently supplied verification receipt.
 For a published kit, use the selected [Daedlo release](https://daedlo.com/); do
@@ -83,12 +83,17 @@ Do not bypass a digest or compatibility failure. A successful check establishes
 package integrity and measured toolchain compatibility, not your application's
 behavior. Keep the verified kit in a durable location for installation and rebuilds.
 
-## Existing managed installations: alpha.11 tools bootstrap
+## Alpha.12 tools bootstrap for existing managed installations
 
-The alpha.11 recovery and model-migration commands require a separate **tools
-bootstrap**. A runtime-only update does not add these commands. Install this kit's
-verified tools into the fresh directory above and retain the old tools, browser
-cache, accepted installations and original reports.
+Use the verified **tools bootstrap** above for the new controller, installer
+and managed reference. A runtime-only update keeps the previous controller and
+setup tools. Alpha.12 shares status polling across the CLI and Update
+page, diagnoses setup under a restrictive umask and accepts an optional
+`installation.playwrightBrowsersPath`. Its managed starter demonstrates
+independent `draftState()` evidence when model observation is unavailable.
+Adapt the example to your application's own draft and write evidence using
+the installed `docs/managed-integration.md`.
+Retain the old tools, browser cache, accepted installations and original reports.
 
 Safely stop the authenticated old owner using its original tools and unchanged
 configuration before starting replacement tools. Preserve the same configuration,
@@ -108,9 +113,13 @@ node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs status --config 
 
 Verify the accepted existing slot with the new tools, then use its returned update
 URL for **Check for updates → Install update → Restart Daedlo** in your isolated
-fixture. Preserve the previous slot for **Revert update**. Alpha.11 retains
-alpha.10's dependency closure and manager contract; this upgrade requires no
-third-party dependency migration. Review the installed `docs/native-setup.md`,
+fixture. Preserve the previous slot for **Revert update**. Verify the tools
+bootstrap with the original configuration first. If you later opt into the new
+cache setting, keep the original configuration for the retained alpha.11 tools.
+Restore it at the same path after a guarded stop when returning to those tools.
+
+Alpha.12 uses alpha.11's
+Playwright dependency closure and manager contract. Review the installed `docs/native-setup.md`,
 `docs/managed-abandonment.md` and `docs/model-migration.md` before using the new
 operations. A reviewed model migration uses the accepted exact runtime and the
 same store; it does not automatically download a runtime update.

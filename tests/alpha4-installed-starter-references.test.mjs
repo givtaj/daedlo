@@ -50,6 +50,8 @@ for (const version of [
   "0.1.4-alpha.8",
   "0.1.4-alpha.9",
   "0.1.4-alpha.10",
+  "0.1.4-alpha.11",
+  "0.1.4-alpha.12",
 ]) {
   test(`${version} runs both installed references and retains their receipts`, async () => {
     const fixture = references();
