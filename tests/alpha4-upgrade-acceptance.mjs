@@ -18,6 +18,8 @@
 // --alpha11-upgrade starts from the customer's mixed published tuple: alpha.9
 // tools with alpha.10 runtime/engine, then bootstraps alpha.11 tools before the
 // runtime upgrade. It verifies old-tools fallback after complete-slot rollback.
+// --alpha12-upgrade uses the published alpha.11 tools/runtime baseline, bootstraps
+// alpha.12 tools, upgrades and rolls back, then reopens the slot with alpha.11 tools.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
@@ -52,6 +54,7 @@ for (const arg of args)
       "--alpha9-upgrade",
       "--alpha10-upgrade",
       "--alpha11-upgrade",
+      "--alpha12-upgrade",
       "--alpha9-dependency-migration",
     ].includes(arg),
     "Unsupported upgrade acceptance argument",
@@ -71,6 +74,15 @@ const alpha9Upgrade = args.includes("--alpha9-upgrade");
 const alpha10Upgrade = args.includes("--alpha10-upgrade");
 const alpha11Upgrade = args.includes("--alpha11-upgrade");
 const dependencyMigration = args.includes("--alpha9-dependency-migration");
+const alpha12Upgrade = args.includes("--alpha12-upgrade");
+if (alpha12Upgrade)
+  assert.ok(
+    args.every((flag) =>
+      ["--alpha12-upgrade", "--production-https"].includes(flag),
+    ),
+    "Alpha.12 upgrade mode cannot combine with another upgrade mode, dependency migration or legacy-only",
+  );
+const verifyToolsRollback = alpha11Upgrade || alpha12Upgrade;
 assert.ok(
   !(
     alpha11Upgrade &&
@@ -160,6 +172,8 @@ const baselinePins = {
     "81b252cc4853278360e893713c778676b492df5d60afe4f19d7880484327f4b2",
   "0.1.4-alpha.10":
     "543ab597a1c5d30af7d9b12cefa6dec8a01bed2e985426056f5fed57ea8a0c29",
+  "0.1.4-alpha.11":
+    "4c9c747f7530984db09e859783f447ba720c87bc5b41b609039453644230249c",
 };
 assert.ok(
   Object.hasOwn(baselinePins, baselineVersion),
@@ -168,6 +182,12 @@ assert.ok(
 const LEGACY_SHA = baselinePins[baselineVersion];
 const legacyNames = baselineVersion === "0.1.4-alpha.3";
 const baselineToolsVersion = alpha11Upgrade ? "0.1.4-alpha.9" : baselineVersion;
+if (alpha12Upgrade)
+  assert.equal(
+    baselineVersion,
+    "0.1.4-alpha.11",
+    "Alpha.12 upgrade mode requires the published alpha.11 baseline",
+  );
 if (alpha11Upgrade)
   assert.equal(
     baselineVersion,
@@ -208,12 +228,22 @@ assert.ok(
   baselineVersion !== "0.1.4-alpha.10" || alpha11Upgrade,
   "Published alpha.10 baseline requires explicit alpha.11 upgrade mode",
 );
+assert.ok(
+  baselineVersion !== "0.1.4-alpha.11" || alpha12Upgrade,
+  "Published alpha.11 baseline requires explicit alpha.12 upgrade mode",
+);
 const candidateVersion =
   process.env.DAEDLO_UPGRADE_CANDIDATE_VERSION ??
   JSON.parse(
     await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
   ).version;
-if (alpha11Upgrade) {
+if (alpha12Upgrade) {
+  assert.equal(
+    candidateVersion,
+    "0.1.4-alpha.12",
+    "Alpha.12 upgrade mode requires exactly 0.1.4-alpha.12",
+  );
+} else if (alpha11Upgrade) {
   assert.equal(
     candidateVersion,
     "0.1.4-alpha.11",
@@ -332,6 +362,7 @@ const result = {
   alpha9Upgrade,
   alpha10Upgrade,
   alpha11Upgrade,
+  alpha12Upgrade,
   baselineRuntimeVersion: baselineVersion,
   baselineToolsVersion,
   dependencyMigration,
@@ -781,11 +812,11 @@ try {
     source: legacyToolsKit.toolsReceipt.source,
     archive: legacyToolsKit.toolsReceipt.archive,
   };
-  if (alpha10Upgrade || alpha11Upgrade) {
+  if (alpha10Upgrade || verifyToolsRollback) {
     assert.equal(
       old.NINJA_CONTRACTS.manager,
       2,
-      "The retained alpha.9 manager uses the unchanged manager-2 contract",
+      "The baseline tools use the retained manager-2 contract",
     );
     result.managerContract = old.NINJA_CONTRACTS.manager;
   }
@@ -1163,7 +1194,7 @@ try {
     const ownerBytes = await fs.readFile(
       join(config.store, ".ninja-project.json"),
     );
-    const retainedEvidence = alpha11Upgrade
+    const retainedEvidence = verifyToolsRollback
       ? {
           reports: await inventory(join(config.store, "reports")),
           runs: await inventory(join(config.store, "supervisor/run-reports")),
@@ -1183,7 +1214,7 @@ try {
       reusedPublishedTools: reusePublishedTools,
     };
     await open(newer);
-    if (alpha11Upgrade) {
+    if (verifyToolsRollback) {
       for (const method of [
         "prepareMigration",
         "reviewMigration",
@@ -1373,7 +1404,7 @@ try {
       baselineReceipt.id,
     );
     await closeManager();
-    if (alpha11Upgrade) {
+    if (verifyToolsRollback) {
       const beforeToolsRollback = await notes(application.url);
       await open(old);
       assert.deepEqual(
@@ -1383,10 +1414,10 @@ try {
       await active.manager.start();
       assert.equal((await currentReceipt()).id, baselineReceipt.id);
       assert.deepEqual(await notes(application.url), beforeToolsRollback);
-      await managedFlow("rollback-old-alpha9-tools");
+      await managedFlow("rollback-old-tools-" + baselineToolsVersion);
       await closeManager();
       await record(
-        "Retained published alpha.9 tools reopen the complete alpha.10 rollback slot and pass a real flow without resetting trust or replaying prior writes",
+        `Retained published ${baselineToolsVersion} tools reopen the complete ${baselineVersion} rollback slot and pass a real flow without resetting trust or replaying prior writes`,
       );
       for (const [name, directory] of [
         ["reports", "reports"],

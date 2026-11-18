@@ -70,6 +70,13 @@ inspect the visible browser, and record package identities, evidence and ownersh
 
 ## Updates and limits
 
+For an existing managed installation, follow the **release tools bootstrap** in
+the verified kit's `START_HERE.md`. A guarded stop releases the old owner before
+the new tools reopen its configuration and accepted slot. The installed
+`docs/native-setup.md` describes status polling, timeout phases and cache
+selection. `docs/managed-integration.md` gives a working reference for an
+independent application-owned safety check.
+
 Alpha.3 adds Operation Ninja-Update. After assisted project registration, its
 separate local update screen checks the signed production catalog, installs and
 validates a complete replacement, then offers Restart and Revert. Read the

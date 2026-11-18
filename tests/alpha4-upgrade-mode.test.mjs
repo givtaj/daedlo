@@ -114,54 +114,58 @@ for (const production of [false, true])
     await assert.rejects(fs.stat(output), { code: "ENOENT" });
   });
 
-test("mixed alpha.11 bootstrap pins alpha.10 runtime independently of alpha.9 tools and candidate", async (t) => {
-  const root = await fs.mkdtemp(join(tmpdir(), "alpha11-runtime-pin-"));
-  t.after(() => fs.rm(root, { recursive: true, force: true }));
-  const baseline = join(root, "baseline"),
-    output = join(root, "output");
-  await fs.mkdir(baseline);
-  await fs.writeFile(
-    join(baseline, "release.json"),
-    JSON.stringify({
-      version: "0.1.4-alpha.10",
-      source: { dirty: false },
-      archive: {
-        file: "daedlo-0.1.4-alpha.10.zip",
-        sha256: "a".repeat(64),
-        bytes: 0,
-      },
-    }),
-  );
-  await fs.writeFile(join(baseline, "daedlo-0.1.4-alpha.10.zip"), "");
-  await assert.rejects(
-    execute(process.execPath, [harness, "--alpha11-upgrade"], {
-      env: {
-        ...process.env,
-        DAEDLO_UPGRADE_BASELINE: "0.1.4-alpha.10",
-        DAEDLO_UPGRADE_CANDIDATE_VERSION: "0.1.4-alpha.11",
-        ALPHA4_LEGACY_KIT: baseline,
-        ALPHA4_LEGACY_SHA256: "a".repeat(64),
-        DAEDLO_UPGRADE_BASELINE_TOOLS_KIT: join(root, "tools-not-read"),
-        ALPHA4_CANDIDATE_KIT: join(root, "candidate-not-read"),
-        ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
-        ALPHA4_UPGRADE_OUTPUT: output,
-      },
-    }),
-  );
-  const [run] = await fs.readdir(output);
-  const receipt = JSON.parse(
-    await fs.readFile(join(output, run, "result.json"), "utf8"),
-  );
-  assert.equal(receipt.status, "FAIL");
-  assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
-  assert.equal(receipt.alpha11Upgrade, true);
-  assert.equal(receipt.baselineRuntimeVersion, "0.1.4-alpha.10");
-  assert.equal(receipt.baselineToolsVersion, "0.1.4-alpha.9");
-  assert.equal(receipt.reusePublishedTools, false);
-  assert.equal(receipt.dependencyMigration, false);
-  assert.deepEqual(receipt.checks, []);
-  assert.deepEqual(await fs.readdir(join(output, run, "work")), []);
-});
+for (const [mode, baselineVersion, toolsVersion, candidateVersion] of [
+  ["alpha11", "0.1.4-alpha.10", "0.1.4-alpha.9", "0.1.4-alpha.11"],
+  ["alpha12", "0.1.4-alpha.11", "0.1.4-alpha.11", "0.1.4-alpha.12"],
+])
+  test(`${mode} bootstrap independently pins the published baseline, tools policy and candidate`, async (t) => {
+    const root = await fs.mkdtemp(join(tmpdir(), mode + "-runtime-pin-"));
+    t.after(() => fs.rm(root, { recursive: true, force: true }));
+    const baseline = join(root, "baseline"),
+      output = join(root, "output");
+    await fs.mkdir(baseline);
+    await fs.writeFile(
+      join(baseline, "release.json"),
+      JSON.stringify({
+        version: baselineVersion,
+        source: { dirty: false },
+        archive: {
+          file: `daedlo-${baselineVersion}.zip`,
+          sha256: "a".repeat(64),
+          bytes: 0,
+        },
+      }),
+    );
+    await fs.writeFile(join(baseline, `daedlo-${baselineVersion}.zip`), "");
+    await assert.rejects(
+      execute(process.execPath, [harness, "--" + mode + "-upgrade"], {
+        env: {
+          ...process.env,
+          DAEDLO_UPGRADE_BASELINE: baselineVersion,
+          DAEDLO_UPGRADE_CANDIDATE_VERSION: candidateVersion,
+          ALPHA4_LEGACY_KIT: baseline,
+          ALPHA4_LEGACY_SHA256: "a".repeat(64),
+          DAEDLO_UPGRADE_BASELINE_TOOLS_KIT: join(root, "tools-not-read"),
+          ALPHA4_CANDIDATE_KIT: join(root, "candidate-not-read"),
+          ALPHA4_CANDIDATE_SHA256: "b".repeat(64),
+          ALPHA4_UPGRADE_OUTPUT: output,
+        },
+      }),
+    );
+    const [run] = await fs.readdir(output);
+    const receipt = JSON.parse(
+      await fs.readFile(join(output, run, "result.json"), "utf8"),
+    );
+    assert.equal(receipt.status, "FAIL");
+    assert.match(receipt.error.message, /Exact public-kit ZIP pin/);
+    assert.equal(receipt[mode + "Upgrade"], true);
+    assert.equal(receipt.baselineRuntimeVersion, baselineVersion);
+    assert.equal(receipt.baselineToolsVersion, toolsVersion);
+    assert.equal(receipt.reusePublishedTools, false);
+    assert.equal(receipt.dependencyMigration, false);
+    assert.deepEqual(receipt.checks, []);
+    assert.deepEqual(await fs.readdir(join(output, run, "work")), []);
+  });
 
 for (const [label, args, pattern] of [
   ["unknown mode", ["--production"], /Unsupported upgrade acceptance argument/],
@@ -442,6 +446,34 @@ for (const [label, args, baseline, candidate, pattern] of [
     /Alpha.10 upgrade mode requires exactly 0.1.4-alpha.10/,
   ],
   [
+    "alpha.12 wrong baseline",
+    ["--alpha12-upgrade"],
+    "0.1.4-alpha.10",
+    "0.1.4-alpha.12",
+    /Alpha.12 upgrade mode requires the published alpha.11 baseline/,
+  ],
+  [
+    "alpha.12 wrong candidate",
+    ["--alpha12-upgrade"],
+    "0.1.4-alpha.11",
+    "0.1.4-alpha.11",
+    /Alpha.12 upgrade mode requires exactly 0.1.4-alpha.12/,
+  ],
+  [
+    "alpha.12 incompatible tools policy",
+    ["--alpha12-upgrade", "--alpha11-upgrade"],
+    "0.1.4-alpha.11",
+    "0.1.4-alpha.12",
+    /Alpha.12 upgrade mode cannot combine/,
+  ],
+  [
+    "implicit alpha.11 baseline tools policy",
+    [],
+    "0.1.4-alpha.11",
+    "0.1.4-alpha.12",
+    /Published alpha.11 baseline requires explicit alpha.12 upgrade mode/,
+  ],
+  [
     "implicit alpha.9 baseline tools policy",
     [],
     "0.1.4-alpha.9",
@@ -666,6 +698,18 @@ for (const [label, args, baseline, candidate] of [
     ["--alpha7-upgrade", "--production-https"],
     "0.1.4-alpha.6",
     "0.1.4-alpha.7",
+  ],
+  [
+    "explicit alpha.12 tools bootstrap",
+    ["--alpha12-upgrade"],
+    "0.1.4-alpha.11",
+    "0.1.4-alpha.12",
+  ],
+  [
+    "explicit alpha.12 production upgrade",
+    ["--alpha12-upgrade", "--production-https"],
+    "0.1.4-alpha.11",
+    "0.1.4-alpha.12",
   ],
   [
     "explicit alpha.10 unchanged-tools upgrade",

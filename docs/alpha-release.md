@@ -1,7 +1,32 @@
-# Daedlo alpha delivery — 11 November 2026
+# Daedlo alpha delivery — 18 November 2026
 
-Release candidate: **0.1.4-alpha.11**. Publication, exact artifact identities and
-measured acceptance belong in [verification](verification.md).
+The **0.1.4-alpha.12** source candidate updates native status polling, managed
+setup and the independent recovery example. The product's assisted onboarding
+scope is macOS arm64 with Codex. Exact kit identities, installation checks and
+publication status are recorded in [verification](verification.md).
+
+- The CLI and Update page share one in-progress status observation. The
+  controller distinguishes time spent waiting for the child, collecting its
+  observation and verifying an installation. A safety decision takes a fresh
+  measurement.
+- Setup verifies signed runtime content with a restrictive POSIX umask such as
+  `077`. A project can select an existing Chromium cache using
+  `installation.playwrightBrowsersPath`. Doctor checks the directory and the
+  installer records the executable selected by its installed Playwright copy.
+- The managed starter measures drafts, requests, journals, unresolved writes,
+  operations and leases independently of model observation. An unavailable
+  measurement keeps the recovery decision unknown. Each integration needs its
+  own equivalent evidence.
+
+The upgrade from alpha.11 uses a separate **release tools bootstrap**. Safely
+stop the existing owner, preserve its tools and store, and launch the verified
+new tools against the same configuration. The Playwright dependency and manager
+contract match alpha.11. Follow [native setup](native-setup.md) and the
+[managed integration guide](managed-integration.md).
+
+## Historical alpha.11 delivery — 11 November 2026
+
+The alpha.11 release kit was **0.1.4-alpha.11**.
 
 This release adds explicit reviewed abandonment for an owned session with failed
 model observation, and reviewed model descriptor migration in the existing store.

@@ -1,15 +1,9 @@
-# Install the Daedlo 0.1.4-alpha.11 candidate
+# Install the Daedlo 0.1.4-alpha.12 candidate
 
-Alpha.11 is being prepared; alpha.10 is the published baseline. Use the selected
-kit and its verification receipt. The live installation page identifies the
-currently published version; these source instructions alone do not establish
-publication or customer acceptance.
-
-This guide covers the Daedlo 0.1.4-alpha.11 kit. Its `release.json` records exact
-artifact identities and scoped verification. Consult the current
-[verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
-for publication status; a guide alone does not establish public availability or
-acceptance of a customer application.
+This guide covers the **0.1.4-alpha.12** source candidate. Obtain the selected kit
+and its independent release receipt. The [installation page](https://daedlo.com/install)
+identifies the publicly served kit, and the [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
+records measured release and upgrade results.
 
 This alpha pairs the Daedlo runtime, Rust engine source,
 portable release tools and complete agent skill under the Daedlo technical names.
@@ -48,10 +42,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `daedlo-runtime-0.1.4-alpha.11.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
-| `daedlo-engine-0.1.4-alpha.11.crate` | Rust library source for the customer's application model                                                                |
+| `daedlo-runtime-0.1.4-alpha.12.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
+| `daedlo-engine-0.1.4-alpha.12.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `daedlo-tools-0.1.4-alpha.11.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
+| `daedlo-tools-0.1.4-alpha.12.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -123,23 +117,28 @@ hidden operation produces an actionable refusal.
 
 ## Updates and limits
 
-Alpha.11 keeps alpha.10's Playwright dependency closure and manager contract.
-The reviewed abandonment and model-migration commands require the alpha.11
-**release tools**. A runtime-only update retains the existing tools. Verify and
-install the new tools separately, safely stop the authenticated old owner with its
-original configuration, then reopen the same registration, configuration, store,
-publisher trust and checkpoint. Retain the old tools, browser cache and accepted
-slots. New tools cannot hot-repair an already running older controller.
+The alpha.12 native status and setup changes are delivered in the **release
+tools**. Install the verified tools in a fresh directory. Safely stop the
+authenticated old owner with its original configuration, preserve its tools,
+browser cache, registration, store, publisher trust and checkpoint, then start
+the new tools with that configuration. Verify the accepted alpha.11 slot first.
 
-After that tools bootstrap, use the normal Check, Install, Restart and Revert flow
-for the runtime. No third-party dependency migration is required. Read
-[native setup](native-setup.md), [reviewed abandonment](managed-abandonment.md)
-and [reviewed model changes](model-migration.md) before using these operations.
+Use Check for updates, Install update and Restart Daedlo for the runtime. Keep the
+accepted slot for Revert update. Verify the bootstrap with the original
+configuration first. If you later add `installation.playwrightBrowsersPath`,
+retain the alpha.11 configuration and restore it at the same path after a
+guarded stop before returning to alpha.11 tools.
+
+Alpha.12 uses the same Playwright dependency
+closure and manager contract as alpha.11. See [native setup](native-setup.md)
+for polling cadence, timeout phases, private umask and browser diagnostics.
+[Managed integration](managed-integration.md) shows how an application-owned
+`draftState()` supplies independent safety for [reviewed recovery](managed-abandonment.md).
 Older alpha.7 integrations still need the
 reviewed manifest/lock migration described in the installed
 [update guide](ninja-update.md#alpha9-dependency-migration).
 
-For standalone Swagger, install the matching alpha.11 runtime, core and tools
+For standalone Swagger, install the matching alpha.12 runtime, core and tools
 from the kit and rebuild the included model using its setup guide. Preserve the
 accepted integration until the rebuilt model and agreed flows pass; a runtime-only
 replacement cannot deliver the model's updated response wording.

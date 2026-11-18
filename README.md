@@ -17,7 +17,15 @@ The [verification record](docs/verification.md) owns current publication status,
 measured acceptance and limits; [alpha delivery](docs/alpha-release.md) owns the
 product scope. Use the exact verified release kit and its installation instructions.
 
-The alpha.11 candidate adds reviewed abandonment when model observation fails and
+Alpha.12 brings shared native status polling, phase timings for slow reads, and
+private setup diagnostics for the runtime permissions and selected Chromium.
+Its managed starter shows how to measure draft and write safety independently
+when the application observer fails. Existing integrations supply those facts
+from their own application. Install the verified alpha.12 release tools in a new
+directory and reopen the accepted installation after a guarded stop. See
+[native setup](docs/native-setup.md) and the [managed starter](docs/managed-integration.md).
+
+Alpha.11 added reviewed abandonment when model observation fails and
 explicit review of model descriptor migrations. Recovery preserves original run
 reports and requires fresh independent draft and pending-effect safety. Model
 migration retains the accepted runtime, store, reports and rollback history.
