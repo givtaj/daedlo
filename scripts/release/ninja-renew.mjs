@@ -46,7 +46,18 @@ const ALPHA4 = "0.1.4-alpha.4",
   ALPHA9 = "0.1.4-alpha.9",
   ALPHA10 = "0.1.4-alpha.10",
   ALPHA11 = "0.1.4-alpha.11",
+  ALPHA12 = "0.1.4-alpha.12",
   DAY = 86400000;
+const managedVersions = [
+  ALPHA4,
+  ALPHA5,
+  ALPHA6,
+  ALPHA7,
+  ALPHA9,
+  ALPHA10,
+  ALPHA11,
+  ALPHA12,
+];
 const CONTRACTS = {
   manager: 1,
   launcher: 1,
@@ -92,7 +103,12 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
     version: ALPHA11,
     sourceCommit: "8ddd8d7f770f3a6c7e14315ebee3164d45a9ac33",
   },
+  alpha12Promotion: {
+    version: ALPHA12,
+    sourceCommit: "2721e9e58beecd6cd2fa9c9960b1a7d399ade299",
+  },
   releaseContracts: {
+    [ALPHA12]: { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.4": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.5": { ...CONTRACTS, manager: 2 },
     "0.1.4-alpha.6": { ...CONTRACTS, manager: 2 },
@@ -102,6 +118,23 @@ export const PRODUCTION_RENEWAL_POLICY = Object.freeze({
     "0.1.4-alpha.11": { ...CONTRACTS, manager: 2 },
   },
   assets: {
+    [ALPHA12]: {
+      "daedlo-0.1.4-alpha.12.zip": {
+        bytes: 391508,
+        sha256:
+          "fa69913ddcea6cf52df9879d9a36eec3b2a47423854deeccdb2bc8c00d3a7d2b",
+      },
+      "release.json": {
+        bytes: 7743,
+        sha256:
+          "5b5b3f218e3d1a88b3272183dc3174b4aa34d7896ad6bb22967bbb3a2d621f1c",
+      },
+      SHA256SUMS: {
+        bytes: 92,
+        sha256:
+          "d3a37fa6b52f20838f66cce742f7ea361fff8b518aa8da782ce7ae711d8a3b88",
+      },
+    },
     "0.1.4-alpha.11": {
       "daedlo-0.1.4-alpha.11.zip": {
         bytes: 380817,
@@ -295,16 +328,7 @@ const HTTP_DIAGNOSTIC_PATHS = new Set([
   ),
   "/updates/preview.json",
   `/updates/keys/${KEY}.pem`,
-  ...[
-    ...VERSIONS,
-    ALPHA4,
-    ALPHA5,
-    ALPHA6,
-    ALPHA7,
-    ALPHA9,
-    ALPHA10,
-    ALPHA11,
-  ].flatMap((version) =>
+  ...[...VERSIONS, ...managedVersions].flatMap((version) =>
     [`daedlo-${version}.zip`, "release.json", "SHA256SUMS"].map(
       (name) => `/downloads/${version}/${name}`,
     ),
@@ -480,30 +504,13 @@ async function read(path, max = 4 * 1024 * 1024) {
 }
 function settings(deps = {}, stage) {
   const policy = deps.policy ?? PRODUCTION_RENEWAL_POLICY;
-  const versions = [
-    ...VERSIONS,
-    ...(Object.hasOwn(policy.assets, ALPHA4) ? [ALPHA4] : []),
-    ...(Object.hasOwn(policy.assets, ALPHA5) ? [ALPHA5] : []),
-    ...(Object.hasOwn(policy.assets, ALPHA6) ? [ALPHA6] : []),
-    ...(Object.hasOwn(policy.assets, ALPHA7) ? [ALPHA7] : []),
-    ...(Object.hasOwn(policy.assets, ALPHA9) ? [ALPHA9] : []),
-    ...(Object.hasOwn(policy.assets, ALPHA10) ? [ALPHA10] : []),
-    ...(Object.hasOwn(policy.assets, ALPHA11) ? [ALPHA11] : []),
-  ];
+  const assets = Object.keys(policy.assets).sort();
+  // The pinned releases form a prefix of the explicit historical sequence.
+  // This prevents omissions, unknown versions and skipping the predecessor.
+  const versions = [...VERSIONS, ...managedVersions].slice(0, assets.length);
   if (
-    (Object.hasOwn(policy.assets, ALPHA5) &&
-      !Object.hasOwn(policy.assets, ALPHA4)) ||
-    (Object.hasOwn(policy.assets, ALPHA6) &&
-      !Object.hasOwn(policy.assets, ALPHA5)) ||
-    (Object.hasOwn(policy.assets, ALPHA7) &&
-      !Object.hasOwn(policy.assets, ALPHA6)) ||
-    (Object.hasOwn(policy.assets, ALPHA9) &&
-      !Object.hasOwn(policy.assets, ALPHA7)) ||
-    (Object.hasOwn(policy.assets, ALPHA10) &&
-      !Object.hasOwn(policy.assets, ALPHA9)) ||
-    (Object.hasOwn(policy.assets, ALPHA11) &&
-      !Object.hasOwn(policy.assets, ALPHA10)) ||
-    !isDeepStrictEqual(Object.keys(policy.assets).sort(), [...versions].sort())
+    versions.length < VERSIONS.length ||
+    !isDeepStrictEqual(assets, [...versions].sort())
   )
     fail("Unsupported pinned renewal release inventory");
   const releaseContracts = policy.releaseContracts ?? {};
@@ -517,17 +524,7 @@ function settings(deps = {}, stage) {
   for (const version of versions.slice(1)) {
     const expected = {
       ...CONTRACTS,
-      manager: [
-        ALPHA4,
-        ALPHA5,
-        ALPHA6,
-        ALPHA7,
-        ALPHA9,
-        ALPHA10,
-        ALPHA11,
-      ].includes(version)
-        ? 2
-        : 1,
+      manager: managedVersions.includes(version) ? 2 : 1,
     };
     if (!isDeepStrictEqual(releaseContracts[version] ?? CONTRACTS, expected))
       fail("Unsupported pinned release contracts");
@@ -708,41 +705,24 @@ function requireBaselineInventory(
   promoteAlpha9 = false,
   promoteAlpha10 = false,
   promoteAlpha11 = false,
+  promoteAlpha12 = false,
 ) {
+  const flags = [
+    promoteAlpha4,
+    promoteAlpha5,
+    promoteAlpha6,
+    promoteAlpha7,
+    promoteAlpha9,
+    promoteAlpha10,
+    promoteAlpha11,
+    promoteAlpha12,
+  ];
   if (
-    typeof promoteAlpha4 !== "boolean" ||
-    typeof promoteAlpha5 !== "boolean" ||
-    typeof promoteAlpha6 !== "boolean" ||
-    typeof promoteAlpha7 !== "boolean" ||
-    typeof promoteAlpha9 !== "boolean" ||
-    typeof promoteAlpha10 !== "boolean" ||
-    typeof promoteAlpha11 !== "boolean" ||
-    [
-      promoteAlpha4,
-      promoteAlpha5,
-      promoteAlpha6,
-      promoteAlpha7,
-      promoteAlpha9,
-      promoteAlpha10,
-      promoteAlpha11,
-    ].filter(Boolean).length > 1
+    flags.some((value) => typeof value !== "boolean") ||
+    flags.filter(Boolean).length > 1
   )
     fail("Only one explicit release promotion may be selected");
-  const selected = promoteAlpha11
-    ? ALPHA11
-    : promoteAlpha10
-      ? ALPHA10
-      : promoteAlpha9
-        ? ALPHA9
-        : promoteAlpha7
-          ? ALPHA7
-          : promoteAlpha6
-            ? ALPHA6
-            : promoteAlpha5
-              ? ALPHA5
-              : promoteAlpha4
-                ? ALPHA4
-                : null;
+  const selected = managedVersions[flags.indexOf(true)];
   if (
     selected &&
     (!s.versions.includes(selected) || s.versions.at(-1) !== selected)
@@ -772,6 +752,7 @@ async function baseline(
   promoteAlpha9,
   promoteAlpha10,
   promoteAlpha11,
+  promoteAlpha12,
 ) {
   const response = await fetchBytes(FEED, s, { date: true });
   const retained = checkpointPath
@@ -788,6 +769,7 @@ async function baseline(
     promoteAlpha9,
     promoteAlpha10,
     promoteAlpha11,
+    promoteAlpha12,
   );
   if (retained) {
     for (const release of retained.catalog.releases)
@@ -845,6 +827,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha9 = false,
     promoteAlpha10 = false,
     promoteAlpha11 = false,
+    promoteAlpha12 = false,
     ...unknown
   } = {},
   deps = {},
@@ -867,6 +850,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha9,
     promoteAlpha10,
     promoteAlpha11,
+    promoteAlpha12,
   );
   const sourceBefore = await inventory(s.sourceRoot, SOURCE_FILES);
   await fs.mkdir(output, { mode: 0o700 });
@@ -971,6 +955,7 @@ export async function prepareNinjaRenewal(
     promoteAlpha9,
     promoteAlpha10,
     promoteAlpha11,
+    promoteAlpha12,
     status: "PREPARED",
     generation: pub.generation,
     baselineGeneration: prior.catalog.generation,
@@ -1034,6 +1019,7 @@ async function prepared(output, s, t) {
     receipt.promoteAlpha9 ?? false,
     receipt.promoteAlpha10 ?? false,
     receipt.promoteAlpha11 ?? false,
+    receipt.promoteAlpha12 ?? false,
   );
   const next = history(catalog, s, t, old.checkpoint);
   requireBaselineInventory(next, s, false);

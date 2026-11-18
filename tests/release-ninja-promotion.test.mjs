@@ -74,7 +74,10 @@ test("alpha10 CLI recognizes only its explicit selector and reaches credential v
 
 for (const selectors of [
   ["--promote-alpha8"],
-  ["--promote-alpha12"],
+  ["--promote-alpha13"],
+  ["--promote-alpha12", "--promote-alpha11"],
+  ["--promote-alpha12", "--promote-alpha12"],
+  ["--release", "0.1.4-alpha.12"],
   ["--promote-alpha11", "true"],
   ["--promote-alpha11", "--promote-alpha11"],
   ["--promote-alpha10", "--promote-alpha11"],
@@ -159,9 +162,12 @@ test("alpha9 preparation preserves every historical asset, contract, source and 
   const historical = Object.fromEntries(
     Object.entries(p.assets).filter(
       ([version]) =>
-        !["0.1.4-alpha.9", "0.1.4-alpha.10", "0.1.4-alpha.11"].includes(
-          version,
-        ),
+        ![
+          "0.1.4-alpha.9",
+          "0.1.4-alpha.10",
+          "0.1.4-alpha.11",
+          "0.1.4-alpha.12",
+        ].includes(version),
     ),
   );
   assert.deepEqual(Object.keys(historical).sort(), [
@@ -177,9 +183,12 @@ test("alpha9 preparation preserves every historical asset, contract, source and 
   const releaseContracts = Object.fromEntries(
     Object.entries(p.releaseContracts).filter(
       ([version]) =>
-        !["0.1.4-alpha.9", "0.1.4-alpha.10", "0.1.4-alpha.11"].includes(
-          version,
-        ),
+        ![
+          "0.1.4-alpha.9",
+          "0.1.4-alpha.10",
+          "0.1.4-alpha.11",
+          "0.1.4-alpha.12",
+        ].includes(version),
     ),
   );
   assert.equal(
@@ -337,19 +346,21 @@ function fixture(candidateVersion = version) {
       state.prepared++;
       assert.deepEqual(options, {
         ...args,
-        [version.endsWith("alpha.11")
-          ? "promoteAlpha11"
-          : version.endsWith("alpha.10")
-            ? "promoteAlpha10"
-            : version.endsWith("alpha.9")
-              ? "promoteAlpha9"
-              : version.endsWith("alpha.7")
-                ? "promoteAlpha7"
-                : version.endsWith("alpha.6")
-                  ? "promoteAlpha6"
-                  : version.endsWith("alpha.5")
-                    ? "promoteAlpha5"
-                    : "promoteAlpha4"]: true,
+        [version.endsWith("alpha.12")
+          ? "promoteAlpha12"
+          : version.endsWith("alpha.11")
+            ? "promoteAlpha11"
+            : version.endsWith("alpha.10")
+              ? "promoteAlpha10"
+              : version.endsWith("alpha.9")
+                ? "promoteAlpha9"
+                : version.endsWith("alpha.7")
+                  ? "promoteAlpha7"
+                  : version.endsWith("alpha.6")
+                    ? "promoteAlpha6"
+                    : version.endsWith("alpha.5")
+                      ? "promoteAlpha5"
+                      : "promoteAlpha4"]: true,
       });
       assert.equal(renewalDeps.policy, policy);
       for (const [name, bytes] of files) {
@@ -862,12 +873,18 @@ test("alpha10 preparation preserves every historical pin including alpha9 and pu
   const p = PRODUCTION_RENEWAL_POLICY;
   const historical = Object.fromEntries(
     Object.entries(p.assets).filter(
-      ([version]) => !["0.1.4-alpha.10", "0.1.4-alpha.11"].includes(version),
+      ([version]) =>
+        !["0.1.4-alpha.10", "0.1.4-alpha.11", "0.1.4-alpha.12"].includes(
+          version,
+        ),
     ),
   );
   const releaseContracts = Object.fromEntries(
     Object.entries(p.releaseContracts).filter(
-      ([version]) => !["0.1.4-alpha.10", "0.1.4-alpha.11"].includes(version),
+      ([version]) =>
+        !["0.1.4-alpha.10", "0.1.4-alpha.11", "0.1.4-alpha.12"].includes(
+          version,
+        ),
     ),
   );
   assert.deepEqual(Object.keys(historical).sort(), [
@@ -1043,12 +1060,12 @@ test("alpha11 preparation preserves all 27 prior assets, contracts, source pins 
   const p = PRODUCTION_RENEWAL_POLICY;
   const assets = Object.fromEntries(
     Object.entries(p.assets).filter(
-      ([version]) => version !== "0.1.4-alpha.11",
+      ([version]) => !["0.1.4-alpha.11", "0.1.4-alpha.12"].includes(version),
     ),
   );
   const releaseContracts = Object.fromEntries(
     Object.entries(p.releaseContracts).filter(
-      ([version]) => version !== "0.1.4-alpha.11",
+      ([version]) => !["0.1.4-alpha.11", "0.1.4-alpha.12"].includes(version),
     ),
   );
   assert.equal(Object.keys(assets).length, 9);
@@ -1077,31 +1094,102 @@ test("alpha11 preparation preserves all 27 prior assets, contracts, source pins 
   assert.equal(p.assets["0.1.4-alpha.8"], undefined);
 });
 
-test("alpha11 CLI accepts its unique selector and requires a credential before transport", () => {
-  assert.throws(
-    () =>
-      execFileSync(
-        process.execPath,
-        [
-          fileURLToPath(
-            new URL("../scripts/release/ninja-promotion.mjs", import.meta.url),
-          ),
-          "--promote-alpha11",
-          "--private-key",
-          args.privateKeyPath,
-          "--output",
-          args.output,
-          "--checkpoint",
-          args.checkpointPath,
-        ],
-        { env: { ...process.env, GITHUB_TOKEN: "" }, stdio: "pipe" },
-      ),
-    (error) => {
-      assert.match(
-        error.stderr.toString(),
-        /Promotion requires a GitHub credential/,
-      );
-      return true;
+for (const flag of ["--promote-alpha11", "--promote-alpha12"])
+  test(`${flag} CLI validates the release pins and requires a credential before transport`, () => {
+    assert.throws(
+      () =>
+        execFileSync(
+          process.execPath,
+          [
+            fileURLToPath(
+              new URL(
+                "../scripts/release/ninja-promotion.mjs",
+                import.meta.url,
+              ),
+            ),
+            flag,
+            "--private-key",
+            args.privateKeyPath,
+            "--output",
+            args.output,
+            "--checkpoint",
+            args.checkpointPath,
+          ],
+          { env: { ...process.env, GITHUB_TOKEN: "" }, stdio: "pipe" },
+        ),
+      (error) => {
+        assert.match(
+          error.stderr.toString(),
+          /Promotion requires a GitHub credential/,
+        );
+        return true;
+      },
+    );
+  });
+
+test("alpha12 promotion resolves the independently pinned tag and all three exact files", async () => {
+  const f = fixture("0.1.4-alpha.12");
+  f.policy.alpha12Promotion = f.policy.promotion;
+  delete f.policy.promotion;
+  assert.equal(
+    (await prepareNinjaPromotion({ ...args, promoteAlpha12: true }, f.deps))
+      .status,
+    "PREPARED",
+  );
+  assert.ok(
+    f.calls.some((c) => c.url.endsWith("/git/ref/tags/v0.1.4-alpha.12")),
+  );
+  f.state.ref.object.sha = "c".repeat(40);
+  await assert.rejects(
+    prepareNinjaPromotion({ ...args, promoteAlpha12: true }, f.deps),
+    /tag target does not match pinned source/,
+  );
+  await assert.rejects(
+    prepareNinjaPromotion(
+      { ...args, promoteAlpha11: true, promoteAlpha12: true },
+      f.deps,
+    ),
+    /Promotion requires explicit/,
+  );
+});
+
+test("alpha12 policy preserves the independent pins and publisher trust for all 30 historical downloads", () => {
+  const baseline = structuredClone(PRODUCTION_RENEWAL_POLICY);
+  delete baseline.alpha12Promotion;
+  delete baseline.assets["0.1.4-alpha.12"];
+  delete baseline.releaseContracts["0.1.4-alpha.12"];
+  assert.equal(Object.values(baseline.assets).flatMap(Object.keys).length, 30);
+  // The alpha.11 production policy at b012719, including the original trust anchor.
+  assert.equal(
+    sha256(Buffer.from(JSON.stringify(baseline))),
+    "8da2c219013649f489873937297e95ebe8f2bf9203eb1287b2fd2025e5b4a3aa",
+  );
+});
+
+test("production publisher pins exactly the accepted alpha12 source and three release files", () => {
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.alpha12Promotion, {
+    version: "0.1.4-alpha.12",
+    sourceCommit: "2721e9e58beecd6cd2fa9c9960b1a7d399ade299",
+  });
+  assert.deepEqual(PRODUCTION_RENEWAL_POLICY.assets["0.1.4-alpha.12"], {
+    "daedlo-0.1.4-alpha.12.zip": {
+      bytes: 391508,
+      sha256:
+        "fa69913ddcea6cf52df9879d9a36eec3b2a47423854deeccdb2bc8c00d3a7d2b",
     },
+    "release.json": {
+      bytes: 7743,
+      sha256:
+        "5b5b3f218e3d1a88b3272183dc3174b4aa34d7896ad6bb22967bbb3a2d621f1c",
+    },
+    SHA256SUMS: {
+      bytes: 92,
+      sha256:
+        "d3a37fa6b52f20838f66cce742f7ea361fff8b518aa8da782ce7ae711d8a3b88",
+    },
+  });
+  assert.deepEqual(
+    PRODUCTION_RENEWAL_POLICY.releaseContracts["0.1.4-alpha.12"],
+    PRODUCTION_RENEWAL_POLICY.releaseContracts["0.1.4-alpha.11"],
   );
 });

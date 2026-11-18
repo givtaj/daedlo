@@ -20,14 +20,14 @@ function section(html, title) {
   return found[1];
 }
 
-test("alpha11 homepage identifies the new release without relabelling the recorded alpha9 flow", async () => {
+test("alpha12 homepage identifies the new release without relabelling the recorded alpha9 flow", async () => {
   const html = await read("public/index.html");
   const current = section(html, "latest-release-title");
-  assert.match(text(current), /Available now · 0\.1\.4-alpha\.11/);
-  assert.match(current, /releases\/tag\/v0\.1\.4-alpha\.11/);
-  assert.match(text(current), /review[^.]*session/i);
-  assert.match(text(current), /model[^.]*history/i);
-  assert.match(html, /href="\/updates\.html#alpha11-tools-title"/);
+  assert.match(text(current), /Available now · 0\.1\.4-alpha\.12/);
+  assert.match(current, /releases\/tag\/v0\.1\.4-alpha\.12/);
+  assert.match(text(current), /status/i);
+  assert.match(text(current), /setup/i);
+  assert.match(html, /href="\/updates\.html#alpha12-tools-title"/);
   const record = html.match(
     /<section\b[^>]*\bid="record"[^>]*>([\s\S]*?)<\/section>/i,
   )?.[1];
@@ -118,4 +118,21 @@ test("the copied onboarding prompt preserves existing ownership and reads the pa
     /same configuration[^.]*registration[^.]*store[^.]*publisher trust[^.]*signed checkpoint/i,
   );
   assert.match(prompt, /runtime update[^.]*does not[^.]*replace[^.]*tools/i);
+});
+
+test("alpha12 update guide covers safe tools bootstrap, status diagnostics, recovery measurement and setup", async () => {
+  const html = section(
+    await read("templates/updates.html"),
+    "alpha12-tools-title",
+  );
+  const copy = text(html);
+  assert.match(copy, /original.*tools/i);
+  assert.match(copy, /same configuration/i);
+  assert.match(copy, /queue/i);
+  assert.match(copy, /status reads[^.]*installation receipt/i);
+  assert.match(copy, /startup and activation verify[^.]*sealed files/i);
+  assert.match(copy, /draftState/);
+  assert.match(copy, /permission/i);
+  assert.match(copy, /browser cache/i);
+  assert.match(html, /blob\/v\{\{VERSION\}\}\/docs\/native-setup\.md/);
 });

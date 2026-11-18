@@ -101,3 +101,9 @@
 !/downloads/0.1.4-alpha.11/daedlo-0.1.4-alpha.11.zip
 !/downloads/0.1.4-alpha.11/SHA256SUMS
 !/downloads/0.1.4-alpha.11/release.json
+
+# Exact managed diagnostics and recovery example release.
+!/downloads/0.1.4-alpha.12/
+!/downloads/0.1.4-alpha.12/daedlo-0.1.4-alpha.12.zip
+!/downloads/0.1.4-alpha.12/SHA256SUMS
+!/downloads/0.1.4-alpha.12/release.json
