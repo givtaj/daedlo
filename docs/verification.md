@@ -27,6 +27,39 @@ cleanup. [Recovery regression](../tests/managed-starter-recovery.test.mjs) ·
 These results cover independent local fixtures. Publication, hosted CI, Windows
 and customer validation of these changes remain unverified.
 
+## “Did it save?” homepage published — 2026-11-18
+
+[PR #49](https://github.com/givtaj/daedlo/pull/49) merged as `43a02f7` after
+[all five PR checks passed](https://github.com/givtaj/daedlo/actions/runs/44304963961).
+Its tree matches the approved preview commit `00a7200`.
+The [production publisher](https://github.com/givtaj/daedlo/actions/runs/44307277984)
+verified Worker version `87eb2fd3-f466-455b-9a83-4850fd98d099` at 100%
+traffic at 12:48 UTC. It checked 60 served assets and nine private boundaries.
+Signed feed generation 42 retained the nine release entries from generation 41.
+
+An independent HTTPS check fetched 19 public URLs and compared the homepage,
+five new assets, original Roots screenshot and evidence with the approved files.
+Chromium opened [daedlo.com](https://daedlo.com/) at 1440 × 900 and 390 × 844.
+At both widths the artwork and local font loaded, the page fit horizontally,
+and the first-screen action led to the original recording. The full evidence
+link reached the dated [Roots run](https://daedlo.com/demo.html#roots-recording)
+and the install link reached the alpha.11 setup prompt.
+
+## “Did it save?” homepage preview — 2026-11-18
+
+**Local preview passed.** Before implementation, the browser check expected
+“Did it save?” and found the previous homepage headline. On the redesigned
+page, keyboard activation of “Inspect the recorded run” reached the dated
+Roots receipt on desktop and mobile. The original capture and independent
+readback retain their 9 November alpha.9 candidate provenance.
+
+The 93 website tests, 97 simulated publisher tests and static acceptance passed
+with 11 HTML pages and 10 verified release archives. Local Chromium passed all
+16 visitor and 18 onboarding checks, including the relocated workflow sketches,
+Compose guide and alpha.11 tools upgrade link. The homepage action fit the first
+screen across checks from 320 to 1440 CSS pixels. Desktop and phone renders were
+inspected locally.
+
 ## Alpha.11 publication and public verification — 2026-11-11
 
 **PASS — published and independently verified.** The `0.1.4-alpha.11` kit is

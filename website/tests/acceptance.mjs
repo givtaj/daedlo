@@ -32,10 +32,14 @@ export async function checkWebsite({
     /\s+/g,
     " ",
   );
-  assert.match(
-    home,
-    /<h1[\s>][\s\S]*Make[\s\S]*it works[\s\S]*something you can show[\s\S]*<\/h1>/,
-    "The public page must explain the product promise.",
+  const heading = home.match(/<h1\b[^>]*>(.*?)<\/h1>/i)?.[1];
+  assert.equal(
+    heading
+      ?.replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
+    "Did it save?",
+    "The homepage must lead with the recorded save question.",
   );
   const privacy = await readFile(join(root, "privacy.html"), "utf8");
   const contactAddresses = [...privacy.matchAll(/href="mailto:([^?"\s]+)/g)]
@@ -67,6 +71,12 @@ export async function checkWebsite({
   }
   assert.match(
     home,
+    /href="\/workflow\.html"/,
+    "Visitors must be able to find the workflow illustration.",
+  );
+  const workflow = await readFile(join(root, "workflow.html"), "utf8");
+  assert.match(
+    workflow.replace(/\s+/g, " "),
     /illustration[^<]*not a live browser/i,
     "The concept must be labelled as an illustration.",
   );

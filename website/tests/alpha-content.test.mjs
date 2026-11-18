@@ -16,19 +16,37 @@ test("homepage release label matches the current runtime release", async () => {
       "utf8",
     ),
   );
+  const home = flat(await read("public/index.html"));
+  const release = home.match(
+    /<section\b[^>]*\bid="latest-release"[^>]*>(.*?)<\/section>/i,
+  )?.[1];
+  assert.ok(release, "Visitors must be able to identify the current release.");
+  const advertisedVersion = release.match(/Available now\s*·\s*([^\s<]+)/)?.[1];
+  assert.equal(
+    advertisedVersion,
+    runtime.version,
+    "The public release label must match the runtime being staged.",
+  );
   assert.ok(
-    (await read("public/index.html")).includes(
-      `${runtime.version} · Assisted alpha.`,
+    release.includes(
+      `href="https://github.com/givtaj/daedlo/releases/tag/v${runtime.version}"`,
     ),
-    "The public release label must not lag the release being staged.",
+    "The current release must point to its matching tag.",
   );
 });
 
 test("alpha home and install state the supported assisted release scope", async () => {
   for (const file of ["public/index.html", "templates/install.html"]) {
     const html = flat(await read(file));
+    const setup =
+      file === "public/index.html"
+        ? html.match(
+            /<section\b[^>]*\bid="preview"[^>]*>(.*?)<\/section>/i,
+          )?.[1]
+        : html;
+    assert.ok(setup, "The homepage must identify the supported setup.");
     assert.match(
-      html,
+      setup,
       /assisted[^<]*macOS arm64[^<]*Codex/i,
       `${file}: visitors need the supported assisted alpha path`,
     );

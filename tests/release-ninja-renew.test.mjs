@@ -483,7 +483,7 @@ test("renewal CLI live remains strict unless availability waiting is selected", 
     f.live.dependencies,
   );
   assert.equal(result.status, "PASS");
-  assert.equal(result.servedAssets, 34);
+  assert.equal(result.servedAssets, 39);
   assert.equal(result.privateBoundaries, 9);
   assert.equal(Object.hasOwn(result, "availability"), false);
   let misses = 0;
@@ -519,7 +519,7 @@ test("renewal CLI live forwards availability waiting and retains the failed obse
     f.live.dependencies,
   );
   assert.equal(result.status, "PASS");
-  assert.equal(result.servedAssets, 34);
+  assert.equal(result.servedAssets, 39);
   assert.deepEqual(result.availability, {
     attempts: 2,
     elapsedMs: 5000,
@@ -1129,6 +1129,11 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
     "The new copy script must be staged and verified as exact public source bytes",
   );
   const curatedAssets = [
+    "homepage.css",
+    "save-press.webp",
+    "instrument-serif-italic.woff2",
+    "instrument-serif-license.txt",
+    "workflow.html",
     "compose.html",
     "teaching.html",
     "teaching.css",
@@ -1186,7 +1191,7 @@ test("live verifier checks exact deployed assets, canonical HTML redirects, cach
         ),
       ),
     ),
-    { status: "PASS", generation: 2, servedAssets: 34, privateBoundaries: 9 },
+    { status: "PASS", generation: 2, servedAssets: 39, privateBoundaries: 9 },
   );
   assert.deepEqual(
     curatedAssets.map((name) =>
@@ -1340,7 +1345,7 @@ test("post-activation availability waits for an expected public 404 then verifie
   };
   const result = await verifyAvailable(f);
   assert.equal(result.status, "PASS");
-  assert.equal(result.servedAssets, 34);
+  assert.equal(result.servedAssets, 39);
   assert.deepEqual(result.availability, {
     attempts: 2,
     elapsedMs: 5000,
