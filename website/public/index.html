@@ -25,11 +25,12 @@
       type="font/woff2"
       crossorigin
     />
+    <link rel="stylesheet" href="/site.css" />
     <link rel="stylesheet" href="/homepage.css" />
   </head>
-  <body>
+  <body class="homepage">
     <a class="skip-link" href="#main">Skip to content</a>
-    <header class="wrap">
+    <header class="masthead wrap">
       <a class="brand" aria-label="Daedlo home" href="/index.html"
         ><img src="/mark.svg" alt="" width="32" height="32" /><span
           >daedlo<b>.</b></span
@@ -39,7 +40,7 @@
         <a class="wide-link" href="/demo.html">Recorded runs</a>
         <a class="wide-link" href="/guide.html">Integration guide</a>
         <a href="https://github.com/givtaj/daedlo">GitHub</a>
-        <a href="/install.html"
+        <a class="install-link" href="/install.html"
           >Start with Codex <span aria-hidden="true">↗</span></a
         >
       </nav>
@@ -99,23 +100,48 @@
             <p>Reload returned the same row.</p>
           </div>
         </div>
+        <div class="record-links">
+          <a class="deep" href="/demo.html#roots-recording"
+            >Read the full evidence <span aria-hidden="true">↗</span></a
+          >
+          <a href="/demo-roots-save.png">Original alpha.9 screenshot</a>
+        </div>
+      </section>
+      <section
+        id="workbench"
+        class="record wrap"
+        aria-labelledby="workbench-title"
+      >
+        <div class="band">
+          <p class="meta">Inside Daedlo</p>
+          <p class="small">0.1.4-alpha.11 · Swagger UI</p>
+        </div>
+        <h2 id="workbench-title">
+          Inside the <i class="editorial">control room.</i>
+        </h2>
+        <p class="workbench-lead">
+          Three steps, one request. Watch Daedlo send
+          <code>GET /hello</code> through Swagger UI and check the HTTP 200
+          response. The sidebar shows what the browser and application are doing
+          along the way.
+        </p>
         <figure class="capture">
           <a
-            href="/demo-roots-save.png"
-            aria-label="Open the original viewer capture at full size"
+            href="/viewer-alpha11-workspace.webp"
+            aria-label="Open the alpha.11 control room at full size"
           >
             <img
-              src="/demo-roots-save.png"
-              width="1440"
-              height="900"
+              src="/viewer-alpha11-workspace.webp"
+              width="1995"
+              height="1305"
               loading="lazy"
-              alt="Recorded Daedlo viewer showing the Roots Journal entry, the completed keyboard-save flow and its saved application effect."
+              alt="Daedlo’s Connections sidebar beside a controlled Swagger UI browser, with flow steps and execution results."
             />
           </a>
           <figcaption>
-            <span class="small">Original viewer capture · Roots Journal</span>
-            <a class="deep" href="/demo.html#roots-recording"
-              >Read the full evidence <span aria-hidden="true">↗</span></a
+            <span class="small">18 Nov 2026 · Local test API</span>
+            <a class="deep" href="/demo.html#current-viewer"
+              >Explore the viewer <span aria-hidden="true">↗</span></a
             >
           </figcaption>
         </figure>
@@ -210,21 +236,41 @@
         </section>
       </div>
     </main>
-    <footer class="wrap">
+    <footer class="site-footer-links wrap">
       <p>Daedlo · Make “it works” something you can show.</p>
       <nav aria-label="Footer navigation">
-        <a href="/demo.html">Recorded runs</a
-        ><a href="/guide.html">Integration guide</a
-        ><a href="/privacy.html">Privacy &amp; contact</a>
-        <a href="https://github.com/givtaj/daedlo">GitHub</a
-        ><a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
-          >Contribute</a
-        >
-        <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
-          >Support</a
-        ><a href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
-          >Apache-2.0 core</a
-        >
+        <ul aria-label="Product and guides">
+          <li><a href="/demo.html">Recorded runs</a></li>
+          <li><a href="/workflow.html">Workflow illustrations</a></li>
+          <li><a href="/teaching.html">Teaching plan</a></li>
+          <li><a href="/index.html#story">Our story</a></li>
+          <li><a href="/guide.html">Integration guide</a></li>
+          <li><a href="/compose.html">Docker Compose</a></li>
+          <li><a href="/updates.html">Updates</a></li>
+        </ul>
+        <ul aria-label="Project and support">
+          <li><a href="https://github.com/givtaj/daedlo">GitHub</a></li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/releases">Releases</a>
+          </li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/blob/main/CONTRIBUTING.md"
+              >Contribute</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/givtaj/daedlo/blob/main/SUPPORT.md"
+              >Support</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/givtaj/daedlo/blob/main/docs/licensing.md"
+              >Apache-2.0 core</a
+            >
+          </li>
+          <li><a href="/privacy.html">Privacy &amp; contact</a></li>
+        </ul>
       </nav>
     </footer>
   </body>

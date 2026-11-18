@@ -174,16 +174,11 @@ export async function checkPublicLaunchBrowser({
         /synthetic/i,
       ])
         assert.match(summary, fact);
-      const homeCapture = record.locator('img[src="/demo-roots-save.png"]');
-      await homeCapture.scrollIntoViewIfNeeded();
-      await homeCapture.evaluate((image) => image.decode());
-      assert.deepEqual(
-        await homeCapture.evaluate((image) => [
-          image.naturalWidth,
-          image.naturalHeight,
-        ]),
-        [1440, 900],
-      );
+      const original = record.getByRole("link", {
+        name: "Original alpha.9 screenshot",
+      });
+      assert.equal(await original.getAttribute("href"), "/demo-roots-save.png");
+      assert.equal(await original.isVisible(), true);
       assert.equal(
         await record
           .locator('a[href="/demo.html#roots-recording"]')
@@ -194,6 +189,39 @@ export async function checkPublicLaunchBrowser({
         name: `${label} first-screen action reaches the dated Roots receipt and original recording`,
         status: "PASS",
       });
+      const workbench = page.locator("#workbench");
+      const currentCapture = workbench.locator(
+        'img[src="/viewer-alpha11-workspace.webp"]',
+      );
+      await currentCapture.scrollIntoViewIfNeeded();
+      await currentCapture.evaluate((image) => image.decode());
+      const size = await currentCapture.evaluate((image) => ({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        declaredWidth: Number(image.getAttribute("width")),
+        declaredHeight: Number(image.getAttribute("height")),
+      }));
+      assert.ok(size.width > 0 && size.height > 0);
+      assert.deepEqual(
+        [size.width, size.height],
+        [size.declaredWidth, size.declaredHeight],
+      );
+      const tour = workbench.getByRole("link", { name: /explore the viewer/i });
+      await tour.click();
+      const panel = page.locator("#current-viewer");
+      assert.equal(new URL(page.url()).hash, "#current-viewer");
+      assert.match(await panel.innerText(), /Swagger UI/);
+      const productImage = panel.locator(
+        'img[src="/viewer-alpha11-workspace.webp"]',
+      );
+      await productImage.evaluate((image) => image.decode());
+      assert.equal(await productImage.isVisible(), true);
+      await screenshot("current-viewer", false);
+      receipt.checks.push({
+        name: `${label} current viewer tour opens the released Swagger UI capture`,
+        status: "PASS",
+      });
+      await open("/");
       const current = page.locator("#latest-release");
       assert.equal(
         await current.isVisible(),
