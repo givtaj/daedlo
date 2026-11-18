@@ -1838,9 +1838,24 @@ test("workflow limits events, credentials, concurrency and deployed configuratio
     .find((step) => step.includes("ninja-renew.mjs live"));
   assert.match(live, /id: live/);
   assert.match(live, /ninja-renew\.mjs live[^\n]+--wait-for-assets/);
+  const identity = text
+    .split("      - name:")
+    .find((step) =>
+      step.startsWith(" Verify the active deployment identity\n"),
+    );
+  assert.match(identity, /run: node scripts\/release\/ninja-deployment\.mjs\n/);
+  assert.match(
+    identity,
+    /NINJA_VERSION_ID: \$\{\{ steps\.upload\.outputs\.version-id \}\}/,
+  );
+  assert.match(
+    text,
+    /node --test [^\n]*tests\/release-ninja-deployment\.test\.mjs/,
+  );
   assert.ok(
-    text.indexOf("Verify the active deployment identity") < text.indexOf(live),
-    "Only the post-activation live check may wait for missing assets",
+    text.indexOf(activation) < text.indexOf(identity) &&
+      text.indexOf(identity) < text.indexOf(live),
+    "Verify the active Worker after activation and before checking public assets",
   );
   assert.doesNotMatch(activation, /--wait-for-assets/);
   const observations = text

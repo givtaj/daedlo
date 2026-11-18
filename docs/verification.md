@@ -1,5 +1,23 @@
 # Verification record
 
+## Worker activation check after alpha.12 — 2026-11-18
+
+The original rollout check failed on the recorded alpha.12 predecessor ID even
+when the next response would have confirmed the uploaded version. A local
+regression using both recorded Worker IDs now passes with the predecessor
+reported through 125 simulated seconds and the uploaded version at 100% on the
+130-second read. With the predecessor still active and the target present only
+in deployment history, the verifier fails at the 150-second deadline.
+
+All 333 publisher checks passed, including 14 deployment checks covering
+immediate activation, late responses, split traffic and invalid API results.
+In a separate wall-clock run with simulated Cloudflare responses, the workflow
+command wrote the matching receipt after five seconds. With the predecessor
+continuously active, it exited with code 1 after 150 seconds and left the receipt
+directory empty. The original production promotion and its independent readback
+are recorded below.
+[Regression tests](../tests/release-ninja-deployment.test.mjs)
+
 ## Alpha.12 publication and public verification — 2026-11-18
 
 **Published and independently verified on macOS arm64.** The public installer

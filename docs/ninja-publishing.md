@@ -269,6 +269,14 @@ API and compares all served assets, signature, cache rules, security headers and
 private-path boundaries on the production apex origin. Check the workflow result and
 its verified generation/expiry, not just a green upload step.
 
+The first deployment read is immediate. If Cloudflare reports a different single
+Worker version at 100% traffic, the verifier reads again after five seconds.
+The control-plane check has a 150-second deadline, including requests and waits.
+Only a current deployment showing the uploaded version at 100% produces the
+active-deployment receipt and allows live asset verification to begin. A stale
+version at the deadline, split traffic, an invalid response or a failed request
+stops the rollout check. Polling only reads deployment status.
+
 After activation is confirmed, the workflow enables `live --wait-for-assets`.
 An expected public asset returning HTTP 404 can wait up to **120 seconds total**,
 with a five-second interval and at most 25 attempts. Each attempt starts the full
