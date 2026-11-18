@@ -28,8 +28,15 @@ test("alpha11 homepage identifies the new release without relabelling the record
   assert.match(text(current), /review[^.]*session/i);
   assert.match(text(current), /model[^.]*history/i);
   assert.match(html, /href="\/updates\.html#alpha11-tools-title"/);
-  assert.match(text(html), /Roots · Recorded alpha\.9 candidate flow/);
-  assert.match(html, /demo-roots-save\.png/);
+  const record = html.match(
+    /<section\b[^>]*\bid="record"[^>]*>([\s\S]*?)<\/section>/i,
+  )?.[1];
+  assert.ok(record, "The recorded evidence needs its own homepage section.");
+  assert.match(text(record), /Roots/i);
+  assert.match(text(record), /recorded/i);
+  assert.match(text(record), /alpha\.9 candidate/i);
+  assert.match(record, /<time\b[^>]*datetime="2026-11-09"/);
+  assert.match(record, /demo-roots-save\.png/);
 });
 
 test("existing users get an explicit tools bootstrap that preserves the original managed installation", async () => {
