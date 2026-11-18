@@ -1,5 +1,33 @@
 # Verification record
 
+## Site-wide redesign on daedlo.com — 2026-11-18
+
+[PR #54](https://github.com/givtaj/daedlo/pull/54) merged as `1fcf20e` after
+[all five checks passed](https://github.com/givtaj/daedlo/actions/runs/44316432036).
+Its tree matched the verified candidate `b32c4f7`. The
+[production publisher](https://github.com/givtaj/daedlo/actions/runs/44319060818)
+confirmed Worker version `1921fb8d-4541-4503-b569-8c138112a6f5` at 100% at
+13:58:35 UTC. Its first live readback reported a byte mismatch three seconds
+later. The workflow omitted the asset path and finished with a failure.
+
+Independent HTTPS readback subsequently matched all 65 served assets to the
+deployed source and staged release inputs. It verified the security and cache
+headers, all ten immutable release archives, nine private-path 404s and the
+signed generation 44 catalog with its nine retained entries. The live catalog
+SHA-256 was `8774899f1e5b835c926f0417b70c52469cdd90a55d5e93244a42c851b887190e`,
+identical to the publisher's checkpoint.
+
+The repository's unmodified production `live --wait-for-assets` verifier then
+passed on the first attempt in 3.351 seconds against that same active deployment.
+Its reconstructed 68-entry manifest matched the manifest printed by the publisher.
+
+Chromium opened every HTML page on the public domain at 1440 × 900 and 390 × 844.
+The ten current pages, the original October demo and a nested missing URL
+accounted for 24 visits. All 18 interaction checks passed, including both new
+images, workflow controls and the install prompt with the corrected Swagger
+instructions. The October archive screenshots matched the pre-deployment
+desktop and mobile captures.
+
 ## Released viewer capture for the website — 2026-11-18
 
 The public `0.1.4-alpha.11` kit (source `8ddd8d7`) ran in Chromium against a
