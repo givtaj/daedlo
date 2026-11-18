@@ -2,6 +2,15 @@
 
 ## Worker activation check after alpha.12 — 2026-11-18
 
+**Production renewal passed.** An ordinary renewal on `main` at `273e502`
+confirmed Worker version `b6fabc73-8281-43c1-918b-14505bfb8dd9` at 100%
+traffic in deployment `22f8e61e-2ad2-4496-bd08-e173765ba383` at 18:57:37 UTC.
+The identity check completed on its first read. Live verification then passed
+all 68 public assets and nine private-path checks in one attempt. Independent
+HTTPS verification matched the signed generation-46 checkpoint byte-for-byte
+and confirmed all ten release entries from generation 45 were unchanged.
+[Production renewal](https://github.com/givtaj/daedlo/actions/runs/44375108835)
+
 The original rollout check failed on the recorded alpha.12 predecessor ID even
 when the next response would have confirmed the uploaded version. A local
 regression using both recorded Worker IDs now passes with the predecessor
