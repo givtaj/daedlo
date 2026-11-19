@@ -176,10 +176,16 @@ export async function readNinjaConfig(
 
 export async function openNinja(configPath, { recover = true } = {}) {
   const { config, keys, installation } = await readNinjaConfig(configPath);
+  const fixtureConfig = {
+    store: config.store,
+    registration: config.registration,
+    fixturePreflight: config.fixturePreflight,
+  };
   const supervisor = await createNinjaSupervisor({
     root: join(config.store, "supervisor"),
     settings: config.settings || {},
     frontend: frontendIdentity(config),
+    fixtureConfig,
   });
   const manager = await createNinjaManager({
     recover,
@@ -187,7 +193,8 @@ export async function openNinja(configPath, { recover = true } = {}) {
     registration: config.registration,
     provider: createNinjaProvider({ ...config.catalog, trustedKeys: keys }),
     installer: {
-      prepare: (args) => prepareInstallation({ ...args, ...installation }),
+      prepare: (args) =>
+        prepareInstallation({ ...args, ...installation, fixtureConfig }),
       readIdentity: readInstallationIdentity,
       verify: verifyInstallation,
     },

@@ -19,6 +19,7 @@ import {
 } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { verifyBundle } from "./manifest.mjs";
+import { readNativeFixture } from "./native-fixture.mjs";
 
 const runtimePackages = releaseFamilies.map(
   (prefix) => packageNames(prefix).runtime,
@@ -232,27 +233,25 @@ function registrationValue(value) {
     !/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(value.rust.binary ?? "")
   )
     fail("Unsupported Rust package registration");
-  only(value.hooks, ["acceptance", "health"], "hook registration");
+  only(value.hooks, ["acceptance", "health", "preflight"], "hook registration");
+  const hooks = [value.hooks.acceptance, value.hooks.health];
+  if (Object.hasOwn(value.hooks, "preflight"))
+    hooks.push(value.hooks.preflight);
   for (const file of [
     value.node.packageJson,
     value.node.packageLock,
     value.rust.manifest,
     value.rust.lock,
     value.launcher,
-    value.hooks.acceptance,
-    value.hooks.health,
+    ...hooks,
   ]) {
     localPath(file);
     if (!value.files.includes(file))
       fail(
-        "Launcher, manifests, locks and acceptance/health hooks must be allowlisted source files",
+        "Launcher, manifests, locks and registered hooks must be allowlisted source files",
       );
   }
-  if (
-    ![value.launcher, value.hooks.acceptance, value.hooks.health].every(
-      (file) => file.endsWith(".mjs"),
-    )
-  )
+  if (![value.launcher, ...hooks].every((file) => file.endsWith(".mjs")))
     fail("Managed launcher and hooks require explicit .mjs files");
   return structuredClone(value);
 }
@@ -906,10 +905,14 @@ async function hookRun(
   receipt,
   phase,
   registration,
-  { timeout = 180000 } = {},
+  { timeout = 180000, fixtureConfig } = {},
 ) {
   if (!["acceptance", "health"].includes(phase))
     fail("Unsupported installation hook");
+  const fixture = await readNativeFixture(
+    { ...fixtureConfig, registration },
+    phase,
+  );
   const mutable = join(receipt.path, "checks");
   await fs.mkdir(mutable, { recursive: true, mode: 0o700 });
   const fixturePath = await fs.mkdtemp(join(mutable, phase + "-"));
@@ -930,17 +933,24 @@ async function hookRun(
             phase,
             installation: receipt,
             fixturePath,
+            ...(fixture ? { fixture } : {}),
           }),
           timeout,
-          log: join(fixturePath, "hook.log"),
+          ...(fixture ? {} : { log: join(fixturePath, "hook.log") }),
         },
       ).catch((error) => {
-        error.message += `. See checks/${basename(fixturePath)}/hook.log and, for Playwright, logs/playwright-browser.json inside the private installation.`;
+        if (!fixture)
+          error.message += `. See checks/${basename(fixturePath)}/hook.log and, for Playwright, logs/playwright-browser.json inside the private installation.`;
         throw error;
       }),
     );
     validateHookOutput(output, phase, receipt);
     await verifyBrowserIdentity(output.browser);
+  } catch (error) {
+    if (!fixture || error.code === "browser_changed") throw error;
+    fail(
+      `Registered ${phase} hook failed or did not return an accepted receipt. Inspect its private fixture evidence.`,
+    );
   } finally {
     same(
       await sealedInventory(receipt.path),
@@ -948,7 +958,20 @@ async function hookRun(
       "Installation changed during registered hook",
     );
   }
-  return output;
+  return fixture
+    ? {
+        schemaVersion: 1,
+        accepted: true,
+        isolated: true,
+        tests: output.tests,
+        failed: 0,
+        runtimePath: receipt.runtimePath,
+        enginePath: receipt.enginePath,
+        model: receipt.model,
+        browser: output.browser,
+        ...(phase === "health" ? { ready: true } : {}),
+      }
+    : output;
 }
 
 export async function prepareInstallation({
@@ -959,9 +982,12 @@ export async function prepareInstallation({
   cargoHome,
   playwrightBrowsersPath,
   offline = true,
+  fixtureConfig,
 } = {}) {
   const mask = installationUmask();
   const registration = registrationValue(input);
+  await readNativeFixture({ ...fixtureConfig, registration }, "acceptance");
+  await readNativeFixture({ ...fixtureConfig, registration }, "health");
   if (playwrightBrowsersPath !== undefined)
     playwrightBrowsersPath = await checkPlaywrightCache(playwrightBrowsersPath);
   if (
@@ -1305,12 +1331,16 @@ export async function prepareInstallation({
       createdAt: new Date().toISOString(),
       ownerNonce: nonce,
     };
-    receipt.acceptance = await hookRun(receipt, "acceptance", registration);
+    receipt.acceptance = await hookRun(receipt, "acceptance", registration, {
+      fixtureConfig,
+    });
     receipt.browser = structuredClone(receipt.acceptance.browser);
     receipt.browserDependency =
       "External executable and observed version; browser cache/framework contents are not bundled.";
     await assertSource(registration, source);
-    receipt.health = await hookRun(receipt, "health", registration);
+    receipt.health = await hookRun(receipt, "health", registration, {
+      fixtureConfig,
+    });
     await assertSource(registration, source);
     const sealed = await sealedInventory(path);
     receipt.inventory = sealed;
@@ -1500,13 +1530,30 @@ export async function verifyInstallation(
 export async function runInstallationHook(
   input,
   phase,
-  { checkSource = true, timeout } = {},
+  { checkSource = true, timeout, fixtureConfig } = {},
 ) {
   const receipt = await verifyInstallation(input, { checkSource });
   const registration = json(
     await bytes(join(receipt.path, "registration.json")),
   );
-  const result = await hookRun(receipt, phase, registration, { timeout });
+  const result = await hookRun(receipt, phase, registration, {
+    timeout,
+    fixtureConfig,
+  });
   await verifyInstallation(receipt.path, { checkSource });
   return result;
+}
+
+export async function readLaunchFixture(receipt, config = {}) {
+  const registration = receipt.path
+    ? json(await bytes(join(receipt.path, "registration.json")))
+    : undefined;
+  if (registration?.hooks?.preflight !== config.registration?.hooks?.preflight)
+    throw Object.assign(
+      Error(
+        "Selected installation and current registration disagree on fixture preflight. Validate a matching installation before launch.",
+      ),
+      { code: "fixture_preflight" },
+    );
+  return readNativeFixture(config, "live");
 }

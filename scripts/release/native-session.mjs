@@ -177,6 +177,8 @@ const messages = {
     "The selected model engine disconnected before startup completed.",
   setup_required:
     "Run setup with a reviewed version before starting this frontend.",
+  fixture_preflight:
+    "Fixture preflight is missing, stale or incompatible. Review the prepared generation and registered installation.",
   stale_source:
     "Authored source changed. Refresh and validate it before starting.",
   migration_review_required:

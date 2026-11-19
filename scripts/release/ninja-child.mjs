@@ -3,7 +3,10 @@ import { randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { dirname, join } from "node:path";
 import { ninjaDirectory, ninjaWrite } from "./ninja-manager.mjs";
-import { verifyBrowserIdentity } from "./ninja-installation.mjs";
+import {
+  readLaunchFixture,
+  verifyBrowserIdentity,
+} from "./ninja-installation.mjs";
 import { createNinjaEvidence } from "./ninja-evidence.mjs";
 import { createRecoveryArchive } from "./ninja-recovery.mjs";
 
@@ -664,6 +667,8 @@ async function perform(m) {
       },
     };
     try {
+      const fixture = await readLaunchFixture(installation, m.fixtureConfig);
+      checkStartup();
       const launcher = await import(pathToFileURL(installation.launcherPath));
       if (typeof launcher.createManagedLaunch !== "function")
         error(
@@ -677,6 +682,7 @@ async function perform(m) {
         sourceRoot: installation.sourcePath,
         installation,
         settings: m.settings,
+        ...(fixture ? { fixture } : {}),
         signal: startupAbort.signal,
       });
       checkStartup();
@@ -713,6 +719,10 @@ async function perform(m) {
       });
       return status();
     } catch (e) {
+      if (m.fixtureConfig?.fixturePreflight !== undefined) {
+        const safe = startupError(e);
+        e = Object.assign(Error(safe.message), { code: safe.code });
+      }
       if (cancelling) {
         e.code = "startup_cancelled";
         e.message = "Startup was cancelled.";

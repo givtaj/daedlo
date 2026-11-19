@@ -84,6 +84,67 @@ and executable paths in local diagnostics.
 
 Docker is only an application-fixture choice, not a Daedlo requirement.
 
+### Prepare a fresh fixture
+
+Tools with `preflight` in `daedlo-native --help` can run an explicit fixture
+selector before native setup or launch. This command is available in the source
+candidate following alpha.12. It is opt-in. Existing projects can continue to
+use `doctor`, `setup` and `start` directly.
+
+Add the project selector to `registration.files` and name it in
+`registration.hooks.preflight`. Keep the existing acceptance and health hooks.
+Configure the following top-level entry in the private Ninja configuration.
+Use a new UUID v4 and a fresh destination for each preparation. For example,
+`node -p "require('node:crypto').randomUUID()"` prints a suitable ID.
+
+```json
+{
+  "fixturePreflight": {
+    "input": "/absolute/private-workspace/fixture-request.json",
+    "directory": "/absolute/private-workspace/run-001",
+    "generation": "3823607a-123a-40e7-bd4a-8ebc9c50721f"
+  }
+}
+```
+
+Keep the input owner-readable and private (mode `0600`). Use an existing
+private parent directory and keep the input and destination outside both the
+registered source and the managed store. The file checks require POSIX
+ownership and permission bits. Run the candidate tools' native CLI.
+
+```sh
+node "$tools/lib/native.mjs" preflight --config "$config"
+```
+
+The trusted selector receives `{schemaVersion: 1, input}` as JSON on stdin.
+Call the integration's existing eligibility checks on the requested cases,
+including current revision and prior history where applicable. Return one
+JSON object on stdout with `schemaVersion: 1` and three object-valued keys,
+`acceptance`, `health` and `live`. These objects hold the project inputs
+for their respective phases. Select disposable acceptance data, read-only
+health data and the intended live fixture. Keep the selector read-only.
+An ineligible or ambiguous case should cause a nonzero exit. The selector has
+10 seconds to finish. The input limit is 128 KiB and the combined stdout and
+stderr limit is 256 KiB. Native reports a fixed error when selection fails and
+keeps the selector's output private.
+
+Wait for a successful preflight before `setup` and `start`. A fresh setup
+passes an additional `fixture` object to each installation hook on stdin.
+Live launch receives `fixture` in `createManagedLaunch`. Each object carries
+`phase`, `generation`, `input` and `evidenceDirectory`. Use the validated
+project input and recheck application state when authorizing the action.
+Store phase-specific evidence in its supplied directory. Keep the case data
+and operation identities out of receipts, logs and public result labels.
+An occupied or incomplete preparation directory is preserved. Correct the
+reported prerequisite and choose a fresh directory and generation for another
+preparation. Changes to the source input require a fresh preparation.
+
+Ordinary setup reuse still applies to accepted installations and ready slots.
+An earlier installation receipt describes the disposable checks that ran for
+that installation. Starting or reconnecting to a runner does not authorize a
+business write. Stop the current owner through its usual guarded path before
+switching its configuration to a new fixture.
+
 ## Normal use and Codex Browser
 
 Run `start` in a persistent Codex terminal or the project's local environment action.

@@ -638,6 +638,7 @@ export async function createNinjaManager({
       );
     if (live.cleanupPending)
       fail("cleanup_incomplete", "Owned resource cleanup is incomplete.");
+    await supervisor.checkLaunchInputs?.(candidate);
     const id = randomUUID();
     const before = {
       current: s.current,

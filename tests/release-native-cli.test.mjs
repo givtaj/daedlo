@@ -6,6 +6,7 @@ import {
   readFile,
   realpath,
   rm,
+  copyFile,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -851,4 +852,67 @@ test("a final display timeout leaves an already accepted native owner available 
   } finally {
     await owner.close();
   }
+});
+
+test("stopped native setup and start refuse missing fixture phases before opening a manager", async (t) => {
+  const f = await fixture(t);
+  const read = f.deps.readConfig;
+  const sourceRoot = join(f.root, "source");
+  const hook = "preflight.mjs";
+  const input = join(f.root, "seed.json");
+  const directory = join(f.root, "fixture-evidence");
+  const generation = "12345678-0000-4000-8000-000000000001";
+  await mkdir(sourceRoot);
+  await writeFile(input, "{}", { mode: 0o600 });
+  await writeFile(
+    join(sourceRoot, hook),
+    `console.log(JSON.stringify({schemaVersion:1,acceptance:{phase:"acceptance"},health:{phase:"health"},live:{phase:"live"}}));`,
+  );
+  const sourceValidation = [];
+  f.deps.readConfig = async (path, { validateSource }) => {
+    sourceValidation.push(validateSource);
+    const result = await read();
+    Object.assign(result.config.registration, {
+      sourceRoot,
+      hooks: { preflight: hook },
+      files: [hook],
+    });
+    result.config.fixturePreflight = { input, directory, generation };
+    return result;
+  };
+  for (const command of ["setup", "start"])
+    await assert.rejects(nativeCommand(command, f.configPath, f.deps), {
+      code: "fixture_preflight",
+    });
+  assert.deepEqual(
+    (await nativeCommand("preflight", f.configPath, f.deps)).result,
+    {
+      schemaVersion: 1,
+      ok: true,
+      status: "prepared",
+      phases: ["acceptance", "health", "live"],
+    },
+  );
+  assert.deepEqual(sourceValidation, [false, false, true]);
+  for (const [command, phase] of [
+    ["setup", "health"],
+    ["start", "live"],
+  ]) {
+    await copyFile(
+      join(directory, "acceptance", "input.json"),
+      join(directory, phase, "input.json"),
+    );
+    await assert.rejects(nativeCommand(command, f.configPath, f.deps), {
+      code: "fixture_preflight",
+    });
+  }
+  assert.deepEqual(f.calls, []);
+  assert.equal(
+    (await nativeCommand("status", f.configPath, f.deps)).result.status,
+    "stopped",
+  );
+  assert.equal(
+    (await nativeCommand("stop", f.configPath, f.deps)).result.status,
+    "stopped",
+  );
 });

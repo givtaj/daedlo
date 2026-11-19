@@ -35,6 +35,7 @@ const libraries = [
   "ninja-recovery",
   "native",
   "native-doctor",
+  "native-fixture",
   "native-session",
 ];
 const documents = [

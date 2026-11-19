@@ -1,5 +1,28 @@
 # Verification record
 
+## Native fixture preflight candidate — 2026-11-19
+
+The local candidate for [issue #60](https://github.com/givtaj/daedlo/issues/60)
+ran a project-owned selector through the native CLI before setup. On the
+published alpha.12 tools, the same command exited with a usage error. The
+portable packaging test also failed on the missing fixture module before the
+module was added to the closed tools inventory.
+
+The candidate source runner passed a fresh setup and guarded live flow on macOS
+arm64 using Node 24.22.2, Chromium 158.0.8127.18 and the published alpha.12
+runtime and engine. Installation consumed the verified kit from a signed local
+test feed. The selector and phase consumers checked three separate synthetic
+case identities against their application fixtures.
+
+| Check | Observed result |
+| --- | --- |
+| Before setup | Refused an exposed input file, an ineligible revision, and an occupied evidence destination. Refusals preserved prior evidence and produced zero business writes. |
+| Acceptance and health | Replacing the health input with another phase's file blocked setup before a catalog download. Fresh setup completed with one independently observed acceptance POST and commit, zero health writes and zero live writes. |
+| Live launch and execution | Stale live input blocked startup. The intended fresh fixture started with zero business writes. A guarded live save produced one POST, one committed record, independent readback and an archived saved effect. Guarded stop closed the owned runner and preserved the attached fixture. |
+
+These results cover the local candidate and synthetic project. The CLI command,
+configuration and ownership boundaries are in the [native setup guide](native-setup.md#prepare-a-fresh-fixture).
+
 ## Worker activation check after alpha.12 — 2026-11-18
 
 **Production renewal passed.** An ordinary renewal on `main` at `273e502`
