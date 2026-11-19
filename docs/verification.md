@@ -23,6 +23,32 @@ case identities against their application fixtures.
 These results cover the local candidate and synthetic project. The CLI command,
 configuration and ownership boundaries are in the [native setup guide](native-setup.md#prepare-a-fresh-fixture).
 
+A clean build from `fd28e8853bb45caf1332377c0153836c3f8e22a8` produced a
+local tools archive with SHA-256
+`44435433e6fa6e4177a5fdeaa0ad788ca59e2bcaab7dba2d56af024a3065db21`.
+The test installed that archive offline into a new tools directory. Its native
+entrypoint passed the same signed-loopback setup, two live starts, one guarded
+save, and guarded stop. Both start records survived and the viewer displayed
+the saved result with one matching note. The exact alpha.12 kit used for the
+runtime and engine matched its published ZIP digest.
+
+The runtime suite passed 319 tests. The native, installation, manager,
+supervisor and tools suites passed 192 tests, including nine fixture contract
+tests. Their optional exact-bundle model migration case was skipped in this run.
+The ordinary managed starter passed all eight checks with its original
+registration. The Rust workspace passed 29 tests with one existing ignored
+test. Source, type, formatting and public metadata checks passed.
+
+One rollback limitation was reproduced across registrations. Direct Revert
+with a mismatched preflight registration refused before quiescing the running
+slot. After guarded stop and restoration of the previous configuration and
+authored source, Revert in the retained failed-start owner's Update UI restored
+the legacy slot. That controller continued to report its earlier startup
+failure. Guarded stop exited 1 even though the owner exited and an independent
+status read confirmed `stopped`. A fresh native start then reported `running`
+with the previous slot and connected viewer. The live count stayed at one POST
+and one commit throughout restoration.
+
 ## Worker activation check after alpha.12 — 2026-11-18
 
 **Production renewal passed.** An ordinary renewal on `main` at `273e502`
