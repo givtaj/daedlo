@@ -334,6 +334,88 @@ test("disabled reads preserve the existing path", async () => {
   assert.equal(await readNativeFixture({}, "live"), undefined);
 });
 
+for (const phase of phases) {
+  test(`serialized ${phase} accepts 320 KiB and refuses one extra byte before publishing`, async (t) => {
+    const { config, root, hook } = await project(t);
+    // The selector writes short exponent notation. Re-encoding the parsed
+    // numbers in a private phase file expands each to 21 decimal digits.
+    await fs.writeFile(
+      hook,
+      `
+      let request = "";
+      for await (const chunk of process.stdin) request += chunk;
+      const { phase, count, label } = JSON.parse(request).input;
+      const reply = { schemaVersion: 1, acceptance: {}, health: {}, live: {} };
+      reply[phase] = { readings: [], label };
+      const samples = Array(count).fill("1e20").join(",");
+      process.stdout.write(JSON.stringify(reply).replace('"readings":[]', '"readings":[' + samples + ']'));
+    `,
+    );
+    async function preparation(name, count, label) {
+      const input = join(root, name + ".json");
+      await fs.writeFile(input, json({ phase, count, label }), { mode: 0o600 });
+      return {
+        ...config,
+        fixturePreflight: {
+          input,
+          directory: join(root, name),
+          generation: randomUUID(),
+        },
+      };
+    }
+
+    // Equal-length paths and UUIDs keep the measured envelope overhead exact
+    // even when the host's temporary directory changes.
+    const empty = await preparation("zero", 0, "");
+    await prepareNativeFixture(empty);
+    const phaseFile = (cfg) =>
+      join(cfg.fixturePreflight.directory, phase, "input.json");
+    const overhead = (await fs.stat(phaseFile(empty))).size;
+    const count = 14000;
+    const digitsAndCommas = count * String(1e20).length + count - 1;
+    const limit = 320 * 1024;
+    const padding = limit - overhead - digitsAndCommas;
+    const label = "é".repeat(Math.floor(padding / 2)) + "x".repeat(padding % 2);
+    assert.equal(Buffer.byteLength(label), padding);
+
+    const exact = await preparation("edge", count, label);
+    await prepareNativeFixture(exact);
+    assert.equal((await fs.stat(phaseFile(exact))).size, limit);
+    for (const name of phases) {
+      const { input } = await readNativeFixture(exact, name);
+      if (name === phase) {
+        assert.equal(input.readings.length, count);
+        assert.equal(input.readings[0], 1e20);
+        assert.equal(input.label, label);
+      } else assert.deepEqual(input, {});
+    }
+    const priorReceipt = join(exact.fixturePreflight.directory, "receipt.json");
+    const original = await fs.readFile(priorReceipt);
+    const evidence = join(
+      exact.fixturePreflight.directory,
+      phase,
+      "evidence",
+      "accepted.txt",
+    );
+    await fs.writeFile(evidence, "retained");
+
+    const oversized = await preparation("over", count, label + "x");
+    await assert.rejects(prepareNativeFixture(oversized), {
+      code: "fixture_preflight",
+    });
+    await noPath(phaseFile(oversized));
+    await noPath(join(oversized.fixturePreflight.directory, "receipt.json"));
+    for (const name of phases) {
+      await assert.rejects(readNativeFixture(oversized, name), {
+        code: "fixture_preflight",
+      });
+    }
+    assert.deepEqual(await fs.readFile(priorReceipt), original);
+    assert.equal(await fs.readFile(evidence, "utf8"), "retained");
+    assert.equal((await readNativeFixture(exact, phase)).input.label, label);
+  });
+}
+
 test("cancelling a running selector terminates it and leaves no completed receipt", async (t) => {
   const { config, marker, hook } = await project(t);
   await fs.writeFile(

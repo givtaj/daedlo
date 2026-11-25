@@ -125,8 +125,11 @@ for their respective phases. Select disposable acceptance data, read-only
 health data and the intended live fixture. Keep the selector read-only.
 An ineligible or ambiguous case should cause a nonzero exit. The selector has
 10 seconds to finish. The input limit is 128 KiB and the combined stdout and
-stderr limit is 256 KiB. Native reports a fixed error when selection fails and
-keeps the selector's output private.
+stderr limit is 256 KiB. Each serialized phase file must fit within 320 KiB,
+including its metadata and trailing newline. If any phase exceeds that limit,
+preflight exits with `fixture_preflight` before publishing the receipt.
+Native reports a fixed error when selection fails and keeps the selector's
+output private.
 
 Wait for a successful preflight before `setup` and `start`. A fresh setup
 passes an additional `fixture` object to each installation hook on stdin.

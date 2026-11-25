@@ -275,6 +275,8 @@ function runHook(path, sourceRoot, input, signal) {
 
 async function writePrivate(path, value) {
   const bytes = Buffer.from(JSON.stringify(value) + "\n");
+  if (bytes.length > envelopeLimit)
+    fail("Fixture preflight serialized file exceeds the size limit.");
   await fs.writeFile(path, bytes, { mode: 0o600, flag: "wx" });
   return digest(bytes);
 }
