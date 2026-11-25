@@ -1,5 +1,34 @@
 # Verification record
 
+## Native fixture request changed after preparation · 2026-11-25
+
+The installed tools from `30da565` prepared synthetic case A. After the
+request file was edited in place to select eligible case B, native setup
+exited zero and made one POST and one commit on A's disposable acceptance
+fixture. B received zero writes. The regression failed on the expected
+refusal. All three phase readers had also returned A in the module-level
+review. [Issue #60](https://github.com/givtaj/daedlo/issues/60)
+
+The corrected tools were packed from clean commit `69ec311`. The archive
+SHA-256 was `5dc3233d08484b8f52ac3c6bba6c09c1cb37e86eb2105b55b24de891bb10e454`.
+The installed entrypoint ran with Node 24.22.2, Chromium 158.0.8127.18 and
+the verified alpha.12 runtime and engine on macOS arm64.
+
+| Synthetic check | Observed result |
+| --- | --- |
+| Edit A to B at the original path, then run setup | Exit 1 with `fixture_preflight`. Both cases' lookup, POST and commit counts stayed unchanged. No kit download occurred and the earlier receipt was preserved byte-for-byte. |
+| Prepare B in a fresh directory and generation | Disposable acceptance made one POST and one commit on B. Health and both live starts made zero writes. The explicit live save made one POST and one commit. Independent readback found exactly one record. A's counts stayed unchanged. Guarded stop and owned cleanup passed. |
+| Phase reader and receipt compatibility | All 12 fixture tests passed. Acceptance, health and live refused the changed request. An edit during selection prevented receipt publication, and a receipt without a request fingerprint required fresh preparation. |
+| Rollback to an earlier registration without preflight | The retained controller reported running after restoration, guarded stop exited zero, both archived reports were preserved and the live write count stayed at one. Owned cleanup passed. |
+
+The integration review remains on hold for two other findings. Revert still
+needs to establish compatibility when two enrolled selectors share a filename
+and use different fixture fields. Preparation also needs to ensure every
+serialized phase file fits its reader's size limit.
+
+[Native browser regression](../tests/native-fixture-preflight-acceptance.mjs) ·
+[Fixture tests](../tests/release-native-fixture.test.mjs)
+
 ## Native fixture preflight candidate — 2026-11-19
 
 The local candidate for [issue #60](https://github.com/givtaj/daedlo/issues/60)
