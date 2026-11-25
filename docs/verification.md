@@ -1,5 +1,19 @@
 # Verification record
 
+## Installed model migration waits for Revert · 2026-11-25
+
+On the first Node 22.23.4 run at merge commit `11561f6`, the Update page
+showed “Previous installation selected” while Revert still held the update
+lock. The migration test's next native status read failed with
+`operation_busy`. The unchanged job passed on rerun.
+[First Node 22 run](https://github.com/givtaj/daedlo/actions/runs/45664172993/job/139381881541)
+
+The corrected test checks the successful Revert response before reading native
+status. On macOS arm64 with Node 22.23.4, the installed Chromium migration test
+passed on its first run. Revert restored the version 1 model, preserved the
+version 2 source and both saved records, and completed guarded cleanup.
+[Migration test](../tests/release-native-model-migration-browser.test.mjs)
+
 ## Native fixture preparation enforces the phase reader's size limit · 2026-11-25
 
 On installed commit `9528879`, the selector returned about 86 kB of valid
@@ -19,7 +33,7 @@ Each phase was tested independently on both sides of the limit.
 
 All 17 fixture tests passed, including multibyte text at the boundary and
 preservation of an earlier successful generation's receipt and evidence.
-P3 is verified. The merge remains on hold pending a maintainer decision.
+P3 was verified and [PR #62](https://github.com/givtaj/daedlo/pull/62) merged at `11561f6`.
 [Fixture tests](../tests/release-native-fixture.test.mjs)
 
 ## Native Revert checks the target fixture before stopping the viewer · 2026-11-25

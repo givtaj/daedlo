@@ -383,9 +383,19 @@ test(
 
     await page.goto(migrated.result.updateUrl);
     await page.locator("#acknowledge").check();
-    await page
-      .getByRole("button", { name: "Revert update", exact: true })
-      .click();
+    // A display poll can show the previous installation while Revert is still running.
+    const actionUrl = new URL("/action", migrated.result.updateUrl).href;
+    const [revertResponse] = await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.url() === actionUrl &&
+          response.request().method() === "POST" &&
+          response.request().postDataJSON()?.action === "revert",
+      ),
+      page.getByRole("button", { name: "Revert update", exact: true }).click(),
+    ]);
+    assert.equal(revertResponse.status(), 200);
+    assert.equal((await revertResponse.json()).ok, true);
     await page
       .locator("#phase-title")
       .filter({ hasText: "Previous installation selected" })
