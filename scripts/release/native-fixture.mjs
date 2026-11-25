@@ -167,12 +167,38 @@ async function privateBytes(path, limit) {
       if (!bytesRead) break;
       size += bytesRead;
     }
-    if (size > limit || size !== info.size)
+    const current = await fs.lstat(path);
+    requirePrivateFile(current);
+    if (
+      size > limit ||
+      size !== info.size ||
+      ["dev", "ino", "size", "mtimeMs", "ctimeMs"].some(
+        (key) => current[key] !== info[key],
+      )
+    )
       fail("Fixture preflight input is oversized or changed while being read.");
     return buffer.subarray(0, size);
   } finally {
     await handle.close();
   }
+}
+
+async function requestBytes(path) {
+  try {
+    return await privateBytes(path, inputLimit);
+  } catch (error) {
+    if (error instanceof FixtureError) throw error;
+    fail(
+      "Fixture preflight input file could not be read. Check the input path and permissions.",
+    );
+  }
+}
+
+async function verifyRequest(path, expectedSha256) {
+  if (digest(await requestBytes(path)) !== expectedSha256)
+    fail(
+      "Fixture preflight does not match the current request. Prepare a fresh directory and generation.",
+    );
 }
 
 function parseJson(bytes, message) {
@@ -277,14 +303,8 @@ export async function prepareNativeFixture(config, { signal } = {}) {
     await verifyStorePath(settings.store);
     const hook = join(settings.sourceRoot, settings.hook);
     await localPath(hook, "file");
-    const bytes = await privateBytes(settings.input, inputLimit).catch(
-      (error) => {
-        if (error instanceof FixtureError) throw error;
-        fail(
-          "Fixture preflight input file could not be read. Check the input path and permissions.",
-        );
-      },
-    );
+    const bytes = await requestBytes(settings.input);
+    const inputSha256 = digest(bytes);
     const input = parseJson(
       bytes,
       "Fixture preflight input must be valid JSON.",
@@ -331,7 +351,8 @@ export async function prepareNativeFixture(config, { signal } = {}) {
     }
     const receiptPath = join(settings.directory, "receipt.json");
     const temporary = receiptPath + ".tmp";
-    await writePrivate(temporary, { ...identity, checksums });
+    await writePrivate(temporary, { ...identity, inputSha256, checksums });
+    await verifyRequest(settings.input, inputSha256);
     // Publish at a single boundary after the last cancellation check.
     checkCancellation(signal);
     renameSync(temporary, receiptPath);
@@ -376,6 +397,7 @@ export async function readNativeFixture(config, phase) {
       fail("Fixture preflight input does not match this phase and generation.");
     const evidenceDirectory = join(directory, "evidence");
     await privateDirectory(evidenceDirectory);
+    await verifyRequest(settings.input, receipt.inputSha256);
     return {
       phase,
       generation: settings.generation,

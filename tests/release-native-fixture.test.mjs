@@ -16,7 +16,7 @@ const json = (value) => JSON.stringify(value);
 const readMode = async (path) => (await fs.stat(path)).mode & 0o777;
 const noPath = (path) => assert.rejects(fs.lstat(path), { code: "ENOENT" });
 
-async function project(t) {
+async function project(t, eligibleIds = [privateMarker]) {
   const root = await fs.mkdtemp(
     join(await fs.realpath(tmpdir()), "native-fixture-test-"),
   );
@@ -32,14 +32,14 @@ async function project(t) {
     let raw = "";
     for await (const chunk of process.stdin) raw += chunk;
     const request = JSON.parse(raw);
-    if (request.schemaVersion !== 1 || request.input.selectedId !== ${json(privateMarker)})
+    if (request.schemaVersion !== 1 || !${json(eligibleIds)}.includes(request.input.selectedId))
       process.exit(4);
     await appendFile(${json(marker)}, "1", {mode: 0o600});
     console.log(JSON.stringify({schemaVersion: 1,${phases.map((phase) => `${phase}: { selectedId: request.input.selectedId, phase: "${phase}" }`).join(",")}}));
   `,
   );
   const input = join(root, "input.json");
-  await fs.writeFile(input, json({ selectedId: privateMarker }), {
+  await fs.writeFile(input, json({ selectedId: eligibleIds[0] }), {
     mode: 0o600,
   });
   const config = {
@@ -86,6 +86,64 @@ test("the registered hook runs once and publishes privately bound phase contexts
   };
   await walk(config.fixturePreflight.directory);
   await noPath(config.store);
+});
+
+test("changing the request at the same path requires a fresh preparation for every phase", async (t) => {
+  const { config, marker, root } = await project(t, ["case-a", "case-b"]);
+  const settings = config.fixturePreflight;
+  await prepareNativeFixture(config);
+  const first = await readNativeFixture(config, "live");
+  assert.equal(first.input.selectedId, "case-a");
+  const evidence = join(first.evidenceDirectory, "original.json");
+  await fs.writeFile(evidence, "original evidence");
+
+  await fs.writeFile(settings.input, json({ selectedId: "case-b" }));
+  for (const phase of phases) {
+    await assert.rejects(
+      readNativeFixture(config, phase),
+      { code: "fixture_preflight" },
+      `${phase} must refuse the stale case`,
+    );
+  }
+  const fresh = {
+    ...config,
+    fixturePreflight: {
+      ...settings,
+      directory: join(root, "next"),
+      generation: randomUUID(),
+    },
+  };
+  await prepareNativeFixture(fresh);
+  for (const phase of phases) {
+    const context = await readNativeFixture(fresh, phase);
+    assert.deepEqual(context.input, { selectedId: "case-b", phase });
+    assert.equal(context.generation, fresh.fixturePreflight.generation);
+  }
+  assert.equal(await fs.readFile(marker, "utf8"), "11");
+  assert.equal(await fs.readFile(evidence, "utf8"), "original evidence");
+});
+
+test("a request edited during selection leaves no published receipt", async (t) => {
+  const { config, hook } = await project(t);
+  const { input, directory } = config.fixturePreflight;
+  // Place an editor's byte change between selector dispatch and publication.
+  await fs.appendFile(hook, `\nawait appendFile(${json(input)}, "\\n");\n`);
+  await assert.rejects(prepareNativeFixture(config), {
+    code: "fixture_preflight",
+  });
+  await noPath(join(directory, "receipt.json"));
+});
+
+test("older preparations without a request fingerprint require fresh preparation", async (t) => {
+  const { config } = await project(t);
+  await prepareNativeFixture(config);
+  const path = join(config.fixturePreflight.directory, "receipt.json");
+  const receipt = JSON.parse(await fs.readFile(path, "utf8"));
+  delete receipt.inputSha256;
+  await fs.writeFile(path, json(receipt));
+  await assert.rejects(readNativeFixture(config, "live"), {
+    code: "fixture_preflight",
+  });
 });
 
 test("absent generation and cross-project or cross-phase substitution fail closed", async (t) => {

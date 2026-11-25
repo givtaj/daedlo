@@ -137,7 +137,11 @@ Store phase-specific evidence in its supplied directory. Keep the case data
 and operation identities out of receipts, logs and public result labels.
 An occupied or incomplete preparation directory is preserved. Correct the
 reported prerequisite and choose a fresh directory and generation for another
-preparation. Changes to the source input require a fresh preparation.
+preparation. Keep the original request file private and available through
+setup and launch. Preflight records a fingerprint of its exact bytes in the
+private receipt. Each phase rechecks the file before using the selected case.
+If the file changes, or the receipt predates this check, run preflight with
+a fresh directory and generation. The earlier evidence stays in place.
 
 Ordinary setup reuse still applies to accepted installations and ready slots.
 An earlier installation receipt describes the disposable checks that ran for

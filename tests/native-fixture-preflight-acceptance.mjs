@@ -155,9 +155,9 @@ async function localCatalog(root, kitDirectory, metadata) {
   };
 }
 
-async function createCase(phase) {
+async function createCase(phase, variant = "case") {
   const fixture = await createStarterFixture();
-  const caseId = `fixture-${phase}-case`;
+  const caseId = `fixture-${phase}-${variant}`;
   const revision = `fixture-${phase}-revision`;
   let posts = 0,
     lookups = 0;
@@ -328,8 +328,8 @@ try {
     cases[phase] = await createCase(phase);
     owned.push(cases[phase]);
   }
-  const caseCounts = () =>
-    Object.fromEntries(phases.map((phase) => [phase, cases[phase].count()]));
+  const caseCounts = (selected = cases) =>
+    Object.fromEntries(phases.map((phase) => [phase, selected[phase].count()]));
   const version = metadata.version;
   const crateArchive = join(root, metadata.bundle.artifacts.engine.file);
   const { stdout: crateBytes } = await execute(
@@ -406,6 +406,61 @@ try {
     ...process.env,
     NODE_EXTRA_CA_CERTS: catalog.certificate,
   });
+  const originalCases = {};
+  const originalRequest = structuredClone(fixtureInputs);
+  for (const phase of phases) {
+    const original = await createCase(phase, "original");
+    owned.push(original);
+    originalCases[phase] = original;
+    Object.assign(originalRequest[phase], {
+      origin: original.origin,
+      caseId: original.caseId,
+      expectedRevision: original.revision,
+    });
+  }
+  const originalDirectory = join(root, "original-preparation");
+  config.fixturePreflight = {
+    input,
+    directory: originalDirectory,
+    generation: randomUUID(),
+  };
+  await writeJson(configPath, config);
+  await writeJson(input, originalRequest);
+  await cli.ok("preflight", "prepared");
+  const originalReceipt = await fs.readFile(
+    join(originalDirectory, "receipt.json"),
+  );
+  const beforeRequestChange = {
+    original: caseCounts(originalCases),
+    replacement: caseCounts(),
+  };
+  await writeJson(input, fixtureInputs);
+  const changedRequest = await cli.call("setup", "--version", version);
+  const afterRequestChange = {
+    original: caseCounts(originalCases),
+    replacement: caseCounts(),
+  };
+  checks.push({
+    check:
+      "An edited request at the same path refuses setup before any case is consumed",
+    exit: changedRequest.status,
+    before: beforeRequestChange,
+    after: afterRequestChange,
+  });
+  assert.equal(
+    changedRequest.status,
+    1,
+    "Changing the fixture request must block setup",
+  );
+  assert.equal(JSON.parse(changedRequest.stderr).code, "fixture_preflight");
+  assert.deepEqual(afterRequestChange, beforeRequestChange);
+  assert.equal(catalog.downloaded.size, 0);
+  assert.deepEqual(
+    await fs.readFile(join(originalDirectory, "receipt.json")),
+    originalReceipt,
+  );
+  config.fixturePreflight = { input, directory, generation };
+  await writeJson(configPath, config);
   const untouched = caseCounts();
   await fs.chmod(input, 0o644);
   const permissions = await cli.refused("preflight");
@@ -683,6 +738,7 @@ try {
     live: { posts: 1, commits: 1, lookups: 4 },
   });
   assert.equal(await fs.readFile(receiptPath, "utf8"), receipt);
+  assert.deepEqual(caseCounts(originalCases), beforeRequestChange.original);
   checks.push({
     check:
       "Stale generation refuses startup, same-generation relaunch preserves evidence, and guarded stop retains the independently verified live write",
