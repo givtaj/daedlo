@@ -156,6 +156,30 @@ test("a ready operation without a confirmed version cannot restart the available
   );
 });
 
+test("fixture preflight refusals explain how to recover without exposing private input", async (t) => {
+  const f = await start(t);
+  const privateDetail = "private fixture input and directory";
+  const rejectFixture = async () => {
+    throw Object.assign(Error(privateDetail), { code: "fixture_preflight" });
+  };
+  f.state.canRollback = true;
+  f.manager.rollback = rejectFixture;
+  f.manager.activate = rejectFixture;
+  await f.action("check");
+  await f.action("install");
+  for (const action of ["restart", "revert"]) {
+    const refusal = await f.action(action, { acknowledgeRestart: true });
+    assert.equal(refusal.status, 409);
+    assert.deepEqual(refusal.body.requestError, {
+      code: "fixture_preflight",
+      message:
+        "Fixture preflight is missing, stale or incompatible. Check the prepared generation and registered installation before trying again.",
+    });
+    assert.equal(refusal.body.status.running.id, "old");
+    assert.equal(JSON.stringify(refusal.body).includes(privateDetail), false);
+  }
+});
+
 test("Host, Origin, token and strict request shape refuse cross-site and arbitrary inputs", async (t) => {
   const f = await start(t);
   const generation = (await f.status()).body.generation;

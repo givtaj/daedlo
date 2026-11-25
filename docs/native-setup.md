@@ -84,6 +84,78 @@ and executable paths in local diagnostics.
 
 Docker is only an application-fixture choice, not a Daedlo requirement.
 
+### Prepare a fresh fixture
+
+Tools with `preflight` in `daedlo-native --help` can run an explicit fixture
+selector before native setup or launch. This command is available in the source
+candidate following alpha.12. It is opt-in. Existing projects can continue to
+use `doctor`, `setup` and `start` directly.
+
+Add the project selector to `registration.files` and name it in
+`registration.hooks.preflight`. Keep the existing acceptance and health hooks.
+Configure the following top-level entry in the private Ninja configuration.
+Use a new UUID v4 and a fresh destination for each preparation. For example,
+`node -p "require('node:crypto').randomUUID()"` prints a suitable ID.
+
+```json
+{
+  "fixturePreflight": {
+    "input": "/absolute/private-workspace/fixture-request.json",
+    "directory": "/absolute/private-workspace/run-001",
+    "generation": "3823607a-123a-40e7-bd4a-8ebc9c50721f"
+  }
+}
+```
+
+Keep the input owner-readable and private (mode `0600`). Use an existing
+private parent directory and keep the input and destination outside both the
+registered source and the managed store. The file checks require POSIX
+ownership and permission bits. Run the candidate tools' native CLI.
+
+```sh
+node "$tools/lib/native.mjs" preflight --config "$config"
+```
+
+The trusted selector receives `{schemaVersion: 1, input}` as JSON on stdin.
+Call the integration's existing eligibility checks on the requested cases,
+including current revision and prior history where applicable. Return one
+JSON object on stdout with `schemaVersion: 1` and three object-valued keys,
+`acceptance`, `health` and `live`. These objects hold the project inputs
+for their respective phases. Select disposable acceptance data, read-only
+health data and the intended live fixture. Keep the selector read-only.
+An ineligible or ambiguous case should cause a nonzero exit. The selector has
+10 seconds to finish. The input limit is 128 KiB and the combined stdout and
+stderr limit is 256 KiB. Each serialized phase file must fit within 320 KiB,
+including its metadata and trailing newline. If any phase exceeds that limit,
+preflight exits with `fixture_preflight` before publishing the receipt.
+Native reports a fixed error when selection fails and keeps the selector's
+output private.
+
+Wait for a successful preflight before `setup` and `start`. A fresh setup
+passes an additional `fixture` object to each installation hook on stdin.
+Live launch receives `fixture` in `createManagedLaunch`. Each object carries
+`phase`, `generation`, `input` and `evidenceDirectory`. Use the validated
+project input and recheck application state when authorizing the action.
+Store phase-specific evidence in its supplied directory. Keep the case data
+and operation identities out of receipts, logs and public result labels.
+An occupied or incomplete preparation directory is preserved. Correct the
+reported prerequisite and choose a fresh directory and generation for another
+preparation. Keep the original request file private and available through
+setup and launch. Preflight records fingerprints of the exact request and
+the registered project source in the private receipt. Each phase rechecks
+the request. A slot can consume the prepared inputs when its sealed source
+matches the registration and allowlisted files used to prepare them. This
+includes helpers imported by the selector and the launcher that reads its
+output. Different slots or runtime versions can share the same registered source.
+If the file changes, or the receipt predates this check, run preflight with
+a fresh directory and generation. The earlier evidence stays in place.
+
+Ordinary setup reuse still applies to accepted installations and ready slots.
+An earlier installation receipt describes the disposable checks that ran for
+that installation. Starting or reconnecting to a runner does not authorize a
+business write. Stop the current owner through its usual guarded path before
+switching its configuration to a new fixture.
+
 ## Normal use and Codex Browser
 
 Run `start` in a persistent Codex terminal or the project's local environment action.
@@ -168,6 +240,27 @@ including its snapshot and adapter, without overwriting current authoring files 
 undoing application writes. `status` after replacement supplies the current viewer
 URL; reconnect that URL. Expired catalogs block discovery/downloads, not an already
 accepted local launch, source refresh from retained bytes or rollback.
+
+Before **Revert update** stops the current viewer, it checks the prepared
+fixture against the target slot. A different registered source snapshot,
+including different contents under the same selector filename, or a change
+in preflight enrollment results in `fixture_preflight`. The current viewer
+stays running. If a registered file changed in a way you consider compatible,
+the same snapshot check still applies. To return to that earlier installation:
+
+1. Use guarded `stop` with the current configuration and confirm `status` reports
+   `stopped`.
+2. Restore the earlier reviewed configuration, registration and authored source at
+   their original paths. Keep the same store, installed slots, reports and data.
+3. If the earlier registration uses preflight, select a matching retained
+   preparation with its original private request or prepare a fresh generation
+   using the restored source.
+4. Run `start` with the restored configuration. If the selected installation
+   disagrees with the restored registration, keep the foreground owner and open
+   its private `updateUrl`. Acknowledge the restart and choose **Revert update**.
+5. Check the selected and running installation identities with `status` and open
+   its current viewer. Verify the existing application record by readback before
+   continuing. Revert does not resubmit an earlier command.
 
 Keep customized skills and guidance in the registration allowlist. Read the new
 versioned standard guidance and merge necessary changes explicitly; never replace

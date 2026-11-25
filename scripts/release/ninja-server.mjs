@@ -64,6 +64,8 @@ const messages = {
     "Project inputs changed. Prepare and validate the update again.",
   stale_source:
     "Project inputs changed. Prepare and validate the update again.",
+  fixture_preflight:
+    "Fixture preflight is missing, stale or incompatible. Check the prepared generation and registered installation before trying again.",
   retained_bundle_missing:
     "The accepted release bundle is missing. Restore its exact verified bytes before refreshing. No newer release was downloaded.",
   retained_bundle_invalid:
@@ -768,6 +770,7 @@ export async function createNinjaServer({
           });
         else result = await manager.rollback({ acknowledgeRestart: true });
         if (result?.ok === false) throw result.error ?? result;
+        if (restart) lifecycle?.installationStarted?.();
       } catch (error) {
         failure = safeError(
           error,

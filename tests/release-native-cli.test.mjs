@@ -6,6 +6,7 @@ import {
   readFile,
   realpath,
   rm,
+  copyFile,
   unlink,
   writeFile,
 } from "node:fs/promises";
@@ -793,6 +794,88 @@ test("alpha4 retains a failed startup page with sanitized failure and completed 
   }
 });
 
+test("Update Revert supersedes a failed startup only after the manager restores a running installation", async (t) => {
+  const f = await fixture(t);
+  const status = f.manager.status;
+  f.manager.status = async (...args) => ({
+    ...(await status(...args)),
+    canRollback: true,
+  });
+  const start = f.manager.start;
+  f.manager.start = async () => {
+    throw Object.assign(Error("synthetic incompatible registration"), {
+      code: "fixture_preflight",
+    });
+  };
+  const owner = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    assert.equal(owner.result.status, "failed");
+    const url = new URL(owner.result.updateUrl);
+    const headers = { Authorization: `Bearer ${url.hash.slice(7)}` };
+    const revert = async () => {
+      const { generation } = await fetch(url.origin + "/status", {
+        headers,
+      }).then((response) => response.json());
+      return fetch(url.origin + "/action", {
+        method: "POST",
+        headers: {
+          ...headers,
+          Origin: url.origin,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "revert",
+          generation,
+          acknowledgeRestart: true,
+        }),
+      });
+    };
+    f.manager.rollback = f.manager.start;
+    const refused = await revert();
+    assert.equal(refused.status, 409);
+    assert.equal(
+      (await nativeCommand("status", f.configPath, f.deps)).result.status,
+      "failed",
+    );
+
+    f.manager.rollback = start;
+    const accepted = await revert();
+    assert.equal(accepted.status, 200);
+    assert.equal((await accepted.json()).status.running.id, "installed");
+    const recovered = await nativeCommand("status", f.configPath, f.deps);
+    assert.equal(recovered.result.status, "running");
+    assert.equal(recovered.result.startup.phase, "ready");
+    assert.equal(recovered.result.startup.error, undefined);
+    assert.equal(recovered.result.viewerUrl, "http://127.0.0.1:12345/");
+  } finally {
+    await owner.close();
+  }
+});
+
+test("successful guarded stop reports stopped even when initial startup failed", async (t) => {
+  const f = await fixture(t);
+  f.manager.start = async () => {
+    throw Object.assign(Error("synthetic startup failure"), {
+      code: "boot_failed",
+    });
+  };
+  const owner = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    assert.equal(owner.result.status, "failed");
+    const stop = await nativeCommand("stop", f.configPath, f.deps);
+    await owner.closed;
+    assert.equal(
+      (await nativeCommand("status", f.configPath, f.deps)).result.status,
+      "stopped",
+    );
+    assert.equal(stop.result.status, "stopped");
+    assert.notEqual(stop.result.ok, false);
+    assert.equal(stop.result.startup.cleanup, "complete");
+  } finally {
+    await owner.close();
+  }
+});
+
 test("an expired status transport deadline reports a read timeout and preserves the owner", async (t) => {
   const f = await fixture(t);
   const owner = await nativeCommand("start", f.configPath, f.deps);
@@ -851,4 +934,67 @@ test("a final display timeout leaves an already accepted native owner available 
   } finally {
     await owner.close();
   }
+});
+
+test("stopped native setup and start refuse missing fixture phases before opening a manager", async (t) => {
+  const f = await fixture(t);
+  const read = f.deps.readConfig;
+  const sourceRoot = join(f.root, "source");
+  const hook = "preflight.mjs";
+  const input = join(f.root, "seed.json");
+  const directory = join(f.root, "fixture-evidence");
+  const generation = "12345678-0000-4000-8000-000000000001";
+  await mkdir(sourceRoot);
+  await writeFile(input, "{}", { mode: 0o600 });
+  await writeFile(
+    join(sourceRoot, hook),
+    `console.log(JSON.stringify({schemaVersion:1,acceptance:{phase:"acceptance"},health:{phase:"health"},live:{phase:"live"}}));`,
+  );
+  const sourceValidation = [];
+  f.deps.readConfig = async (path, { validateSource }) => {
+    sourceValidation.push(validateSource);
+    const result = await read();
+    Object.assign(result.config.registration, {
+      sourceRoot,
+      hooks: { preflight: hook },
+      files: [hook],
+    });
+    result.config.fixturePreflight = { input, directory, generation };
+    return result;
+  };
+  for (const command of ["setup", "start"])
+    await assert.rejects(nativeCommand(command, f.configPath, f.deps), {
+      code: "fixture_preflight",
+    });
+  assert.deepEqual(
+    (await nativeCommand("preflight", f.configPath, f.deps)).result,
+    {
+      schemaVersion: 1,
+      ok: true,
+      status: "prepared",
+      phases: ["acceptance", "health", "live"],
+    },
+  );
+  assert.deepEqual(sourceValidation, [false, false, true]);
+  for (const [command, phase] of [
+    ["setup", "health"],
+    ["start", "live"],
+  ]) {
+    await copyFile(
+      join(directory, "acceptance", "input.json"),
+      join(directory, phase, "input.json"),
+    );
+    await assert.rejects(nativeCommand(command, f.configPath, f.deps), {
+      code: "fixture_preflight",
+    });
+  }
+  assert.deepEqual(f.calls, []);
+  assert.equal(
+    (await nativeCommand("status", f.configPath, f.deps)).result.status,
+    "stopped",
+  );
+  assert.equal(
+    (await nativeCommand("stop", f.configPath, f.deps)).result.status,
+    "stopped",
+  );
 });

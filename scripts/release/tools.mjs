@@ -27,6 +27,7 @@ const libraries = [
   "ninja",
   "ninja-catalog",
   "ninja-installation",
+  "ninja-source",
   "ninja-manager",
   "ninja-supervisor",
   "ninja-child",
@@ -35,6 +36,7 @@ const libraries = [
   "ninja-recovery",
   "native",
   "native-doctor",
+  "native-fixture",
   "native-session",
 ];
 const documents = [

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { ninjaDirectory, ninjaRead, ninjaWrite } from "./ninja-manager.mjs";
+import { readLaunchFixture } from "./ninja-installation.mjs";
 
 import {
   safeFrontend,
@@ -16,6 +17,7 @@ export async function createNinjaSupervisor({
   root,
   settings = {},
   frontend,
+  fixtureConfig,
   timeoutMs = 30000,
 }) {
   root = resolve(root);
@@ -127,6 +129,9 @@ export async function createNinjaSupervisor({
     };
   }
   return {
+    async checkLaunchInputs(receipt) {
+      await readLaunchFixture(receipt, fixtureConfig);
+    },
     async status({ onPhase } = {}) {
       if (launching)
         return {
@@ -277,6 +282,7 @@ export async function createNinjaSupervisor({
           installation: receipt,
           settings,
           frontend,
+          fixtureConfig,
           marker,
           token,
         });

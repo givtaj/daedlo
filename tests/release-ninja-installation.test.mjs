@@ -1,14 +1,17 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { execFileSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { createManifest } from "../scripts/release/manifest.mjs";
+import { prepareNativeFixture } from "../scripts/release/native-fixture.mjs";
+import { createNinjaManager } from "../scripts/release/ninja-manager.mjs";
 import {
   prepareInstallation,
   readInstallationIdentity,
+  readLaunchFixture,
   snapshotProject,
   verifyInstallation,
   runInstallationHook,
@@ -249,6 +252,10 @@ test("real isolated npm and Cargo prepare preserve source, custom instructions, 
   assert.ok(receipt, "Installation must return a complete verified receipt");
   assert.equal(receipt.version, "1.0.0");
   assert.equal(receipt.path, f.destination);
+  assert.equal(
+    await readLaunchFixture(receipt, { registration: f.registration }),
+    undefined,
+  );
   assert.equal(receipt.sourceSha256, before.sha256);
   assert.equal(receipt.acceptance.accepted, true);
   assert.equal(receipt.health.ready, true);
@@ -915,4 +922,220 @@ test("new installer accepts manager2 renamed packages and refuses unknown manage
   other.verifiedKit.identity.contracts.manager = 3;
   await assert.rejects(other.prepare(), /supported manager contracts/);
   await assert.rejects(fs.stat(other.destination), { code: "ENOENT" });
+});
+
+test("registration accepts an explicit allowlisted preflight hook", async (t) => {
+  const f = await fixture(t);
+  const file = "fixture-preflight.mjs";
+  await write(join(f.sourceRoot, file), "export const testPreflight = true;\n");
+  const registration = {
+    ...f.registration,
+    files: [...f.registration.files, file],
+    hooks: { ...f.registration.hooks, preflight: file },
+  };
+  await validateRegistration(registration);
+  await assert.rejects(
+    validateRegistration({ ...registration, files: f.registration.files }),
+    /allowlisted/,
+  );
+});
+
+test("Revert checks the prepared fixture against the historical selector contract before quiescing", async (t) => {
+  const f = await fixture(t);
+  const selector = "fixture-preflight.mjs";
+  const helper = "fixture-contract.mjs";
+  const registration = {
+    ...f.registration,
+    files: [...f.registration.files, selector, helper],
+    hooks: { ...f.registration.hooks, preflight: selector },
+  };
+  const store = join(f.root, "store");
+  const input = join(f.root, "request.json");
+  await fs.writeFile(input, "{}", { mode: 0o600 });
+  await write(
+    join(f.sourceRoot, selector),
+    `import { phaseInput } from "./fixture-contract.mjs";
+console.log(JSON.stringify({schemaVersion: 1, acceptance: phaseInput, health: phaseInput, live: phaseInput}));
+`,
+  );
+  let config;
+  async function prepareCase(field) {
+    await write(
+      join(f.sourceRoot, helper),
+      `export const phaseInput = ${JSON.stringify({ [field]: 1 })};\n`,
+    );
+    const generation = randomUUID();
+    config = {
+      registration,
+      store,
+      fixturePreflight: {
+        input,
+        directory: join(f.root, generation),
+        generation,
+      },
+    };
+    await prepareNativeFixture(config);
+  }
+
+  let running;
+  const calls = [];
+  const manager = await createNinjaManager({
+    root: store,
+    registration,
+    provider: {
+      check: async () => ({ available: { id: "kit", version: "1.0.0" } }),
+      download: async () => f.verifiedKit,
+    },
+    installer: {
+      prepare: (args) =>
+        prepareInstallation({ ...args, fixtureConfig: config }),
+      verify: verifyInstallation,
+      readIdentity: readInstallationIdentity,
+    },
+    supervisor: {
+      status: async () => ({ running, dirty: false }),
+      checkLaunchInputs: (target) => readLaunchFixture(target, config),
+      quiesce: async () => calls.push("quiesce"),
+      report: async () => ({ format: "browser-driver-report/1" }),
+      close: async () => {
+        calls.push("close");
+        running = null;
+      },
+      start: async (target) => {
+        calls.push("start");
+        running = target;
+      },
+    },
+  });
+  async function activateCase(field) {
+    await prepareCase(field);
+    await manager.check();
+    const ready = await manager.prepare("kit");
+    await manager.activate(ready.operation.id, { acknowledgeRestart: true });
+    assert.deepEqual((await readLaunchFixture(running, config)).input, {
+      [field]: 1,
+    });
+    return running;
+  }
+  const first = await activateCase("legacyCaseId");
+  const equivalent = await activateCase("legacyCaseId");
+  assert.notEqual(equivalent.id, first.id);
+  const matching = await manager.rollback({ acknowledgeRestart: true });
+  assert.equal(matching.running.id, first.id);
+  const previous = running;
+  const current = await activateCase("recordId");
+  await t.test(
+    "historical launch refuses the other selector's prepared input",
+    async () => {
+      await assert.rejects(readLaunchFixture(previous, config), {
+        code: "fixture_preflight",
+      });
+    },
+  );
+  await t.test(
+    "refusal preserves the running slot until a compatible preparation is restored",
+    async () => {
+      calls.length = 0;
+      const before = await manager.status();
+      await assert.rejects(manager.rollback({ acknowledgeRestart: true }), {
+        code: "fixture_preflight",
+      });
+      assert.deepEqual(calls, []);
+      const after = await manager.status();
+      assert.equal(after.generation, before.generation);
+      assert.equal(after.selected.id, current.id);
+      assert.equal(after.running.id, current.id);
+      await prepareCase("legacyCaseId");
+      const reverted = await manager.rollback({ acknowledgeRestart: true });
+      assert.equal(reverted.selected.id, previous.id);
+      assert.equal(reverted.running.id, previous.id);
+      assert.deepEqual((await readLaunchFixture(running, config)).input, {
+        legacyCaseId: 1,
+      });
+    },
+  );
+});
+
+test("installation consumes separate fixture phases without archiving hook payloads", async (t) => {
+  const f = await fixture(t);
+  const preflight = "fixture-preflight.mjs";
+  const registration = {
+    ...f.registration,
+    files: [...f.registration.files, preflight],
+    hooks: { ...f.registration.hooks, preflight },
+  };
+  const marker = "SYNTHETIC_PRIVATE_FIXTURE_MARKER";
+  const input = join(f.root, "seed.json");
+  const directory = join(f.root, "fixture-evidence");
+  const generation = "12345678-0000-4000-8000-000000000001";
+  const fixtureConfig = {
+    registration,
+    store: join(f.root, "store"),
+    fixturePreflight: { input, directory, generation },
+  };
+  await fs.writeFile(input, JSON.stringify({ marker }), { mode: 0o600 });
+  await write(
+    join(f.sourceRoot, preflight),
+    `console.log(JSON.stringify({schemaVersion:1,acceptance:{phase:"acceptance",marker:${JSON.stringify(marker)}},health:{phase:"health",marker:${JSON.stringify(marker)}},live:{phase:"live",marker:${JSON.stringify(marker)}}}));`,
+  );
+  const fixtureHook = hook
+    .replace(
+      "const runtime=",
+      `if(ctx.fixture?.phase!==ctx.phase || ctx.fixture?.input?.phase!==ctx.phase || ctx.fixture.generation!==${JSON.stringify(generation)} || ctx.fixture.input.marker!==${JSON.stringify(marker)}) throw Error('Wrong fixture context');
+await fs.writeFile(ctx.fixture.evidenceDirectory+'/consumed.json',JSON.stringify({phase:ctx.phase}),{mode:0o600});
+console.error(ctx.fixture.input.marker);
+const runtime=`,
+    )
+    .replace(
+      "accepted:true,isolated:true",
+      "accepted:true,isolated:true,private:ctx.fixture.input.marker",
+    );
+  await write(join(f.sourceRoot, registration.hooks.acceptance), fixtureHook);
+  await write(join(f.sourceRoot, registration.hooks.health), fixtureHook);
+  await assert.rejects(f.prepare({ registration }), {
+    code: "fixture_preflight",
+  });
+  await assert.rejects(f.prepare({ registration, fixtureConfig }), {
+    code: "fixture_preflight",
+  });
+  await assert.rejects(fs.access(f.destination), { code: "ENOENT" });
+  await prepareNativeFixture(fixtureConfig);
+  const receipt = await f.prepare({ registration, fixtureConfig });
+  for (const phase of ["acceptance", "health"]) {
+    assert.deepEqual(
+      JSON.parse(
+        await fs.readFile(join(directory, phase, "evidence", "consumed.json")),
+      ),
+      { phase },
+    );
+    assert.equal(receipt[phase].accepted, true);
+    assert.equal(Object.hasOwn(receipt[phase], "private"), false);
+  }
+  for (const directory of await fs.readdir(join(f.destination, "checks")))
+    await assert.rejects(
+      fs.access(join(f.destination, "checks", directory, "hook.log")),
+      { code: "ENOENT" },
+    );
+  assert.equal(JSON.stringify(receipt).includes(marker), false);
+  assert.equal(
+    (
+      await fs.readFile(join(f.destination, "installation.json"), "utf8")
+    ).includes(marker),
+    false,
+  );
+  assert.equal(
+    (await readLaunchFixture(receipt, fixtureConfig)).input.phase,
+    "live",
+  );
+  await assert.rejects(readLaunchFixture(receipt), {
+    code: "fixture_preflight",
+  });
+  await fs.copyFile(
+    join(directory, "acceptance", "input.json"),
+    join(directory, "health", "input.json"),
+  );
+  await assert.rejects(
+    runInstallationHook(receipt, "health", { fixtureConfig }),
+    { code: "fixture_preflight" },
+  );
 });

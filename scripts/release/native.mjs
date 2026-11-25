@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { openNinja, readNinjaConfig } from "./ninja.mjs";
 import { ninjaDirectory, ninjaRead, ninjaWrite } from "./ninja-manager.mjs";
 import { createNinjaServer } from "./ninja-server.mjs";
+import { prepareNativeFixture, readNativeFixture } from "./native-fixture.mjs";
 
 import {
   frontendIdentity,
@@ -20,6 +21,7 @@ const fail = (code, message) => {
 };
 const commands = [
   "doctor",
+  "preflight",
   "setup",
   "start",
   "status",
@@ -237,6 +239,15 @@ export async function nativeCommand(
   });
   configPath = resolve(configPath);
   if (command === "doctor") return { result: await doctor(configPath) };
+  if (command === "preflight") {
+    const { config } = await readConfig(configPath, { validateSource: true });
+    return {
+      result: {
+        schemaVersion: 1,
+        ...(await prepareNativeFixture(config, { signal })),
+      },
+    };
+  }
   const { config, keys } = await readConfig(configPath, {
     validateSource: false,
   });
@@ -329,6 +340,8 @@ export async function nativeCommand(
       "Start the native runner before requesting this action.",
     );
   if (command === "setup") {
+    await readNativeFixture(config, "acceptance");
+    await readNativeFixture(config, "health");
     const preflight = await doctor(configPath);
     if (!preflight.ok)
       throw Object.assign(
@@ -338,6 +351,8 @@ export async function nativeCommand(
         { code: "preflight_blocked", preflight },
       );
   }
+  if (["start", "restart", "migrate-activate"].includes(command))
+    await readNativeFixture(config, "live");
   // Initialization does not recover/switch a selection before exclusive runner ownership.
   const { manager, supervisor } = await open(configPath, { recover: false });
   const live = await supervisor.status();
@@ -439,6 +454,11 @@ export async function nativeCommand(
     if (starting)
       fail("operation_busy", "Native startup is still in progress.");
   };
+  const installationStarted = () => {
+    startedSuccessfully = true;
+    recovery = false;
+    startup = { phase: "ready", cleanup: "pending" };
+  };
   async function ensureServer() {
     if (server) return;
     server = await createNinjaServer({
@@ -457,8 +477,9 @@ export async function nativeCommand(
             ...(s.observation ? { observation: s.observation } : {}),
             evidence: s.evidence ?? null,
             frontend: s.frontend ?? frontend,
-            startup:
-              startup.phase === "failed" ? startup : (s.startup ?? startup),
+            startup: ["failed", "stopped"].includes(startup.phase)
+              ? startup
+              : (s.startup ?? startup),
           };
         },
         stop: async () => {
@@ -489,6 +510,7 @@ export async function nativeCommand(
             }
           }
           await closeDriver();
+          startup = { phase: "stopped", cleanup: "complete" };
         },
         refresh: () => {
           available();
@@ -508,9 +530,7 @@ export async function nativeCommand(
             reviewSha256,
             acknowledgeRestart: true,
           });
-          startedSuccessfully = true;
-          recovery = false;
-          startup = { phase: "ready", cleanup: "pending" };
+          if (result?.ok !== false) installationStarted();
           return result;
         },
         reviewAbandonment: () => {
@@ -524,13 +544,16 @@ export async function nativeCommand(
           startup = { ...startup, phase: "stopped", cleanup: "complete" };
           return result;
         },
-        restart: ({ operation, version }) => {
+        restart: async ({ operation, version }) => {
           available();
-          return manager.activate(operation, {
+          const result = await manager.activate(operation, {
             acknowledgeRestart: true,
             expectedVersion: version,
           });
+          if (result?.ok !== false) installationStarted();
+          return result;
         },
+        installationStarted,
         retryEvidence: async () => {
           available();
           const result = await supervisor.retryEvidence();
@@ -751,7 +774,7 @@ export async function runNativeCli(
 ) {
   if (args.length === 1 && args[0] === "--help") {
     process.stdout.write(
-      "Daedlo native\n  daedlo-native doctor|setup|start|status|stop|refresh|restart|retry-evidence --config FILE\n  daedlo-native setup --config FILE --version VERSION\n  daedlo-native migrate-prepare --config FILE\n  daedlo-native migrate-review --config FILE --operation ID\n  daedlo-native migrate-activate --config FILE --operation ID --review-sha256 SHA256\n  daedlo-native abandon-review --config FILE\n  daedlo-native abandon --config FILE --review ID\n\nReview commands print private evidence; retain it locally. Migration activation and abandonment require the exact reviewed identity.\nStart and migrate-activate own a foreground runner; repeated start reconnects without replay.\nOpen the returned viewerUrl in Codex Browser; updateUrl opens Ninja-Update.\nKeep private control URLs and records local. Setup never upgrades an existing selection.\n",
+      "Daedlo native\n  daedlo-native doctor|preflight|setup|start|status|stop|refresh|restart|retry-evidence --config FILE\n  daedlo-native setup --config FILE --version VERSION\n  daedlo-native migrate-prepare --config FILE\n  daedlo-native migrate-review --config FILE --operation ID\n  daedlo-native migrate-activate --config FILE --operation ID --review-sha256 SHA256\n  daedlo-native abandon-review --config FILE\n  daedlo-native abandon --config FILE --review ID\n\nReview commands print private evidence; retain it locally. Migration activation and abandonment require the exact reviewed identity.\nStart and migrate-activate own a foreground runner; repeated start reconnects without replay.\nOpen the returned viewerUrl in Codex Browser; updateUrl opens Ninja-Update.\nKeep private control URLs and records local. Setup never upgrades an existing selection.\n",
     );
     return;
   }

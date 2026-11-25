@@ -160,6 +160,29 @@ test("a changed prepared version refuses activation before the running session i
   assert.equal((await f.manager.status()).running.version, "1.0.0");
 });
 
+test("invalid launch input refuses activation before quiescing the accepted session", async (t) => {
+  const f = await fixture(t);
+  const accepted = await install(f, "1.0.0");
+  f.setOffer("2.0.0");
+  await f.manager.check();
+  const ready = await f.manager.prepare("2.0.0");
+  f.options.supervisor.checkLaunchInputs = async ({ id }) => {
+    assert.equal(id, ready.operation.id);
+    throw Object.assign(Error("Fixture input is stale"), {
+      code: "fixture_preflight",
+    });
+  };
+  f.log.length = 0;
+  await assert.rejects(
+    f.manager.activate(ready.operation.id, { acknowledgeRestart: true }),
+    { code: "fixture_preflight" },
+  );
+  assert.deepEqual(f.log, []);
+  const current = await f.manager.status();
+  assert.equal(current.selected.id, accepted.selected.id);
+  assert.equal(current.running.id, accepted.running.id);
+});
+
 for (const wasRunning of [true, false]) {
   test(`a changed candidate after guarded close preserves the previous ${wasRunning ? "running" : "stopped"} selection`, async (t) => {
     const f = await fixture(t);

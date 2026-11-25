@@ -1,5 +1,128 @@
 # Verification record
 
+## Native fixture preparation enforces the phase reader's size limit · 2026-11-25
+
+On installed commit `9528879`, the selector returned about 86 kB of valid
+JSON. Re-encoding its numbers expanded one phase file to 327,681 bytes.
+Preflight exited zero and published a receipt. The reader then refused that
+phase. The same regression reproduced for acceptance, health and live.
+
+The tools built from clean commit `7952e08` were installed offline and
+tested through the native `preflight` command. The archive SHA-256 was
+`26c7ae98f00c8230d8bf049c2f3ee8db90fc39167f5432622ae142fb5154f1ba`.
+Each phase was tested independently on both sides of the limit.
+
+| Serialized phase size, including the trailing newline | Installed result |
+| --- | --- |
+| 327,680 bytes | Preflight exited zero and all three phases were readable. |
+| 327,681 bytes | Preflight exited 1 with `fixture_preflight` before writing the oversized file or publishing a receipt. All three reads refused the incomplete generation. |
+
+All 17 fixture tests passed, including multibyte text at the boundary and
+preservation of an earlier successful generation's receipt and evidence.
+P3 is verified. The merge remains on hold pending a maintainer decision.
+[Fixture tests](../tests/release-native-fixture.test.mjs)
+
+## Native Revert checks the target fixture before stopping the viewer · 2026-11-25
+
+On installed PR revision `8bb255a`, two registered selectors had the same
+filename but produced different live input fields. Clicking **Revert update**
+returned HTTP 409 with `operation_failed`. Although the previously running
+slot ended up selected, the supervisor child had been replaced and the live
+case received one additional lookup. Both completed reports survived, and write counts
+stayed unchanged. A separate regression with identical selector bytes and a
+changed imported helper also showed the manager switching to the incompatible
+target. [Browser drill](../tests/native-fixture-preflight-rollback.mjs) ·
+[Manager regression](../tests/release-ninja-installation.test.mjs)
+
+The corrected tools were installed from clean commit `8cc874f`. The archive
+SHA-256 was `55c81bf9ca2e8da5347053ba7503682cef9df81cd3219036f9466ec63af315f8`.
+The drill used synthetic fixtures, the verified alpha.12 runtime and engine,
+Node 24.22.2 and Chromium 158.0.8127.18 on macOS arm64.
+
+| Revert requested in the Update UI | Observed result |
+| --- | --- |
+| Same selector filename, different live input fields | HTTP 409 with `fixture_preflight`. The child ownership record, running and selected slot IDs, and viewer URL stayed the same. The existing editor remained usable. The two archived reports were byte-identical. Acceptance, health and live lookup, POST and commit counts stayed unchanged. |
+| Distinct slots with identical registered source | HTTP 200. The earlier slot was selected and running, its editor reopened, and the two reports were preserved. Disposable acceptance committed once during setup. Live recorded zero POSTs and zero commits. Guarded stop and owned cleanup passed. |
+
+P3 was still open at this checkpoint. The phase size results above close it.
+
+## Native fixture request changed after preparation · 2026-11-25
+
+The installed tools from `30da565` prepared synthetic case A. After the
+request file was edited in place to select eligible case B, native setup
+exited zero and made one POST and one commit on A's disposable acceptance
+fixture. B received zero writes. The regression failed on the expected
+refusal. All three phase readers had also returned A in the module-level
+review. [Issue #60](https://github.com/givtaj/daedlo/issues/60)
+
+The corrected tools were packed from clean commit `69ec311`. The archive
+SHA-256 was `5dc3233d08484b8f52ac3c6bba6c09c1cb37e86eb2105b55b24de891bb10e454`.
+The installed entrypoint ran with Node 24.22.2, Chromium 158.0.8127.18 and
+the verified alpha.12 runtime and engine on macOS arm64.
+
+| Synthetic check | Observed result |
+| --- | --- |
+| Edit A to B at the original path, then run setup | Exit 1 with `fixture_preflight`. Both cases' lookup, POST and commit counts stayed unchanged. No kit download occurred and the earlier receipt was preserved byte-for-byte. |
+| Prepare B in a fresh directory and generation | Disposable acceptance made one POST and one commit on B. Health and both live starts made zero writes. The explicit live save made one POST and one commit. Independent readback found exactly one record. A's counts stayed unchanged. Guarded stop and owned cleanup passed. |
+| Phase reader and receipt compatibility | All 12 fixture tests passed. Acceptance, health and live refused the changed request. An edit during selection prevented receipt publication, and a receipt without a request fingerprint required fresh preparation. |
+| Rollback to an earlier registration without preflight | The retained controller reported running after restoration, guarded stop exited zero, both archived reports were preserved and the live write count stayed at one. Owned cleanup passed. |
+
+At this checkpoint the open findings were rollback compatibility between
+enrolled selectors sharing a filename, and the reader's size limit on
+serialized phase files. The later Revert results are recorded above.
+
+[Native browser regression](../tests/native-fixture-preflight-acceptance.mjs) ·
+[Fixture tests](../tests/release-native-fixture.test.mjs)
+
+## Native fixture preflight candidate — 2026-11-19
+
+The local candidate for [issue #60](https://github.com/givtaj/daedlo/issues/60)
+ran a project-owned selector through the native CLI before setup. On the
+published alpha.12 tools, the same command exited with a usage error. The
+portable packaging test also failed on the missing fixture module before the
+module was added to the closed tools inventory.
+
+The candidate source runner passed a fresh setup and guarded live flow on macOS
+arm64 using Node 24.22.2, Chromium 158.0.8127.18 and the published alpha.12
+runtime and engine. Installation consumed the verified kit from a signed local
+test feed. The selector and phase consumers checked three separate synthetic
+case identities against their application fixtures.
+
+| Check | Observed result |
+| --- | --- |
+| Before setup | Refused an exposed input file, an ineligible revision, and an occupied evidence destination. Refusals preserved prior evidence and produced zero business writes. |
+| Acceptance and health | Replacing the health input with another phase's file blocked setup before a catalog download. Fresh setup completed with one independently observed acceptance POST and commit, zero health writes and zero live writes. |
+| Live launch and execution | Stale live input blocked startup. The intended fresh fixture started with zero business writes. A guarded live save produced one POST, one committed record, independent readback and an archived saved effect. Guarded stop closed the owned runner and preserved the attached fixture. |
+
+These results cover the local candidate and synthetic project. The CLI command,
+configuration and ownership boundaries are in the [native setup guide](native-setup.md#prepare-a-fresh-fixture).
+
+A clean build from `fd28e8853bb45caf1332377c0153836c3f8e22a8` produced a
+local tools archive with SHA-256
+`44435433e6fa6e4177a5fdeaa0ad788ca59e2bcaab7dba2d56af024a3065db21`.
+The test installed that archive offline into a new tools directory. Its native
+entrypoint passed the same signed-loopback setup, two live starts, one guarded
+save, and guarded stop. Both start records survived and the viewer displayed
+the saved result with one matching note. The exact alpha.12 kit used for the
+runtime and engine matched its published ZIP digest.
+
+The runtime suite passed 319 tests. The native, installation, manager,
+supervisor and tools suites passed 192 tests, including nine fixture contract
+tests. Their optional exact-bundle model migration case was skipped in this run.
+The ordinary managed starter passed all eight checks with its original
+registration. The Rust workspace passed 29 tests with one existing ignored
+test. Source, type, formatting and public metadata checks passed.
+
+One rollback limitation was reproduced across registrations. Direct Revert
+with a mismatched preflight registration refused before quiescing the running
+slot. After guarded stop and restoration of the previous configuration and
+authored source, Revert in the retained failed-start owner's Update UI restored
+the legacy slot. That controller continued to report its earlier startup
+failure. Guarded stop exited 1 even though the owner exited and an independent
+status read confirmed `stopped`. A fresh native start then reported `running`
+with the previous slot and connected viewer. The live count stayed at one POST
+and one commit throughout restoration.
+
 ## Worker activation check after alpha.12 — 2026-11-18
 
 **Production renewal passed.** An ordinary renewal on `main` at `273e502`

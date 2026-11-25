@@ -158,6 +158,13 @@ These are evidence assertions by trusted integration code, not a sandbox or proo
 merely because the fields are present. The installer independently checks the
 engine handshake, source/install inventories and browser executable hash.
 
+The [optional native fixture preflight](native-setup.md#prepare-a-fresh-fixture)
+adds a registered selector and private per-phase inputs. An enrolled project's
+acceptance and health hooks receive `fixture` on stdin. Its live launcher
+receives the same shape as an argument to `createManagedLaunch`, scoped to
+the live phase. Projects using the original registration keep their existing
+hook and launcher inputs.
+
 The v1 build contract supports a standalone Node package and one standalone Cargo
 model package with a direct engine dependency. Generated package/Cargo overlays
 and build outputs live in the managed slot. Original manifests/locks remain in

@@ -165,6 +165,22 @@ does not authorize publishing it. Customer suites such as `test:roots-feature`
 and `test:ninja:customer` need their documented isolated source and fixtures and
 are not prerequisites for an ordinary core contribution.
 
+### Reproduce native fixture preflight acceptance
+
+Run the synthetic browser test with a locally verified kit, its populated
+offline npm and Playwright caches, Cargo dependencies and OpenSSL. The test
+starts a signed loopback feed, sets up a disposable native installation and
+exercises the acceptance, health and live cases. To test a packed tools
+candidate, set `DAEDLO_PREFLIGHT_NATIVE` to its installed `lib/native.mjs`.
+
+```sh
+DAEDLO_PREFLIGHT_KIT=/absolute/verified-kit-downloads \
+DAEDLO_PREFLIGHT_NPM_CACHE=/absolute/npm-cache \
+DAEDLO_PREFLIGHT_BROWSER_CACHE=/absolute/browser-cache \
+DAEDLO_PREFLIGHT_OUTPUT=/absolute/fresh-evidence \
+node tests/native-fixture-preflight-acceptance.mjs
+```
+
 ## Propose and review a change
 
 1. For a bug, include a small reproduction, expected and observed behavior,
