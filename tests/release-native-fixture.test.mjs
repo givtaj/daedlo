@@ -146,6 +146,31 @@ test("older preparations without a request fingerprint require fresh preparation
   });
 });
 
+test("a registered source edit during selection prevents receipt publication", async (t) => {
+  const { config, hook } = await project(t);
+  const helper = join(config.registration.sourceRoot, "fixture-fields.json");
+  config.registration.files.push("fixture-fields.json");
+  await fs.writeFile(helper, '["oldField"]');
+  // Model a concurrent editor after the selector started and before it exits.
+  await fs.appendFile(hook, `\nawait appendFile(${json(helper)}, "\\n");\n`);
+  await assert.rejects(prepareNativeFixture(config), {
+    code: "fixture_preflight",
+  });
+  await noPath(join(config.fixturePreflight.directory, "receipt.json"));
+});
+
+test("a preparation without a source fingerprint refuses phase consumption", async (t) => {
+  const { config } = await project(t);
+  await prepareNativeFixture(config);
+  const path = join(config.fixturePreflight.directory, "receipt.json");
+  const receipt = JSON.parse(await fs.readFile(path, "utf8"));
+  delete receipt.sourceSha256;
+  await fs.writeFile(path, json(receipt));
+  await assert.rejects(readNativeFixture(config, "live"), {
+    code: "fixture_preflight",
+  });
+});
+
 test("absent generation and cross-project or cross-phase substitution fail closed", async (t) => {
   const { config } = await project(t);
   await assert.rejects(readNativeFixture(config, "live"), /fixture/i);

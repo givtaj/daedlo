@@ -20,6 +20,7 @@ import { prepareManagedStarter } from "../examples/managed-starter/prepare.mjs";
 import { ninjaCatalogSigningBytes } from "../scripts/release/ninja-catalog.mjs";
 import { sha256 } from "../scripts/release/manifest.mjs";
 import { NINJA_CONTRACTS } from "../scripts/release/ninja.mjs";
+import { verifyFixtureRollback } from "./native-fixture-preflight-rollback.mjs";
 
 const execute = promisify(execFile);
 const phases = ["acceptance", "health", "live"];
@@ -238,7 +239,7 @@ function nativeCli(config, environment) {
     let ownerReady;
     child.stdout.on("data", (bytes) => {
       stdout += bytes;
-      if (command !== "start" || ownerReady) return;
+      if (!["start", "restart"].includes(command) || ownerReady) return;
       const final = stdout.replace(/^\{[^\n]+\}\n(?=\{)/, "");
       try {
         const result = JSON.parse(final);
@@ -287,8 +288,8 @@ function nativeCli(config, environment) {
       assert.equal(result.status, 1, `Native ${command} must fail closed`);
       return JSON.parse(result.stderr);
     },
-    start() {
-      const owner = run("start", []);
+    start(command = "start") {
+      const owner = run(command, []);
       return {
         ...owner,
         ready: Promise.race([
@@ -729,8 +730,6 @@ try {
     .waitFor();
   assert.ok(!(await page.locator("body").innerText()).includes(privateMarker));
   await page.screenshot({ path: join(root, "viewer-saved.png") });
-  await inspector.close();
-  inspector = undefined;
   await stopOwner();
   assert.equal((await fetch(cases.live.origin + "/fixture-case")).status, 200);
   assert.deepEqual(caseCounts(), {
@@ -750,6 +749,28 @@ try {
     liveStartupEvidenceFiles: Object.keys(currentLiveEvidence).length,
     canonicalRunReports: reports.length,
     chromium: installation.browser.version,
+  });
+  const freshAcceptance = await createCase("acceptance", "compatible");
+  owned.push(freshAcceptance);
+  await verifyFixtureRollback({
+    root,
+    config,
+    configPath,
+    request: originalRequest,
+    currentCases: originalCases,
+    freshAcceptance,
+    cli,
+    page,
+    checks,
+    restart: () => {
+      owner = cli.start("restart");
+      return owner.ready;
+    },
+    stop: stopOwner,
+  });
+  assert.deepEqual(caseCounts(), {
+    ...afterSetup,
+    live: { posts: 1, commits: 1, lookups: 4 },
   });
   failed = false;
 } finally {

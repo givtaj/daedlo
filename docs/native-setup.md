@@ -138,8 +138,12 @@ and operation identities out of receipts, logs and public result labels.
 An occupied or incomplete preparation directory is preserved. Correct the
 reported prerequisite and choose a fresh directory and generation for another
 preparation. Keep the original request file private and available through
-setup and launch. Preflight records a fingerprint of its exact bytes in the
-private receipt. Each phase rechecks the file before using the selected case.
+setup and launch. Preflight records fingerprints of the exact request and
+the registered project source in the private receipt. Each phase rechecks
+the request. A slot can consume the prepared inputs when its sealed source
+matches the registration and allowlisted files used to prepare them. This
+includes helpers imported by the selector and the launcher that reads its
+output. Different slots or runtime versions can share the same registered source.
 If the file changes, or the receipt predates this check, run preflight with
 a fresh directory and generation. The earlier evidence stays in place.
 
@@ -234,18 +238,24 @@ undoing application writes. `status` after replacement supplies the current view
 URL; reconnect that URL. Expired catalogs block discovery/downloads, not an already
 accepted local launch, source refresh from retained bytes or rollback.
 
-When returning from a preflight-enabled registration to an earlier registration
-without that hook, direct **Revert update** can refuse with `fixture_preflight`.
-The running installation stays selected. To restore the earlier registration:
+Before **Revert update** stops the current viewer, it checks the prepared
+fixture against the target slot. A different registered source snapshot,
+including different contents under the same selector filename, or a change
+in preflight enrollment results in `fixture_preflight`. The current viewer
+stays running. If a registered file changed in a way you consider compatible,
+the same snapshot check still applies. To return to that earlier installation:
 
 1. Use guarded `stop` with the current configuration and confirm `status` reports
    `stopped`.
 2. Restore the earlier reviewed configuration, registration and authored source at
    their original paths. Keep the same store, installed slots, reports and data.
-3. Run `start` with the restored configuration. If the selected installation
+3. If the earlier registration uses preflight, select a matching retained
+   preparation with its original private request or prepare a fresh generation
+   using the restored source.
+4. Run `start` with the restored configuration. If the selected installation
    disagrees with the restored registration, keep the foreground owner and open
    its private `updateUrl`. Acknowledge the restart and choose **Revert update**.
-4. Check the selected and running installation identities with `status` and open
+5. Check the selected and running installation identities with `status` and open
    its current viewer. Verify the existing application record by readback before
    continuing. Revert does not resubmit an earlier command.
 

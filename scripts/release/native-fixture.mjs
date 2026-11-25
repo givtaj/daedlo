@@ -3,6 +3,10 @@ import { createHash } from "node:crypto";
 import { constants, renameSync } from "node:fs";
 import fs from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import {
+  registrationFingerprint,
+  snapshotRegisteredSource,
+} from "./ninja-source.mjs";
 
 const phases = ["acceptance", "health", "live"];
 const inputLimit = 128 * 1024;
@@ -323,6 +327,7 @@ export async function prepareNativeFixture(config, { signal } = {}) {
         "Fixture preflight could not reserve the evidence destination. Check the parent directory and permissions.",
       );
     }
+    const source = await snapshotRegisteredSource(config.registration);
     const data = parseJson(
       await runHook(hook, settings.sourceRoot, input, signal),
       "Fixture preflight hook must return valid JSON.",
@@ -351,7 +356,20 @@ export async function prepareNativeFixture(config, { signal } = {}) {
     }
     const receiptPath = join(settings.directory, "receipt.json");
     const temporary = receiptPath + ".tmp";
-    await writePrivate(temporary, { ...identity, inputSha256, checksums });
+    await writePrivate(temporary, {
+      ...identity,
+      inputSha256,
+      sourceSha256: source.sha256,
+      registrationSha256: source.registrationSha256,
+      checksums,
+    });
+    if (
+      (await snapshotRegisteredSource(config.registration)).sha256 !==
+      source.sha256
+    )
+      fail(
+        "Registered fixture source changed during preflight. Prepare a fresh directory and generation.",
+      );
     await verifyRequest(settings.input, inputSha256);
     // Publish at a single boundary after the last cancellation check.
     checkCancellation(signal);
@@ -365,7 +383,7 @@ export async function prepareNativeFixture(config, { signal } = {}) {
   }
 }
 
-export async function readNativeFixture(config, phase) {
+export async function readNativeFixture(config, phase, installation) {
   try {
     const settings = fixtureSettings(config);
     if (!settings) return;
@@ -383,6 +401,16 @@ export async function readNativeFixture(config, phase) {
     if (!matches(receipt, identity))
       fail(
         "Fixture preflight receipt does not match this project and generation.",
+      );
+    if (
+      typeof receipt.sourceSha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(receipt.sourceSha256) ||
+      receipt.registrationSha256 !==
+        registrationFingerprint(config.registration) ||
+      (installation && receipt.sourceSha256 !== installation.sourceSha256)
+    )
+      fail(
+        "Fixture preflight does not match the registered installation source. Prepare a fresh generation with the matching source.",
       );
     const directory = join(settings.directory, phase);
     await privateDirectory(directory);

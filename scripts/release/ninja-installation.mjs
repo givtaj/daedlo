@@ -20,6 +20,15 @@ import {
 import { isDeepStrictEqual } from "node:util";
 import { verifyBundle } from "./manifest.mjs";
 import { readNativeFixture } from "./native-fixture.mjs";
+import {
+  bytes,
+  checkedPath,
+  localPath,
+  registrationFingerprint,
+  snapshotRegisteredSource,
+  stat,
+  validateRegisteredFiles,
+} from "./ninja-source.mjs";
 
 const runtimePackages = releaseFamilies.map(
   (prefix) => packageNames(prefix).runtime,
@@ -35,20 +44,8 @@ const isRuntimeLock = (name) =>
   );
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const digest = /^[a-f0-9]{64}$/;
-const canonical = (value) =>
-  Array.isArray(value)
-    ? value.map(canonical)
-    : value && typeof value === "object"
-      ? Object.fromEntries(
-          Object.keys(value)
-            .sort()
-            .map((key) => [key, canonical(value[key])]),
-        )
-      : value;
 const markerName = ".ninja-installation.json";
 const receiptName = "installation.json";
-const maxFile = 64 * 1024 * 1024;
-const maxSnapshot = 256 * 1024 * 1024;
 const fail = (message) => {
   throw Error(message);
 };
@@ -65,66 +62,6 @@ function only(value, keys, label) {
   object(value, label);
   if (Object.keys(value).some((key) => !keys.includes(key)))
     fail(`Unsupported ${label} fields`);
-}
-function localPath(value) {
-  if (
-    typeof value !== "string" ||
-    !value ||
-    value.includes("\\") ||
-    /[\x00-\x1f\x7f]/.test(value) ||
-    isAbsolute(value) ||
-    value.split("/").some((p) => !p || p === "." || p === "..")
-  )
-    fail("Registration paths must be safe relative file paths");
-  return value;
-}
-async function stat(path) {
-  try {
-    return await fs.lstat(path);
-  } catch (error) {
-    if (error.code === "ENOENT") return null;
-    throw error;
-  }
-}
-async function checkedPath(path, { missing = false, directory = false } = {}) {
-  if (
-    typeof path !== "string" ||
-    !isAbsolute(path) ||
-    path.includes("\0") ||
-    path.split(/[\\/]/).includes("..")
-  )
-    fail("Explicit absolute paths without traversal are required");
-  const full = resolve(path),
-    parts = full.split(sep).filter(Boolean);
-  let current = sep;
-  for (let i = 0; i < parts.length; i++) {
-    current = join(current, parts[i]);
-    const info = await stat(current);
-    if (!info) {
-      if (missing && i === parts.length - 1) return full;
-      fail("A required installation path is missing");
-    }
-    if (info.isSymbolicLink()) fail("Symlink paths are unsupported");
-    if (i < parts.length - 1 || directory) {
-      if (!info.isDirectory()) fail("Expected a regular directory");
-    } else if (!info.isFile() && !info.isDirectory())
-      fail("Expected a regular file or directory");
-  }
-  return full;
-}
-async function bytes(path, limit = maxFile) {
-  await checkedPath(path);
-  const handle = await fs.open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const info = await handle.stat();
-    if (!info.isFile() || info.size > limit)
-      fail("Expected a bounded regular file");
-    const value = await handle.readFile();
-    if (value.length > limit) fail("File exceeds size limit");
-    return value;
-  } finally {
-    await handle.close();
-  }
 }
 async function put(path, value) {
   await fs.mkdir(dirname(path), { recursive: true, mode: 0o700 });
@@ -197,26 +134,7 @@ function registrationValue(value) {
     !digest.test(value.descriptorSha256)
   )
     fail("Invalid descriptor digest");
-  if (
-    !Array.isArray(value.files) ||
-    !value.files.length ||
-    value.files.length > 4096 ||
-    new Set(value.files).size !== value.files.length
-  )
-    fail("Registration requires a closed file inventory");
-  for (const file of value.files) {
-    localPath(file);
-    if (
-      file
-        .split("/")
-        .some((part) =>
-          ["node_modules", "target", ".git", ".cargo"].includes(part),
-        )
-    )
-      fail(
-        "Generated dependencies, Cargo configuration and build outputs cannot be registered source",
-      );
-  }
+  validateRegisteredFiles(value.files);
   only(value.node, ["packageJson", "packageLock"], "Node registration");
   if (
     value.node.packageJson !== "package.json" ||
@@ -256,30 +174,7 @@ function registrationValue(value) {
   return structuredClone(value);
 }
 export async function snapshotProject(input) {
-  const registration = registrationValue(input);
-  const root = await checkedPath(registration.sourceRoot, { directory: true });
-  let total = 0;
-  const files = [];
-  for (const file of [...registration.files].sort()) {
-    const path = join(root, file),
-      content = await bytes(path),
-      info = await fs.lstat(path);
-    total += content.length;
-    if (total > maxSnapshot)
-      fail("Registered source snapshot exceeds size limit");
-    files.push({
-      file,
-      bytes: content.length,
-      sha256: hash(content),
-      mode: info.mode & 0o777,
-    });
-  }
-  const registrationSha256 = hash(JSON.stringify(canonical(registration)));
-  return {
-    sha256: hash(JSON.stringify({ files, registrationSha256 })),
-    registrationSha256,
-    files,
-  };
+  return snapshotRegisteredSource(registrationValue(input));
 }
 function safeEnvironment(extra = {}) {
   const env = {};
@@ -912,6 +807,7 @@ async function hookRun(
   const fixture = await readNativeFixture(
     { ...fixtureConfig, registration },
     phase,
+    receipt,
   );
   const mutable = join(receipt.path, "checks");
   await fs.mkdir(mutable, { recursive: true, mode: 0o700 });
@@ -986,8 +882,6 @@ export async function prepareInstallation({
 } = {}) {
   const mask = installationUmask();
   const registration = registrationValue(input);
-  await readNativeFixture({ ...fixtureConfig, registration }, "acceptance");
-  await readNativeFixture({ ...fixtureConfig, registration }, "health");
   if (playwrightBrowsersPath !== undefined)
     playwrightBrowsersPath = await checkPlaywrightCache(playwrightBrowsersPath);
   if (
@@ -998,6 +892,10 @@ export async function prepareInstallation({
       "Installation requires a trusted verified manifest digest and version identity",
     );
   const source = await snapshotProject(registration);
+  const fixtureRegistration = { ...fixtureConfig, registration };
+  const target = { sourceSha256: source.sha256 };
+  await readNativeFixture(fixtureRegistration, "acceptance", target);
+  await readNativeFixture(fixtureRegistration, "health", target);
   const path = await checkedPath(destination, { missing: true });
   if (
     inside(registration.sourceRoot, path) ||
@@ -1493,7 +1391,7 @@ export async function verifyInstallation(
     receipt.source?.files,
     "Installation snapshot identity changed",
   );
-  const registrationSha256 = hash(JSON.stringify(canonical(registration)));
+  const registrationSha256 = registrationFingerprint(registration);
   if (
     receipt.source?.registrationSha256 !== registrationSha256 ||
     receipt.sourceSha256 !==
@@ -1555,5 +1453,5 @@ export async function readLaunchFixture(receipt, config = {}) {
       ),
       { code: "fixture_preflight" },
     );
-  return readNativeFixture(config, "live");
+  return readNativeFixture(config, "live", receipt);
 }
