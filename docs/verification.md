@@ -1,5 +1,27 @@
 # Verification record
 
+## Native fixture preparation enforces the phase reader's size limit · 2026-11-25
+
+On installed commit `9528879`, the selector returned about 86 kB of valid
+JSON. Re-encoding its numbers expanded one phase file to 327,681 bytes.
+Preflight exited zero and published a receipt. The reader then refused that
+phase. The same regression reproduced for acceptance, health and live.
+
+The tools built from clean commit `7952e08` were installed offline and
+tested through the native `preflight` command. The archive SHA-256 was
+`26c7ae98f00c8230d8bf049c2f3ee8db90fc39167f5432622ae142fb5154f1ba`.
+Each phase was tested independently on both sides of the limit.
+
+| Serialized phase size, including the trailing newline | Installed result |
+| --- | --- |
+| 327,680 bytes | Preflight exited zero and all three phases were readable. |
+| 327,681 bytes | Preflight exited 1 with `fixture_preflight` before writing the oversized file or publishing a receipt. All three reads refused the incomplete generation. |
+
+All 17 fixture tests passed, including multibyte text at the boundary and
+preservation of an earlier successful generation's receipt and evidence.
+P3 is verified. The merge remains on hold pending a maintainer decision.
+[Fixture tests](../tests/release-native-fixture.test.mjs)
+
 ## Native Revert checks the target fixture before stopping the viewer · 2026-11-25
 
 On installed PR revision `8bb255a`, two registered selectors had the same
@@ -22,8 +44,7 @@ Node 24.22.2 and Chromium 158.0.8127.18 on macOS arm64.
 | Same selector filename, different live input fields | HTTP 409 with `fixture_preflight`. The child ownership record, running and selected slot IDs, and viewer URL stayed the same. The existing editor remained usable. The two archived reports were byte-identical. Acceptance, health and live lookup, POST and commit counts stayed unchanged. |
 | Distinct slots with identical registered source | HTTP 200. The earlier slot was selected and running, its editor reopened, and the two reports were preserved. Disposable acceptance committed once during setup. Live recorded zero POSTs and zero commits. Guarded stop and owned cleanup passed. |
 
-The integration review remains on hold for P3, ensuring that every phase file
-published by a successful preparation fits its reader's size limit.
+P3 was still open at this checkpoint. The phase size results above close it.
 
 ## Native fixture request changed after preparation · 2026-11-25
 
