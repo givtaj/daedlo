@@ -230,6 +230,21 @@ undoing application writes. `status` after replacement supplies the current view
 URL; reconnect that URL. Expired catalogs block discovery/downloads, not an already
 accepted local launch, source refresh from retained bytes or rollback.
 
+When returning from a preflight-enabled registration to an earlier registration
+without that hook, direct **Revert update** can refuse with `fixture_preflight`.
+The running installation stays selected. To restore the earlier registration:
+
+1. Use guarded `stop` with the current configuration and confirm `status` reports
+   `stopped`.
+2. Restore the earlier reviewed configuration, registration and authored source at
+   their original paths. Keep the same store, installed slots, reports and data.
+3. Run `start` with the restored configuration. If the selected installation
+   disagrees with the restored registration, keep the foreground owner and open
+   its private `updateUrl`. Acknowledge the restart and choose **Revert update**.
+4. Check the selected and running installation identities with `status` and open
+   its current viewer. Verify the existing application record by readback before
+   continuing. Revert does not resubmit an earlier command.
+
 Keep customized skills and guidance in the registration allowlist. Read the new
 versioned standard guidance and merge necessary changes explicitly; never replace
 a customized copy during a runtime upgrade. Upgrading the native tools/manager

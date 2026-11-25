@@ -410,7 +410,8 @@ try {
   await fs.chmod(input, 0o644);
   const permissions = await cli.refused("preflight");
   await assert.rejects(fs.stat(directory), { code: "ENOENT" });
-  assert.deepEqual(caseCounts(), untouched);
+  const afterPermissionsRefusal = caseCounts();
+  assert.deepEqual(afterPermissionsRefusal, untouched);
   await fs.chmod(input, 0o600);
   const ineligible = structuredClone(fixtureInputs);
   ineligible.acceptance.expectedRevision = "older-fixture-revision";
@@ -427,7 +428,8 @@ try {
     code: "ENOENT",
   });
   await assert.rejects(fs.stat(config.store), { code: "ENOENT" });
-  assert.deepEqual(caseCounts(), {
+  const afterSelectionRefusal = caseCounts();
+  assert.deepEqual(afterSelectionRefusal, {
     ...untouched,
     acceptance: { posts: 0, commits: 0, lookups: 1 },
   });
@@ -477,7 +479,8 @@ try {
   );
   for (const [phase, bytes] of originalInputs)
     assert.deepEqual(await fs.readFile(fileFor(phase)), bytes);
-  assert.deepEqual(caseCounts(), afterPreflight);
+  const afterConflictRefusal = caseCounts();
+  assert.deepEqual(afterConflictRefusal, afterPreflight);
   for (const result of [permissions, selection, conflict])
     assert.equal(result.code, "fixture_preflight");
   checks.push({
@@ -486,13 +489,19 @@ try {
     permissions: permissions.code,
     selection: selection.code,
     conflict: conflict.code,
+    refusalCounts: {
+      permissions: afterPermissionsRefusal,
+      selection: afterSelectionRefusal,
+      conflict: afterConflictRefusal,
+    },
     counts: afterPreflight,
   });
 
   await fs.writeFile(fileFor("health"), originalInputs.get("live"));
   const wrongPhase = await cli.refused("setup", "--version", version);
+  const afterWrongPhaseRefusal = caseCounts();
   assert.equal(wrongPhase.code, "fixture_preflight");
-  assert.deepEqual(caseCounts(), afterPreflight);
+  assert.deepEqual(afterWrongPhaseRefusal, afterPreflight);
   assert.equal(catalog.downloaded.size, 0);
   await fs.writeFile(fileFor("health"), originalInputs.get("health"));
   const setup = await cli.ok("setup", "ready", "--version", version);
@@ -548,14 +557,16 @@ try {
     check:
       "Verified kit setup consumes phase-specific cases and leaves live state idle",
     wrongPhase: wrongPhase.code,
+    wrongPhaseCounts: afterWrongPhaseRefusal,
     counts: afterSetup,
   });
 
   config.fixturePreflight.generation = randomUUID();
   await writeJson(configPath, config);
   const staleGeneration = await cli.refused("start");
+  const afterStaleGenerationRefusal = caseCounts();
   assert.equal(staleGeneration.code, "fixture_preflight");
-  assert.deepEqual(caseCounts(), afterSetup);
+  assert.deepEqual(afterStaleGenerationRefusal, afterSetup);
   assert.deepEqual(await fs.readdir(join(directory, "live", "evidence")), []);
   config.fixturePreflight.generation = generation;
   await writeJson(configPath, config);
@@ -569,6 +580,7 @@ try {
   };
   owner = cli.start();
   assert.equal((await owner.ready).status, "running");
+  const afterFirstLiveStart = caseCounts();
   const firstLiveEvidence = await measuredCases("live");
   const liveEvidence = {
     phase: "live",
@@ -579,13 +591,15 @@ try {
   assert.deepEqual(Object.values(firstLiveEvidence).map(JSON.parse), [
     liveEvidence,
   ]);
-  assert.deepEqual(caseCounts(), {
+  assert.deepEqual(afterFirstLiveStart, {
     ...afterSetup,
     live: { posts: 0, commits: 0, lookups: 2 },
   });
+  assert.deepEqual(caseCounts(), afterFirstLiveStart);
   await stopOwner();
   owner = cli.start();
   const ready = await owner.ready;
+  const afterSecondLiveStart = caseCounts();
   assert.equal(ready.status, "running");
   assert.ok(ready.viewerUrl);
   const live = await cli.ok("status", "running");
@@ -598,10 +612,11 @@ try {
   ]);
   for (const [name, bytes] of Object.entries(firstLiveEvidence))
     assert.equal(currentLiveEvidence[name], bytes);
-  assert.deepEqual(caseCounts(), {
+  assert.deepEqual(afterSecondLiveStart, {
     ...afterSetup,
     live: { posts: 0, commits: 0, lookups: 3 },
   });
+  assert.deepEqual(caseCounts(), afterSecondLiveStart);
   const viewerOrigin = new URL(ready.viewerUrl).origin;
   const guard = async (id, params = {}) => {
     const status = await fetch(viewerOrigin + "/status").then((r) => r.json());
@@ -672,6 +687,9 @@ try {
     check:
       "Stale generation refuses startup, same-generation relaunch preserves evidence, and guarded stop retains the independently verified live write",
     staleGeneration: staleGeneration.code,
+    staleGenerationCounts: afterStaleGenerationRefusal,
+    liveStartCounts: [afterFirstLiveStart.live, afterSecondLiveStart.live],
+    independentReadbackCount: records.length,
     counts: caseCounts(),
     liveStartupEvidenceFiles: Object.keys(currentLiveEvidence).length,
     canonicalRunReports: reports.length,
