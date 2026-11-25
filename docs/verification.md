@@ -1,5 +1,30 @@
 # Verification record
 
+## Native Revert checks the target fixture before stopping the viewer · 2026-11-25
+
+On installed PR revision `8bb255a`, two registered selectors had the same
+filename but produced different live input fields. Clicking **Revert update**
+returned HTTP 409 with `operation_failed`. Although the previously running
+slot ended up selected, the supervisor child had been replaced and the live
+case received one additional lookup. Both completed reports survived, and write counts
+stayed unchanged. A separate regression with identical selector bytes and a
+changed imported helper also showed the manager switching to the incompatible
+target. [Browser drill](../tests/native-fixture-preflight-rollback.mjs) ·
+[Manager regression](../tests/release-ninja-installation.test.mjs)
+
+The corrected tools were installed from clean commit `8cc874f`. The archive
+SHA-256 was `55c81bf9ca2e8da5347053ba7503682cef9df81cd3219036f9466ec63af315f8`.
+The drill used synthetic fixtures, the verified alpha.12 runtime and engine,
+Node 24.22.2 and Chromium 158.0.8127.18 on macOS arm64.
+
+| Revert requested in the Update UI | Observed result |
+| --- | --- |
+| Same selector filename, different live input fields | HTTP 409 with `fixture_preflight`. The child ownership record, running and selected slot IDs, and viewer URL stayed the same. The existing editor remained usable. The two archived reports were byte-identical. Acceptance, health and live lookup, POST and commit counts stayed unchanged. |
+| Distinct slots with identical registered source | HTTP 200. The earlier slot was selected and running, its editor reopened, and the two reports were preserved. Disposable acceptance committed once during setup. Live recorded zero POSTs and zero commits. Guarded stop and owned cleanup passed. |
+
+The integration review remains on hold for P3, ensuring that every phase file
+published by a successful preparation fits its reader's size limit.
+
 ## Native fixture request changed after preparation · 2026-11-25
 
 The installed tools from `30da565` prepared synthetic case A. After the
@@ -21,10 +46,9 @@ the verified alpha.12 runtime and engine on macOS arm64.
 | Phase reader and receipt compatibility | All 12 fixture tests passed. Acceptance, health and live refused the changed request. An edit during selection prevented receipt publication, and a receipt without a request fingerprint required fresh preparation. |
 | Rollback to an earlier registration without preflight | The retained controller reported running after restoration, guarded stop exited zero, both archived reports were preserved and the live write count stayed at one. Owned cleanup passed. |
 
-The integration review remains on hold for two other findings. Revert still
-needs to establish compatibility when two enrolled selectors share a filename
-and use different fixture fields. Preparation also needs to ensure every
-serialized phase file fits its reader's size limit.
+At this checkpoint the open findings were rollback compatibility between
+enrolled selectors sharing a filename, and the reader's size limit on
+serialized phase files. The later Revert results are recorded above.
 
 [Native browser regression](../tests/native-fixture-preflight-acceptance.mjs) ·
 [Fixture tests](../tests/release-native-fixture.test.mjs)
