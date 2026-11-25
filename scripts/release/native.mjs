@@ -454,6 +454,11 @@ export async function nativeCommand(
     if (starting)
       fail("operation_busy", "Native startup is still in progress.");
   };
+  const installationStarted = () => {
+    startedSuccessfully = true;
+    recovery = false;
+    startup = { phase: "ready", cleanup: "pending" };
+  };
   async function ensureServer() {
     if (server) return;
     server = await createNinjaServer({
@@ -472,8 +477,9 @@ export async function nativeCommand(
             ...(s.observation ? { observation: s.observation } : {}),
             evidence: s.evidence ?? null,
             frontend: s.frontend ?? frontend,
-            startup:
-              startup.phase === "failed" ? startup : (s.startup ?? startup),
+            startup: ["failed", "stopped"].includes(startup.phase)
+              ? startup
+              : (s.startup ?? startup),
           };
         },
         stop: async () => {
@@ -504,6 +510,7 @@ export async function nativeCommand(
             }
           }
           await closeDriver();
+          startup = { phase: "stopped", cleanup: "complete" };
         },
         refresh: () => {
           available();
@@ -523,9 +530,7 @@ export async function nativeCommand(
             reviewSha256,
             acknowledgeRestart: true,
           });
-          startedSuccessfully = true;
-          recovery = false;
-          startup = { phase: "ready", cleanup: "pending" };
+          if (result?.ok !== false) installationStarted();
           return result;
         },
         reviewAbandonment: () => {
@@ -539,13 +544,16 @@ export async function nativeCommand(
           startup = { ...startup, phase: "stopped", cleanup: "complete" };
           return result;
         },
-        restart: ({ operation, version }) => {
+        restart: async ({ operation, version }) => {
           available();
-          return manager.activate(operation, {
+          const result = await manager.activate(operation, {
             acknowledgeRestart: true,
             expectedVersion: version,
           });
+          if (result?.ok !== false) installationStarted();
+          return result;
         },
+        installationStarted,
         retryEvidence: async () => {
           available();
           const result = await supervisor.retryEvidence();

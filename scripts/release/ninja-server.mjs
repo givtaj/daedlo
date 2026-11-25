@@ -768,6 +768,7 @@ export async function createNinjaServer({
           });
         else result = await manager.rollback({ acknowledgeRestart: true });
         if (result?.ok === false) throw result.error ?? result;
+        if (restart) lifecycle?.installationStarted?.();
       } catch (error) {
         failure = safeError(
           error,

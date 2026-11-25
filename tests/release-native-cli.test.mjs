@@ -794,6 +794,88 @@ test("alpha4 retains a failed startup page with sanitized failure and completed 
   }
 });
 
+test("Update Revert supersedes a failed startup only after the manager restores a running installation", async (t) => {
+  const f = await fixture(t);
+  const status = f.manager.status;
+  f.manager.status = async (...args) => ({
+    ...(await status(...args)),
+    canRollback: true,
+  });
+  const start = f.manager.start;
+  f.manager.start = async () => {
+    throw Object.assign(Error("synthetic incompatible registration"), {
+      code: "fixture_preflight",
+    });
+  };
+  const owner = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    assert.equal(owner.result.status, "failed");
+    const url = new URL(owner.result.updateUrl);
+    const headers = { Authorization: `Bearer ${url.hash.slice(7)}` };
+    const revert = async () => {
+      const { generation } = await fetch(url.origin + "/status", {
+        headers,
+      }).then((response) => response.json());
+      return fetch(url.origin + "/action", {
+        method: "POST",
+        headers: {
+          ...headers,
+          Origin: url.origin,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "revert",
+          generation,
+          acknowledgeRestart: true,
+        }),
+      });
+    };
+    f.manager.rollback = f.manager.start;
+    const refused = await revert();
+    assert.equal(refused.status, 409);
+    assert.equal(
+      (await nativeCommand("status", f.configPath, f.deps)).result.status,
+      "failed",
+    );
+
+    f.manager.rollback = start;
+    const accepted = await revert();
+    assert.equal(accepted.status, 200);
+    assert.equal((await accepted.json()).status.running.id, "installed");
+    const recovered = await nativeCommand("status", f.configPath, f.deps);
+    assert.equal(recovered.result.status, "running");
+    assert.equal(recovered.result.startup.phase, "ready");
+    assert.equal(recovered.result.startup.error, undefined);
+    assert.equal(recovered.result.viewerUrl, "http://127.0.0.1:12345/");
+  } finally {
+    await owner.close();
+  }
+});
+
+test("successful guarded stop reports stopped even when initial startup failed", async (t) => {
+  const f = await fixture(t);
+  f.manager.start = async () => {
+    throw Object.assign(Error("synthetic startup failure"), {
+      code: "boot_failed",
+    });
+  };
+  const owner = await nativeCommand("start", f.configPath, f.deps);
+  try {
+    assert.equal(owner.result.status, "failed");
+    const stop = await nativeCommand("stop", f.configPath, f.deps);
+    await owner.closed;
+    assert.equal(
+      (await nativeCommand("status", f.configPath, f.deps)).result.status,
+      "stopped",
+    );
+    assert.equal(stop.result.status, "stopped");
+    assert.notEqual(stop.result.ok, false);
+    assert.equal(stop.result.startup.cleanup, "complete");
+  } finally {
+    await owner.close();
+  }
+});
+
 test("an expired status transport deadline reports a read timeout and preserves the owner", async (t) => {
   const f = await fixture(t);
   const owner = await nativeCommand("start", f.configPath, f.deps);
