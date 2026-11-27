@@ -2,7 +2,7 @@
 
 ## Universal alpha.6 with live recording — 2026-11-27
 
-The local candidate pairs the separately installed workspace and recording runtime,
+The public prerelease pairs the separately installed workspace and recording runtime,
 both version 0.1.0-alpha.6. The 334,195-byte workspace archive reproduces SHA-256
 `3f32ad5cbad60c649b96b0c989bbb47eb168d325f46b9d1a717ce4b5bbf8a6f9`.
 The recording runtime SHA-256 is
@@ -21,8 +21,21 @@ The downloadable components comprise the workspace, the newly named recording
 runtime and the previously published alpha.9 Rust model SDK. Application-specific
 models, authentication and data stay with each integration. See the
 [installation and rollback guide](universal-release.md) for exact component
-identities and the runnable public example. Hosted checks and public acquisition
-have separate receipts.
+identities and the runnable public example.
+
+All five hosted jobs passed for the tagged commit. The Node 22 and 24 builds
+each reproduced the nine release files and verified a live save using the
+packaged SDK. An anonymous macOS ARM64 installation verified all nine downloads
+and matched 139 installed npm files. Its browser submitted one write and the
+application returned one note. The installed CLI verified a four-file backup
+and restored the original run report exactly.
+[Exact-commit CI](https://github.com/givtaj/daedlo/actions/runs/46059831497) ·
+[Public release and checksums](https://github.com/givtaj/daedlo/releases/tag/universal-v0.1.0-alpha.6)
+
+On that macOS installation the npm Universal CLI symlink exited successfully
+with empty output. Running the CLI file in the installed workspace package with
+Node produced help, history and backup results. Use the
+[corrected alpha.6 CLI commands](universal-alpha6-cli.md).
 
 ## Installed model migration waits for Revert · 2026-11-25
 

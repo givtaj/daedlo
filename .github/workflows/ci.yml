@@ -159,6 +159,8 @@ jobs:
             if (attemptedWrites !== 1 || savedRows !== 1 || historyComplete !== true) process.exit(1);
             console.log(JSON.stringify({ attemptedWrites, savedRows, historyComplete }));
           ' "$RUNNER_TEMP/universal-smoke.json" >&3
+          phase='installed CLI help, history, backup and restore'
+          node tests/universal-installed-cli.mjs "$RUNNER_TEMP/universal-consumer/node_modules/@daedlo/universal/src/cli.mjs" "$RUNNER_TEMP/universal-smoke.json" >&3
       - name: Retain only reviewed Universal release assets
         if: needs.public-metadata.outputs.full == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
