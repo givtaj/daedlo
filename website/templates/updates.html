@@ -54,14 +54,44 @@
           disposable fixture and acceptance before an update is ready to use.
         </p>
       </section>
+      <section class="guide-block" aria-labelledby="alpha13-tools-title">
+        <h2 id="alpha13-tools-title">Upgrade from alpha.12 to alpha.13</h2>
+        <p>
+          Stop the current owner safely with your alpha.12 tools and original
+          configuration. Keep the old tools, installations, browser cache and
+          reports. Follow the <a href="/install.html#manual">verified install
+          instructions</a> in a separate directory. Start the alpha.13 tools
+          with the same configuration, registration, store, publisher trust
+          and signed checkpoint. Check the accepted installation, then choose
+          <strong>Check for updates → Install update → Restart Daedlo</strong>.
+          To roll back, choose <strong>Revert update</strong> and check the
+          selected and running versions. Keep the original configuration and
+          both tools directories. If Revert reports <code>fixture_preflight</code>,
+          follow the
+          <a href="https://github.com/givtaj/daedlo/blob/v{{VERSION}}/docs/native-setup.md#continuing-development-and-future-daedlo-updates">fixture rollback steps</a>
+          to restore the earlier registration and its matching preparation.
+        </p>
+        <p>
+          To opt in to fresh-fixture preflight, register your project's
+          read-only selector and prepare separate acceptance, health and live
+          inputs. Use a new generation and a fresh private destination. From the
+          extracted kit, run
+          <code>./installed-tools/node_modules/.bin/daedlo-native preflight --config FILE</code>
+          before setup or launch. A refusal preserves the existing preparation. Correct the
+          prerequisite before trying again. The live save still requires an
+          explicit action and independent application readback.
+          <a href="https://github.com/givtaj/daedlo/blob/v{{VERSION}}/docs/native-setup.md#prepare-a-fresh-fixture">Configure native preflight</a>.
+        </p>
+      </section>
       <section class="guide-block" aria-labelledby="alpha12-tools-title">
-        <h2 id="alpha12-tools-title">Upgrade from alpha.11 to alpha.12</h2>
+        <h2 id="alpha12-tools-title">Earlier upgrade from alpha.11 to alpha.12</h2>
         <p>
           Use the original tools and configuration to stop the authenticated
           alpha.11 owner safely. Keep its installation, reports and browser
-          cache. Follow the
-          <a href="/install.html#manual">verified install instructions</a>
-          to bootstrap the alpha.12 tools in a separate directory. Start them
+          cache. Download the verified kit from the
+          <a href="https://github.com/givtaj/daedlo/releases/tag/v0.1.4-alpha.12">alpha.12 release</a>
+          and follow its <code>START_HERE.md</code> to bootstrap the alpha.12
+          tools in a separate directory. Start them
           with the same configuration, registration, store, publisher trust and
           signed checkpoint. Check the accepted installation before using
           <strong>Check for updates → Install update → Restart Daedlo</strong>.

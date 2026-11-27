@@ -4,7 +4,7 @@
  * workflow must persist its normal checkpoint before any deployment. This tool
  * neither publishes a GitHub release nor deploys a Worker. Policy, transport and
  * preparation seams are for trusted tests only; the CLI accepts paths and one
- * allowlisted release selector only: --promote-alpha12, --promote-alpha11, --promote-alpha10, --promote-alpha9, or the historical
+ * allowlisted release selector only: --promote-alpha13, --promote-alpha12, --promote-alpha11, --promote-alpha10, --promote-alpha9, or the historical
  * --release 0.1.4-alpha.4 through 0.1.4-alpha.7 forms.
  */
 import { isAbsolute, resolve } from "node:path";
@@ -26,6 +26,7 @@ const ALPHA9 = "0.1.4-alpha.9";
 const ALPHA10 = "0.1.4-alpha.10";
 const ALPHA11 = "0.1.4-alpha.11";
 const ALPHA12 = "0.1.4-alpha.12";
+const ALPHA13 = "0.1.4-alpha.13";
 const MAX_JSON = 1024 * 1024;
 const MAX_ASSET = 64 * 1024 * 1024;
 const fail = (message) => {
@@ -42,6 +43,7 @@ const promotions = {
   promoteAlpha10: [ALPHA10, "alpha10Promotion"],
   promoteAlpha11: [ALPHA11, "alpha11Promotion"],
   promoteAlpha12: [ALPHA12, "alpha12Promotion"],
+  promoteAlpha13: [ALPHA13, "alpha13Promotion"],
 };
 function pinned(policy, version, policyKey) {
   const promotion = policy?.[policyKey];
@@ -312,6 +314,7 @@ if (
           "--promote-alpha10",
           "--promote-alpha11",
           "--promote-alpha12",
+          "--promote-alpha13",
         ].includes(key)
       ) {
         if (Object.hasOwn(parsed, key))
@@ -337,6 +340,7 @@ if (
         parsed["--promote-alpha10"],
         parsed["--promote-alpha11"],
         parsed["--promote-alpha12"],
+        parsed["--promote-alpha13"],
         parsed["--release"],
       ].filter(Boolean).length > 1
     )
@@ -357,6 +361,7 @@ if (
       promoteAlpha10: parsed["--promote-alpha10"] === true,
       promoteAlpha11: parsed["--promote-alpha11"] === true,
       promoteAlpha12: parsed["--promote-alpha12"] === true,
+      promoteAlpha13: parsed["--promote-alpha13"] === true,
     });
     console.log(JSON.stringify(result));
   } catch (error) {
