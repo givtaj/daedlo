@@ -119,7 +119,7 @@ fresh-fixture preparation by registering a read-only selector and configuring a
 private request, a fresh directory and a new generation as described in the
 installed `docs/native-setup.md`. From the kit root, run:
 
-```sh
+```console
 node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs preflight --config /same/absolute/FILE
 ```
 
