@@ -6,15 +6,17 @@ for (const path of [
   "docs/public-downloads/START_HERE.md",
   "docs/public-downloads/AGENT_START.md",
 ]) {
-  test(`${path} requires the alpha.12 tools bootstrap for native polling, setup and recovery`, async () => {
+  test(`${path} requires the alpha.13 tools bootstrap for native fixture preflight`, async () => {
     const guide = (
       await fs.readFile(new URL("../" + path, import.meta.url), "utf8")
     ).replace(/\s+/g, " ");
-    assert.match(guide, /alpha\.12[\s\S]*tools bootstrap/i);
+    assert.match(guide, /alpha\.13[\s\S]*tools bootstrap/i);
     assert.match(
       guide,
       /runtime-only update keeps the previous controller and setup tools/i,
     );
+    assert.match(guide, /preflight --config/);
+    assert.match(guide, /acceptance, health and live/i);
     assert.match(guide, /status poll/i);
     assert.match(guide, /playwrightBrowsersPath/);
     assert.match(guide, /draftState/);

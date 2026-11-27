@@ -87,8 +87,7 @@ Docker is only an application-fixture choice, not a Daedlo requirement.
 ### Prepare a fresh fixture
 
 Tools with `preflight` in `daedlo-native --help` can run an explicit fixture
-selector before native setup or launch. This command is available in the source
-candidate following alpha.12. It is opt-in. Existing projects can continue to
+selector before native setup or launch. Alpha.13 release tools include this opt-in command. Existing projects can continue to
 use `doctor`, `setup` and `start` directly.
 
 Add the project selector to `registration.files` and name it in
@@ -110,7 +109,7 @@ Use a new UUID v4 and a fresh destination for each preparation. For example,
 Keep the input owner-readable and private (mode `0600`). Use an existing
 private parent directory and keep the input and destination outside both the
 registered source and the managed store. The file checks require POSIX
-ownership and permission bits. Run the candidate tools' native CLI.
+ownership and permission bits. Run the installed alpha.13 tools' native CLI.
 
 ```sh
 node "$tools/lib/native.mjs" preflight --config "$config"

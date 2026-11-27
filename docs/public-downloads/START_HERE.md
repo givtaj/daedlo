@@ -83,11 +83,11 @@ Do not bypass a digest or compatibility failure. A successful check establishes
 package integrity and measured toolchain compatibility, not your application's
 behavior. Keep the verified kit in a durable location for installation and rebuilds.
 
-## Alpha.12 tools bootstrap for existing managed installations
+## Alpha.13 tools bootstrap for existing managed installations
 
 Use the verified **tools bootstrap** above for the new controller, installer
 and managed reference. A runtime-only update keeps the previous controller and
-setup tools. Alpha.12 shares status polling across the CLI and Update
+setup tools. The installed tools share status polling across the CLI and Update
 page, diagnoses setup under a restrictive umask and accepts an optional
 `installation.playwrightBrowsersPath`. Its managed starter demonstrates
 independent `draftState()` evidence when model observation is unavailable.
@@ -114,11 +114,21 @@ node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs status --config 
 Verify the accepted existing slot with the new tools, then use its returned update
 URL for **Check for updates → Install update → Restart Daedlo** in your isolated
 fixture. Preserve the previous slot for **Revert update**. Verify the tools
-bootstrap with the original configuration first. If you later opt into the new
-cache setting, keep the original configuration for the retained alpha.11 tools.
-Restore it at the same path after a guarded stop when returning to those tools.
+bootstrap with the original configuration first. After a guarded stop, opt into
+fresh-fixture preparation by registering a read-only selector and configuring a
+private request, a fresh directory and a new generation as described in the
+installed `docs/native-setup.md`. From the kit root, run:
 
-Alpha.12 uses alpha.11's
+```sh
+node installed-tools/node_modules/{{TOOLS_NAME}}/lib/native.mjs preflight --config /same/absolute/FILE
+```
+
+Use the separate acceptance, health and live inputs for their intended phases.
+Wait for preflight to succeed before setup or launch. A save requires an
+explicit action. Keep the original configuration and restore it at its original
+path after a guarded stop before reopening the slot with alpha.12 tools.
+
+Alpha.13 uses alpha.12's
 Playwright dependency closure and manager contract. Review the installed `docs/native-setup.md`,
 `docs/managed-abandonment.md` and `docs/model-migration.md` before using the new
 operations. A reviewed model migration uses the accepted exact runtime and the
