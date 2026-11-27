@@ -20,6 +20,7 @@
 // runtime upgrade. It verifies old-tools fallback after complete-slot rollback.
 // --alpha12-upgrade uses the published alpha.11 tools/runtime baseline, bootstraps
 // alpha.12 tools, upgrades and rolls back, then reopens the slot with alpha.11 tools.
+// --alpha13-upgrade repeats this complete lifecycle from the public alpha.12 kit.
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
@@ -55,6 +56,7 @@ for (const arg of args)
       "--alpha10-upgrade",
       "--alpha11-upgrade",
       "--alpha12-upgrade",
+      "--alpha13-upgrade",
       "--alpha9-dependency-migration",
     ].includes(arg),
     "Unsupported upgrade acceptance argument",
@@ -74,15 +76,23 @@ const alpha9Upgrade = args.includes("--alpha9-upgrade");
 const alpha10Upgrade = args.includes("--alpha10-upgrade");
 const alpha11Upgrade = args.includes("--alpha11-upgrade");
 const dependencyMigration = args.includes("--alpha9-dependency-migration");
-const alpha12Upgrade = args.includes("--alpha12-upgrade");
-if (alpha12Upgrade)
+const bootstrapPairs = [
+  { previous: 12, next: 13 },
+  { previous: 11, next: 12 },
+];
+const bootstrapPair = bootstrapPairs.find(({ next }) =>
+  args.includes(`--alpha${next}-upgrade`),
+);
+if (bootstrapPair)
   assert.ok(
     args.every((flag) =>
-      ["--alpha12-upgrade", "--production-https"].includes(flag),
+      [`--alpha${bootstrapPair.next}-upgrade`, "--production-https"].includes(
+        flag,
+      ),
     ),
-    "Alpha.12 upgrade mode cannot combine with another upgrade mode, dependency migration or legacy-only",
+    `Alpha.${bootstrapPair.next} upgrade mode cannot combine with another upgrade mode, dependency migration or legacy-only`,
   );
-const verifyToolsRollback = alpha11Upgrade || alpha12Upgrade;
+const verifyToolsRollback = alpha11Upgrade || Boolean(bootstrapPair);
 assert.ok(
   !(
     alpha11Upgrade &&
@@ -174,6 +184,8 @@ const baselinePins = {
     "543ab597a1c5d30af7d9b12cefa6dec8a01bed2e985426056f5fed57ea8a0c29",
   "0.1.4-alpha.11":
     "4c9c747f7530984db09e859783f447ba720c87bc5b41b609039453644230249c",
+  "0.1.4-alpha.12":
+    "fa69913ddcea6cf52df9879d9a36eec3b2a47423854deeccdb2bc8c00d3a7d2b",
 };
 assert.ok(
   Object.hasOwn(baselinePins, baselineVersion),
@@ -182,11 +194,11 @@ assert.ok(
 const LEGACY_SHA = baselinePins[baselineVersion];
 const legacyNames = baselineVersion === "0.1.4-alpha.3";
 const baselineToolsVersion = alpha11Upgrade ? "0.1.4-alpha.9" : baselineVersion;
-if (alpha12Upgrade)
+if (bootstrapPair)
   assert.equal(
     baselineVersion,
-    "0.1.4-alpha.11",
-    "Alpha.12 upgrade mode requires the published alpha.11 baseline",
+    `0.1.4-alpha.${bootstrapPair.previous}`,
+    `Alpha.${bootstrapPair.next} upgrade mode requires the published alpha.${bootstrapPair.previous} baseline`,
   );
 if (alpha11Upgrade)
   assert.equal(
@@ -228,20 +240,22 @@ assert.ok(
   baselineVersion !== "0.1.4-alpha.10" || alpha11Upgrade,
   "Published alpha.10 baseline requires explicit alpha.11 upgrade mode",
 );
-assert.ok(
-  baselineVersion !== "0.1.4-alpha.11" || alpha12Upgrade,
-  "Published alpha.11 baseline requires explicit alpha.12 upgrade mode",
-);
+for (const pair of bootstrapPairs)
+  assert.ok(
+    baselineVersion !== `0.1.4-alpha.${pair.previous}` ||
+      bootstrapPair === pair,
+    `Published alpha.${pair.previous} baseline requires explicit alpha.${pair.next} upgrade mode`,
+  );
 const candidateVersion =
   process.env.DAEDLO_UPGRADE_CANDIDATE_VERSION ??
   JSON.parse(
     await fs.readFile(join(repo, "packages/runtime/package.json"), "utf8"),
   ).version;
-if (alpha12Upgrade) {
+if (bootstrapPair) {
   assert.equal(
     candidateVersion,
-    "0.1.4-alpha.12",
-    "Alpha.12 upgrade mode requires exactly 0.1.4-alpha.12",
+    `0.1.4-alpha.${bootstrapPair.next}`,
+    `Alpha.${bootstrapPair.next} upgrade mode requires exactly 0.1.4-alpha.${bootstrapPair.next}`,
   );
 } else if (alpha11Upgrade) {
   assert.equal(
@@ -362,7 +376,8 @@ const result = {
   alpha9Upgrade,
   alpha10Upgrade,
   alpha11Upgrade,
-  alpha12Upgrade,
+  alpha12Upgrade: bootstrapPair?.next === 12,
+  alpha13Upgrade: bootstrapPair?.next === 13,
   baselineRuntimeVersion: baselineVersion,
   baselineToolsVersion,
   dependencyMigration,
