@@ -82,7 +82,7 @@ an already running adapter or bypasses unknown draft/pending-operation guards.
 ## Alpha.9 coordinated promotion
 
 This is the historical alpha.9 procedure, completed while the repository was
-private. The current alpha.12 procedure below uses the now-public repository.
+private. The current alpha.13 procedure below uses the now-public repository.
 
 The prepared alpha.9 policy pins source
 `30d2a985964011c08d80db2e83a3716a2c151345` and the three immutable files in the
@@ -227,6 +227,23 @@ installation, configuration, reports and trust checkpoint for recovery.
 4. Verify the public installer and the alpha.11 to alpha.12 bootstrap, runtime
    upgrade, restart, rollback and retained-tool fallback with disposable data.
    Record completed checks and limitations in the release verification record.
+
+## Alpha.13 native fresh-fixture preflight
+
+1. Freeze the clean source revision and the exact public ZIP, `SHA256SUMS`
+   and sanitized `release.json`. Publish those three accepted files at the
+   GitHub prerelease `v0.1.4-alpha.13` and verify the tag and file digests.
+2. Merge the publisher pins and dispatch `ninja-renew.yml` on `main` with
+   only `promote_alpha13=true`. Retain the authenticated alpha.12 checkpoint,
+   the ten signed entries and all 33 historical download files. After the
+   promotion, ordinary renewal requires all eleven entries.
+3. Verify the active Worker and the signed feed. Download the public kit,
+   bootstrap the new tools against the retained alpha.12 configuration and
+   rehearse upgrade, restart, rollback and reopening the original tools.
+4. From the installed public kit, run the five synthetic preflight refusal
+   cases and check the write count. Exercise one explicit live save, check the
+   single committed record independently, and verify that restart and teardown
+   preserve it. Keep private fixture values out of public verification records.
 
 ## Automatic renewal
 

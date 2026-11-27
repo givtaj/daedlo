@@ -107,3 +107,9 @@
 !/downloads/0.1.4-alpha.12/daedlo-0.1.4-alpha.12.zip
 !/downloads/0.1.4-alpha.12/SHA256SUMS
 !/downloads/0.1.4-alpha.12/release.json
+
+# Exact native fresh-fixture preflight release.
+!/downloads/0.1.4-alpha.13/
+!/downloads/0.1.4-alpha.13/daedlo-0.1.4-alpha.13.zip
+!/downloads/0.1.4-alpha.13/SHA256SUMS
+!/downloads/0.1.4-alpha.13/release.json
