@@ -1,5 +1,29 @@
 # Verification record
 
+## Universal alpha.6 with live recording — 2026-11-27
+
+The local candidate pairs the separately installed workspace and recording runtime,
+both version 0.1.0-alpha.6. The 334,195-byte workspace archive reproduces SHA-256
+`3f32ad5cbad60c649b96b0c989bbb47eb168d325f46b9d1a717ce4b5bbf8a6f9`.
+The recording runtime SHA-256 is
+`40c49a9152870bd31a0df87354f0ef55c00830f6a6d41da9c4e1155d09cc261a`.
+These distributions use the explicit integration runner. The ordinary basic
+installer and signed update feed retain their existing versions.
+
+| Local gate | Observed result |
+| --- | --- |
+| Reproducible packages | Node 22.23.4 and 24.22.2 reproduced both tarballs and their verification records. |
+| Storage regressions | 279 tests passed on each Node pin. These cover journal and catalog recovery, target isolation, schema migration, backup and restore. |
+| Public recording example | On macOS ARM64, Node 24.22.2 and the installed packages saved one synthetic note in Chromium. Independent application readback found one row, the browser observed one write attempt, and the installed workspace returned the matching completed report. |
+| Isolated application acceptance | Two synthetic accounts retained one distinct row each. A transport abort and an expressly retried lost response accounted for four browser attempts and three upstream requests. All 15 reports survived process replacement, full restore and compatible rollback. Storage-only recovery submitted no further application writes. |
+
+The downloadable components comprise the workspace, the newly named recording
+runtime and the previously published alpha.9 Rust model SDK. Application-specific
+models, authentication and data stay with each integration. See the
+[installation and rollback guide](universal-release.md) for exact component
+identities and the runnable public example. Hosted checks and public acquisition
+have separate receipts.
+
 ## Installed model migration waits for Revert · 2026-11-25
 
 On the first Node 22.23.4 run at merge commit `11561f6`, the Update page
@@ -4310,8 +4334,8 @@ implementation is unchanged from `42ef2a3`; the later `b74e830` checkpoint chang
 only documentation. The source and exact installed-package test evidence below
 remains inspectable; these tests were not rerun for this availability review.
 
-The temporary Roots consumer `/private/tmp/roots-daedlo-resume-20261019` is absent
-at this check. Its ignored Roots acceptance receipts and native evidence are not
+The temporary Roots consumer from October 19 is absent at this check.
+Its ignored Roots acceptance receipts and native evidence are not
 available at their recorded locations. The cause of the directory's disappearance
 has not been established. The final integration archive and strict closure were
 not completed, and no replacement is claimed. Recovery is in progress; recovered

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
@@ -27,7 +28,11 @@ test("next release declares Apache-2.0 consistently without reusing alpha.3", as
   assert.match(license, /Grant of Patent License/);
   assert.doesNotMatch(license, /DRAFT|NOT OPERATIVE/);
   const legacy = await read("licenses/MIT-legacy.txt");
-  assert.match(legacy, /Copyright \(c\) 2026 Aidin Givtaj/);
+  // Pin the complete historical grant, including its attribution.
+  assert.equal(
+    createHash("sha256").update(legacy).digest("hex"),
+    "940e838e3a280f3304236ed74b5a630535e1bc663034041116ae6556b2dc7248",
+  );
   assert.match(legacy, /Permission is hereby granted/);
   const notices = await read("THIRD_PARTY_NOTICES.md");
   assert.match(notices, /0\.1\.4-alpha\.4/);

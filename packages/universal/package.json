@@ -1,0 +1,23 @@
+{
+  "name": "@daedlo/universal",
+  "version": "0.1.0-alpha.6",
+  "private": true,
+  "description": "Optional customer-owned target history, evidence and reviewed knowledge for Daedlo",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.23.4 <23 || >=24.22.2 <25"
+  },
+  "bin": {
+    "daedlo-universal": "src/cli.mjs"
+  },
+  "files": [
+    "src",
+    "vendor/tools",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "SOURCE.json"
+  ],
+  "daedloToolsLayout": "bundled"
+}

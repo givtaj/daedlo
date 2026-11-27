@@ -41,7 +41,7 @@ async function regularPath(input, kind) {
   return absolute;
 }
 
-async function readRegular(path, maximum) {
+export async function readRegular(path, maximum) {
   await regularPath(path, "file");
   const handle = await fs.open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
@@ -96,7 +96,7 @@ function publicText(bytes, label) {
 }
 
 // Read archive bytes in memory; no package code is executed or extracted.
-function readArchive(bytes, prefix) {
+export function readArchive(bytes, prefix) {
   let output;
   try {
     output = execFileSync(

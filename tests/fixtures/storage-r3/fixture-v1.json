@@ -1,0 +1,115 @@
+{
+  "fixtureFormat": "daedlo-universal-v1-synthetic-fixture/1",
+  "schemaSha256": "9096b5c31167d6f14218115576ab2c4063f2e7ec69d7255c775b972043df8796",
+  "applicationId": 1145328945,
+  "sqlUserVersion": 1,
+  "catalogFormat": "daedlo-universal/1",
+  "catalogVersion": 1,
+  "projectionVersion": 1,
+  "catalogId": "00000000-0000-4000-8000-000000000001",
+  "workspace": {
+    "schemaVersion": 1,
+    "kind": "daedlo-workspace",
+    "workspaceId": "synthetic-r3-workspace",
+    "formats": {
+      "managedRun": 1,
+      "runJournal": 1
+    }
+  },
+  "revisions": [
+    {
+      "revision": 1,
+      "registration": {
+        "id": "synthetic-stage",
+        "label": "Synthetic staging v1",
+        "environment": "staging",
+        "origin": "https://synthetic.invalid",
+        "authProfileRef": "synthetic-staging-profile",
+        "projectId": "synthetic-project",
+        "store": "@store",
+        "sourceRoot": "@source",
+        "configPath": "@config",
+        "configSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "sourceSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "model": {
+          "id": "synthetic-fixture",
+          "version": "1"
+        }
+      }
+    },
+    {
+      "revision": 2,
+      "registration": {
+        "id": "synthetic-stage",
+        "label": "Synthetic staging v2",
+        "environment": "staging",
+        "origin": "https://synthetic.invalid",
+        "authProfileRef": "synthetic-staging-profile",
+        "projectId": "synthetic-project",
+        "store": "@store",
+        "sourceRoot": "@source",
+        "configPath": "@config",
+        "configSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "sourceSha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "model": {
+          "id": "synthetic-fixture",
+          "version": "2"
+        }
+      }
+    }
+  ],
+  "historyState": {
+    "generation": 4,
+    "indexedAt": "2026-11-10T10:01:00.000Z"
+  },
+  "run": {
+    "runId": "synthetic-retained-run",
+    "journalSha256": "e376c0b4ee72f3c455ec8b371c7ea2411ab3380408dfed292231ae230f497236",
+    "checkpointOffset": 1587,
+    "checkpointSequence": 3,
+    "summary": {
+      "runId": "synthetic-retained-run",
+      "command": "synthetic.save",
+      "commandTruncated": false,
+      "recipe": false,
+      "startedAt": "2026-11-10T10:00:00.000Z",
+      "finishedAt": "2026-11-10T10:00:02.000Z",
+      "status": "finished",
+      "execution": "completed",
+      "effect": {
+        "status": "saved"
+      },
+      "eventCount": 3,
+      "historyComplete": true,
+      "reportTruncated": false,
+      "indexedAt": "2026-11-10T10:01:00.000Z"
+    },
+    "report": {
+      "format": "browser-driver-report/1",
+      "runId": "synthetic-retained-run",
+      "identity": {
+        "application": "Synthetic storage compatibility fixture"
+      },
+      "lastResult": {
+        "runId": "synthetic-retained-run",
+        "ok": true,
+        "execution": "completed",
+        "outcome": {
+          "kind": "success",
+          "label": "Synthetic fixture completion"
+        },
+        "effect": {
+          "status": "saved"
+        }
+      },
+      "events": [],
+      "resources": [],
+      "eventRange": {
+        "first": 1,
+        "last": 1,
+        "retainedFirst": 1,
+        "truncated": false
+      }
+    }
+  }
+}

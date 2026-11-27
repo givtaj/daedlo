@@ -1,0 +1,34 @@
+{
+  "name": "@daedlo/universal-runtime",
+  "version": "0.1.0-alpha.6",
+  "description": "Journal-capable browser session runtime for Daedlo Universal",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.23.4 <23 || >=24.22.2 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    },
+    "./swagger": {
+      "types": "./src/swagger/index.d.ts",
+      "import": "./src/swagger/index.mjs"
+    }
+  },
+  "bin": {
+    "daedlo-universal-runtime": "./src/cli.mjs"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses"
+  ],
+  "dependencies": {
+    "playwright": "1.65.0"
+  },
+  "private": true
+}

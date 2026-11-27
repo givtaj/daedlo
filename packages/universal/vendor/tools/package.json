@@ -1,0 +1,35 @@
+{
+  "name": "@daedlo/release-tools",
+  "version": "0.1.4-alpha.9",
+  "description": "Verify and select Daedlo release bundles in an isolated archive store",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "daedloCompatibility": {
+    "nodeMajor": 22,
+    "rustVersion": "1.96"
+  },
+  "bin": {
+    "daedlo-release": "lib/consumer-cli.mjs",
+    "browser-driver-release": "lib/consumer-cli.mjs",
+    "ninja-update": "lib/ninja.mjs",
+    "daedlo-native": "lib/native.mjs"
+  },
+  "files": [
+    "lib",
+    "docs",
+    "skills",
+    "examples/starter",
+    "examples/managed-starter",
+    "integrations/swagger",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "licenses/Apache-2.0.txt",
+    "licenses/MIT-legacy.txt",
+    "SOURCE.json"
+  ]
+}
