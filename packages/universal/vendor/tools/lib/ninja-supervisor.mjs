@@ -1,0 +1,363 @@
+import { fork } from "node:child_process";
+import fs from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
+import { ninjaDirectory, ninjaRead, ninjaWrite } from "./ninja-manager.mjs";
+import { openWorkspace, assertJournalRuntime } from "./workspace.mjs";
+import { captureProcessOwner } from "./process-owner.mjs";
+
+import {
+  safeFrontend,
+  safeObservation,
+  safeStartup,
+} from "./native-session.mjs";
+
+/** A stable owner outside the selected runtime. The child drains on IPC disconnect. */
+export async function createNinjaSupervisor({
+  root,
+  settings = {},
+  frontend,
+  workspaceConfig,
+  timeoutMs = 30000,
+}) {
+  root = resolve(root);
+  const marker = join(root, "child.json");
+  let child = null,
+    installation = null,
+    sequence = 0,
+    exited = null,
+    exitResult = null,
+    childToken = null,
+    accepted = false,
+    launching = false,
+    startup = { phase: "stopped", cleanup: "complete" },
+    frontendStatus = frontend;
+  const pending = new Map();
+  async function orphan() {
+    const r = await ninjaRead(marker, { optional: true });
+    if (!r || r.status === "closed") return null;
+    if (workspaceConfig && r.status === "retired") {
+      const { verifiedRetiredOwner } = await import("./managed-recovery.mjs");
+      if (await verifiedRetiredOwner(workspaceConfig, r)) return null;
+    }
+    return r;
+  }
+  async function request(action, payload = {}) {
+    if (!child || child.exitCode !== null || !child.connected)
+      throw Object.assign(Error("Managed driver is unavailable."), {
+        code: "child_unreachable",
+      });
+    const id = ++sequence;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        const e = Error(
+          "Managed driver timed out; retained owned child requires cleanup.",
+        );
+        e.code = action === "status" ? "child_timeout" : "cleanup_incomplete";
+        reject(e);
+      }, timeoutMs);
+      pending.set(id, { resolve, reject, timer });
+      child.send({ id, action, ...payload }, (e) => {
+        if (e) {
+          clearTimeout(timer);
+          pending.delete(id);
+          reject(
+            Object.assign(Error("Managed child communication failed."), {
+              code: "child_unreachable",
+            }),
+          );
+        }
+      });
+    });
+  }
+  async function idle() {
+    const retained = await orphan();
+    return {
+      running: null,
+      busy: retained ? null : false,
+      paused: retained ? null : false,
+      dirty: retained ? null : false,
+      observation: safeObservation({
+        status: retained ? "unreachable" : "not_running",
+        ...(retained
+          ? { error: { code: child ? "child_exited" : "child_unreachable" } }
+          : {}),
+      }),
+      cleanupPending: !!retained,
+      startup,
+      frontend: frontendStatus,
+    };
+  }
+  return {
+    async status() {
+      if (launching)
+        return {
+          ready: false,
+          running: null,
+          busy: true,
+          paused: false,
+          dirty: null,
+          observation: { status: "starting" },
+          cleanupPending: true,
+          startup,
+          frontend: frontendStatus,
+        };
+      if (!child || exitResult || child.exitCode !== null || child.signalCode)
+        return {
+          ...(await idle()),
+          ...(exitResult
+            ? {
+                ownerLifecycle: { state: "exited", ...exitResult },
+                resourceCleanup: "unknown",
+              }
+            : {}),
+        };
+      try {
+        const s = await request("status");
+        return {
+          ...s,
+          observation: safeObservation(s.observation),
+          startup,
+          frontend: frontendStatus,
+          running:
+            s.ready || s.accepted
+              ? {
+                  id: installation.id,
+                  version: installation.version,
+                  sourceSha256: installation.sourceSha256,
+                  viewerUrl: s.ready ? s.viewerUrl : null,
+                }
+              : null,
+        };
+      } catch (error) {
+        return {
+          running:
+            accepted && installation
+              ? {
+                  id: installation.id,
+                  version: installation.version,
+                  sourceSha256: installation.sourceSha256,
+                  viewerUrl: null,
+                }
+              : null,
+          ready: false,
+          busy: null,
+          paused: null,
+          dirty: null,
+          observation: safeObservation({
+            status: "unreachable",
+            error: { code: error.code },
+          }),
+          cleanupPending: true,
+          startup,
+          frontend: frontendStatus,
+        };
+      }
+    },
+    async start(receipt) {
+      if (child || (await orphan()))
+        throw Error(
+          "A managed driver still owns resources; finish cleanup first.",
+        );
+      // Check before creating ownership records or importing customer code.
+      if (workspaceConfig) {
+        const workspace = await openWorkspace(workspaceConfig);
+        if (workspace?.journal === 1) await assertJournalRuntime(receipt);
+      }
+      await ninjaDirectory(root, { create: true });
+      installation = receipt;
+      accepted = false;
+      frontendStatus = frontend;
+      launching = true;
+      startup = {
+        phase: "bootstrap",
+        cleanup: "pending",
+        history: ["bootstrap"],
+      };
+      const token = randomUUID();
+      childToken = token;
+      exitResult = null;
+      const parentOwner = await captureProcessOwner();
+      const env = Object.fromEntries(
+        [
+          "PATH",
+          "HOME",
+          "TMPDIR",
+          "TMP",
+          "TEMP",
+          "SystemRoot",
+          "PLAYWRIGHT_BROWSERS_PATH",
+        ]
+          .filter((k) => process.env[k])
+          .map((k) => [k, process.env[k]]),
+      );
+      child = fork(
+        fileURLToPath(new URL("./ninja-child.mjs", import.meta.url)),
+        [],
+        {
+          cwd: root,
+          env,
+          stdio: ["ignore", "ignore", "ignore", "ipc"],
+          serialization: "json",
+        },
+      );
+      exited = new Promise((resolve) =>
+        child.once("exit", (code, signal) => {
+          exitResult = { code, signal };
+          for (const p of pending.values()) {
+            clearTimeout(p.timer);
+            p.reject(
+              Object.assign(
+                Error("Managed driver exited before completing its request."),
+                {
+                  code: "child_exited",
+                },
+              ),
+            );
+          }
+          pending.clear();
+          resolve({ code, signal });
+        }),
+      );
+      child.on("error", () => {});
+      child.on("message", (m) => {
+        if (m.event === "startup") {
+          try {
+            startup = safeStartup(m.startup);
+            if (m.frontend) frontendStatus = safeFrontend(m.frontend);
+          } catch {}
+          return;
+        }
+        const p = pending.get(m.id);
+        if (!p) return;
+        pending.delete(m.id);
+        clearTimeout(p.timer);
+        if (m.error) {
+          const e = Error(m.error.message);
+          e.code = m.error.code;
+          p.reject(e);
+        } else p.resolve(m.result);
+      });
+      await ninjaWrite(marker, {
+        pid: child.pid,
+        owner: { ...parentOwner, pid: child.pid, instance: token },
+        token,
+        status: "starting",
+        installationId: receipt.id,
+      });
+      try {
+        await request("start", {
+          installation: receipt,
+          settings,
+          frontend,
+          workspaceConfig,
+          marker,
+          token,
+        });
+      } finally {
+        launching = false;
+      }
+    },
+    async cancelStartup() {
+      if (launching) return request("cancelStartup");
+      return { requested: false };
+    },
+    async retireRecoveredOwner(recoveryId) {
+      const record = await ninjaRead(marker, { optional: true });
+      const { verifiedRetiredOwner } = await import("./managed-recovery.mjs");
+      if (
+        !record ||
+        record.status !== "retired" ||
+        record.recoveryComplete !== true ||
+        record.recoveryId !== recoveryId ||
+        record.resourceCleanup !== "unknown" ||
+        !workspaceConfig ||
+        !(await verifiedRetiredOwner(workspaceConfig, record)) ||
+        (child &&
+          (!exitResult ||
+            record.pid !== child.pid ||
+            record.token !== childToken))
+      )
+        throw Object.assign(
+          Error("The exact exited owner has not completed ownership recovery."),
+          { code: "recovery_changed" },
+        );
+      child = null;
+      installation = null;
+      accepted = false;
+      exited = null;
+      exitResult = null;
+      launching = false;
+      startup = { phase: "stopped", cleanup: "pending", history: ["stopped"] };
+      return { resourceCleanup: "unknown" };
+    },
+    async quiesce() {
+      if (child) await request("quiesce");
+      else if (await orphan())
+        throw Error("Previous managed driver cleanup is pending.");
+    },
+    async unquiesce() {
+      if (child) await request("unquiesce");
+    },
+    async accept() {
+      await request("accept");
+      accepted = true;
+    },
+    async report() {
+      return request("report");
+    },
+    async retryEvidence() {
+      return request("retryEvidence");
+    },
+    async close({ requireSafe = false } = {}) {
+      if (!child) {
+        if (await orphan())
+          throw Error(
+            "Previous managed driver cleanup is pending; retained child is not owned by this process.",
+          );
+        return;
+      }
+      let cleanup;
+      if (child.exitCode === null && child.connected)
+        cleanup = await request("close", { requireSafe });
+      let timer;
+      const result = await Promise.race([
+        exited,
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                Error("Managed child did not exit; cleanup handle retained."),
+              ),
+            timeoutMs,
+          );
+        }),
+      ]).finally(() => clearTimeout(timer));
+      const record = await ninjaRead(marker, { optional: true });
+      if (record?.status !== "closed") {
+        const e = Error(
+          "Managed child exited without complete cleanup; retained recovery record.",
+        );
+        e.code = "cleanup_incomplete";
+        throw e;
+      }
+      if (result.signal)
+        throw Error(
+          "Managed child was terminated; cleanup cannot be established.",
+        );
+      child = null;
+      installation = null;
+      accepted = false;
+      exited = null;
+      launching = false;
+      startup = {
+        ...startup,
+        phase: startup.error ? "failed" : "stopped",
+        cleanup: "complete",
+      };
+      return cleanup;
+    },
+  };
+}

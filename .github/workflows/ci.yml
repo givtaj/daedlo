@@ -121,6 +121,54 @@ jobs:
           npm run test:evidence
           cargo build --locked --manifest-path integrations/swagger/engine/Cargo.toml
           node --test packages/runtime/tests/swagger-browser.mjs
+      - name: Verify Universal storage and prepare its HTTPS release files
+        if: needs.public-metadata.outputs.full == 'true'
+        shell: bash
+        run: |
+          # Retain diagnostic output on the ephemeral runner only. Source tests and
+          # tools can include absolute paths in their progress and failure output.
+          exec 3>&1
+          exec >"$RUNNER_TEMP/universal-verification.log" 2>&1
+          phase='storage tests'
+          trap 'echo "Universal verification failed during $phase." >&3' ERR
+          node --test --test-concurrency=3 tests/universal-*.test.mjs
+          phase='package reconstruction'
+          node scripts/release/universal.mjs --output "$RUNNER_TEMP/universal-pack"
+          phase='public SDK acquisition'
+          curl --proto '=https' --fail --show-error --location https://daedlo.com/downloads/0.1.4-alpha.9/daedlo-0.1.4-alpha.9.zip --output "$RUNNER_TEMP/universal-engine-kit.zip"
+          phase='release asset verification'
+          node scripts/release/universal-public.mjs --packages "$RUNNER_TEMP/universal-pack" --engine-kit "$RUNNER_TEMP/universal-engine-kit.zip" --output "$RUNNER_TEMP/universal-https" >"$RUNNER_TEMP/universal-release-receipt.json"
+          cat "$RUNNER_TEMP/universal-release-receipt.json" >&3
+      - name: Exercise the packaged Universal live recording example
+        if: needs.public-metadata.outputs.full == 'true'
+        shell: bash
+        run: |
+          exec 3>&1
+          exec >"$RUNNER_TEMP/universal-install.log" 2>&1
+          phase='package installation'
+          trap 'echo "Universal recipient check failed during $phase." >&3' ERR
+          npm install --prefix "$RUNNER_TEMP/universal-consumer" --workspaces=false --ignore-scripts --no-audit --no-fund "$RUNNER_TEMP/universal-https/daedlo-universal-0.1.0-alpha.6.tgz" "$RUNNER_TEMP/universal-https/daedlo-universal-runtime-0.1.0-alpha.6.tgz"
+          phase='browser installation'
+          "$RUNNER_TEMP/universal-consumer/node_modules/.bin/playwright" install chromium
+          phase='released SDK build'
+          sh examples/universal-live/build-model.sh "$RUNNER_TEMP/universal-https/daedlo-engine-0.1.4-alpha.9.crate" "$RUNNER_TEMP/universal-model"
+          phase='journaled browser save and application readback'
+          node "$RUNNER_TEMP/universal-model/examples/universal-live/record.mjs" --install "$RUNNER_TEMP/universal-consumer" --output "$RUNNER_TEMP/universal-workspace" --engine "$RUNNER_TEMP/universal-model/target/debug/notebook-engine" >"$RUNNER_TEMP/universal-smoke.json"
+          node -e '
+            const { attemptedWrites, savedRows, historyComplete } = JSON.parse(require("node:fs").readFileSync(process.argv[1]));
+            if (attemptedWrites !== 1 || savedRows !== 1 || historyComplete !== true) process.exit(1);
+            console.log(JSON.stringify({ attemptedWrites, savedRows, historyComplete }));
+          ' "$RUNNER_TEMP/universal-smoke.json" >&3
+          phase='installed CLI help, history, backup and restore'
+          node tests/universal-installed-cli.mjs "$RUNNER_TEMP/universal-consumer/node_modules/@daedlo/universal/src/cli.mjs" "$RUNNER_TEMP/universal-smoke.json" >&3
+      - name: Retain only reviewed Universal release assets
+        if: needs.public-metadata.outputs.full == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: daedlo-universal-0.1.0-alpha.6-node${{ matrix.node }}-${{ github.sha }}
+          path: ${{ runner.temp }}/universal-https/
+          if-no-files-found: error
+          retention-days: 14
       - name: Build an immutable candidate bundle from the clean checkout
         if: needs.public-metadata.outputs.full == 'true'
         id: bundle

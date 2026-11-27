@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daedlo updates</title>
+    <style nonce="{{NONCE}}">
+      :root {
+        color-scheme: light;
+        font-family:
+          ui-sans-serif,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        color: #17352b;
+        background: #f4f5ef;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding-bottom: 30px;
+      }
+      .brand {
+        font-size: 20px;
+        font-weight: 750;
+        letter-spacing: -0.6px;
+      }
+      .local {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #5c6d64;
+      }
+      .eyebrow {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: #526c5c;
+      }
+      h1 {
+        font-size: clamp(30px, 5vw, 44px);
+        font-weight: 600;
+        letter-spacing: -1.5px;
+        margin: 12px 0;
+      }
+      p {
+        line-height: 1.6;
+      }
+      .intro {
+        color: #52645a;
+        max-width: 620px;
+        margin: 0 0 28px;
+      }
+      .card {
+        border: 1px solid #cdd8cc;
+        border-radius: 16px;
+        background: #fffefa;
+        padding: 26px;
+        margin: 18px 0;
+      }
+      .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      h2 {
+        font-size: 20px;
+        margin: 0;
+      }
+      .badge {
+        color: #385e49;
+        background: #e8eee4;
+        border-radius: 6px;
+        padding: 5px 9px;
+        font-size: 12px;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        padding: 22px 0;
+        margin: 0;
+        border-bottom: 1px solid #e4e7df;
+      }
+      dt {
+        font-size: 13px;
+        color: #607166;
+        margin-bottom: 8px;
+      }
+      dd {
+        margin: 0;
+        font-size: 18px;
+        overflow-wrap: anywhere;
+      }
+      #candidate {
+        font-size: 15px;
+      }
+      #phase-title {
+        margin-top: 24px;
+      }
+      #phase-detail {
+        color: #52645a;
+        margin: 8px 0 20px;
+        min-height: 24px;
+      }
+      .steps {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 0;
+        margin: 0 0 22px;
+        list-style: none;
+      }
+      .steps li {
+        border: 1px solid #d8e0d4;
+        padding: 7px 10px;
+        font-size: 12px;
+        border-radius: 6px;
+        color: #647466;
+      }
+      .steps li[aria-current="step"] {
+        color: #fff;
+        background: #284f3a;
+        border-color: #284f3a;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      button {
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 11px 16px;
+        border: 1px solid #b5c5b7;
+        border-radius: 8px;
+        background: transparent;
+        color: #234d37;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #28523b;
+        color: white;
+        border-color: #28523b;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid #b0822e;
+        outline-offset: 3px;
+      }
+      .restart-consent {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 18px 0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      input {
+        margin-top: 4px;
+      }
+      #message,
+      #blockers {
+        color: #7b341c;
+        background: #fbede2;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-size: 14px;
+      }
+      #message:empty,
+      #blockers:empty {
+        display: none;
+      }
+      #blockers {
+        list-style-position: inside;
+      }
+      .footnote {
+        color: #607166;
+        font-size: 13px;
+        margin-top: 22px;
+      }
+      .historical {
+        color: #7b341c;
+        font-size: 13px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 560px) {
+        main {
+          padding: 28px 16px;
+        }
+        .card {
+          padding: 20px;
+        }
+        dl {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+        .card-top {
+          flex-direction: column;
+        }
+        .actions button {
+          flex: 1 1 auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="brand">Daedlo</span
+        ><span class="local">Local update control</span>
+      </header>
+      <div class="eyebrow">Your project stays yours</div>
+      <h1>Update with a way back.</h1>
+      <p class="intro">
+        Prepare and validate a new installation, then restart when your project
+        is ready. Your authored flows and application data stay in place.
+      </p>
+      <section class="card" aria-labelledby="project-name">
+        <div class="card-top">
+          <h2 id="project-name">Connecting to manager…</h2>
+          <span id="phase-badge" class="badge">Connecting</span>
+        </div>
+        <dl>
+          <div>
+            <dt>Selected installation</dt>
+            <dd id="selected">Unconfirmed</dd>
+          </div>
+          <div>
+            <dt>Running session</dt>
+            <dd id="running">Unconfirmed</dd>
+          </div>
+        </dl>
+        <p id="historical" class="historical" hidden>
+          This installation uses a retained historical integration snapshot.
+          Your current authoring files have not been replaced.
+        </p>
+        <p id="candidate">Check for a compatible release when you are ready.</p>
+        <h2 id="phase-title">Checking local status</h2>
+        <p id="phase-detail" aria-live="polite">
+          No installation action has been requested.
+        </p>
+        <ol class="steps" aria-label="Update progress">
+          <li data-step="available">Available</li>
+          <li data-step="preparing">Install</li>
+          <li data-step="validating">Validate</li>
+          <li data-step="ready">Ready</li>
+          <li data-step="activating">Restart</li>
+          <li data-step="updated">Updated</li>
+        </ol>
+        <p id="message" role="alert"></p>
+        <ul id="blockers" aria-label="Update blockers"></ul>
+        <label class="restart-consent" id="consent" hidden
+          ><input id="acknowledge" type="checkbox" />I’m ready to restart this
+          project’s Daedlo session. I have finished or preserved any
+          draft.</label
+        >
+        <div class="actions">
+          <button id="check" disabled>Check for updates</button
+          ><button id="install" class="primary" disabled>Install update</button
+          ><button id="restart" class="primary" hidden disabled>
+            Restart Daedlo</button
+          ><button id="revert" hidden disabled>Revert update</button>
+        </div>
+      </section>
+      <p class="footnote">
+        An update never runs application flows in your normal session.
+        Validation uses the registered isolated fixture. Reverting changes the
+        installation; it does not undo application writes. A browser login or
+        unsaved draft may not survive restart.
+      </p>
+    </main>
+    <script nonce="{{NONCE}}">
+      const $ = (id) => document.getElementById(id);
+      const storageKey = "daedlo-ninja-token";
+      let token;
+      function readToken() {
+        const incoming = new URLSearchParams(location.hash.slice(1)).get(
+          "token",
+        );
+        try {
+          if (/^[a-f0-9]{64}$/.test(incoming ?? "")) {
+            token = incoming;
+            sessionStorage.setItem(storageKey, token);
+          } else token ??= sessionStorage.getItem(storageKey);
+        } catch {
+          if (/^[a-f0-9]{64}$/.test(incoming ?? "")) token = incoming;
+        }
+        history.replaceState(null, "", location.pathname);
+      }
+      readToken();
+      let view,
+        pending = false,
+        polling = false;
+      const phases = {
+        idle: [
+          "Ready to check",
+          "Check for a compatible release. Nothing installs automatically.",
+        ],
+        checking: [
+          "Checking for updates",
+          "Looking for a verified compatible release.",
+        ],
+        available: [
+          "Update available",
+          "Install prepares a separate candidate and validates your registered project.",
+        ],
+        preparing: [
+          "Preparing the update",
+          "The current installation remains selected while the candidate is built.",
+        ],
+        validating: [
+          "Validating your project",
+          "Registered checks are running against the isolated fixture.",
+        ],
+        ready: [
+          "Ready — restart Daedlo",
+          "Validation passed. Restart at a safe boundary to activate this installation.",
+        ],
+        activating: [
+          "Restarting Daedlo",
+          "The manager is checking the safe boundary and switching the complete installation.",
+        ],
+        updated: [
+          "Update selected",
+          "Check the selected installation and running session above for their actual versions.",
+        ],
+        rolled_back: [
+          "Previous installation selected",
+          "The prior installation is selected. Application writes were not undone.",
+        ],
+        recovered: [
+          "Previous selection restored",
+          "Recovery restored the previous installation selection. Start the session through the manager when ready.",
+        ],
+        failed: [
+          "Update needs attention",
+          "The action did not complete. Review the reported issue before continuing.",
+        ],
+        recovery_required: [
+          "Recovery required",
+          "The manager cannot offer an update action until recovery is complete.",
+        ],
+      };
+      function controls() {
+        for (const id of ["check", "install", "restart", "revert"])
+          $(id).disabled =
+            pending ||
+            !view?.actions?.[id] ||
+            (["restart", "revert"].includes(id) && !$("acknowledge").checked);
+      }
+      function render(next) {
+        if (!next.status) return;
+        view = next;
+        const s = next.status;
+        $("project-name").textContent = s.project.label;
+        $("selected").textContent = s.selected?.version ?? "Not selected";
+        $("running").textContent = s.running?.version ?? "No running session";
+        $("historical").hidden =
+          !s.selected?.historicalSnapshot && !s.running?.historicalSnapshot;
+        const [title, detail] = phases[s.phase] ?? phases.recovery_required;
+        $("phase-title").textContent = title;
+        $("phase-badge").textContent = title;
+        $("phase-detail").textContent = detail;
+        $("candidate").textContent = s.available
+          ? `Candidate ${s.available.version}`
+          : "No candidate currently offered by the manager.";
+        $("restart").hidden = s.operation?.status !== "ready";
+        $("revert").hidden = !s.canRollback;
+        $("consent").hidden = $("restart").hidden && $("revert").hidden;
+        $("blockers").replaceChildren(
+          ...s.blockers.map((b) => {
+            const li = document.createElement("li");
+            li.textContent = b.message;
+            return li;
+          }),
+        );
+        if (s.error) $("message").textContent = s.error.message;
+        for (const step of document.querySelectorAll("[data-step]")) {
+          if (step.dataset.step === s.phase)
+            step.setAttribute("aria-current", "step");
+          else step.removeAttribute("aria-current");
+        }
+        controls();
+      }
+      async function request(path, options = {}) {
+        const response = await fetch(path, {
+          ...options,
+          headers: {
+            Authorization: `Bearer ${token ?? ""}`,
+            ...options.headers,
+          },
+          cache: "no-store",
+        });
+        const data = await response.json();
+        if (data.status) render(data);
+        if (!response.ok || data.ok === false)
+          throw Error(
+            data.requestError?.message ??
+              (typeof data.error === "string"
+                ? data.error
+                : "Update status is unavailable."),
+          );
+        return data;
+      }
+      async function poll() {
+        if (polling) return;
+        polling = true;
+        try {
+          await request("/status");
+        } catch (error) {
+          $("message").textContent = error.message;
+          view = null;
+          controls();
+        } finally {
+          polling = false;
+        }
+      }
+      for (const action of ["check", "install", "restart", "revert"])
+        $(action).addEventListener("click", async () => {
+          if (pending || !view?.actions?.[action]) return;
+          const generation = view.generation;
+          pending = true;
+          controls();
+          $("message").textContent = "";
+          try {
+            await request("/action", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action,
+                generation,
+                ...(["restart", "revert"].includes(action)
+                  ? { acknowledgeRestart: $("acknowledge").checked }
+                  : {}),
+              }),
+            });
+          } catch (error) {
+            $("message").textContent = error.message;
+          } finally {
+            pending = false;
+            $("acknowledge").checked = false;
+            controls();
+          }
+        });
+      $("acknowledge").addEventListener("change", controls);
+      let pollTimer;
+      function connect() {
+        if (!token)
+          $("message").textContent =
+            "Open the local control link supplied by the manager to authenticate this page.";
+        else {
+          $("message").textContent = "";
+          void poll();
+          pollTimer ??= setInterval(poll, 500);
+        }
+      }
+      addEventListener("hashchange", () => {
+        readToken();
+        connect();
+      });
+      connect();
+    </script>
+  </body>
+</html>

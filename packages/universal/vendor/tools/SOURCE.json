@@ -1,0 +1,511 @@
+{
+  "schemaVersion": 1,
+  "kind": "browser-driver-release-tools",
+  "name": "@daedlo/release-tools",
+  "version": "0.1.4-alpha.9",
+  "source": {
+    "commit": "1d1a87646003b7e03b01a16693317a1e166ee21b",
+    "dirty": false,
+    "treeSha256": "d5d37a06b92ed531bee608c126a410ad9d5e05ee93bc22679ca8ab52852c013c"
+  },
+  "files": [
+    {
+      "file": "LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "mode": 420
+    },
+    {
+      "file": "README.md",
+      "bytes": 7712,
+      "sha256": "a660cdd064e68fbcc8edd6d80f985201883dbf7c6eb88f74e3ee75d242515fe6",
+      "mode": 420
+    },
+    {
+      "file": "THIRD_PARTY_NOTICES.md",
+      "bytes": 7126,
+      "sha256": "93d1a2785d2735ac34338e44b0ef6ae367052e37b6f42a029fbffc6f1ea5a9e4",
+      "mode": 420
+    },
+    {
+      "file": "docs/agent-onboarding.md",
+      "bytes": 18357,
+      "sha256": "edf2fa883cdad81ea864d02c5ffa2d6a050e60b0fdc1db4065f4e595fb0501dd",
+      "mode": 420
+    },
+    {
+      "file": "docs/contracts.md",
+      "bytes": 44336,
+      "sha256": "f509f24b1ce543f48d33dd6ad40bddd915043b19fc1d52266283738a48076cfc",
+      "mode": 420
+    },
+    {
+      "file": "docs/development-workflow.md",
+      "bytes": 9597,
+      "sha256": "dd5a0cde779a2518bf1a4897ebe9a207379eda37daf86149e8ab031480f65624",
+      "mode": 420
+    },
+    {
+      "file": "docs/evidence-reporting.md",
+      "bytes": 10843,
+      "sha256": "6cf022f0b2b9154d6c3fc61d6c91473358720f49b79f17804d5d1eb94b5716f0",
+      "mode": 420
+    },
+    {
+      "file": "docs/managed-integration.md",
+      "bytes": 16894,
+      "sha256": "7edea7ae5ee9fd8625c8bb7be7dc9d09de3c9c12cd6cab8331f186806b551e86",
+      "mode": 420
+    },
+    {
+      "file": "docs/native-setup.md",
+      "bytes": 30818,
+      "sha256": "32d18fdef8d95a3a6a0d4477804e7e27eb86733ae5fc774ec11aafccf0b2a2c9",
+      "mode": 420
+    },
+    {
+      "file": "docs/ninja-update.md",
+      "bytes": 14863,
+      "sha256": "d27d0fca2774ebf59a8d797f491464adce1e33871646dc9a072785a8e82cb74c",
+      "mode": 420
+    },
+    {
+      "file": "docs/presentation.md",
+      "bytes": 6682,
+      "sha256": "f3016813fbee4bc3d192abbf4a161dbe134aa27362fe6fa529f28314244aab0a",
+      "mode": 420
+    },
+    {
+      "file": "docs/releases.md",
+      "bytes": 9209,
+      "sha256": "a4af3fdb95332e7308334270857d0fcb111b73e9997cd8be40a859226295a981",
+      "mode": 420
+    },
+    {
+      "file": "docs/rename.md",
+      "bytes": 9155,
+      "sha256": "e9aaae84520f0f4297605a9026fc99371acc0e0e7232893a1e05f7d6ed478a5f",
+      "mode": 420
+    },
+    {
+      "file": "docs/update-client.md",
+      "bytes": 7707,
+      "sha256": "095c39513a2e972e394c6bb41a4df97ee7b1745ca3c5bef82ff8c0b79a204626",
+      "mode": 420
+    },
+    {
+      "file": "docs/update-trust/daedlo-release-2026-10.pem",
+      "bytes": 113,
+      "sha256": "df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297",
+      "mode": 420
+    },
+    {
+      "file": "docs/update-trust/production.json",
+      "bytes": 430,
+      "sha256": "21e77e38eab65c0a09dea5f5c0e0371f973f0ca82e55c295fb5361b8dc0e638b",
+      "mode": 420
+    },
+    {
+      "file": "examples/managed-starter/README.md",
+      "bytes": 5984,
+      "sha256": "6554bbfee05178ea044a05ae1fb39cd2d21048abbafacdc4ee340274a1888513",
+      "mode": 420
+    },
+    {
+      "file": "examples/managed-starter/adapter.mjs",
+      "bytes": 1110,
+      "sha256": "385d0f2929ad9a95e37e1ffd53ab048aa5aac70650d746f67fe4df572c8859ab",
+      "mode": 420
+    },
+    {
+      "file": "examples/managed-starter/catalog.mjs",
+      "bytes": 1727,
+      "sha256": "e17c1ec1e36a7707486f2c996488194f92866217d6baee745bf4db36cbae78d2",
+      "mode": 420
+    },
+    {
+      "file": "examples/managed-starter/installation-hook.mjs",
+      "bytes": 4654,
+      "sha256": "1895a911e3128119eefe61e86e2e0deb949fa192139d0d0f28db556b095643da",
+      "mode": 420
+    },
+    {
+      "file": "examples/managed-starter/managed-launch.mjs",
+      "bytes": 3536,
+      "sha256": "5c9922d7f3ee93430c758d4df6d2d3344f7b74146a74baa21968d2848f25bda6",
+      "mode": 420
+    },
+    {
+      "file": "examples/managed-starter/prepare.mjs",
+      "bytes": 6850,
+      "sha256": "e2153130b9ea01acbcd088d806c9fc4df6cac30cf264259115e333867fc0f8d7",
+      "mode": 420
+    },
+    {
+      "file": "examples/managed-starter/serve-fixture.mjs",
+      "bytes": 379,
+      "sha256": "8c570c2cb0f7bba1ec2f52cabd11fd414d5d3f54f518f179568acf2938684dc8",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/README.md",
+      "bytes": 7840,
+      "sha256": "90100dc81f416b4f7e7dedd78db7adf140db397819d587eed89269d1940614a2",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/acceptance.mjs",
+      "bytes": 9491,
+      "sha256": "51cf33bcf85c587d89180d80c10f718ba7f9a853f5fedc075d4059552dfb2be9",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/adapter.mjs",
+      "bytes": 3351,
+      "sha256": "c2d187464052badd36b29550921007a8cc1766f48e7cf1a9aece861a7fad8fbc",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/build-model.mjs",
+      "bytes": 2316,
+      "sha256": "6d7887e7c0ebe7b839a21547d75247cc52445f8444f05e6e4d5e747c9d755d65",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/fixture.mjs",
+      "bytes": 4580,
+      "sha256": "0d9608519e7489b01e137bc85e15918b9538be7eb12cb223c7b2649bbd2ae2f1",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/index.html",
+      "bytes": 3092,
+      "sha256": "17cace9d4bb7f7f779df8e52b7d0d88b69de9cc4784e3f63bc4d59558f0c0a41",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/model/Cargo.toml",
+      "bytes": 357,
+      "sha256": "36e8684eded481f0f0ed55f1acb6bf2f93e7c08b7c94d8023c39f016ffc3ce78",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/model/src/bin/starter-invalid-model.rs",
+      "bytes": 229,
+      "sha256": "6049fb943444f0eb24035cb935f91bca259e9fae3775ed0b65d4dac2ee76f2cf",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/model/src/lib.rs",
+      "bytes": 12070,
+      "sha256": "d7afc5e308d192c00d56c2d378866b33db0eb75cefff565c26840a22d1ba2fbd",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/model/src/main.rs",
+      "bytes": 110,
+      "sha256": "740576e6a273d1e53b09bd87e2403e7d1fd504f33a86a0ed22100801cf46d59f",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/project.mjs",
+      "bytes": 1072,
+      "sha256": "12cbd47b74482cca5d589990f93395084043ce136cbe41405a84786475638dfe",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/report-archive.mjs",
+      "bytes": 5864,
+      "sha256": "c51daa3ec5a7202b764f0d18f2ce81a31cf34b8232b07a4e87fa13fdcc886833",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/request-acceptance.mjs",
+      "bytes": 11231,
+      "sha256": "0ecc3b3aaf8fa7f111029c7eab2fa4520aba982444c729a3b6ef06b611d93a1a",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/request-accounting.mjs",
+      "bytes": 3348,
+      "sha256": "5845dc911c3c5cb55bcbc343d9868bca1a486d677a4cda03e43d4eee895aa6fb",
+      "mode": 420
+    },
+    {
+      "file": "examples/starter/runtime.mjs",
+      "bytes": 637,
+      "sha256": "fbb4d715b2e75528eb428c0d0ab69b169c0ffac5a1c3490ede3cc622d091309a",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/README.md",
+      "bytes": 13903,
+      "sha256": "1c0e52a75bc90ec8704dab849cce5d47ec745e482ff8ef9c09e9ba68067c8fbf",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/build-model.mjs",
+      "bytes": 4872,
+      "sha256": "59c1247294a178ce05f50d9429d2dbfaf7bb344c974d9036c0b46af55e00b840",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/engine/Cargo.lock",
+      "bytes": 5015,
+      "sha256": "e1806871314d4e2053ced55bb8aa1a441cfb7dd85cfaa1ab497311fb6f1c9c6b",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/engine/Cargo.toml",
+      "bytes": 312,
+      "sha256": "ea525bcf207fa5190de2e14e1955bd7026dc966a931480b28fdf8ef14aa0b1e5",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/engine/src/lib.rs",
+      "bytes": 35414,
+      "sha256": "52166f579215ba436960e0795b83d0b35d20576ad9a291f228977d7202f22800",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/engine/src/main.rs",
+      "bytes": 888,
+      "sha256": "85893e63676d999fe6f1aee5e679d73790761510da101d803e7b5fda1fc1a7ce",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/project.mjs",
+      "bytes": 5309,
+      "sha256": "ac539ee119c14311b90d21b6d556ca93a80d10ca16995bc7434e316096b80644",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/runtime.mjs",
+      "bytes": 2755,
+      "sha256": "04cba261b8368cda9d112a94f24b3b71a1e847df6e1fdd55c3a25853271c57a1",
+      "mode": 420
+    },
+    {
+      "file": "integrations/swagger/session.mjs",
+      "bytes": 4953,
+      "sha256": "9ecee4c6b5fb876c403ec2ebf003d72d8bf38130716971f9c5b0e2d016c406c7",
+      "mode": 420
+    },
+    {
+      "file": "lib/commands.mjs",
+      "bytes": 6377,
+      "sha256": "b34c3fb6b80044203794a904a9155a691dcb3c19f6d6ff2e34cf3d7700b31117",
+      "mode": 420
+    },
+    {
+      "file": "lib/consumer-cli.mjs",
+      "bytes": 91,
+      "sha256": "835acf9d98cf2a29e4e42f18a13d6bfb1bb604bb603d3a00880bbfda7ff64daf",
+      "mode": 493
+    },
+    {
+      "file": "lib/journal-recovery.mjs",
+      "bytes": 21023,
+      "sha256": "313ea8820372826afb28e2a827d577aeffe29aae1b9570aea6659c45b1cdff57",
+      "mode": 420
+    },
+    {
+      "file": "lib/managed-recovery.mjs",
+      "bytes": 20240,
+      "sha256": "01f067a0646fce9a8a9975bb59a0f307789ad0a0fb2ee11d25baba1335c1f43c",
+      "mode": 420
+    },
+    {
+      "file": "lib/manifest.mjs",
+      "bytes": 6706,
+      "sha256": "ba6d647f10cad7f7345f7d2893595ddc58e6e73835146eac93341b23d6b4e71e",
+      "mode": 420
+    },
+    {
+      "file": "lib/names.mjs",
+      "bytes": 1116,
+      "sha256": "d1bbee2492a8ad73504ffcfe3b7913d6a42f84d68632b77f56493748363ea11c",
+      "mode": 420
+    },
+    {
+      "file": "lib/native-doctor.mjs",
+      "bytes": 19599,
+      "sha256": "a52df78a8d8625a7d03df415ecc2afa52e802e9d4853b71d22c7b43d85122283",
+      "mode": 420
+    },
+    {
+      "file": "lib/native-session-ui.html",
+      "bytes": 9486,
+      "sha256": "6dcf267e80c8ada8f8c7d8e38cb9c89f43db68eb77a43c175360e7861befcf8c",
+      "mode": 420
+    },
+    {
+      "file": "lib/native-session.mjs",
+      "bytes": 9600,
+      "sha256": "aed85f4a38ca63adf47640731ea46c61675d780ed496a000c15aeee7e6fbc84a",
+      "mode": 420
+    },
+    {
+      "file": "lib/native.mjs",
+      "bytes": 27460,
+      "sha256": "18314a9273295662150dae80d4b8df34be5b670063a969e16b9848be59c39229",
+      "mode": 493
+    },
+    {
+      "file": "lib/ninja-catalog.mjs",
+      "bytes": 29826,
+      "sha256": "088481177a1605b926f56f7c89cd936369fe31f799a234176763eee13fa2c9ff",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja-child.mjs",
+      "bytes": 20576,
+      "sha256": "dc8b64deb1c151659d5bb91c5ea7dd3cbadae77ac2b089d826d1b7198b7e43cd",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja-evidence.mjs",
+      "bytes": 3853,
+      "sha256": "e815d45e19e3a0fab6e6478f401d890cd8d4699dd09a7120ca344b0968f409af",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja-installation.mjs",
+      "bytes": 43583,
+      "sha256": "6e0b72e87485ee9f329a1af606555359cb6434f5568e8712a8b32a5eaf7b2be1",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja-manager.mjs",
+      "bytes": 24522,
+      "sha256": "f8cd67d61b825a2d746518acf7d4c4d9c34519ecfc3e752e09083a35e0bdfb50",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja-server.mjs",
+      "bytes": 23329,
+      "sha256": "d25890d5abd9c4cd4c6dd470248519ad895d13772b644a3b4a23cedb59ebd252",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja-supervisor.mjs",
+      "bytes": 10907,
+      "sha256": "94e972b8a862dcd2102b9629dc1c70922a31f8465d2888195416abac691795ae",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja-ui.html",
+      "bytes": 14635,
+      "sha256": "984fd9ad64eaba167819ddffd62ef7dc9329b4795332de763fc10d6e7e0f46b0",
+      "mode": 420
+    },
+    {
+      "file": "lib/ninja.mjs",
+      "bytes": 8538,
+      "sha256": "d74c9e77696bb7bd303d7afb665cc5dd58a33ba3ed6a2d4f6c2cc297c4f57bac",
+      "mode": 493
+    },
+    {
+      "file": "lib/process-owner.mjs",
+      "bytes": 5312,
+      "sha256": "36789fdabebe70a24138ae3245c78d067dbda862788733c38ac7878856e9a074",
+      "mode": 420
+    },
+    {
+      "file": "lib/remote.mjs",
+      "bytes": 14061,
+      "sha256": "2f7938857720b65a93413e81f19fcf2779d1fbe54b57e755d2b3a28a69722662",
+      "mode": 420
+    },
+    {
+      "file": "lib/run-journal.mjs",
+      "bytes": 25020,
+      "sha256": "f9a0c7257e7c59f898e7d1328c4dad8626658781426a8d1b603a69281d3d510c",
+      "mode": 420
+    },
+    {
+      "file": "lib/store.mjs",
+      "bytes": 12869,
+      "sha256": "2c5d127bd56dda866ad45882d4f8451d3010a77e576c8d9e45627a1b00e3a5dc",
+      "mode": 420
+    },
+    {
+      "file": "lib/workspace.mjs",
+      "bytes": 11455,
+      "sha256": "e1a013e5a778f7716d916c5ecef5360741cec2a9291376c4484d90d84e2cf991",
+      "mode": 420
+    },
+    {
+      "file": "licenses/Apache-2.0.txt",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "mode": 420
+    },
+    {
+      "file": "licenses/MIT-legacy.txt",
+      "bytes": 1069,
+      "sha256": "940e838e3a280f3304236ed74b5a630535e1bc663034041116ae6556b2dc7248",
+      "mode": 420
+    },
+    {
+      "file": "package.json",
+      "bytes": 814,
+      "sha256": "b116df6863773192b231687a77df038f74be0917fe5748eac7b7709388fa0f2c",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/LICENSE",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/SKILL.md",
+      "bytes": 6733,
+      "sha256": "da08fb302783a8a141e6b814aff0a14b180f42a8f963ad441ebb4d1a675de17e",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/THIRD_PARTY_NOTICES.md",
+      "bytes": 7126,
+      "sha256": "93d1a2785d2735ac34338e44b0ef6ae367052e37b6f42a029fbffc6f1ea5a9e4",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/assets/flow-spec.md",
+      "bytes": 2399,
+      "sha256": "e436ed7c819da7617390591f14bc6d3a457b76406d6fc46b78d840e32f530f47",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/licenses/Apache-2.0.txt",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/licenses/MIT-legacy.txt",
+      "bytes": 1069,
+      "sha256": "940e838e3a280f3304236ed74b5a630535e1bc663034041116ae6556b2dc7248",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/references/model-and-flows.md",
+      "bytes": 5465,
+      "sha256": "f60bf960c5b095964f4bf0f3a70d23abcc2a6debce5c15f05d88f8d3b57bd79f",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/references/onboarding.md",
+      "bytes": 9863,
+      "sha256": "642ba3295dccd026c4693c011c9053ad4c8feab2a5d85c0905e212c5012b3a95",
+      "mode": 420
+    },
+    {
+      "file": "skills/daedlo/references/swagger.md",
+      "bytes": 2378,
+      "sha256": "7296d128fd60a938d5c5296c1771cf23385ead03f9ed8dd2756963b6c58f2cf4",
+      "mode": 420
+    }
+  ]
+}

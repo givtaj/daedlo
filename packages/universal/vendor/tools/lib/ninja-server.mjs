@@ -1,0 +1,666 @@
+import http from "node:http";
+import { randomBytes, timingSafeEqual } from "node:crypto";
+import { readFile } from "node:fs/promises";
+
+import {
+  safeFrontend,
+  safeObservation,
+  safeStartup,
+} from "./native-session.mjs";
+
+const MAX_BODY = 4096;
+const phases = new Set([
+  "idle",
+  "checking",
+  "available",
+  "preparing",
+  "validating",
+  "ready",
+  "activating",
+  "updated",
+  "failed",
+  "rolled_back",
+  "recovered",
+  "recovery_required",
+]);
+const activePhases = new Set([
+  "checking",
+  "preparing",
+  "validating",
+  "activating",
+  "recovery_required",
+]);
+const messages = {
+  busy: "An active run must finish before this update can restart Daedlo.",
+  operation_busy: "Another update operation is still running.",
+  draft_unpreserved:
+    "A draft or session cannot be preserved. Finish or preserve it before restarting.",
+  dirty_draft:
+    "A draft or session cannot be preserved. Finish or preserve it before restarting.",
+  draft_unknown:
+    "Current draft safety is unknown. Obtain a fresh measurement before cleanup or restart.",
+  observation_failed:
+    "Application observation failed. Current safety state is unconfirmed.",
+  invalid_observation:
+    "The adapter did not provide a valid application observation.",
+  disconnected: "The application page or model connection is unavailable.",
+  unknown_state:
+    "The model did not recognize the currently observed application state.",
+  engine_disconnected: "The model engine connection is unavailable.",
+  engine_timeout: "The model engine did not respond before the deadline.",
+  target_mismatch:
+    "The controlled page does not match this frontend's registered target.",
+  draft_observation_failed: "Current draft safety could not be observed.",
+  child_unreachable:
+    "The owned child cannot be reached. Preserve its ownership and recovery records.",
+  child_timeout:
+    "The owned child did not respond before the deadline. Current safety state is unknown.",
+  child_exited:
+    "The owned child exited without confirmed resource cleanup. Preserve its recovery records.",
+  unsafe_restart: "The project is not at a safe restart boundary.",
+  source_changed:
+    "Project inputs changed. Prepare and validate the update again.",
+  stale_source:
+    "Project inputs changed. Prepare and validate the update again.",
+  retained_bundle_missing:
+    "The accepted release bundle is missing. Restore its exact verified bytes before refreshing. No newer release was downloaded.",
+  retained_bundle_invalid:
+    "The retained release bundle could not be verified. Preserve it for inspection and restore its exact verified bytes before refreshing. No newer release was downloaded.",
+  stale_generation:
+    "This view changed. Review the current status before trying again.",
+  validation_failed:
+    "The candidate did not pass project validation. Review the local verification record.",
+  migration_required:
+    "This project needs a reviewed migration before it can use the candidate.",
+  compatibility_failed: "The candidate is incompatible with this project.",
+  cleanup_incomplete:
+    "Owned cleanup is incomplete. Recovery is required before restarting.",
+  recovery_required:
+    "The manager requires recovery. Review its local record before continuing.",
+  recovery_blocked:
+    "Writer ownership or process state cannot be confirmed. Preserve the retained records before recovering.",
+  recovery_changed:
+    "The inspected recovery records changed. Inspect the current owner before retrying.",
+  check_failed:
+    "Release discovery is unavailable. This does not establish that your version is up to date.",
+  operation_failed:
+    "The update action failed. Review the current selection and local manager record.",
+  status_unavailable:
+    "Manager status is unavailable. The selected and running versions cannot be confirmed.",
+  evidence_incomplete:
+    "Run evidence could not be saved. Repair local storage and retry evidence before continuing.",
+  action_unavailable:
+    "This action is unavailable in the current project state.",
+};
+const object = (value) =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+const recoveryReceipt = (value) =>
+  typeof value === "string" &&
+  /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\.[a-f0-9]{64}$/.test(value);
+const id = (value) =>
+  typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value)
+    ? value
+    : null;
+const label = (value, fallback) =>
+  typeof value === "string" &&
+  value.length > 0 &&
+  value.length <= 200 &&
+  !/[\x00-\x1f\x7f-\x9f]/.test(value)
+    ? value
+    : fallback;
+function safeError(error, fallback = "operation_failed") {
+  const raw = error?.code ?? error?.error_code;
+  const code = Object.hasOwn(messages, raw) ? raw : fallback;
+  return { code, message: messages[code] };
+}
+function safeRecovery(value, expectedId) {
+  if (
+    !object(value) ||
+    !["recovered", "already_recovered"].includes(value.status) ||
+    !recoveryReceipt(value.recoveryId) ||
+    value.historyUnchanged !== true ||
+    value.applicationEffects !== "unresolved" ||
+    value.resourceCleanup !== "unknown"
+  )
+    throw Object.assign(Error(), { code: "recovery_required" });
+  if (value.recoveryId !== expectedId)
+    throw Object.assign(Error(), { code: "recovery_changed" });
+  return {
+    status: value.status,
+    recoveryId: value.recoveryId,
+    historyUnchanged: true,
+    applicationEffects: "unresolved",
+    resourceCleanup: "unknown",
+  };
+}
+function installation(value) {
+  if (!object(value) || !id(value.id) || typeof value.version !== "string")
+    return null;
+  return {
+    id: value.id,
+    version: label(value.version, "Unknown version"),
+    ...(typeof value.sourceSha256 === "string" &&
+    /^[a-f0-9]{64}$/.test(value.sourceSha256)
+      ? { sourceSha256: value.sourceSha256 }
+      : {}),
+    ...(value.historicalSnapshot === true ? { historicalSnapshot: true } : {}),
+  };
+}
+function publicStatus(value) {
+  const known =
+    object(value) && phases.has(value.phase) && id(value.project?.id);
+  return {
+    project: {
+      id: id(value?.project?.id),
+      label: label(value?.project?.label, "Registered project"),
+    },
+    selected: installation(value?.selected),
+    running: installation(value?.running),
+    dirty: typeof value?.dirty === "boolean" ? value.dirty : null,
+    ...(value?.observation !== undefined
+      ? { observation: safeObservation(value.observation) }
+      : {}),
+    phase: known ? value.phase : "recovery_required",
+    available:
+      object(value?.available) && id(value.available.id)
+        ? {
+            id: value.available.id,
+            version: label(value.available.version, "Unknown version"),
+          }
+        : null,
+    operation:
+      object(value?.operation) && id(value.operation.id)
+        ? {
+            id: value.operation.id,
+            status: label(value.operation.status, "unknown"),
+          }
+        : null,
+    canRollback: known && value.canRollback === true,
+    blockers: Array.isArray(value?.blockers)
+      ? value.blockers.slice(0, 16).map((item) => safeError(item))
+      : [],
+    ...(!known
+      ? { error: safeError({ code: "recovery_required" }) }
+      : value.error
+        ? { error: safeError(value.error) }
+        : {}),
+  };
+}
+
+/** Stable local update control. The caller retains ownership of the manager. */
+export async function createNinjaServer({
+  manager,
+  lifecycle,
+  host = "127.0.0.1",
+  port = 0,
+} = {}) {
+  if (host !== "127.0.0.1")
+    throw new TypeError("Ninja control must bind 127.0.0.1");
+  if (!Number.isInteger(port) || port < 0 || port > 65535)
+    throw new TypeError("Invalid Ninja control port");
+  for (const method of ["status", "check", "prepare", "activate", "rollback"]) {
+    if (typeof manager?.[method] !== "function")
+      throw new TypeError(`Manager must implement ${method}`);
+  }
+  if (lifecycle) {
+    for (const method of [
+      "snapshot",
+      "stop",
+      "refresh",
+      "restart",
+      "retryEvidence",
+    ])
+      if (typeof lifecycle[method] !== "function")
+        throw new TypeError(`Native lifecycle must implement ${method}`);
+    for (const method of ["recover", "afterRecover"])
+      if (
+        lifecycle[method] !== undefined &&
+        typeof lifecycle[method] !== "function"
+      )
+        throw new TypeError(`Native lifecycle ${method} must be a function`);
+  }
+  const html = await readFile(
+    new URL("ninja-ui.html", import.meta.url),
+    "utf8",
+  );
+  const sessionHtml = lifecycle
+    ? await readFile(new URL("native-session-ui.html", import.meta.url), "utf8")
+    : null;
+  const token = randomBytes(32).toString("hex");
+  const authorization = Buffer.from(`Bearer ${token}`);
+  let generation = randomBytes(16).toString("hex"),
+    fingerprint,
+    busy = false,
+    sealedRecovery = null,
+    mutationEpoch = 0,
+    closing,
+    origin;
+  const rotate = () => {
+    generation = randomBytes(16).toString("hex");
+  };
+  const assertMutation = (action, recoveryId) => {
+    if (
+      sealedRecovery !== null &&
+      !(action === "recover" && recoveryId === sealedRecovery)
+    )
+      throw Object.assign(Error(), { code: "recovery_required" });
+  };
+  async function snapshot() {
+    let status;
+    try {
+      status = publicStatus(await manager.status());
+    } catch {
+      status = {
+        project: { id: null, label: "Registered project" },
+        selected: null,
+        running: null,
+        phase: "recovery_required",
+        available: null,
+        operation: null,
+        canRollback: false,
+        blockers: [],
+        error: safeError({ code: "status_unavailable" }),
+      };
+    }
+    const next = JSON.stringify(status);
+    if (fingerprint !== next) {
+      fingerprint = next;
+      rotate();
+    }
+    const permitted =
+      sealedRecovery === null && !busy && !activePhases.has(status.phase);
+    return {
+      ok: true,
+      generation,
+      busy,
+      status,
+      actions: {
+        check: permitted,
+        install:
+          permitted &&
+          Boolean(status.available) &&
+          status.operation?.status !== "ready",
+        restart:
+          permitted &&
+          status.phase === "ready" &&
+          status.operation?.status === "ready" &&
+          status.blockers.length === 0,
+        revert: permitted && status.canRollback && status.blockers.length === 0,
+      },
+    };
+  }
+  async function nativeSnapshot() {
+    const epoch = mutationEpoch;
+    if (busy) throw Object.assign(Error(), { code: "operation_busy" });
+    const value = await lifecycle.snapshot();
+    const state = await snapshot();
+    const observation = safeObservation(
+      value.observation ?? state.status.observation,
+    );
+    if (busy || epoch !== mutationEpoch)
+      throw Object.assign(Error(), { code: "operation_busy" });
+    if (
+      !state.status.project.id ||
+      state.status.error?.code === "status_unavailable"
+    )
+      throw Object.assign(Error(), { code: "status_unavailable" });
+    if (
+      (value.runningId ?? null) !== (state.status.running?.id ?? null) ||
+      (value.viewerUrl && !value.runningId) ||
+      (value.observation !== undefined &&
+        state.status.observation !== undefined &&
+        JSON.stringify(observation) !==
+          JSON.stringify(state.status.observation))
+    )
+      throw Error("Native session changed during observation");
+    const viewer = value.viewerUrl ? new URL(value.viewerUrl) : null;
+    if (
+      viewer &&
+      (viewer.protocol !== "http:" ||
+        viewer.hostname !== "127.0.0.1" ||
+        Number(viewer.port) < 1 ||
+        viewer.username ||
+        viewer.password ||
+        viewer.pathname !== "/" ||
+        viewer.search ||
+        viewer.hash)
+    )
+      throw Error("Invalid owned viewer URL");
+    for (const [key, length] of [
+      ["instance", 32],
+      ["configSha256", 64],
+      ["toolsSha256", 64],
+    ])
+      if (
+        typeof value[key] !== "string" ||
+        !new RegExp(`^[a-f0-9]{${length}}$`).test(value[key])
+      )
+        throw Error("Invalid native session identity");
+    return {
+      ...state,
+      native: {
+        instance: value.instance,
+        configSha256: value.configSha256,
+        toolsSha256: value.toolsSha256,
+        viewerUrl: observation?.error ? null : (viewer?.href ?? null),
+        ...(observation ? { observation } : {}),
+        starting: value.starting === true,
+        recovery: value.recovery === true,
+        ...(value.frontend ? { frontend: safeFrontend(value.frontend) } : {}),
+        ...(value.startup ? { startup: safeStartup(value.startup) } : {}),
+        evidence: value.evidence
+          ? {
+              pending: value.evidence.pending,
+              failed: value.evidence.failed,
+              lastRunId: value.evidence.lastRunId ?? null,
+            }
+          : null,
+      },
+    };
+  }
+  const json = (res, code, data) => {
+    if (res.destroyed || res.writableEnded) return;
+    res.writeHead(code, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify(data));
+  };
+  async function body(req, res) {
+    if (
+      !/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(
+        req.headers["content-type"] ?? "",
+      )
+    ) {
+      json(res, 415, { ok: false, error: "JSON content type required" });
+      req.resume();
+      return;
+    }
+    if (Number(req.headers["content-length"]) > MAX_BODY) {
+      json(res, 413, { ok: false, error: "Request exceeds 4 KiB" });
+      req.resume();
+      return;
+    }
+    let size = 0;
+    const chunks = [];
+    // Keep draining an oversized stream without retaining its bytes.
+    for await (const chunk of req) {
+      size += chunk.length;
+      if (size > MAX_BODY) {
+        json(res, 413, { ok: false, error: "Request exceeds 4 KiB" });
+        continue;
+      }
+      chunks.push(chunk);
+    }
+    if (size > MAX_BODY) return;
+    try {
+      const parsed = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      if (!object(parsed)) throw Error();
+      return parsed;
+    } catch {
+      json(res, 400, { ok: false, error: "A valid JSON object is required" });
+    }
+  }
+  const server = http.createServer(async (req, res) => {
+    const nonce = randomBytes(18).toString("base64");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader(
+      "Content-Security-Policy",
+      `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
+    );
+    if (
+      req.headers.host !== new URL(origin).host ||
+      (req.headers.origin !== undefined && req.headers.origin !== origin) ||
+      req.headers["sec-fetch-site"] === "cross-site"
+    ) {
+      json(res, 403, { ok: false, error: "Local Host and Origin required" });
+      req.resume();
+      return;
+    }
+    if (req.method === "GET" && lifecycle && req.url === "/session") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(sessionHtml.replaceAll("{{NONCE}}", nonce));
+      return;
+    }
+    if (req.method === "GET" && req.url === "/") {
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(html.replaceAll("{{NONCE}}", nonce));
+      return;
+    }
+    if (
+      !(
+        (req.method === "GET" && req.url === "/status") ||
+        (req.method === "POST" && req.url === "/action") ||
+        (lifecycle &&
+          ["GET", "POST"].includes(req.method) &&
+          req.url === "/native")
+      )
+    ) {
+      json(res, 404, { ok: false, error: "Unknown route" });
+      req.resume();
+      return;
+    }
+    const supplied = Buffer.from(req.headers.authorization ?? "");
+    if (
+      supplied.length !== authorization.length ||
+      !timingSafeEqual(supplied, authorization)
+    ) {
+      json(res, 401, {
+        ok: false,
+        error: "Open the local control link supplied by the manager",
+      });
+      req.resume();
+      return;
+    }
+    if (req.method === "GET") {
+      try {
+        json(
+          res,
+          200,
+          req.url === "/native" ? await nativeSnapshot() : await snapshot(),
+        );
+      } catch (error) {
+        json(res, 503, {
+          ok: false,
+          requestError: safeError(error, "status_unavailable"),
+        });
+      }
+      return;
+    }
+    if (req.headers.origin !== origin) {
+      json(res, 403, { ok: false, error: "An exact local Origin is required" });
+      req.resume();
+      return;
+    }
+    try {
+      const input = await body(req, res);
+      if (!input) return;
+      if (req.url === "/native") {
+        const recovering = input.action === "recover";
+        if (
+          !["stop", "refresh", "restart", "retry-evidence", "recover"].includes(
+            input.action,
+          ) ||
+          Object.keys(input).sort().join(",") !==
+            (recovering
+              ? "action,generation,recoveryId"
+              : "action,generation") ||
+          (recovering && !recoveryReceipt(input.recoveryId)) ||
+          !/^[a-f0-9]{32}$/.test(input.generation)
+        ) {
+          json(res, 400, { ok: false, error: "Invalid native action" });
+          return;
+        }
+        if (busy) {
+          json(res, 409, {
+            ok: false,
+            requestError: safeError({ code: "operation_busy" }),
+          });
+          return;
+        }
+        busy = true;
+        mutationEpoch++;
+        let failure, recovery;
+        try {
+          if (input.generation !== (await snapshot()).generation)
+            throw Object.assign(Error(), { code: "stale_generation" });
+          assertMutation(input.action, input.recoveryId);
+          rotate();
+          const method =
+            input.action === "retry-evidence" ? "retryEvidence" : input.action;
+          if (typeof lifecycle[method] !== "function")
+            throw Object.assign(Error(), { code: "action_unavailable" });
+          const result = recovering
+            ? await lifecycle.recover(input.recoveryId)
+            : await lifecycle[method]();
+          if (result?.ok === false) throw result.error ?? result;
+          if (recovering) recovery = safeRecovery(result, input.recoveryId);
+        } catch (error) {
+          failure = safeError(error);
+        } finally {
+          busy = false;
+          mutationEpoch++;
+          rotate();
+        }
+        const afterAction =
+          input.action === "stop"
+            ? "afterStop"
+            : recovering
+              ? "afterRecover"
+              : null;
+        if (!failure && afterAction && lifecycle[afterAction])
+          res.once("finish", () => {
+            void Promise.resolve()
+              .then(() => lifecycle[afterAction]())
+              .catch(() => {
+                process.stderr.write(
+                  "Native control cleanup failed; retained ownership requires recovery.\n",
+                );
+              });
+          });
+        let observed;
+        try {
+          observed = await nativeSnapshot();
+        } catch (error) {
+          json(res, 503, {
+            ok: false,
+            requestError: safeError(error, "status_unavailable"),
+            actionCompleted: failure ? null : true,
+            doNotReplay: true,
+            ...(failure ? { actionError: failure } : {}),
+          });
+          return;
+        }
+        json(res, failure ? 409 : 200, {
+          ...observed,
+          ...(recovery ? { recovery } : {}),
+          ...(failure ? { ok: false, requestError: failure } : {}),
+        });
+        return;
+      }
+      const restart = ["restart", "revert"].includes(input.action);
+      const keys = [
+        "action",
+        "generation",
+        ...(restart ? ["acknowledgeRestart"] : []),
+      ]
+        .sort()
+        .join(",");
+      if (
+        !["check", "install", "restart", "revert"].includes(input.action) ||
+        Object.keys(input).sort().join(",") !== keys ||
+        !/^[a-f0-9]{32}$/.test(input.generation) ||
+        (restart && input.acknowledgeRestart !== true)
+      ) {
+        json(res, 400, { ok: false, error: "Invalid update action" });
+        return;
+      }
+      if (busy) {
+        json(res, 409, {
+          ...(await snapshot()),
+          ok: false,
+          requestError: safeError({ code: "operation_busy" }),
+        });
+        return;
+      }
+      // Own the mutation gate before awaiting manager state, so two tabs cannot race.
+      busy = true;
+      mutationEpoch++;
+      let failure;
+      try {
+        const current = await snapshot();
+        if (input.generation !== current.generation)
+          throw Object.assign(Error(), { code: "stale_generation" });
+        assertMutation(input.action);
+        // snapshot actions include the server gate; evaluate the manager state separately.
+        const s = current.status;
+        const allowed =
+          !activePhases.has(s.phase) &&
+          (input.action === "check" ||
+            (input.action === "install" &&
+              s.available &&
+              s.operation?.status !== "ready") ||
+            (input.action === "restart" &&
+              s.phase === "ready" &&
+              s.operation?.status === "ready" &&
+              s.blockers.length === 0) ||
+            (input.action === "revert" &&
+              s.canRollback &&
+              s.blockers.length === 0));
+        if (!allowed)
+          throw Object.assign(Error(), { code: "action_unavailable" });
+        rotate();
+        let result;
+        if (input.action === "check") result = await manager.check();
+        else if (input.action === "install")
+          result = await manager.prepare(s.available.id);
+        else if (input.action === "restart")
+          result = await manager.activate(s.operation.id, {
+            acknowledgeRestart: true,
+          });
+        else result = await manager.rollback({ acknowledgeRestart: true });
+        if (result?.ok === false) throw result.error ?? result;
+      } catch (error) {
+        failure = safeError(
+          error,
+          input.action === "check" ? "check_failed" : "operation_failed",
+        );
+      } finally {
+        busy = false;
+        mutationEpoch++;
+        rotate();
+      }
+      json(res, failure ? 409 : 200, {
+        ...(await snapshot()),
+        ...(failure ? { ok: false, requestError: failure } : {}),
+      });
+    } catch {
+      json(res, 400, { ok: false, error: "Request could not be read" });
+    }
+  });
+  server.requestTimeout = 15000;
+  server.headersTimeout = 10000;
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, host, resolve);
+  });
+  origin = `http://${host}:${server.address().port}`;
+  return {
+    url: `${origin}/#token=${token}`,
+    sealForRecovery(recoveryId) {
+      if (!recoveryReceipt(recoveryId))
+        throw new TypeError("An exact recovery receipt is required.");
+      if (sealedRecovery !== null && sealedRecovery !== recoveryId)
+        throw Object.assign(Error(), { code: "recovery_changed" });
+      if (sealedRecovery === recoveryId) return;
+      sealedRecovery = recoveryId;
+      mutationEpoch++;
+      rotate();
+    },
+    close() {
+      return (closing ??= new Promise((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+        server.closeAllConnections();
+      }));
+    },
+  };
+}

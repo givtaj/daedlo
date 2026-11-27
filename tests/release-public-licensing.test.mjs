@@ -126,7 +126,9 @@ test("Apache public core refuses truncated Apache or MIT texts even when every c
     ["licenses/Apache-2.0.txt", "Apache License, Version 2.0\n"],
     [
       "licenses/MIT-legacy.txt",
-      "MIT License\nCopyright (c) 2026 Aidin Givtaj\n",
+      "MIT License\n" +
+        mit.split("\n").find((line) => line.startsWith("Copyright (c)")) +
+        "\n",
     ],
   ]) {
     const sources = apacheFixture();

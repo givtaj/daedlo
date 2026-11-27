@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "publisher": "daedlo",
+  "keyId": "daedlo-release-2026-10",
+  "algorithm": "Ed25519",
+  "publicKeyFile": "daedlo-release-2026-10.pem",
+  "publicKeyPemSha256": "df84f7d60ed2af949d394e338070ef66ab4debabf911ffd6c7b35bebe6ba4297",
+  "publicKeySpkiSha256": "8055c415145b311263b6771c9a3204401836be00bfa1b5274a8e70cb36ff4761",
+  "catalogUrl": "https://daedlo.com/updates/preview.json",
+  "channel": "preview"
+}

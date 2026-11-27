@@ -13,6 +13,9 @@ application outcome. Authored flows run without an AI agent or model API key.
 
 **Assisted macOS arm64 onboarding with Codex.**
 [Start with one Codex prompt](https://daedlo.com/install).
+
+[Daedlo Universal alpha.6](docs/universal-release.md) is a separate local installation for durable multi-target history and live recording.
+Use the [alpha.6 CLI instructions](docs/universal-alpha6-cli.md) for help, history, backup and restore with the installed workspace package.
 The [verification record](docs/verification.md) owns current publication status,
 measured acceptance and limits; [alpha delivery](docs/alpha-release.md) owns the
 product scope. Use the exact verified release kit and its installation instructions.

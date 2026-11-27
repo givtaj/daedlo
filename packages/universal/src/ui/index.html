@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daedlo Universal · Recorded work</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.mjs"></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Daedlo Universal home"
+        ><span class="brand-mark" aria-hidden="true">↗</span
+        ><span>Daedlo<small>UNIVERSAL</small></span></a
+      >
+      <section class="target-picker" aria-labelledby="target-label">
+        <label id="target-label" class="eyebrow" for="target-select"
+          >WORKSPACE TARGET</label
+        >
+        <select id="target-select" disabled>
+          <option>Loading targets…</option>
+        </select>
+        <p class="sidebar-note">
+          Each environment keeps its own recorded work and live session.
+        </p>
+      </section>
+      <section aria-labelledby="identity-heading">
+        <h2 id="identity-heading">Target details</h2>
+        <dl id="target-details" class="target-details"></dl>
+      </section>
+      <p class="sidebar-footer">
+        <span class="tiny-dot" aria-hidden="true"></span>Customer-owned
+        workspace<span>Your targets. Your history.</span>
+      </p>
+    </aside>
+    <main>
+      <header class="workspace-header">
+        <div>
+          <p class="eyebrow">WORKSPACE HISTORY</p>
+          <h1 id="target-title">Recorded work</h1>
+          <p id="target-subtitle" class="subtle">
+            Choose a target to inspect its saved runs.
+          </p>
+        </div>
+        <span class="pill">History view</span>
+      </header>
+      <p id="page-error" class="notice error" role="alert" hidden></p>
+      <section class="live-panel" aria-labelledby="live-heading">
+        <div>
+          <h2 id="live-heading">Live session</h2>
+          <p id="live-message" class="subtle" role="status">
+            Opening history does not start or control your application.
+          </p>
+        </div>
+        <div class="live-actions">
+          <button id="launch" class="secondary" type="button" disabled>
+            Open live session</button
+          ><a
+            id="live-link"
+            class="button-link"
+            target="_blank"
+            rel="noopener noreferrer"
+            hidden
+            >Open live viewer<span aria-hidden="true"> ↗</span></a
+          >
+        </div>
+      </section>
+      <nav class="workspace-tabs" aria-label="Workspace views">
+        <button id="history-tab" type="button" aria-pressed="true">
+          History
+        </button>
+        <button id="knowledge-tab" type="button" aria-pressed="false">
+          Evidence &amp; knowledge
+        </button>
+      </nav>
+      <div id="history-view" class="history-grid">
+        <section class="panel history-panel" aria-labelledby="history-heading">
+          <header class="panel-header">
+            <div>
+              <h2 id="history-heading">Recorded runs</h2>
+              <p id="index-status" class="subtle">
+                Reading the saved history index.
+              </p>
+            </div>
+            <button
+              id="refresh-history"
+              class="secondary compact"
+              type="button"
+              disabled
+            >
+              Refresh history
+            </button>
+          </header>
+          <p class="panel-description">
+            Refresh adds newly recorded runs to this list. It does not run an
+            application action.
+          </p>
+          <div
+            id="history-list"
+            class="history-list"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <p class="empty">Loading saved runs…</p>
+          </div>
+          <nav class="pagination" aria-label="History pages">
+            <button
+              id="previous-page"
+              class="secondary compact"
+              type="button"
+              disabled
+            >
+              Previous page</button
+            ><span id="page-number" class="subtle">Page 1</span
+            ><button
+              id="next-page"
+              class="secondary compact"
+              type="button"
+              disabled
+            >
+              Next page
+            </button>
+          </nav>
+        </section>
+        <section
+          id="run-detail"
+          class="panel detail-panel"
+          aria-labelledby="detail-heading"
+          aria-live="polite"
+        >
+          <div class="empty detail-empty">
+            <span class="empty-mark" aria-hidden="true">≡</span>
+            <h2 id="detail-heading">Inspect a recorded run</h2>
+            <p>Choose a run to see its saved result and recording status.</p>
+            <p>Live application state is unknown.</p>
+          </div>
+        </section>
+      </div>
+      <section id="target-knowledge" aria-labelledby="knowledge-heading" hidden>
+        <div class="knowledge-heading">
+          <div>
+            <p class="eyebrow">REVIEWED TARGET NOTES</p>
+            <h2 id="knowledge-heading">Evidence &amp; knowledge</h2>
+          </div>
+          <button id="reload-knowledge" class="secondary compact" type="button">
+            Reload saved notes
+          </button>
+        </div>
+        <p class="subtle knowledge-intro">
+          Reviewed notes retain their source evidence. They do not establish
+          current application state or authorize an action.
+        </p>
+        <p id="knowledge-error" class="notice error" role="alert" hidden></p>
+        <section class="panel summary-panel" aria-labelledby="summary-heading">
+          <header class="panel-header">
+            <div>
+              <h3 id="summary-heading">Accepted knowledge</h3>
+              <p class="subtle">Current, reviewed notes for this target.</p>
+            </div>
+          </header>
+          <div
+            id="knowledge-summary"
+            class="summary-content"
+            aria-live="polite"
+          >
+            <p class="empty">Choose a target to read its accepted knowledge.</p>
+          </div>
+        </section>
+        <div class="review-grid">
+          <section
+            class="panel evidence-panel"
+            aria-labelledby="evidence-heading"
+          >
+            <header class="panel-header">
+              <div>
+                <h3 id="evidence-heading">Run evidence</h3>
+                <p id="evidence-run" class="subtle">
+                  Choose a recorded run in History.
+                </p>
+              </div>
+              <button
+                id="choose-evidence-run"
+                class="secondary compact"
+                type="button"
+              >
+                Choose run
+              </button>
+            </header>
+            <div class="review-content">
+              <form id="evidence-form" class="review-form">
+                <label for="evidence-label">Evidence label</label
+                ><input
+                  id="evidence-label"
+                  name="label"
+                  maxlength="120"
+                  required
+                  placeholder="What does this file show?"
+                />
+                <label for="evidence-file">File</label
+                ><input
+                  id="evidence-file"
+                  name="file"
+                  type="file"
+                  accept="image/png,image/jpeg,text/plain,application/json,application/pdf"
+                  required
+                />
+                <p class="subtle">
+                  Add an explicitly reviewed file, up to 16 MiB. Evidence stays
+                  in this private workspace.
+                </p>
+                <button id="save-evidence" type="submit" disabled>
+                  Attach evidence
+                </button>
+              </form>
+              <div id="evidence-list" class="evidence-list" aria-live="polite">
+                <p class="empty">No run selected.</p>
+              </div>
+              <div id="evidence-preview" class="evidence-preview" hidden></div>
+            </div>
+          </section>
+          <section
+            class="panel compose-panel"
+            aria-labelledby="compose-heading"
+          >
+            <header class="panel-header">
+              <div>
+                <h3 id="compose-heading">Write a note</h3>
+                <p id="compose-context" class="subtle">
+                  Link a finding or proposed knowledge to recorded evidence.
+                </p>
+              </div>
+            </header>
+            <div class="review-content">
+              <form id="record-form" class="review-form">
+                <label for="record-kind">Note type</label
+                ><select id="record-kind">
+                  <option value="finding">Finding</option>
+                  <option value="knowledge">Knowledge</option>
+                </select>
+                <label for="record-title">Title</label
+                ><input id="record-title" maxlength="120" required />
+                <label for="record-body">Note</label
+                ><textarea
+                  id="record-body"
+                  maxlength="4000"
+                  rows="5"
+                  required
+                ></textarea>
+                <label for="record-event">Source event</label
+                ><select id="record-event">
+                  <option value="">Entire recorded run</option>
+                </select>
+                <p id="record-source" class="subtle">
+                  Choose a recorded run first. Checked evidence files are linked
+                  to this note.
+                </p>
+                <div class="form-actions">
+                  <button id="save-record" type="submit" disabled>
+                    Propose note</button
+                  ><button
+                    id="cancel-revision"
+                    class="secondary"
+                    type="button"
+                    hidden
+                  >
+                    Cancel revision
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
+        </div>
+        <section class="panel records-panel" aria-labelledby="records-heading">
+          <header class="panel-header">
+            <div>
+              <h3 id="records-heading">Findings &amp; knowledge</h3>
+              <p class="subtle">
+                Review proposals explicitly. Earlier revisions and their sources
+                remain available.
+              </p>
+            </div>
+          </header>
+          <div id="knowledge-records" class="record-list" aria-live="polite">
+            <p class="empty">No saved notes loaded.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>
