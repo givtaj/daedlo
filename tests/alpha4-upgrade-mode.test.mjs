@@ -117,6 +117,7 @@ for (const production of [false, true])
 for (const [mode, baselineVersion, toolsVersion, candidateVersion] of [
   ["alpha11", "0.1.4-alpha.10", "0.1.4-alpha.9", "0.1.4-alpha.11"],
   ["alpha12", "0.1.4-alpha.11", "0.1.4-alpha.11", "0.1.4-alpha.12"],
+  ["alpha13", "0.1.4-alpha.12", "0.1.4-alpha.12", "0.1.4-alpha.13"],
 ])
   test(`${mode} bootstrap independently pins the published baseline, tools policy and candidate`, async (t) => {
     const root = await fs.mkdtemp(join(tmpdir(), mode + "-runtime-pin-"));
@@ -474,6 +475,34 @@ for (const [label, args, baseline, candidate, pattern] of [
     /Published alpha.11 baseline requires explicit alpha.12 upgrade mode/,
   ],
   [
+    "alpha.13 wrong baseline",
+    ["--alpha13-upgrade"],
+    "0.1.4-alpha.11",
+    "0.1.4-alpha.13",
+    /Alpha.13 upgrade mode requires the published alpha.12 baseline/,
+  ],
+  [
+    "alpha.13 wrong candidate",
+    ["--alpha13-upgrade"],
+    "0.1.4-alpha.12",
+    "0.1.4-alpha.12",
+    /Alpha.13 upgrade mode requires exactly 0.1.4-alpha.13/,
+  ],
+  [
+    "alpha.13 incompatible tools policy",
+    ["--alpha13-upgrade", "--alpha12-upgrade"],
+    "0.1.4-alpha.12",
+    "0.1.4-alpha.13",
+    /Alpha.13 upgrade mode cannot combine/,
+  ],
+  [
+    "implicit alpha.12 baseline tools policy",
+    [],
+    "0.1.4-alpha.12",
+    "0.1.4-alpha.13",
+    /Published alpha.12 baseline requires explicit alpha.13 upgrade mode/,
+  ],
+  [
     "implicit alpha.9 baseline tools policy",
     [],
     "0.1.4-alpha.9",
@@ -710,6 +739,18 @@ for (const [label, args, baseline, candidate] of [
     ["--alpha12-upgrade", "--production-https"],
     "0.1.4-alpha.11",
     "0.1.4-alpha.12",
+  ],
+  [
+    "explicit alpha.13 tools bootstrap",
+    ["--alpha13-upgrade"],
+    "0.1.4-alpha.12",
+    "0.1.4-alpha.13",
+  ],
+  [
+    "explicit alpha.13 production upgrade",
+    ["--alpha13-upgrade", "--production-https"],
+    "0.1.4-alpha.12",
+    "0.1.4-alpha.13",
   ],
   [
     "explicit alpha.10 unchanged-tools upgrade",

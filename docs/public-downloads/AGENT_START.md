@@ -20,7 +20,7 @@ outside its acceptance claim. Read the exact version's verification receipt;
 neither this guide nor a previous candidate's results establish this kit's release
 or acceptance status.
 
-For an existing managed integration, apply the alpha.12 **tools bootstrap** in
+For an existing managed integration, apply the alpha.13 **tools bootstrap** in
 `START_HERE.md` for status polling, timeout timing and setup diagnostics. A
 runtime-only update keeps the previous controller and setup tools.
 The optional `installation.playwrightBrowsersPath` selects the first hook's
@@ -31,7 +31,11 @@ starting the new tools. Preserve the same configuration, registration, store,
 publisher trust and checkpoint; retain the old tools, browser cache, accepted
 installations and original reports. New tools cannot repair an already running
 older controller, and unknown draft or pending-effect safety remains a blocker.
-Verify the accepted slot with the new tools before a runtime update. Read the
+Verify the accepted alpha.12 slot with the new tools before a runtime update.
+For opt-in fixture selection, follow the native setup guide to register the selector.
+Run the installed native CLI's `preflight --config FILE` with the private
+configuration. Keep acceptance, health and live inputs separate, and issue
+application writes only through the explicit operation. Read the
 installed `docs/native-setup.md`, `docs/managed-abandonment.md` and
 `docs/model-migration.md`. Do not initialize a replacement store or reset trust.
 

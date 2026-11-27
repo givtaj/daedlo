@@ -1,6 +1,20 @@
-# Daedlo alpha delivery — 18 November 2026
+# Daedlo alpha delivery — 27 November 2026
 
-The **0.1.4-alpha.12** source candidate updates native status polling, managed
+**0.1.4-alpha.13** adds native fresh-fixture preflight for managed integrations.
+Register a read-only selector, prepare a private request with a fresh generation,
+and run `preflight` before setup or launch. The selector produces distinct
+acceptance, health and live inputs. Each phase checks the prepared request
+and registered source. An explicit application action is still required to save.
+[Native setup](native-setup.md#prepare-a-fresh-fixture)
+
+Install the alpha.13 tools separately, keep the accepted alpha.12 slot and tools,
+and use the existing signed upgrade and rollback flow. The verification record
+tracks the exact kit, installation and measured write counts.
+[Release verification](verification.md)
+
+## Historical alpha.12 delivery — 18 November 2026
+
+The **0.1.4-alpha.12** release updated native status polling, managed
 setup and the independent recovery example. The product's assisted onboarding
 scope is macOS arm64 with Codex. Exact kit identities, installation checks and
 publication status are recorded in [verification](verification.md).

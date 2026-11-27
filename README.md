@@ -17,11 +17,17 @@ The [verification record](docs/verification.md) owns current publication status,
 measured acceptance and limits; [alpha delivery](docs/alpha-release.md) owns the
 product scope. Use the exact verified release kit and its installation instructions.
 
-Alpha.12 brings shared native status polling, phase timings for slow reads, and
+Alpha.13 adds opt-in fresh-fixture preflight to the native release tools.
+A project selector prepares separate inputs for acceptance, health and live use.
+Daedlo checks the request and registered source again before consuming each
+input. Prepare the fixture before setup or launch, then issue the save explicitly.
+[Prepare a fresh fixture](docs/native-setup.md#prepare-a-fresh-fixture)
+
+Alpha.12 added shared native status polling, phase timings for slow reads, and
 private setup diagnostics for the runtime permissions and selected Chromium.
 Its managed starter shows how to measure draft and write safety independently
 when the application observer fails. Existing integrations supply those facts
-from their own application. Install the verified alpha.12 release tools in a new
+from their own application. Install the verified release tools in a new
 directory and reopen the accepted installation after a guarded stop. See
 [native setup](docs/native-setup.md) and the [managed starter](docs/managed-integration.md).
 

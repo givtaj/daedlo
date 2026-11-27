@@ -1,6 +1,6 @@
-# Install the Daedlo 0.1.4-alpha.12 candidate
+# Install the Daedlo 0.1.4-alpha.13 candidate
 
-This guide covers the **0.1.4-alpha.12** source candidate. Obtain the selected kit
+This guide covers the **0.1.4-alpha.13** source candidate. Obtain the selected kit
 and its independent release receipt. The [installation page](https://daedlo.com/install)
 identifies the publicly served kit, and the [verification record](https://github.com/givtaj/daedlo/blob/main/docs/verification.md)
 records measured release and upgrade results.
@@ -42,10 +42,10 @@ compatibility, not that a customer's application behaves correctly.
 
 | Component                                 | Purpose                                                                                                                 |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `daedlo-runtime-0.1.4-alpha.12.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
-| `daedlo-engine-0.1.4-alpha.12.crate` | Rust library source for the customer's application model                                                                |
+| `daedlo-runtime-0.1.4-alpha.13.tgz`  | The `@daedlo/runtime` Node package, local viewer and `daedlo` CLI                                       |
+| `daedlo-engine-0.1.4-alpha.13.crate` | Rust library source for the customer's application model                                                                |
 | `manifest.json` and `SHA256SUMS`          | The paired runtime/engine bundle's identity and integrity inventory                                                     |
-| `daedlo-tools-0.1.4-alpha.12.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
+| `daedlo-tools-0.1.4-alpha.13.tgz`    | The offline-installable `@daedlo/release-tools` package, contracts, onboarding documentation and complete skill |
 
 The runtime/engine bundle contains exactly its four listed files. The surrounding
 kit adds the tools, installation guides and release evidence. Follow its inventory
@@ -117,28 +117,25 @@ hidden operation produces an actionable refusal.
 
 ## Updates and limits
 
-The alpha.12 native status and setup changes are delivered in the **release
-tools**. Install the verified tools in a fresh directory. Safely stop the
+Alpha.13 delivers fresh-fixture preflight in the **release tools**. Install the verified tools in a fresh directory. Safely stop the
 authenticated old owner with its original configuration, preserve its tools,
 browser cache, registration, store, publisher trust and checkpoint, then start
-the new tools with that configuration. Verify the accepted alpha.11 slot first.
+the new tools with that configuration. Verify the accepted alpha.12 slot first.
 
 Use Check for updates, Install update and Restart Daedlo for the runtime. Keep the
-accepted slot for Revert update. Verify the bootstrap with the original
-configuration first. If you later add `installation.playwrightBrowsersPath`,
-retain the alpha.11 configuration and restore it at the same path after a
-guarded stop before returning to alpha.11 tools.
+accepted slot for Revert update. Use the original configuration through the
+bootstrap. After a guarded stop you can opt into `fixturePreflight`. Keep
+the original configuration for reopening the accepted slot with alpha.12 tools.
 
-Alpha.12 uses the same Playwright dependency
-closure and manager contract as alpha.11. See [native setup](native-setup.md)
-for polling cadence, timeout phases, private umask and browser diagnostics.
-[Managed integration](managed-integration.md) shows how an application-owned
-`draftState()` supplies independent safety for [reviewed recovery](managed-abandonment.md).
+Alpha.13 uses the same Playwright dependency closure and manager contract as
+alpha.12. See [native setup](native-setup.md#prepare-a-fresh-fixture) for the
+selector contract, private request and phase-specific inputs. Existing status,
+cache diagnostics and independent recovery checks remain available.
 Older alpha.7 integrations still need the
 reviewed manifest/lock migration described in the installed
 [update guide](ninja-update.md#alpha9-dependency-migration).
 
-For standalone Swagger, install the matching alpha.12 runtime, core and tools
+For standalone Swagger, install the matching alpha.13 runtime, core and tools
 from the kit and rebuild the included model using its setup guide. Preserve the
 accepted integration until the rebuilt model and agreed flows pass; a runtime-only
 replacement cannot deliver the model's updated response wording.
