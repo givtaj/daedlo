@@ -1,5 +1,22 @@
 # Verification record
 
+## Universal alpha.7 npm shortcut — 2026-11-28
+
+Fresh macOS ARM64 installations of the alpha.7 workspace on Node 22.23.4 and
+24.22.2 ran `daedlo-universal` from PATH. Both printed help and returned exit
+status 1 for an invalid command. The same test on alpha.6 returned exit status
+0 with empty output. The workspace archive has SHA-256
+`7cda746ce1b5e31bb5a558d330dd29b453f81a47d7ee6d185ffb7c60bd2414b4`.
+
+With Node 24, the alpha.6 recording runtime and the alpha.9 model SDK, the
+notebook made one browser request to save a note. The application recorded one
+write and independently returned that note. The installed shortcut verified a
+four-file backup and restored the complete history listing and run report.
+Both matched the originals byte for byte. A second installation in a macOS
+account matched all 111 files in the verified archive and read the expected
+synthetic run report from a fresh login shell.
+[Installation, live recording and restore](universal-alpha7-release.md)
+
 ## Universal alpha.6 with live recording — 2026-11-27
 
 The public prerelease pairs the separately installed workspace and recording runtime,

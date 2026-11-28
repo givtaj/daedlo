@@ -6,15 +6,19 @@ import { join } from "node:path";
 
 // Consume the existing live smoke receipt so this exercises a real saved run
 // without starting a second browser or replaying the application save.
-const [cli, receiptFile] = process.argv.slice(2);
+const [receiptFile] = process.argv.slice(2);
 const { workspace, target, runId } = JSON.parse(readFileSync(receiptFile));
 const run = (...args) =>
-  execFileSync(process.execPath, [cli, ...args], { encoding: "utf8" });
+  execFileSync("daedlo-universal", args, { encoding: "utf8", stdio: "pipe" });
 const result = (...args) => JSON.parse(run(...args));
 const history = (root, ...args) =>
   result("history", "--workspace", root, "--target", target, ...args);
 
 assert.match(run("--help"), /^Daedlo Universal \(optional installation\)/);
+assert.throws(
+  () => run("unknown-command"),
+  (error) => error.status === 1 && JSON.parse(error.stderr).code === "usage",
+);
 const before = history(workspace);
 assert.equal(before.items.length, 1);
 assert.equal(before.items[0].runId, runId);
