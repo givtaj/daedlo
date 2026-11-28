@@ -4,9 +4,9 @@
   "name": "@daedlo/release-tools",
   "version": "0.1.4-alpha.9",
   "source": {
-    "commit": "1d1a87646003b7e03b01a16693317a1e166ee21b",
+    "commit": "3587be1cb084720656e1682ef46d8bc02cb2f93a",
     "dirty": false,
-    "treeSha256": "d5d37a06b92ed531bee608c126a410ad9d5e05ee93bc22679ca8ab52852c013c"
+    "treeSha256": "14fb0cc28f9e7a9373476c72a256439fa62250d51a3b1ec2b2f7f7d1403922a8"
   },
   "files": [
     {

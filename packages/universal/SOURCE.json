@@ -2,15 +2,15 @@
   "schemaVersion": 1,
   "kind": "daedlo-universal",
   "name": "@daedlo/universal",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.7",
   "source": {
-    "commit": "1d1a87646003b7e03b01a16693317a1e166ee21b",
+    "commit": "3587be1cb084720656e1682ef46d8bc02cb2f93a",
     "dirty": false,
-    "treeSha256": "d5d37a06b92ed531bee608c126a410ad9d5e05ee93bc22679ca8ab52852c013c"
+    "treeSha256": "14fb0cc28f9e7a9373476c72a256439fa62250d51a3b1ec2b2f7f7d1403922a8"
   },
   "bundledTools": {
     "version": "0.1.4-alpha.9",
-    "archiveSha256": "105f7d94ceae1ab73e7bae32041c9a14a2ba15c908f9208c2b3379d362b6bd20",
+    "archiveSha256": "3b69a7d9685ecaf3c2fd06cc0e17b871b2a75f408a18b383624f44b78a83122f",
     "fileCount": 84
   },
   "files": [
@@ -22,12 +22,12 @@
     {
       "file": "package.json",
       "bytes": 515,
-      "sha256": "c3c3b693a873b5e1d074afb3a909f7ecbd1771a736ab09dd3a174b945ad89419"
+      "sha256": "ec4826f8d66259de76ab6bf4388112ffd69934979ed479eef6244815ec25f5a7"
     },
     {
       "file": "README.md",
-      "bytes": 24820,
-      "sha256": "3fed6a082eadc40dab2f202d4342867af10de0d2a5481e985efe71fbabe073ea"
+      "bytes": 24840,
+      "sha256": "994519b21c47f407409096277aba06b1e1fc9903ccb4c617633f55a0d97c4d8b"
     },
     {
       "file": "src/archive-http.mjs",
@@ -66,8 +66,8 @@
     },
     {
       "file": "src/cli.mjs",
-      "bytes": 14983,
-      "sha256": "a30c899735753b9120b16c9472b2ecd670bfbcda65dcc4b14b4dbd56e92bbedf"
+      "bytes": 14873,
+      "sha256": "a6ba77b71871c4de19a3363b4aa0037a4ba27575044d7495705731e27e602563"
     },
     {
       "file": "src/compressed-journal.mjs",
@@ -557,7 +557,7 @@
     {
       "file": "vendor/tools/SOURCE.json",
       "bytes": 15385,
-      "sha256": "ec6b764c9b640d31e55ed4542e076a5e8c518ee7c52bf7cb7ac75ed828b77a7f"
+      "sha256": "79baa242240f84a70d38592dbc7da21effad105d1fe06be0f1dd371db99c9663"
     },
     {
       "file": "vendor/tools/THIRD_PARTY_NOTICES.md",

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { join, resolve } from "node:path";
+import { delimiter, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { parseArgs, promisify } from "node:util";
 import { createNotebookAdapter } from "../notebook/adapter.mjs";
@@ -36,7 +36,10 @@ async function record({ install, output, engine }) {
   const { openRunJournal } = await loadTools("run-journal");
   const { captureTargetRegistration } = await load(join(universal, "src/registration.mjs"));
   const pkg = JSON.parse(await readFile(join(companion, "package.json"), "utf8"));
-  const cli = async (...args) => JSON.parse((await execute(process.execPath, [join(universal, "src/cli.mjs"), ...args])).stdout);
+  const bin = join(prefix, "node_modules/.bin");
+  assert.equal(await realpath(join(bin, "daedlo-universal")), await realpath(join(universal, "src/cli.mjs")));
+  const env = { ...process.env, PATH: bin + delimiter + process.env.PATH };
+  const cli = async (...args) => JSON.parse((await execute("daedlo-universal", args, { env })).stdout);
 
   // Preserve the workspace for later history inspection. Refuse an existing output.
   await mkdir(output, { mode: 0o700 });
@@ -108,7 +111,7 @@ async function record({ install, output, engine }) {
     assert.equal(attempts, 1);
     assert.equal(app.writes, 1);
     return { workspace: root, target: targetId, runId: result.runId, savedRows: items.length,
-      attemptedWrites: attempts, historyComplete: history.historyComplete };
+      attemptedWrites: attempts, serverWrites: app.writes, readbackText: items[0].text, historyComplete: history.historyComplete };
   } finally {
     await scope.close();
   }

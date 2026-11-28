@@ -8,9 +8,10 @@ import { fileURLToPath } from "node:url";
 
 // These two frozen distributions are independent of the basic kit and its feed.
 const packages = fileURLToPath(new URL("../../packages/", import.meta.url));
-const version = "0.1.0-alpha.6";
+const workspaceVersion = "0.1.0-alpha.7";
+const runtimeVersion = "0.1.0-alpha.6";
 const workspaceSha =
-  "3f32ad5cbad60c649b96b0c989bbb47eb168d325f46b9d1a717ce4b5bbf8a6f9";
+  "7cda746ce1b5e31bb5a558d330dd29b453f81a47d7ee6d185ffb7c60bd2414b4";
 const runtimeSha =
   "40c49a9152870bd31a0df87354f0ef55c00830f6a6d41da9c4e1155d09cc261a";
 const referenceRuntimeSha =
@@ -58,7 +59,7 @@ async function stagePackage(name, temporary) {
   return destination;
 }
 
-async function pack(name, temporary, expectedSha) {
+async function pack(name, version, temporary, expectedSha) {
   const directory = await stagePackage(name, temporary);
   const environment = Object.fromEntries(
     Object.entries(process.env).filter(([key]) => !/^npm_config_/i.test(key)),
@@ -110,19 +111,23 @@ async function pack(name, temporary, expectedSha) {
 }
 
 async function build(output) {
-  const temporary = await fs.mkdtemp(join(tmpdir(), "universal-alpha6-pack-"));
+  const temporary = await fs.mkdtemp(join(tmpdir(), "daedlo-universal-pack-"));
   try {
     await fs.writeFile(join(temporary, "npmrc"), "");
     await fs.writeFile(join(temporary, "global-npmrc"), "");
-    const universal = await pack("universal", temporary, workspaceSha);
+    const universal = await pack(
+      "universal",
+      workspaceVersion,
+      temporary,
+      workspaceSha,
+    );
     const reference = JSON.parse(
       await fs.readFile(join(packages, "universal/SOURCE.json"), "utf8"),
     );
-    // The workspace is the byte-identical original. Preserve its original source
-    // receipt; the public release checkout adds the separately named companion.
+    // Reconstruct the accepted workspace receipt, including its archive key order.
     assert.equal(
       reference.source.commit,
-      "1d1a87646003b7e03b01a16693317a1e166ee21b",
+      "3587be1cb084720656e1682ef46d8bc02cb2f93a",
     );
     const files = universal.files.filter(
       (entry) => entry.file !== "SOURCE.json",
@@ -133,11 +138,20 @@ async function build(output) {
     );
     const workspaceReceipt = {
       ...reference,
-      archive: universal.archive,
+      archive: {
+        file: universal.archive.file,
+        sha256: universal.archive.sha256,
+        bytes: universal.archive.bytes,
+      },
       fileCount: universal.files.length,
     };
 
-    const runtime = await pack("universal-runtime", temporary, runtimeSha);
+    const runtime = await pack(
+      "universal-runtime",
+      runtimeVersion,
+      temporary,
+      runtimeSha,
+    );
     const unchanged = runtime.files.filter(
       ({ file }) => file !== "package.json" && file !== "README.md",
     );
@@ -150,7 +164,7 @@ async function build(output) {
     const runtimeReceipt = {
       kind: "daedlo-universal-runtime",
       name: "@daedlo/universal-runtime",
-      version,
+      version: runtimeVersion,
       archive: runtime.archive,
       referenceRuntime: {
         archiveSha256: referenceRuntimeSha,

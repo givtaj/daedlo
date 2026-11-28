@@ -33,3 +33,50 @@ test("hosted Node lanes build, exercise and retain the isolated Universal HTTPS 
     "Keep raw workspace paths and run identifiers out of public job output",
   );
 });
+
+test("the hosted recipient installs the frozen components, checks both npm shortcuts and uploads the nine release assets", () => {
+  const workflow = readFileSync(
+    new URL("../.github/workflows/ci.yml", import.meta.url),
+    "utf8",
+  );
+  const start = workflow.indexOf(
+    "- name: Exercise the packaged Universal live recording example",
+  );
+  const end = workflow.indexOf(
+    "- name: Build an immutable candidate bundle",
+    start,
+  );
+  const job = workflow.slice(start, end);
+  assert.match(
+    job,
+    /npm install --prefix[^\n]+daedlo-universal-0\.1\.0-alpha\.7\.tgz[^\n]+daedlo-universal-runtime-0\.1\.0-alpha\.6\.tgz/,
+  );
+  assert.match(
+    job,
+    /npm install --global[^\n]+daedlo-universal-0\.1\.0-alpha\.7\.tgz/,
+  );
+  assert.match(job, /daedlo-universal --help/);
+  assert.match(
+    job,
+    /node tests\/universal-installed-cli\.mjs "\$RUNNER_TEMP\/universal-smoke\.json"/,
+  );
+  assert.match(job, /name: daedlo-universal-0\.1\.0-alpha\.7-node/);
+  const assets = Array.from(
+    job.matchAll(/\$\{\{ runner\.temp \}\}\/universal-https\/(\S+)/g),
+    (match) => match[1],
+  );
+  assert.deepEqual(
+    assets.sort(),
+    [
+      "INSTALL.md",
+      "SHA256SUMS",
+      "UNIVERSAL_RUNTIME_VERIFICATION.json",
+      "UNIVERSAL_SHA256SUMS",
+      "UNIVERSAL_VERIFICATION.json",
+      "daedlo-engine-0.1.4-alpha.9.crate",
+      "daedlo-universal-0.1.0-alpha.7.tgz",
+      "daedlo-universal-runtime-0.1.0-alpha.6.tgz",
+      "release.json",
+    ].sort(),
+  );
+});

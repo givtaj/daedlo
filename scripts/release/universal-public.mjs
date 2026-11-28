@@ -9,15 +9,18 @@ import { sha256 } from "./manifest.mjs";
 import { readArchive, readRegular } from "./public-kit.mjs";
 
 const repo = fileURLToPath(new URL("../../", import.meta.url));
-const version = "0.1.0-alpha.6";
+const version = "0.1.0-alpha.7";
+const runtimeVersion = "0.1.0-alpha.6";
 const engineVersion = "0.1.4-alpha.9";
 const universalFile = `daedlo-universal-${version}.tgz`;
-const runtimeFile = `daedlo-universal-runtime-${version}.tgz`;
+const runtimeFile = `daedlo-universal-runtime-${runtimeVersion}.tgz`;
 const engineFile = `daedlo-engine-${engineVersion}.crate`;
 const basicZip = `daedlo-${engineVersion}.zip`;
 const limits = 4 * 1024 * 1024;
 const expected = {
-  universal: "3f32ad5cbad60c649b96b0c989bbb47eb168d325f46b9d1a717ce4b5bbf8a6f9",
+  universal: "7cda746ce1b5e31bb5a558d330dd29b453f81a47d7ee6d185ffb7c60bd2414b4",
+  workspaceReceipt:
+    "cefa21fb7a89a8122ba753d282ff41253b665c127e25a3598c3571be6d24c628",
   runtime: "40c49a9152870bd31a0df87354f0ef55c00830f6a6d41da9c4e1155d09cc261a",
   basicZip: "81b252cc4853278360e893713c778676b492df5d60afe4f19d7880484327f4b2",
   engine: "aa870ad72c7e5224e014800c59aa7294c1cf47c712239a8c08813230cb939139",
@@ -93,7 +96,7 @@ export async function stageUniversalRelease({ packages, engineKit, output }) {
     readRegular(join(packages, universalFile), limits),
     readRegular(join(packages, runtimeFile), limits),
     readRegular(engineKit, limits),
-    readRegular(join(repo, "docs/universal-release.md"), limits),
+    readRegular(join(repo, "docs/universal-alpha7-release.md"), limits),
     readRegular(join(packages, "UNIVERSAL_VERIFICATION.json"), limits),
     readRegular(join(packages, "UNIVERSAL_RUNTIME_VERIFICATION.json"), limits),
     readRegular(join(packages, "UNIVERSAL_SHA256SUMS"), limits),
@@ -123,9 +126,11 @@ export async function stageUniversalRelease({ packages, engineKit, output }) {
   const inventory = JSON.parse(universal.get("SOURCE.json").bytes);
   assert.equal(
     inventory.source.commit,
-    "1d1a87646003b7e03b01a16693317a1e166ee21b",
+    "3587be1cb084720656e1682ef46d8bc02cb2f93a",
   );
   assert.equal(inventory.source.dirty, false);
+  assert.equal(inventory.name, "@daedlo/universal");
+  assert.equal(inventory.version, version);
   assert.equal(universal.size, 111);
   assert.equal(inventory.files.length, universal.size - 1);
   assert.deepEqual(
@@ -139,10 +144,15 @@ export async function stageUniversalRelease({ packages, engineKit, output }) {
     );
   const manifest = JSON.parse(runtime.get("package.json").bytes);
   assert.equal(manifest.name, "@daedlo/universal-runtime");
-  assert.equal(manifest.version, version);
+  assert.equal(manifest.version, runtimeVersion);
   assert.equal(
     JSON.parse(runtime.get("src/capabilities.json").bytes).runJournal,
     1,
+  );
+  checked(
+    workspaceReceipt,
+    expected.workspaceReceipt,
+    "workspace verification receipt",
   );
   assert.deepEqual(JSON.parse(workspaceReceipt), {
     ...inventory,

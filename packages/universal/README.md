@@ -25,8 +25,9 @@ Build and install the separate candidate:
 
 ```sh
 node scripts/release/universal.mjs --output /absolute/new-output
-npm install --prefix /absolute/universal-install --offline --ignore-scripts /absolute/new-output/daedlo-universal-0.1.0-alpha.6.tgz
-/absolute/universal-install/node_modules/.bin/daedlo-universal --help
+npm install --prefix /absolute/universal-install --offline --ignore-scripts /absolute/new-output/daedlo-universal-0.1.0-alpha.7.tgz
+export PATH="/absolute/universal-install/node_modules/.bin:$PATH"
+daedlo-universal --help
 ```
 
 Build from a clean reviewed source checkpoint. A maintainer-only `--allow-dirty`

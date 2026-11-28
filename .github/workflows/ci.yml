@@ -147,7 +147,20 @@ jobs:
           exec >"$RUNNER_TEMP/universal-install.log" 2>&1
           phase='package installation'
           trap 'echo "Universal recipient check failed during $phase." >&3' ERR
-          npm install --prefix "$RUNNER_TEMP/universal-consumer" --workspaces=false --ignore-scripts --no-audit --no-fund "$RUNNER_TEMP/universal-https/daedlo-universal-0.1.0-alpha.6.tgz" "$RUNNER_TEMP/universal-https/daedlo-universal-runtime-0.1.0-alpha.6.tgz"
+          npm install --prefix "$RUNNER_TEMP/universal-consumer" --workspaces=false --ignore-scripts --no-audit --no-fund "$RUNNER_TEMP/universal-https/daedlo-universal-0.1.0-alpha.7.tgz" "$RUNNER_TEMP/universal-https/daedlo-universal-runtime-0.1.0-alpha.6.tgz"
+          phase='global npm shortcut'
+          npm install --global --prefix "$RUNNER_TEMP/universal-global" --ignore-scripts --no-audit --no-fund "$RUNNER_TEMP/universal-https/daedlo-universal-0.1.0-alpha.7.tgz"
+          (
+            export PATH="$RUNNER_TEMP/universal-global/bin:$PATH"
+            test "$(command -v daedlo-universal)" = "$RUNNER_TEMP/universal-global/bin/daedlo-universal"
+            daedlo-universal --help >"$RUNNER_TEMP/universal-global-help"
+            grep -Fxq 'Daedlo Universal (optional installation)' "$RUNNER_TEMP/universal-global-help"
+          )
+          phase='local npm shortcut'
+          export PATH="$RUNNER_TEMP/universal-consumer/node_modules/.bin:$PATH"
+          test "$(command -v daedlo-universal)" = "$RUNNER_TEMP/universal-consumer/node_modules/.bin/daedlo-universal"
+          daedlo-universal --help >"$RUNNER_TEMP/universal-local-help"
+          cmp "$RUNNER_TEMP/universal-global-help" "$RUNNER_TEMP/universal-local-help"
           phase='browser installation'
           "$RUNNER_TEMP/universal-consumer/node_modules/.bin/playwright" install chromium
           phase='released SDK build'
@@ -155,18 +168,28 @@ jobs:
           phase='journaled browser save and application readback'
           node "$RUNNER_TEMP/universal-model/examples/universal-live/record.mjs" --install "$RUNNER_TEMP/universal-consumer" --output "$RUNNER_TEMP/universal-workspace" --engine "$RUNNER_TEMP/universal-model/target/debug/notebook-engine" >"$RUNNER_TEMP/universal-smoke.json"
           node -e '
-            const { attemptedWrites, savedRows, historyComplete } = JSON.parse(require("node:fs").readFileSync(process.argv[1]));
-            if (attemptedWrites !== 1 || savedRows !== 1 || historyComplete !== true) process.exit(1);
-            console.log(JSON.stringify({ attemptedWrites, savedRows, historyComplete }));
+            const { attemptedWrites, serverWrites, savedRows, readbackText, historyComplete } = JSON.parse(require("node:fs").readFileSync(process.argv[1]));
+            if (attemptedWrites !== 1 || serverWrites !== 1 || savedRows !== 1 || readbackText !== "Example note" || historyComplete !== true) process.exit(1);
+            console.log(JSON.stringify({ attemptedWrites, serverWrites, savedRows, historyComplete }));
           ' "$RUNNER_TEMP/universal-smoke.json" >&3
           phase='installed CLI help, history, backup and restore'
-          node tests/universal-installed-cli.mjs "$RUNNER_TEMP/universal-consumer/node_modules/@daedlo/universal/src/cli.mjs" "$RUNNER_TEMP/universal-smoke.json" >&3
+          node tests/universal-installed-cli.mjs "$RUNNER_TEMP/universal-smoke.json" >&3
+          PATH="$RUNNER_TEMP/universal-global/bin:$PATH" node tests/universal-installed-cli.mjs "$RUNNER_TEMP/universal-smoke.json" >&3
       - name: Retain only reviewed Universal release assets
         if: needs.public-metadata.outputs.full == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: daedlo-universal-0.1.0-alpha.6-node${{ matrix.node }}-${{ github.sha }}
-          path: ${{ runner.temp }}/universal-https/
+          name: daedlo-universal-0.1.0-alpha.7-node${{ matrix.node }}-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/universal-https/daedlo-universal-0.1.0-alpha.7.tgz
+            ${{ runner.temp }}/universal-https/daedlo-universal-runtime-0.1.0-alpha.6.tgz
+            ${{ runner.temp }}/universal-https/daedlo-engine-0.1.4-alpha.9.crate
+            ${{ runner.temp }}/universal-https/INSTALL.md
+            ${{ runner.temp }}/universal-https/release.json
+            ${{ runner.temp }}/universal-https/UNIVERSAL_VERIFICATION.json
+            ${{ runner.temp }}/universal-https/UNIVERSAL_RUNTIME_VERIFICATION.json
+            ${{ runner.temp }}/universal-https/UNIVERSAL_SHA256SUMS
+            ${{ runner.temp }}/universal-https/SHA256SUMS
           if-no-files-found: error
           retention-days: 14
       - name: Build an immutable candidate bundle from the clean checkout

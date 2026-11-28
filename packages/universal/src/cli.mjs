@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { captureTargetRegistration } from "./registration.mjs";
 import { loadTools } from "./tools.mjs";
 
@@ -426,10 +425,7 @@ export async function runUniversalCli(args = process.argv.slice(2)) {
     process.off("SIGTERM", close);
   }
 }
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-)
+if (import.meta.main)
   runUniversalCli().catch((error) => {
     process.stderr.write(
       JSON.stringify({
